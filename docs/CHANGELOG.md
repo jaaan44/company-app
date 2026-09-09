@@ -4,6 +4,19 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-09-09 — Phase 1 merged into `main`
+- Fast-forward merged `claude/v1-phase-01-project-bootstrap` into `main` (content unchanged) after Phase 1 review/approval.
+
+### 2026-09-09 — Phase 2: Development Environment & CI
+- Installed Larastan (PHPStan for Laravel) v3 as a dev dependency in `apps/api`; configured at `apps/api/phpstan.neon` (level 5, scans `app/`) — DEC-014.
+- Added `.github/workflows/backend-ci.yml` and `.github/workflows/mobile-ci.yml`: path-filtered GitHub Actions workflows, triggered on pull requests targeting `main` and pushes to `main` — DEC-015. Backend job runs `composer install`, `composer validate --strict`, `vendor/bin/pint --test`, `vendor/bin/phpstan analyse`, `php artisan test` on PHP 8.4. Mobile job runs `flutter pub get`, `dart format` check, `flutter analyze`, `flutter test` on Flutter 3.47.2. No Docker, no build matrix, no APK/IPA builds.
+- Decided against Docker as the default local dev environment (DEC-013) — PHP/Composer/Node/Flutter installed locally remain sufficient.
+- Confirmed test database safety: Laravel's existing `phpunit.xml` (from Phase 1) already isolates tests to in-memory SQLite; no changes needed.
+- **Known limitation:** `vendor/bin/phpstan analyse` could not be executed in this session — this sandboxed session's GitHub API access is scoped to `jaaan44/company-app` only, and `phpstan/phpstan`'s Composer package is dist-only (no git source), requiring a GitHub API zipball download that this session's access scope blocks. `composer.json`/`composer.lock` correctly declare and resolve the dependency; this is a session/environment constraint, not a defect. See `docs/handoffs/V1_PHASE_02_HANDOFF.md` for the exact GitHub Actions execution status.
+- Updated `CLAUDE.md` (§5 — authoritative CI-matching commands, now including PHPStan), `README.md` (Quality Gates / CI and Local Development sections), `docs/02_ARCHITECTURE.md` (§11 — Development Environment & CI), `docs/CURRENT_STATE.md`.
+- Added `docs/phases/V1_PHASE_02_DEFINITION.md` and `docs/handoffs/V1_PHASE_02_HANDOFF.md`.
+- No Company App business functionality was implemented.
+
 ### 2026-09-09 — Phase 1: Project Bootstrap
 - Established monorepo structure: `apps/api` (Laravel) and `apps/mobile` (Flutter).
 - Bootstrapped Laravel 13.31.0 (PHP 8.4.19) under `apps/api` via `composer create-project laravel/laravel`. Framework-default migrations only (users, cache, jobs); no business tables. Local dev database is SQLite (DEC-012) — production engine remains open.

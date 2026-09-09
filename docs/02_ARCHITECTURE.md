@@ -88,3 +88,13 @@ These require a decision at the appropriate future phase, not now:
 - Continuous GPS tracking (DEC-005)
 - Full chat-platform feature parity (DEC-007)
 - Microservices, Kubernetes, Kafka, Elasticsearch/OpenSearch, unnecessary always-on services, or other complex distributed-systems infrastructure — this is a single Laravel application sized for ~100 users; no premature infrastructure (§0)
+
+## 11. Development Environment & CI (confirmed, Phase 2)
+
+**Local development:** No Docker by default (DEC-013). PHP, Composer, Node.js, and the Flutter SDK installed directly are sufficient at this project's scale — both apps have already been built and validated this way in Phases 1–2. Docker remains an option to introduce later for a specific, demonstrated need (e.g. standardizing a non-SQLite database across contributors once one is chosen), not a default.
+
+**CI:** Two path-filtered GitHub Actions workflows (DEC-015) — `.github/workflows/backend-ci.yml` and `.github/workflows/mobile-ci.yml` — each triggered on pull requests targeting `main` and pushes to `main`, scoped via `paths:` so a backend-only change doesn't run the mobile suite and vice versa. Single PHP version (8.4), single Flutter version (3.47.2) — no build matrix, per the resource-efficiency direction (§0). No Android/iOS artifact builds in CI (release packaging is a later concern, not fast quality validation).
+
+**Backend static analysis:** Larastan (PHPStan for Laravel) v3, level 5, configured at `apps/api/phpstan.neon` (DEC-014). The exact commands CI runs are documented once, authoritatively, in `CLAUDE.md` §5 — this section intentionally doesn't repeat them.
+
+**Test database safety:** Laravel's own `phpunit.xml` (from the Phase 1 bootstrap) already isolates tests to an in-memory SQLite database (`DB_CONNECTION=sqlite`, `DB_DATABASE=:memory:`) distinct from the local dev database file — no risk of tests touching real data, in CI or locally. Production database engine (PostgreSQL vs. MySQL) remains open (DEC-012) — this phase does not resolve it.

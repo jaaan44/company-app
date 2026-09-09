@@ -6,7 +6,7 @@ Internal company operations and communication platform: staff, clients, projects
 
 ## Project Status
 
-Phase 1 (Project Bootstrap) is complete: a clean Laravel application (`apps/api`) and a minimal Flutter application shell (`apps/mobile`) exist, with no Company App business functionality implemented yet.
+Phase 2 (Development Environment & CI) is complete: both apps have a lean local dev workflow, Laravel static analysis (Larastan), and GitHub Actions CI. No Company App business functionality implemented yet.
 
 For current status, always check `docs/CURRENT_STATE.md` — it is kept accurate and up to date; this README is not.
 
@@ -65,7 +65,7 @@ php artisan migrate
 php artisan serve
 ```
 
-Checks: `composer validate --strict` · `vendor/bin/pint --test` · `php artisan test`
+Checks: `composer validate --strict` · `vendor/bin/pint --test` · `vendor/bin/phpstan analyse` · `php artisan test`
 
 ### Mobile (`apps/mobile`)
 
@@ -76,5 +76,13 @@ flutter run
 ```
 
 Checks: `dart format --output=none --set-exit-if-changed .` · `flutter analyze` · `flutter test`
+
+## Quality Gates / CI
+
+GitHub Actions runs the exact checks above on every pull request targeting `main` and every push to `main` — `.github/workflows/backend-ci.yml` and `.github/workflows/mobile-ci.yml`, each scoped (via `paths:`) to run only when its own app changes. No Docker, no build matrix, no Android/iOS artifact builds — a single PHP version and a single Flutter version, matching the resource-efficiency direction in `docs/02_ARCHITECTURE.md` §0. `CLAUDE.md` §5 is the authoritative list of commands; this section and CI both mirror it.
+
+## Local Development
+
+No Docker is used by default — PHP, Composer, Node.js, and the Flutter SDK installed locally are sufficient for this project's size (~100 users). See DEC-013 in `docs/DECISIONS.md` for rationale; this can be revisited if a real need emerges.
 
 No business features exist in either app yet — see `docs/ROADMAP.md` for what's planned and `docs/CURRENT_STATE.md` for what's authorized next.

@@ -44,20 +44,26 @@ Never assume something is missing merely because a prompt requests it or describ
 
 ## 5. Quality Expectations
 
-Established as of Phase 1 (Project Bootstrap). Run from each app's own directory.
+Established as of Phase 1 (Project Bootstrap), extended in Phase 2 (Development Environment & CI). **This section is the single authoritative source for validation commands** — the GitHub Actions workflows (`.github/workflows/backend-ci.yml`, `.github/workflows/mobile-ci.yml`) run exactly these commands, in this order. Run from each app's own directory. Before any commit/handoff, run the same commands CI will run — don't let local and CI checks drift apart.
 
-**Laravel (`apps/api`) — Laravel 13.31.0, PHP 8.4.19 (requires `^8.3`):**
-- `composer install` — install dependencies
-- `composer validate --strict` — composer.json integrity
-- `vendor/bin/pint --test` — code style check (`vendor/bin/pint` to auto-fix)
-- `php artisan test` — automated tests (PHPUnit)
-- PHPStan/Larastan is **not yet installed** — belongs to the Development Environment/CI phase (Phase 2). Do not install it speculatively.
+**Laravel (`apps/api`) — Laravel 13.31.0, PHP 8.4 (requires `^8.3`):**
+```sh
+composer install --no-interaction --prefer-dist --no-progress
+composer validate --strict
+cp .env.example .env && php artisan key:generate   # first run / CI only — never commit .env
+vendor/bin/pint --test
+vendor/bin/phpstan analyse
+php artisan test
+```
+Static analysis: Larastan (PHPStan for Laravel) v3, configured at `apps/api/phpstan.neon`, level 5 — see DEC-014 for rationale. Raise the level deliberately in a future phase as real business logic accumulates; don't lower it to make a failing check pass.
 
 **Flutter (`apps/mobile`) — Flutter 3.47.2 stable, Dart 3.13.2:**
-- `flutter pub get` — resolve dependencies
-- `dart format --output=none --set-exit-if-changed .` — format check (`dart format .` to auto-fix)
-- `flutter analyze` — static analysis
-- `flutter test` — automated tests
+```sh
+flutter pub get
+dart format --output=none --set-exit-if-changed .
+flutter analyze
+flutter test
+```
 
 If a future phase changes these versions or commands, update this section — don't let it go stale.
 

@@ -76,6 +76,24 @@ Durable record of accepted decisions. Each entry is permanent once recorded — 
 **Decision:** The Laravel application's local development bootstrap uses SQLite (Laravel's own default for a fresh install). This is a local/dev convenience only. It does **not** resolve the PostgreSQL vs. MySQL open question recorded in `02_ARCHITECTURE.md` §9 for production — that choice remains deliberately open until a phase that genuinely requires it.
 **Rationale:** Avoids silently converting an intentionally deferred architecture decision into a permanent one merely because a bootstrap step needed *some* working database driver. SQLite requires no separate service, matching the resource-efficiency direction for Phase 1.
 
+### DEC-013 — No Docker by default for local development
+**Date:** 2026-09-09
+**Status:** ACCEPTED
+**Decision:** Company App's default local development workflow does not use Docker. PHP, Composer, Node.js, and the Flutter SDK installed directly on the developer's machine are sufficient and are what both apps have actually been built and validated against (Phases 1–2).
+**Rationale:** At ~100 users, an always-running container layer adds idle resource overhead and setup complexity with no demonstrated need — both apps run cleanly without it. This does not forbid Docker later for a specific, demonstrated need (e.g. standardizing a chosen non-SQLite database across contributors); it only sets the default.
+
+### DEC-014 — Static analysis: Larastan v3, level 5
+**Date:** 2026-09-09
+**Status:** ACCEPTED
+**Decision:** Backend static analysis uses Larastan (PHPStan for Laravel) v3, configured at `apps/api/phpstan.neon` scanning `app/` at level 5, with no ignored-error baseline.
+**Rationale:** Level 5 is a realistic, moderate starting point for a currently near-empty codebase — strict enough to catch real classes of bugs, not so strict (e.g. max/9) that it would demand suppression rules or fight Eloquent's dynamic behavior before any real business logic exists. The level should be raised deliberately as the codebase matures, not lowered to make a failing check pass.
+
+### DEC-015 — CI layout: two path-filtered GitHub Actions workflows
+**Date:** 2026-09-09
+**Status:** ACCEPTED
+**Decision:** CI is two separate workflow files — `.github/workflows/backend-ci.yml` and `.github/workflows/mobile-ci.yml` — each triggered on pull requests targeting `main` and pushes to `main`, and each scoped via `paths:` to its own app directory (plus its own workflow file) so an unrelated app's changes don't trigger it. Single PHP version (8.4) and single Flutter version (3.47.2); no build matrix; no Android/iOS artifact builds.
+**Rationale:** Matches the resource-efficiency direction (`02_ARCHITECTURE.md` §0) — fast, cheap CI appropriate for a ~100-user internal tool. Two small workflows were chosen over one workflow with two jobs for clearer independent history/status per app, without adding real complexity (no shared logic between them to justify combining).
+
 ---
 
 ## Template for Future Decisions
