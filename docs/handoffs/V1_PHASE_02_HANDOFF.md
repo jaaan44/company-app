@@ -84,7 +84,20 @@ See the table in §12 and `docs/testing/TEST_STATUS.md` (Phase 2 section) for th
 
 ## 14. GitHub CI Execution Status
 
-*(This section is filled in after the branch is pushed and CI has had a chance to run — see the note at the end of this handoff for the final, accurate status. Never claim GitHub CI passed without an actual observed run.)*
+A draft pull request (#2, `claude/v1-phase-02-development-ci` → `main`, not merged) was opened specifically to exercise the `pull_request` trigger, since both workflows are deliberately scoped to only run on PRs targeting `main` and pushes to `main` (§5) — pushing the feature branch alone does not trigger them.
+
+**Both workflows ran and passed on commit `fb4c548`:**
+
+| Workflow | Job | Result | Duration | Run |
+|---|---|---|---|---|
+| Backend CI | Backend quality gates (PHP 8.4) | ✅ success | ~20s | [run 34367259866](https://github.com/jaaan44/company-app/actions/runs/34367259866) |
+| Mobile CI | Mobile quality gates (Flutter 3.47.2) | ✅ success | ~91s | [run 34367259884](https://github.com/jaaan44/company-app/actions/runs/34367259884) |
+
+Confirmed from the actual backend job log (not assumed): `composer validate --strict` → `./composer.json is valid`; `vendor/bin/pint --test` → `PASS ... 26 files`; **`vendor/bin/phpstan analyse` → `Note: Using configuration file .../apps/api/phpstan.neon.` then `[OK] No errors`** (3 files analyzed — the full `app/` directory); `php artisan test` → `Tests: 2 passed (2 assertions)`.
+
+This confirms the local blocker (§15/§16) was exactly what it was diagnosed as: a constraint of this authoring session's sandboxed GitHub API access, not a real problem with the dependency, the config, or the CI setup. On a real GitHub Actions runner with unrestricted internet, PHPStan installed and ran cleanly with zero errors.
+
+**AC-04 (Laravel static analysis passes) is confirmed — via actual GitHub Actions execution, not local execution.** All of AC-01 through AC-18 are satisfied; see the acceptance-criteria mapping in `docs/phases/V1_PHASE_02_DEFINITION.md`.
 
 ## 15. Deviations from Specification
 
@@ -94,7 +107,7 @@ No other deviations from the governing Phase 2 instruction.
 
 ## 16. Known Issues/Limitations
 
-- AC-04 (Laravel static analysis passes) is **not locally verified** — see §15. It is expected to pass in CI; §14 reports whether that expectation was confirmed by an actual run.
+- AC-04 (Laravel static analysis passes) was not locally verifiable in this authoring session — see §15 — but **is confirmed passing via actual GitHub Actions execution**, see §14. Any future session working in a similarly sandboxed environment should expect the same local `composer install` limitation for `phpstan/phpstan` specifically, and should rely on CI (or a broader-access environment) for local-equivalent verification rather than re-diagnosing this from scratch.
 - Production database engine (PostgreSQL vs. MySQL) remains open (DEC-012) — unaffected by this phase.
 - Admin Backoffice rendering approach remains open — unaffected by this phase.
 - No `actionlint`-level GitHub Actions schema validation was performed locally (tool unavailable in this session); only YAML syntax was checked. Real execution (§14) is the actual validation.

@@ -40,12 +40,12 @@ No automated tests apply to this phase — no application code exists yet.
 | `composer validate --strict` (apps/api) | Automated, local | PASS | composer.json integrity, re-verified after Larastan added |
 | `vendor/bin/pint --test` (apps/api) | Automated, local | PASS | code style, unaffected by Phase 2 changes |
 | `php artisan test` (apps/api) | Automated, local | PASS | 2 tests, 2 assertions, unaffected |
-| `vendor/bin/phpstan analyse` (apps/api) | Automated, local | BLOCKED | Could not install `phpstan/phpstan` locally in this session — see Known Issues in `docs/handoffs/V1_PHASE_02_HANDOFF.md`. `composer.json`/`composer.lock` correctly declare the dependency; not executed locally. |
+| `vendor/bin/phpstan analyse` (apps/api) | Automated, local | BLOCKED (local only) | Could not install `phpstan/phpstan` locally in this session (sandboxed GitHub API access) — see `docs/handoffs/V1_PHASE_02_HANDOFF.md` §15/16. **Confirmed PASS via GitHub Actions** (see below): "[OK] No errors", 3 files analyzed. |
 | `dart format --set-exit-if-changed .` (apps/mobile) | Automated, local | PASS | unaffected |
 | `flutter analyze` (apps/mobile) | Automated, local | PASS | unaffected |
 | `flutter test` (apps/mobile) | Automated, local | PASS | unaffected |
-| Backend CI workflow (`.github/workflows/backend-ci.yml`) | Automated, GitHub Actions | *(see handoff for exact status)* | YAML syntax validated locally; real execution status reported in `docs/handoffs/V1_PHASE_02_HANDOFF.md` |
-| Mobile CI workflow (`.github/workflows/mobile-ci.yml`) | Automated, GitHub Actions | *(see handoff for exact status)* | YAML syntax validated locally; real execution status reported in `docs/handoffs/V1_PHASE_02_HANDOFF.md` |
+| Backend CI workflow (`.github/workflows/backend-ci.yml`) | Automated, GitHub Actions | PASS | Run [34367259866](https://github.com/jaaan44/company-app/actions/runs/34367259866), commit `fb4c548`, ~20s. All steps green including PHPStan. |
+| Mobile CI workflow (`.github/workflows/mobile-ci.yml`) | Automated, GitHub Actions | PASS | Run [34367259884](https://github.com/jaaan44/company-app/actions/runs/34367259884), commit `fb4c548`, ~91s. |
 | No real secrets in CI config | Manual | PASS | Workflows generate an ephemeral `APP_KEY` via `php artisan key:generate` after copying `.env.example`; no credentials committed or referenced |
 | No business functionality introduced | Manual | PASS | Confirmed by reviewing the full staged diff before commit |
 
