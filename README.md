@@ -2,13 +2,23 @@
 
 Internal company operations and communication platform: staff, clients, projects, tasks, work logs, leave management, scheduling, messaging, service reports, incident reports, announcements, and administrative reporting — unified under permission-based access control.
 
-**Planned stack:** Laravel (API + Admin Backoffice) · Flutter (staff mobile app) · relational database · Redis (queue/cache/broadcast).
+**Stack:** Laravel (API + Admin Backoffice) · Flutter (staff mobile app) · relational database · queues (framework-default for now; Redis is an upgrade path, not a default — see `docs/02_ARCHITECTURE.md` §0/§6).
 
 ## Project Status
 
-This project is in **Phase 0 (Project Definition & Development Governance)**. No application code exists yet — this repository currently contains only the governance and planning documentation required before implementation begins.
+Phase 1 (Project Bootstrap) is complete: a clean Laravel application (`apps/api`) and a minimal Flutter application shell (`apps/mobile`) exist, with no Company App business functionality implemented yet.
 
 For current status, always check `docs/CURRENT_STATE.md` — it is kept accurate and up to date; this README is not.
+
+## Repository Structure
+
+```
+apps/
+  api/      — Laravel backend/API (and, eventually, the Admin Backoffice)
+  mobile/   — Flutter staff mobile app
+docs/       — governance, architecture, and process documentation
+CLAUDE.md   — operating rules for AI-assisted development
+```
 
 ## Development Process
 
@@ -38,4 +48,33 @@ Company App is built through explicitly authorized, numbered phases. The reposit
 
 ## Getting Started
 
-There is no application to run yet. Once Phase 1 (Project Bootstrap) is authorized and complete, this section will document how to set up the Laravel and Flutter projects locally.
+### Prerequisites
+
+- PHP 8.3+ and Composer (backend requires `apps/api/composer.json`'s `^8.3`; developed against PHP 8.4.19)
+- Node.js + npm (for the backend's default Vite/Tailwind frontend tooling)
+- Flutter stable SDK (developed against 3.47.2 / Dart 3.13.2)
+
+### Backend (`apps/api`)
+
+```sh
+cd apps/api
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+php artisan serve
+```
+
+Checks: `composer validate --strict` · `vendor/bin/pint --test` · `php artisan test`
+
+### Mobile (`apps/mobile`)
+
+```sh
+cd apps/mobile
+flutter pub get
+flutter run
+```
+
+Checks: `dart format --output=none --set-exit-if-changed .` · `flutter analyze` · `flutter test`
+
+No business features exist in either app yet — see `docs/ROADMAP.md` for what's planned and `docs/CURRENT_STATE.md` for what's authorized next.

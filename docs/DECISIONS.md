@@ -64,6 +64,18 @@ Durable record of accepted decisions. Each entry is permanent once recorded — 
 **Decision:** Important state changes such as staff status, leave approvals, and incident progress should preserve history where appropriate rather than simply overwriting previous state.
 **Rationale:** Operational and compliance value in knowing not just current state but how it got there; supports reporting and dispute resolution.
 
+### DEC-011 — Monorepo structure: apps/api and apps/mobile
+**Date:** 2026-09-09
+**Status:** ACCEPTED
+**Decision:** Company App is developed as a single monorepo. The Laravel backend/API (and, eventually, the Admin Backoffice) lives under `apps/api`; the Flutter staff mobile app lives under `apps/mobile`. No monorepo orchestration tooling (Nx/Turborepo/Melos) is introduced — the two applications operate independently within the shared repository.
+**Rationale:** Resolves the "monorepo vs polyrepo" open question from `02_ARCHITECTURE.md` §9 in favor of the suggested default, appropriate for a single team with tightly coupled release cadence at ~100-user scale. This decision fixes *structure and location* only — it does not decide the Admin Backoffice's rendering approach (Blade/Livewire/Inertia/SPA), which remains open.
+
+### DEC-012 — Local bootstrap database: SQLite, production engine still open
+**Date:** 2026-09-09
+**Status:** ACCEPTED
+**Decision:** The Laravel application's local development bootstrap uses SQLite (Laravel's own default for a fresh install). This is a local/dev convenience only. It does **not** resolve the PostgreSQL vs. MySQL open question recorded in `02_ARCHITECTURE.md` §9 for production — that choice remains deliberately open until a phase that genuinely requires it.
+**Rationale:** Avoids silently converting an intentionally deferred architecture decision into a permanent one merely because a bootstrap step needed *some* working database driver. SQLite requires no separate service, matching the resource-efficiency direction for Phase 1.
+
 ---
 
 ## Template for Future Decisions

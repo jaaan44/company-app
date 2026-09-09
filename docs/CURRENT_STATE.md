@@ -3,45 +3,42 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** Phase 0 — Project Definition & Development Governance
+**Current phase:** Phase 1 — Project Bootstrap
 **Phase status:** COMPLETE (pending user review)
-**Last completed phase:** Phase 0
-**Next planned phase:** Phase 1 — Project Bootstrap (see `ROADMAP.md`) — **not authorized yet**
+**Last completed phase:** Phase 1
+**Next planned phase:** Phase 2 — Development Environment & CI (see `ROADMAP.md`) — **not authorized yet**
 
 ## Current Objective
 
-Establish repository-based project governance (documentation, decision ledger, roadmap, testing structure, Claude operating rules) before any implementation begins.
+Awaiting review of Phase 1 and authorization for Phase 2.
 
 ## Completed
 
-- Full documentation foundation: `docs/00_PROJECT_CHARTER.md` through `docs/06_UI_UX_GUIDELINES.md`
-- `docs/ROADMAP.md` — 27-phase plan (Phase 0–26)
-- `docs/DECISIONS.md` — DEC-001 through DEC-010 recorded
-- `docs/testing/` — test strategy structure (`TEST_PLAN.md`, `TEST_STATUS.md`, `UAT_LOG.md`)
-- `docs/handoffs/README.md` — standard handoff format
-- `docs/handoffs/V1_PHASE_00_HANDOFF.md` — this phase's handoff
-- `CLAUDE.md` — operating rules for future AI sessions
-- `README.md` — project overview
+- **Phase 0:** Full documentation/governance foundation (`docs/`, `CLAUDE.md`, `README.md`).
+- **Phase 1:** Monorepo structure established — `apps/api` (Laravel) and `apps/mobile` (Flutter). See `docs/handoffs/V1_PHASE_01_HANDOFF.md` for full detail.
+  - `apps/api`: Laravel 13.31.0 on PHP 8.4.19. Boots; framework-default migrations only (users/cache/jobs); `composer validate --strict`, `vendor/bin/pint --test`, `php artisan test` all pass.
+  - `apps/mobile`: Flutter 3.47.2 / Dart 3.13.2. Minimal neutral shell (demo counter removed, no business screens); `dart format`, `flutter analyze`, `flutter test` all pass.
+  - No business functionality in either app.
 
 ## Pending / Not Started
 
-- Everything application-related: no Laravel project, no Flutter project, no database, no CI, no infrastructure. This is expected and correct for Phase 0.
-- Phase 1 (Project Bootstrap) is next on the roadmap but requires explicit user authorization to begin.
+- Development Environment & CI (Phase 2) and everything after it on the roadmap.
+- PHPStan/Larastan (deferred to Phase 2, per `CLAUDE.md` §5).
 
 ## Known Blockers / Issues
 
-None. Several **open design questions** are recorded (not blockers) in `docs/02_ARCHITECTURE.md` §9, `docs/03_DATABASE_MODEL.md` §3, and `docs/01_PRODUCT_REQUIREMENTS.md` §6 — to be resolved at the phases where they become relevant, not now.
+None blocking. Notable environment detail: the Flutter/Dart SDK is not preinstalled in this session's container and was installed to `/opt/flutter` to run Phase 1's validation — this is a session detail, not a repository dependency (nothing in the repo assumes that path). Open design questions (DB engine, Admin Backoffice rendering approach, real-time transport, object storage) remain deliberately deferred — see `docs/02_ARCHITECTURE.md` §9.
 
 ## Repository / Branch Information
 
 - Repository: `jaaan44/company-app`
-- Working branch: `claude/company-app-phase-0-4oezyj`
-- No commits existed prior to this Phase 0 work; this phase's commit(s) are the first history in the repository.
+- Default branch: `main` (contains the approved Phase 0 baseline)
+- Phase 1 branch: `claude/v1-phase-01-project-bootstrap` (branched from `main`, not merged)
 
 ## Latest Relevant Handoff
 
-`docs/handoffs/V1_PHASE_00_HANDOFF.md`
+`docs/handoffs/V1_PHASE_01_HANDOFF.md`
 
 ## For the Next Session
 
-If you're picking this up cold: read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`. There is no phase specification in `docs/phases/` yet beyond Phase 0's own definition (this prompt, summarized in the Phase 0 handoff) — Phase 1 needs a specification written and explicit user authorization before any implementation starts.
+Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_01_HANDOFF.md` if working on anything bootstrap-related. Phase 2 needs a specification and explicit user authorization before any implementation starts.
