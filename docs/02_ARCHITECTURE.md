@@ -1,6 +1,10 @@
 # 02 — Architecture (Initial)
 
-Status: **Directional.** No code exists yet. This document sets the intended shape of the system so Phase 1 (Project Bootstrap) has a target, without prescribing implementation details that should be decided when actually building.
+Status: **Directional**, now partially confirmed as of Phase 1 (repository layout, versions — see §2). This document sets the intended shape of the system, without prescribing implementation details that should be decided when actually building.
+
+## 0. Resource-Efficiency Direction
+
+Company App serves approximately 100 employees. Favor a lean, resource-efficient architecture with reasonable growth headroom — do not optimize for massive-scale workloads or introduce infrastructure without demonstrated need. Sound database design, indexing, pagination, maintainable module boundaries, and queues for genuinely expensive work are sufficient; premature infrastructure (microservices, Kubernetes, Kafka, Elasticsearch/OpenSearch, unnecessary always-on services, complex distributed systems) is out of scope for V1 and should not be introduced speculatively. This governs every subsequent phase's implementation choices, not just Phase 1's.
 
 ## 1. High-Level Components
 
@@ -27,17 +31,17 @@ Status: **Directional.** No code exists yet. This document sets the intended sha
 - **Relational database**: system of record. PostgreSQL or MySQL — exact choice deferred to Phase 1/3 (either is compatible with the conceptual model in `03_DATABASE_MODEL.md`).
 - **Redis**: queueing (jobs like notification dispatch, report generation), caching, and — if adopted — broadcasting for real-time features (messaging, live status/notifications).
 
-## 2. Suggested Repository Layout
-
-A monorepo is suggested for a project this size (single team, tightly coupled frontend/backend release cadence), containing:
+## 2. Repository Layout (confirmed, Phase 1 — DEC-011)
 
 ```
-backend/     — Laravel app (API + Admin Backoffice, or API only if Admin is split out)
-mobile/      — Flutter app
-docs/        — this documentation tree
+apps/api/     — Laravel app (API + future Admin Backoffice)
+apps/mobile/  — Flutter app
+docs/         — this documentation tree
 ```
 
-Whether the Admin Backoffice lives inside `backend/` (as Laravel views/Livewire/Inertia) or as a separate frontend project is an open question for the Core Architecture phase — not decided here. A monorepo does not preclude splitting it out later.
+Monorepo, no orchestration tooling (Nx/Turborepo/Melos) — the two apps operate independently. Whether the Admin Backoffice renders as Laravel views/Livewire/Inertia or a separate SPA against the API remains an open question for the Core Architecture phase — only its *location* (inside `apps/api`) is confirmed.
+
+**Versions (Phase 1 bootstrap):** Laravel 13.31.0, PHP 8.4.19 (composer.json requires `^8.3`), Flutter 3.47.2 (stable channel), Dart 3.13.2.
 
 ## 3. API Layer
 
@@ -56,7 +60,7 @@ Needed for: messaging, live notifications, possibly live staff status. Direction
 
 ## 6. Background Processing
 
-Redis-backed queues for: notification dispatch, scheduled reminder jobs (leave, deadlines, appointments), report generation, and any bulk/administrative operation that shouldn't block a request.
+Queues for: notification dispatch, scheduled reminder jobs (leave, deadlines, appointments), report generation, and any bulk/administrative operation that shouldn't block a request. Per the resource-efficiency direction (§0), the Phase 1 bootstrap uses Laravel's framework-default **database-backed** queue/cache/session drivers — no Redis service is required to run the application. Redis remains the likely upgrade path if/when a genuine load or real-time need demonstrates it (see §5), not a default to install speculatively.
 
 ## 7. File Storage
 
@@ -70,16 +74,17 @@ Per DEC-009 and DEC-010: state-changing workflows (leave approvals, incident pro
 
 These require a decision at the appropriate future phase, not now:
 
-- Database engine: PostgreSQL vs MySQL
+- Database engine: PostgreSQL vs MySQL (local bootstrap uses SQLite — DEC-012 — production engine still open)
 - Admin Backoffice implementation style: server-rendered Blade/Livewire vs Inertia vs separate SPA against the API
 - Real-time transport for messaging/notifications
-- Monorepo vs polyrepo (default assumption above is monorepo; confirm at Phase 1)
 - Object storage provider for production
 - Whether Departments/Teams need a dedicated hierarchy table or a simpler self-referencing structure
+
+*(Monorepo vs polyrepo is resolved — see §2, DEC-011.)*
 
 ## 10. Non-Goals for V1
 
 - Multi-tenancy
 - Continuous GPS tracking (DEC-005)
 - Full chat-platform feature parity (DEC-007)
-- Microservices — this is a single Laravel application; no premature service decomposition
+- Microservices, Kubernetes, Kafka, Elasticsearch/OpenSearch, unnecessary always-on services, or other complex distributed-systems infrastructure — this is a single Laravel application sized for ~100 users; no premature infrastructure (§0)

@@ -1,0 +1,9 @@
+# Root-level ignores shared across the monorepo.
+# apps/api and apps/mobile each carry their own framework-specific
+# .gitignore for build artifacts, dependencies, and environment files.
+
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

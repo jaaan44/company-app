@@ -44,22 +44,22 @@ Never assume something is missing merely because a prompt requests it or describ
 
 ## 5. Quality Expectations
 
-These commands are **not yet established** in this repository (no Laravel or Flutter project exists yet as of Phase 0). Do not invent or run commands the repository does not yet support.
+Established as of Phase 1 (Project Bootstrap). Run from each app's own directory.
 
-Once the respective projects are bootstrapped (Phase 1 onward), expect and wire up:
+**Laravel (`apps/api`) — Laravel 13.31.0, PHP 8.4.19 (requires `^8.3`):**
+- `composer install` — install dependencies
+- `composer validate --strict` — composer.json integrity
+- `vendor/bin/pint --test` — code style check (`vendor/bin/pint` to auto-fix)
+- `php artisan test` — automated tests (PHPUnit)
+- PHPStan/Larastan is **not yet installed** — belongs to the Development Environment/CI phase (Phase 2). Do not install it speculatively.
 
-**Laravel (backend/API + Admin Backoffice):**
-- Laravel Pint (code style)
-- PHPStan / Larastan (static analysis)
-- PHPUnit / Pest (automated tests)
-- `composer validate` (composer.json integrity)
+**Flutter (`apps/mobile`) — Flutter 3.47.2 stable, Dart 3.13.2:**
+- `flutter pub get` — resolve dependencies
+- `dart format --output=none --set-exit-if-changed .` — format check (`dart format .` to auto-fix)
+- `flutter analyze` — static analysis
+- `flutter test` — automated tests
 
-**Flutter (staff mobile app):**
-- `dart format`
-- `flutter analyze`
-- `flutter test`
-
-Update this section once these tools are actually wired into the repository, and record the exact commands here so future sessions don't have to guess.
+If a future phase changes these versions or commands, update this section — don't let it go stale.
 
 ## 6. Documentation Duties
 
@@ -97,6 +97,9 @@ After completing an authorized phase:
 ```
 CLAUDE.md                      — this file
 README.md                      — project overview / getting started
+apps/
+  api/                          — Laravel backend/API (+ future Admin Backoffice)
+  mobile/                       — Flutter staff mobile app
 docs/
   00_PROJECT_CHARTER.md
   01_PRODUCT_REQUIREMENTS.md
@@ -117,4 +120,4 @@ docs/
     UAT_LOG.md
 ```
 
-Backend (`backend/` or similar), admin frontend, and mobile app (`mobile/` or similar) directories do not exist yet. They will be created in Phase 1 (Project Bootstrap) and this section must be updated at that point.
+`apps/api` and `apps/mobile` were created in Phase 1 (Project Bootstrap) as clean, minimal application shells — no business modules yet. See `docs/phases/V1_PHASE_01_DEFINITION.md` and `docs/handoffs/V1_PHASE_01_HANDOFF.md`.
