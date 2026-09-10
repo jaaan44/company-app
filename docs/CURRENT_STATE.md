@@ -22,7 +22,7 @@ Awaiting review of Phase 3 and authorization for Phase 4.
   - Database: **MySQL is now the production direction** (DEC-016); SQLite remains local/test-only.
   - Identifiers: numeric internal PK + ULID `public_id` for external entities, documented (DEC-017) — no business migrations.
   - Mobile: restructured into `lib/app/`, `lib/core/config/`, `lib/features/home/` — no routing package or state-management framework added.
-  - All local checks pass except `vendor/bin/phpstan analyse` (same session-specific limitation as Phase 2 — see Known Blockers); confirmed via GitHub Actions before handoff.
+  - All local checks pass except `vendor/bin/phpstan analyse` (same session-specific limitation as Phase 2 — see Known Blockers); **confirmed passing via GitHub Actions** (draft PR #3, commit `6308c4a`) before handoff.
   - No business functionality in either app.
 
 ## Pending / Not Started

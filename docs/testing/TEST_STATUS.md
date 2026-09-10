@@ -63,8 +63,8 @@ No automated tests apply to this phase — no application code exists yet.
 | `flutter analyze` (apps/mobile) | Automated, local | PASS | no issues found |
 | `flutter test` (apps/mobile) | Automated, local | PASS | widget test updated for new import path, still passes |
 | `GET /api/v1/health` routing | Manual | PASS | confirmed via `php artisan route:list --path=api` |
-| Backend CI workflow | Automated, GitHub Actions | *(see handoff for exact status)* | verified via draft PR, same approach as Phase 2 |
-| Mobile CI workflow | Automated, GitHub Actions | *(see handoff for exact status)* | verified via draft PR, same approach as Phase 2 |
+| Backend CI workflow | Automated, GitHub Actions | PASS | Run [34542479092](https://github.com/jaaan44/company-app/actions/runs/34542479092), commit `6308c4a`, ~18s. PHPStan: "[OK] No errors" on 4 files. |
+| Mobile CI workflow | Automated, GitHub Actions | PASS | Run [34542479141](https://github.com/jaaan44/company-app/actions/runs/34542479141), commit `6308c4a`, ~44s. |
 | No business functionality introduced | Manual | PASS | Confirmed by reviewing the full staged diff before commit |
 
 ---

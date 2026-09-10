@@ -109,7 +109,18 @@ See §16 and `docs/testing/TEST_STATUS.md` (Phase 3 section).
 
 ## 18. GitHub CI Status
 
-*(Filled in after the branch is pushed and verified via a draft PR, matching the Phase 2 approach — see the addendum at the end of this handoff. Never claimed passing without an observed run.)*
+A draft pull request (#3, `claude/v1-phase-03-core-architecture` → `main`, not merged) was opened to exercise the `pull_request` trigger, matching the Phase 2 approach.
+
+**Both workflows ran and passed on commit `6308c4a`:**
+
+| Workflow | Job | Result | Duration | Run |
+|---|---|---|---|---|
+| Backend CI | Backend quality gates (PHP 8.4) | ✅ success | ~18s | [run 34542479092](https://github.com/jaaan44/company-app/actions/runs/34542479092) |
+| Mobile CI | Mobile quality gates (Flutter 3.47.2) | ✅ success | ~44s | [run 34542479141](https://github.com/jaaan44/company-app/actions/runs/34542479141) |
+
+Confirmed from the actual backend job log (not assumed): **`vendor/bin/phpstan analyse` → `[OK] No errors`, 4 files analyzed** (up from 3 in Phase 2 — the new `HealthController`); `php artisan test` → `Tests: 4 passed (11 assertions)`, explicitly showing `Tests\Feature\Api\V1\HealthEndpointTest` passing both new tests. Since the job completed successfully end-to-end (including Pint and PHPStan, both of which require a fully installed `vendor/`), `livewire/livewire` and every other dependency installed cleanly on the unrestricted-network runner — confirming, again, that the local blocker (§20) is a constraint of this session's sandboxing, not of the dependency or configuration.
+
+**All of AC-01 through AC-18 are satisfied**, including AC-14/15/16 (quality gates and GitHub Actions passing) via this confirmed run.
 
 ## 19. Deviations from Specification
 
