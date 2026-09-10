@@ -1,11 +1,11 @@
 # 04 — API Conventions (Initial Principles)
 
-Status: **Principles only. No endpoints exist.** These conventions guide every future endpoint so the API stays consistent without needing a per-endpoint style debate. Prefer standard Laravel/REST practice over inventing custom conventions.
+Status: **Principles, now implemented for one endpoint as of Phase 3** (`GET /api/v1/health`) to establish the conventions with real, tested code. These conventions guide every future endpoint so the API stays consistent without needing a per-endpoint style debate. Prefer standard Laravel/REST practice over inventing custom conventions.
 
 ## Versioning
 
-- URI-based versioning: `/api/v1/...`. Bump only on breaking changes.
-- Mobile app and Admin Backoffice (if API-driven) share the same versioned API — no per-client API forks.
+- URI-based versioning: `/api/v1/...` — **implemented** (DEC-020): `routes/api.php` groups into `routes/api/v1.php`. A future `/api/v2` adds a parallel file/group; v1 controllers are never duplicated or reused across versions.
+- The Flutter mobile app consumes this API. The Admin Backoffice (Blade + Livewire, DEC-019) does not — it reads models/business logic directly within the same Laravel app (see `02_ARCHITECTURE.md` §1) rather than calling its own API.
 
 ## Resource Naming
 
@@ -71,8 +71,8 @@ Status: **Principles only. No endpoints exist.** These conventions guide every f
 
 ## Timestamps & Identifiers
 
-- All timestamps in ISO 8601 UTC (`created_at`, `updated_at`, plus domain-specific ones like `completed_at`, `approved_at`).
-- Primary key strategy (auto-increment vs UUID) decided once, project-wide, at the Core Architecture phase — see `03_DATABASE_MODEL.md` open questions — and applied consistently across the API, not mixed per resource.
+- All timestamps in ISO 8601 UTC (`created_at`, `updated_at`, plus domain-specific ones like `completed_at`, `approved_at`). The health endpoint's `data.timestamp` follows this.
+- Primary key strategy — **decided (DEC-017):** numeric `BIGINT` internally; externally addressable entities expose a `ULID public_id` instead of the internal numeric ID once such an entity exists. See `03_DATABASE_MODEL.md` §3.
 
 ## Consistency Rules
 
@@ -81,6 +81,4 @@ Status: **Principles only. No endpoints exist.** These conventions guide every f
 
 ## Explicitly Not Decided Here
 
-- Exact primary key type (see `03_DATABASE_MODEL.md`)
-- Rate limiting thresholds (see `05_SECURITY_MODEL.md`)
-- Whether the Admin Backoffice consumes this API or reads models directly (see `02_ARCHITECTURE.md`)
+- Rate limiting thresholds (see `05_SECURITY_MODEL.md`) — the health endpoint intentionally has none yet; real thresholds are tuned when Authentication (Phase 4) and later write-heavy endpoints are built.

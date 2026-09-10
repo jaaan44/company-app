@@ -4,6 +4,18 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-09-10 — Phase 2 merged into `main`
+- PR #2 merged. `main` now contains Development Environment & CI.
+
+### 2026-09-10 — Phase 3: Core Architecture
+- Added `/api/v1` routing foundation: `apps/api/routes/api.php` → `apps/api/routes/api/v1.php`, wired via `bootstrap/app.php`. Added `GET /api/v1/health` (`App\Http\Controllers\Api\V1\HealthController`), returning `{"data": {"status": "ok", "timestamp": "..."}}` — public, no sensitive details. Two feature tests added.
+- Installed `livewire/livewire` (^4.4) as the confirmed Admin Backoffice foundation — no pages/components built yet.
+- Recorded DEC-016 (MySQL production database direction, closing the open question from DEC-012), DEC-017 (numeric ID + ULID public ID identifier strategy), DEC-018 (modular monolith / Laravel organization conventions), DEC-019 (Blade + Livewire Admin Backoffice), DEC-020 (API foundation and response conventions implemented), DEC-021 (Flutter foundation structure; routing/state management deferred).
+- Restructured `apps/mobile/lib` into `app/` (root widget), `core/config/` (build-time config, e.g. `API_BASE_URL` via `--dart-define`), `features/home/` (placeholder screen) — no routing package or state-management framework added.
+- Updated `docs/02_ARCHITECTURE.md` (new §12, database/Admin Backoffice/API sections resolved), `docs/03_DATABASE_MODEL.md` (identifier strategy resolved), `docs/04_API_CONVENTIONS.md` (versioning/PK sections marked implemented), `docs/05_SECURITY_MODEL.md` (health endpoint noted as the one deliberate public exception), `README.md`, `docs/CURRENT_STATE.md`, `docs/testing/TEST_STATUS.md`.
+- **Known limitation (same category as Phase 2):** `vendor/bin/phpstan analyse` and the fresh installation of `livewire/livewire` could not complete locally in this session (sandboxed GitHub API access blocks `phpstan/phpstan`'s dist-only download, which in turn aborts the composer install step for any other newly-added package in the same run). `composer.json`/`composer.lock` are correctly resolved; verified via GitHub Actions — see `docs/handoffs/V1_PHASE_03_HANDOFF.md`.
+- No Company App business functionality was implemented.
+
 ### 2026-09-09 — Phase 1 merged into `main`
 - Fast-forward merged `claude/v1-phase-01-project-bootstrap` into `main` (content unchanged) after Phase 1 review/approval.
 

@@ -78,9 +78,10 @@ Status: **Conceptual only. No migrations exist.** This document identifies likel
 
 - Exact column lists, types, and constraints — decided per-phase against real requirements, not guessed here.
 - Soft-deletes vs hard-deletes per entity.
-- UUID vs auto-increment primary keys (recommend deciding once, project-wide, at the Core Architecture phase, for consistency).
 - Whether `attachments` is one shared polymorphic table or per-module tables.
 - Whether `calendar_events` is unified or composed from source tables.
 - Multi-step vs single-step leave approval.
+
+**Resolved (Phase 3, DEC-017):** primary keys are numeric `BIGINT` (`$table->id()`); externally addressable entities additionally get a `ULID public_id` column, added when each entity is actually built. Likely candidates: `staff`, `clients`, `projects`, `tasks`, `leave_requests`, `service_reports`, `incidents` (all listed in §1 above) — decided per-entity, not applied blanket. Pivot/history tables (`project_members`, `staff_statuses`, `leave_approvals`, etc.) generally don't need one.
 
 This document should be revisited and updated (not silently replaced) each time a phase implements one of these areas for real, so it stays a useful map rather than going stale.

@@ -1,6 +1,6 @@
 # 02 — Architecture (Initial)
 
-Status: **Directional**, now partially confirmed as of Phase 1 (repository layout, versions — see §2). This document sets the intended shape of the system, without prescribing implementation details that should be decided when actually building.
+Status: **Mostly confirmed as of Phase 3** (repository layout, versions, database engine, identifier strategy, Admin Backoffice direction, API foundation — see §2, §3, §12). Remaining open items are listed in §9.
 
 ## 0. Resource-Efficiency Direction
 
@@ -26,10 +26,10 @@ Company App serves approximately 100 employees. Favor a lean, resource-efficient
                               └────────────────────┘
 ```
 
-- **Laravel backend/API**: single source of business logic. The Admin Backoffice and the Flutter app are both clients of this logic — the Admin Backoffice may consume the same versioned API rather than duplicating business rules in controllers, unless a specific phase finds good reason to do otherwise (e.g. server-rendered admin views reading models directly within the same Laravel app). This choice should be confirmed, not assumed, at the Core Architecture phase.
+- **Laravel backend/API**: single source of business logic. The Flutter app consumes the versioned API; the Admin Backoffice (Blade + Livewire — DEC-019) reads models/business logic directly within the same Laravel application rather than round-tripping through its own API — Livewire components call into the same underlying Models/Policies/Actions the API controllers use, so business rules still live in one place.
 - **Flutter mobile app**: consumes the API only. No direct DB access, no duplicated business logic.
-- **Relational database**: system of record. PostgreSQL or MySQL — exact choice deferred to Phase 1/3 (either is compatible with the conceptual model in `03_DATABASE_MODEL.md`).
-- **Redis**: queueing (jobs like notification dispatch, report generation), caching, and — if adopted — broadcasting for real-time features (messaging, live status/notifications).
+- **Relational database**: system of record. **MySQL is the production direction (DEC-016)**; SQLite is used for local development and automated tests where behavior is database-neutral.
+- **Redis**: queueing (jobs like notification dispatch, report generation), caching, and — if adopted — broadcasting for real-time features (messaging, live status/notifications). Not adopted yet — see §6.
 
 ## 2. Repository Layout (confirmed, Phase 1 — DEC-011)
 
@@ -39,15 +39,15 @@ apps/mobile/  — Flutter app
 docs/         — this documentation tree
 ```
 
-Monorepo, no orchestration tooling (Nx/Turborepo/Melos) — the two apps operate independently. Whether the Admin Backoffice renders as Laravel views/Livewire/Inertia or a separate SPA against the API remains an open question for the Core Architecture phase — only its *location* (inside `apps/api`) is confirmed.
+Monorepo, no orchestration tooling (Nx/Turborepo/Melos) — the two apps operate independently. The Admin Backoffice renders as Laravel Blade + Livewire, inside `apps/api` (DEC-019) — both its location and its rendering approach are now confirmed.
 
 **Versions (Phase 1 bootstrap):** Laravel 13.31.0, PHP 8.4.19 (composer.json requires `^8.3`), Flutter 3.47.2 (stable channel), Dart 3.13.2.
 
 ## 3. API Layer
 
-- The API is the only integration point for both frontend surfaces (mobile, and admin — if admin is API-driven).
-- Versioned from day one (see `04_API_CONVENTIONS.md`).
-- Authentication via token-based auth suited to both SPA/admin and mobile clients (e.g. Laravel Sanctum) — exact mechanism confirmed at the Authentication phase.
+- The API is the primary integration point for the Flutter app (the Admin Backoffice reads business logic directly — see §1).
+- Versioned, rooted at `/api/v1` — **implemented as of Phase 3** (DEC-020): `routes/api.php` → `routes/api/v1.php`; a future breaking version adds `routes/api/v2.php` without touching or duplicating v1's controllers. A minimal `GET /api/v1/health` endpoint (tested) establishes the routing and response conventions in `04_API_CONVENTIONS.md` — success responses wrapped in `{"data": ...}`, standard Laravel JSON error/validation rendering, no custom envelope. Intentionally public — no authentication middleware yet.
+- Authentication via token-based auth suited to both mobile and Admin clients (e.g. Laravel Sanctum) — exact mechanism confirmed at the Authentication phase (Phase 4).
 
 ## 4. Authorization Layer
 
@@ -74,13 +74,11 @@ Per DEC-009 and DEC-010: state-changing workflows (leave approvals, incident pro
 
 These require a decision at the appropriate future phase, not now:
 
-- Database engine: PostgreSQL vs MySQL (local bootstrap uses SQLite — DEC-012 — production engine still open)
-- Admin Backoffice implementation style: server-rendered Blade/Livewire vs Inertia vs separate SPA against the API
 - Real-time transport for messaging/notifications
 - Object storage provider for production
 - Whether Departments/Teams need a dedicated hierarchy table or a simpler self-referencing structure
 
-*(Monorepo vs polyrepo is resolved — see §2, DEC-011.)*
+*(Resolved: monorepo vs polyrepo — §2, DEC-011. Database engine — §1, DEC-016. Admin Backoffice implementation style — §1/§2, DEC-019. Primary key/public ID strategy — §12, DEC-017.)*
 
 ## 10. Non-Goals for V1
 
@@ -97,4 +95,16 @@ These require a decision at the appropriate future phase, not now:
 
 **Backend static analysis:** Larastan (PHPStan for Laravel) v3, level 5, configured at `apps/api/phpstan.neon` (DEC-014). The exact commands CI runs are documented once, authoritatively, in `CLAUDE.md` §5 — this section intentionally doesn't repeat them.
 
-**Test database safety:** Laravel's own `phpunit.xml` (from the Phase 1 bootstrap) already isolates tests to an in-memory SQLite database (`DB_CONNECTION=sqlite`, `DB_DATABASE=:memory:`) distinct from the local dev database file — no risk of tests touching real data, in CI or locally. Production database engine (PostgreSQL vs. MySQL) remains open (DEC-012) — this phase does not resolve it.
+**Test database safety:** Laravel's own `phpunit.xml` (from the Phase 1 bootstrap) already isolates tests to an in-memory SQLite database (`DB_CONNECTION=sqlite`, `DB_DATABASE=:memory:`) distinct from the local dev database file — no risk of tests touching real data, in CI or locally. Production database engine is now MySQL (DEC-016, Phase 3); CI continues to use SQLite for the current database-neutral test suite — no MySQL service has been added to CI, and none should be until a feature genuinely needs MySQL-specific behavior tested (see §12).
+
+## 12. Core Architecture Conventions (confirmed, Phase 3)
+
+**Identifiers (DEC-017):** numeric `BIGINT` internal primary keys (`$table->id()`); `ULID public_id` on externally addressable entities, added per-entity as each is actually built — not retrofitted everywhere speculatively. See `03_DATABASE_MODEL.md` §3 for which entities likely need one.
+
+**Laravel application organization (DEC-018):** modular monolith, one Laravel app, conventional structure — thin Controllers, Form Requests, Policies, Eloquent (no repository pattern), Action/Service classes only where warranted, Jobs for genuinely expensive async work, Events only for meaningful decoupling. `app/Http/Controllers/Api/V1/` holds versioned API controllers; this pattern (an app-organized-by-Laravel-convention, versioned API namespace) is what future business modules should follow — no new architectural pattern needed per module.
+
+**Flutter application organization (DEC-021):** `lib/app/` (root widget + theme), `lib/core/` (cross-cutting concerns — currently just `core/config/` for build-time configuration), `lib/features/<name>/` (one folder per feature area, `home/` today as a placeholder). No routing package, no state-management framework — Flutter's built-in navigation is sufficient until Authentication (Phase 4) needs more.
+
+**Mobile configuration (§14 of the governing Phase 3 instruction):** the API base URL is supplied at build/run time via `--dart-define=API_BASE_URL=...` (`lib/core/config/app_config.dart`), defaulting to the local dev server. No production URLs or secrets are hard-coded.
+
+**MySQL-specific behavior (§16 of the governing Phase 3 instruction):** future features must remain compatible with MySQL. If a feature's behavior genuinely can't be faithfully tested against SQLite (e.g. a MySQL-specific function or locking behavior), that feature's phase should add MySQL-backed integration testing for that feature specifically — CI does not gain a general-purpose MySQL service preemptively.
