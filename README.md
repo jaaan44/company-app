@@ -6,7 +6,7 @@ Internal company operations and communication platform: staff, clients, projects
 
 ## Project Status
 
-Phase 2 (Development Environment & CI) is complete: both apps have a lean local dev workflow, Laravel static analysis (Larastan), and GitHub Actions CI. No Company App business functionality implemented yet.
+Phase 3 (Core Architecture) is complete: `/api/v1` routing with a health endpoint, MySQL recorded as the production database direction, a numeric-ID + ULID public-ID identifier convention, Blade + Livewire as the Admin Backoffice direction, and a maintainable Flutter foundation (`app/`, `core/`, `features/`). No Company App business functionality implemented yet.
 
 For current status, always check `docs/CURRENT_STATE.md` — it is kept accurate and up to date; this README is not.
 
@@ -66,6 +66,8 @@ php artisan serve
 ```
 
 Checks: `composer validate --strict` · `vendor/bin/pint --test` · `vendor/bin/phpstan analyse` · `php artisan test`
+
+Once running, `GET /api/v1/health` returns `{"data": {"status": "ok", "timestamp": "..."}}` — the versioned API foundation, not a business endpoint.
 
 ### Mobile (`apps/mobile`)
 

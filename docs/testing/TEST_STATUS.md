@@ -51,4 +51,22 @@ No automated tests apply to this phase — no application code exists yet.
 
 ---
 
+## Phase 3 — Core Architecture
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `composer validate --strict` (apps/api) | Automated, local | PASS | re-verified after adding livewire/livewire |
+| `vendor/bin/pint --test` (apps/api) | Automated, local | PASS | includes new HealthController/routes/tests |
+| `php artisan test` (apps/api) | Automated, local | PASS | 4 tests, 11 assertions (2 baseline + 2 new health-endpoint tests) |
+| `vendor/bin/phpstan analyse` (apps/api) | Automated, local | BLOCKED (local only) | Same session-specific limitation as Phase 2 — see `docs/handoffs/V1_PHASE_03_HANDOFF.md`. |
+| `dart format --set-exit-if-changed .` (apps/mobile) | Automated, local | PASS | after restructuring into app/core/features |
+| `flutter analyze` (apps/mobile) | Automated, local | PASS | no issues found |
+| `flutter test` (apps/mobile) | Automated, local | PASS | widget test updated for new import path, still passes |
+| `GET /api/v1/health` routing | Manual | PASS | confirmed via `php artisan route:list --path=api` |
+| Backend CI workflow | Automated, GitHub Actions | *(see handoff for exact status)* | verified via draft PR, same approach as Phase 2 |
+| Mobile CI workflow | Automated, GitHub Actions | *(see handoff for exact status)* | verified via draft PR, same approach as Phase 2 |
+| No business functionality introduced | Manual | PASS | Confirmed by reviewing the full staged diff before commit |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*

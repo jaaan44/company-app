@@ -32,6 +32,7 @@ Status: **Strategy and principles only.** No authentication/authorization implem
 
 - The API is the enforcement boundary (see `04_API_CONVENTIONS.md`) — every endpoint independently authorizes, regardless of what the calling client (mobile/admin) already filtered client-side.
 - Tokens scoped appropriately per client type where the auth mechanism supports it (e.g. Sanctum token abilities), to limit blast radius of a leaked mobile token vs. an admin session.
+- **`GET /api/v1/health` (Phase 3) is the one deliberate exception** — intentionally public, no authentication middleware, and returns only `{status, timestamp}` (no environment, database, dependency-version, or configuration details). Any future unauthenticated endpoint must be an equally deliberate, narrow, documented exception — not a default.
 
 ## Input Validation
 
