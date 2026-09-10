@@ -35,4 +35,4 @@ Each phase's specification (`docs/phases/`) should state what testing is expecte
 
 ## Current Status
 
-No automated test suite exists yet (no Laravel/Flutter project exists — see `docs/CURRENT_STATE.md`). This plan takes effect starting Phase 1.
+As of Phase 2, "executed by CI" above is real: `.github/workflows/backend-ci.yml` and `.github/workflows/mobile-ci.yml` run the same commands documented in `CLAUDE.md` §5 on every pull request targeting `main` and every push to `main`. Local/AI-session execution before a commit is still expected — CI is the second, independent confirmation, not a substitute for running checks before pushing.
