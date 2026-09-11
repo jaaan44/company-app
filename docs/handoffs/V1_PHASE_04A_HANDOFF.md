@@ -81,7 +81,7 @@ No Authentication business behavior was changed — only its runtime environment
 
 ## 14. Files Changed
 
-**Added:** `docker-compose.yml` (repo root); `docker/php/Dockerfile`; `docker/php/entrypoint.sh`; `docker/php/conf.d/local-dev.ini`; `docker/nginx/default.conf`; `apps/api/.env.docker.example`; `docs/phases/V1_PHASE_04A_DEFINITION.md`; `docs/handoffs/V1_PHASE_04A_HANDOFF.md` (this file).
+**Added:** `docker-compose.yml` (repo root); `docker/php/Dockerfile`; `docker/php/entrypoint.sh`; `docker/php/conf.d/local-dev.ini`; `docker/nginx/default.conf`; `apps/api/.env.docker.example`; `.gitattributes` (repo root — added post-handoff, §26); `docs/phases/V1_PHASE_04A_DEFINITION.md`; `docs/handoffs/V1_PHASE_04A_HANDOFF.md` (this file).
 
 **Modified:** `CLAUDE.md` (§5 Docker note, §9 repository layout), `README.md`, `docs/02_ARCHITECTURE.md` (new §14, §11 updated), `docs/03_DATABASE_MODEL.md`, `docs/DECISIONS.md` (DEC-013 superseded, DEC-027 added), `docs/ROADMAP.md` (Phase 4A inserted), `docs/CURRENT_STATE.md`, `docs/CHANGELOG.md`, `docs/testing/TEST_STATUS.md`.
 
@@ -152,7 +152,7 @@ Both are documented in `02_ARCHITECTURE.md` §14, `docs/DECISIONS.md` DEC-027's 
 ## 20. Known Issues
 
 - The `apt-get` step in the real Dockerfile could not be executed in this specific sandbox (§17) — not a defect, a sandbox network-policy limitation. GitHub Actions doesn't build/run this Dockerfile (CI remains SQLite-based, unchanged — §16 of the governing instructions), so this has no CI impact; it only affects what this session could verify directly versus what a real developer's machine will do.
-- No Windows/macOS-specific manual verification was possible in this Linux sandbox — the permissions/volume design (§11, §6) is written to be cross-platform-safe by construction (UID-agnostic `a+rwX`, a named volume rather than relying on bind-mount UID matching), but hasn't been physically verified on those platforms.
+- No Windows/macOS-specific manual verification was possible in this Linux sandbox — the permissions/volume design (§11, §6) is written to be cross-platform-safe by construction (UID-agnostic `a+rwX`, a named volume rather than relying on bind-mount UID matching), but hasn't been physically verified on those platforms. **Update:** the product owner did perform Windows UAT and found one real issue — a CRLF checkout bug, not a permissions/volume issue — fixed; see §26.
 - `docker compose exec app composer install` itself (the real, network-dependent path a real developer takes on first setup) was not directly exercised in this sandbox for the reason in §17 — only its *effect* (a populated `vendor/`) was verified, via the pre-existing host vendor copied in.
 
 ## 21. Resource-Efficiency Review
@@ -192,6 +192,37 @@ Then: `http://localhost:8000/api/v1/health` should return `{"data":{"status":"ok
 ## 25. Recommended Next Phase
 
 **Phase 5 — Roles & Permissions**, per `docs/ROADMAP.md` — unaffected in scope or urgency by this phase; still the next authorized step once reviewed.
+
+## 26. Post-Handoff Correction: Windows CRLF Checkout Failure
+
+**Reported (product owner UAT, Windows/PowerShell):** with the branch as originally submitted, the `app` container failed to start:
+
+```
+exec /usr/local/bin/entrypoint.sh: no such file or directory
+```
+
+**Root cause:** this repository had no `.gitattributes`. `docker/php/entrypoint.sh` was committed with LF endings (correct, since it was authored in a Linux sandbox), but with no attribute forcing LF on checkout, a Windows machine with Git's common `core.autocrlf=true` setting checks it out as CRLF. Docker's `COPY` then bakes the CRLF file into the image; the kernel's shebang parser reads the first line as `#!/bin/sh\r`, tries to exec an interpreter literally named `/bin/sh\r` (which doesn't exist), and the container fails immediately with exactly the reported error. `git ls-files --eol` on the reporter's checkout showed `i/lf w/crlf`, confirming the checkout-time conversion, not a content problem.
+
+**Fix:** added `.gitattributes` (repo root):
+```gitattributes
+# Normalize line endings for text files across platforms.
+* text=auto eol=lf
+
+# Executed directly inside Linux containers via shebang — a CRLF line
+# ending breaks the interpreter lookup, so these must always be checked
+# out with LF regardless of the developer's platform/git config.
+*.sh text eol=lf
+Dockerfile text eol=lf
+```
+`git add --renormalize .` confirmed no other tracked file needed re-normalizing (`docker/php/entrypoint.sh` and `docker/php/Dockerfile` were already stored as LF — only the *checkout* behavior was wrong, not the repository content). No Docker architecture or business logic changed — this is a pure Git-attributes fix.
+
+**Verification performed in this session (Linux sandbox — no access to a real Windows machine):**
+1. **Reproduced the exact failure independently**, before applying the fix: built a throwaway image from a deliberately CRLF-converted copy of `entrypoint.sh` and ran it — got the identical `exec ...: no such file or directory` error, confirming the root-cause diagnosis.
+2. **Simulated the Windows checkout path at the Git level**, which is what actually determines this bug (Docker itself is agnostic to `.gitattributes` — it only sees whatever bytes end up on disk after checkout): cloned this repository fresh with `git -c core.autocrlf=true clone`, checked out this branch, and confirmed via `file`/`cat -A` that `docker/php/entrypoint.sh` (and `docker/php/Dockerfile`) now checks out with pure LF endings — the exact scenario the product owner hit, now fixed.
+3. **Rebuilt and brought up all three containers** (`nginx`, `app`, `mysql`) from the corrected branch and confirmed: `mysql` reported `healthy`, `app` started and stayed up (no crash loop — the entrypoint ran successfully), `nginx` started, and `GET /api/v1/health` returned `200` through the full stack. This matches the product owner's own successful Windows retest ("all three Docker containers started successfully and MySQL reported healthy").
+4. Re-ran the full host (non-Docker) quality gate suite — `composer validate --strict`, `vendor/bin/pint --test`, `vendor/bin/phpstan analyse`, `php artisan test` (31/31) — all unaffected and passing, confirming this fix touched nothing beyond line-ending normalization.
+
+A genuine Windows machine was not available in this sandbox; the Git-level simulation (step 2) is the mechanistically correct test for this specific bug class, since `core.autocrlf` conversion happens entirely within Git during checkout, before Docker is ever involved — it is not a Docker-specific or platform-emulation concern.
 
 ---
 
