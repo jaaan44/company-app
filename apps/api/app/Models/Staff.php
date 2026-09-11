@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
@@ -140,6 +141,54 @@ class Staff extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Full operational-status history (Phase 9, DEC-032) — append-only,
+     * oldest to newest. Deliberately distinct from $this->status
+     * (employment lifecycle, Phase 7).
+     *
+     * @return HasMany<StaffOperationalStatus, $this>
+     */
+    public function operationalStatuses(): HasMany
+    {
+        return $this->hasMany(StaffOperationalStatus::class);
+    }
+
+    /**
+     * This staff member's current operational status — the latest history
+     * row, derived rather than stored as a separate mutable column. Null
+     * when no status has ever been reported (never assumed to be
+     * "available" by default).
+     *
+     * @return HasOne<StaffOperationalStatus, $this>
+     */
+    public function latestOperationalStatus(): HasOne
+    {
+        return $this->hasOne(StaffOperationalStatus::class)->latestOfMany();
+    }
+
+    /**
+     * Full location check-in history (Phase 9, DEC-005/DEC-032) —
+     * append-only, oldest to newest.
+     *
+     * @return HasMany<StaffCheckIn, $this>
+     */
+    public function checkIns(): HasMany
+    {
+        return $this->hasMany(StaffCheckIn::class);
+    }
+
+    /**
+     * This staff member's current location — the latest check-in, derived
+     * rather than stored as a separate mutable column. Null when no
+     * check-in has ever been made.
+     *
+     * @return HasOne<StaffCheckIn, $this>
+     */
+    public function latestCheckIn(): HasOne
+    {
+        return $this->hasOne(StaffCheckIn::class)->latestOfMany();
     }
 
     /**

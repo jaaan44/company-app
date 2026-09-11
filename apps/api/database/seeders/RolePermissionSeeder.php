@@ -45,6 +45,17 @@ use Illuminate\Database\Seeder;
  * so `clients.view` is attached to Manager and Staff; `clients.manage`
  * remains Administrator-only. Contacts share these permissions — there is
  * no separate `contacts.*` pair (see DEC-031).
+ *
+ * Phase 9 (Staff Status & Location Check-in) adds four permissions
+ * (DEC-032): `staff-status.view` (Manager and Staff — an operational
+ * status word is low-sensitivity, company-wide information, same pattern
+ * as staff.view) and `staff-status.manage` (Administrator-only — setting/
+ * correcting another staff member's status on their behalf). Location is
+ * materially more sensitive: `location.view` is attached to Manager
+ * *only* (not Staff), and is further scoped in CheckInController to a
+ * Manager's own direct reports — never company-wide precise-location
+ * visibility for Manager/Staff. `location.manage` (deleting/correcting a
+ * historical check-in) remains Administrator-only.
  */
 class RolePermissionSeeder extends Seeder
 {
@@ -105,8 +116,32 @@ class RolePermissionSeeder extends Seeder
             ['label' => 'Create, update, and delete clients and contacts'],
         );
 
-        $manager->permissions()->syncWithoutDetaching([$organizationView->id, $staffView->id, $clientsView->id]);
-        $staff->permissions()->syncWithoutDetaching([$organizationView->id, $staffView->id, $clientsView->id]);
+        $staffStatusView = Permission::query()->firstOrCreate(
+            ['name' => 'staff-status.view'],
+            ['label' => "View staff members' operational status"],
+        );
+
+        Permission::query()->firstOrCreate(
+            ['name' => 'staff-status.manage'],
+            ['label' => "Set or correct another staff member's operational status"],
+        );
+
+        $locationView = Permission::query()->firstOrCreate(
+            ['name' => 'location.view'],
+            ['label' => "View staff members' location check-ins"],
+        );
+
+        Permission::query()->firstOrCreate(
+            ['name' => 'location.manage'],
+            ['label' => 'Delete or correct a historical location check-in'],
+        );
+
+        $manager->permissions()->syncWithoutDetaching([
+            $organizationView->id, $staffView->id, $clientsView->id, $staffStatusView->id, $locationView->id,
+        ]);
+        $staff->permissions()->syncWithoutDetaching([
+            $organizationView->id, $staffView->id, $clientsView->id, $staffStatusView->id,
+        ]);
 
         $this->command?->info('Role/permission catalog ready (Administrator, Manager, Staff).');
     }

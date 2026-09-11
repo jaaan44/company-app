@@ -96,6 +96,37 @@ class RolePermissionSeederTest extends TestCase
         $this->assertFalse($staff->permissions->contains('name', 'clients.manage'));
     }
 
+    public function test_it_creates_the_phase_9_staff_operations_permissions(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+
+        $this->assertTrue(Permission::query()->where('name', 'staff-status.view')->exists());
+        $this->assertTrue(Permission::query()->where('name', 'staff-status.manage')->exists());
+        $this->assertTrue(Permission::query()->where('name', 'location.view')->exists());
+        $this->assertTrue(Permission::query()->where('name', 'location.manage')->exists());
+    }
+
+    public function test_manager_and_staff_are_granted_staff_status_view_but_only_manager_gets_location_view(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+
+        $manager = Role::query()->where('name', Role::MANAGER)->firstOrFail();
+        $staff = Role::query()->where('name', Role::STAFF)->firstOrFail();
+
+        $this->assertTrue($manager->permissions->contains('name', 'staff-status.view'));
+        $this->assertTrue($staff->permissions->contains('name', 'staff-status.view'));
+        $this->assertFalse($manager->permissions->contains('name', 'staff-status.manage'));
+        $this->assertFalse($staff->permissions->contains('name', 'staff-status.manage'));
+
+        // Location is materially more sensitive than operational status:
+        // Manager gets 'location.view' (further scoped to direct reports
+        // at the controller level), Staff never does.
+        $this->assertTrue($manager->permissions->contains('name', 'location.view'));
+        $this->assertFalse($staff->permissions->contains('name', 'location.view'));
+        $this->assertFalse($manager->permissions->contains('name', 'location.manage'));
+        $this->assertFalse($staff->permissions->contains('name', 'location.manage'));
+    }
+
     public function test_running_it_twice_does_not_duplicate_rows(): void
     {
         $this->seed(RolePermissionSeeder::class);
@@ -104,9 +135,11 @@ class RolePermissionSeederTest extends TestCase
         $manager = Role::query()->where('name', Role::MANAGER)->firstOrFail();
 
         $this->assertSame(3, Role::query()->count());
-        $this->assertSame(8, Permission::query()->count());
+        $this->assertSame(12, Permission::query()->count());
         $this->assertSame(1, $manager->permissions()->where('name', 'organization.view')->count());
         $this->assertSame(1, $manager->permissions()->where('name', 'staff.view')->count());
         $this->assertSame(1, $manager->permissions()->where('name', 'clients.view')->count());
+        $this->assertSame(1, $manager->permissions()->where('name', 'staff-status.view')->count());
+        $this->assertSame(1, $manager->permissions()->where('name', 'location.view')->count());
     }
 }

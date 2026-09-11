@@ -1,6 +1,6 @@
 # 03 — Conceptual Database Model (Provisional)
 
-Status: **Conceptual, with the Identity & Organization group's Roles/Permissions, Departments/Teams/Positions, and Staff (Phases 5–7), and the Clients group (Phase 8) now implemented.** This document identifies likely entities, relationships, ownership concepts, and areas needing later design decisions. It intentionally does not specify every column — that happens per-phase, when each area is actually implemented.
+Status: **Conceptual, with the Identity & Organization group's Roles/Permissions, Departments/Teams/Positions, and Staff (Phases 5–7), the Clients group (Phase 8), and the Staff Operations group (Phase 9) now implemented.** This document identifies likely entities, relationships, ownership concepts, and areas needing later design decisions. It intentionally does not specify every column — that happens per-phase, when each area is actually implemented.
 
 ## 1. Entity Groups
 
@@ -18,11 +18,10 @@ Status: **Conceptual, with the Identity & Organization group's Roles/Permissions
 - `contacts` belong to a `client` (many contacts per client). A `contact` is not a `user` — clients are external parties, not system logins, in V1. **Implemented as of Phase 8 (DEC-031):** `clients` — `public_id` (ULID), `client_code` (nullable, unique when present, admin-supplied), `name`, `status` (`App\Enums\ClientStatus` — `active`/`inactive`), `email`/`phone`/`website`, a small structured inline address (`address_line1`/`address_line2`/`city`/`state_province`/`postal_code`/`country`), `notes`. `contacts` — `public_id` (ULID), **required** `client_id` (`restrictOnDelete()` — never nullable, no client-less contacts, no many-to-many Contact↔Client relationship), `first_name`/`last_name`, `job_title`, `email`/`phone`, `is_primary` (boolean, at most one per client, application-enforced), `status` (`App\Enums\ContactStatus` — `active`/`inactive`), `notes`.
 
 ### Staff Operations
-`staff_statuses`, `locations`, `staff_checkins`
+`staff_statuses`, `staff_checkins`
 
-- `staff_statuses` — historical log of status changes per staff member (DEC-010: append, don't overwrite). "Current status" is a derived read (latest record), not a separate mutable column, or is a denormalized cache column on `staff` that is *only* ever written alongside a new `staff_statuses` row.
-- `locations` — a catalog of known locations (office sites, client sites) OR free-form location capture on check-in. Likely both: a `locations` table for known sites plus optional free-text/geo on `staff_checkins` for ad hoc check-ins.
-- `staff_checkins` — explicit check-in events (DEC-005: not continuous tracking). Belongs to `staff`, optionally references a `location` or a `client`.
+- `staff_statuses` — historical log of operational-status changes per staff member (DEC-010: append, don't overwrite). **Implemented as of Phase 9 (DEC-032):** `staff_id`, `status` (`App\Enums\OperationalStatus` — `available`/`busy`/`in_meeting`/`in_field`/`off_duty`, deliberately distinct from `staff.status`'s employment lifecycle), `changed_by_user_id` (nullable). "Current status" is a derived read (`Staff::latestOperationalStatus()`, `latestOfMany()`) — no denormalized cache column, avoiding dual-write risk.
+- `staff_checkins` — explicit check-in events (DEC-005: not continuous tracking). **Implemented as of Phase 9 (DEC-032):** `public_id` (ULID), `staff_id`, required `latitude`/`longitude` (`decimal(10,7)`), optional `accuracy_meters`/`location_label` (free text — no separate `locations` catalog table was built; not warranted for V1)/`note`/`status` (an informational snapshot). "Current location" is likewise a derived read (`Staff::latestCheckIn()`, `latestOfMany()`). No `client_id` reference was added — check-ins are not yet connected to Clients/Projects (a future phase's concern if ever needed).
 
 ### Work Management
 `projects`, `project_members`, `project_milestones`, `tasks`, `task_assignees`, `task_comments`, `work_logs`
@@ -95,5 +94,7 @@ Status: **Conceptual, with the Identity & Organization group's Roles/Permissions
 **Resolved (Phase 7):** `staff` was added — see §1 above and DEC-030. Deliberately separate from `users` (see "Ownership & Ambient Concepts" below); `staff.user_id` is nullable and unique, not a forced 1:1. `staff` carries its own three-state `App\Enums\StaffStatus` (`active`/`inactive`/`separated`) rather than reusing `AccountStatus` or `OrganizationStatus`. The Manager relationship is a self-referencing `manager_id`, guarded against self-reference and (bounded) reporting cycles at the application layer.
 
 **Resolved (Phase 8):** `clients`/`contacts` were added — see §1 above and DEC-031. Each carries a `public_id` (ULID, DEC-017 — admin-manageable business entities). `contacts.client_id` is required (never nullable) and `restrictOnDelete()` — a Contact always belongs to exactly one Client. `clients`/`contacts` each carry their own two-state lifecycle (`App\Enums\ClientStatus`/`ContactStatus`) rather than reusing `OrganizationStatus` (a distinct domain concept, even though the state shape is identical) or introducing `SoftDeletes`.
+
+**Resolved (Phase 9):** `staff_statuses`/`staff_checkins` were added — see §1 above and DEC-032. Neither carries a `public_id` matching Department/Team/Position/Staff/Client/Contact's admin-manageable-entity pattern: `staff_checkins` does get one (an Administrator addresses a single check-in directly for deletion), but `staff_statuses` deliberately doesn't (a status entry is never independently addressed by URL — DEC-017's "pivot/history tables generally don't need one"). Both `cascadeOnDelete()` on their parent `staff` row (child data with no independent meaning), unlike every `restrictOnDelete()` relationship elsewhere in the schema (which protects master data other rows still depend on).
 
 This document should be revisited and updated (not silently replaced) each time a phase implements one of these areas for real, so it stays a useful map rather than going stale.
