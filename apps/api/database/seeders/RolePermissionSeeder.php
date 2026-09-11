@@ -39,6 +39,12 @@ use Illuminate\Database\Seeder;
  * same pattern: the Staff Directory is a company-wide feature, so
  * `staff.view` is attached to Manager and Staff; `staff.manage`
  * (create/update/delete/status changes) remains Administrator-only.
+ *
+ * Phase 8 (Clients & Contacts) adds `clients.view` / `clients.manage`,
+ * again the same pattern: the Client/Contact directory is company-wide,
+ * so `clients.view` is attached to Manager and Staff; `clients.manage`
+ * remains Administrator-only. Contacts share these permissions — there is
+ * no separate `contacts.*` pair (see DEC-031).
  */
 class RolePermissionSeeder extends Seeder
 {
@@ -89,8 +95,18 @@ class RolePermissionSeeder extends Seeder
             ['label' => 'Create, update, and delete staff records'],
         );
 
-        $manager->permissions()->syncWithoutDetaching([$organizationView->id, $staffView->id]);
-        $staff->permissions()->syncWithoutDetaching([$organizationView->id, $staffView->id]);
+        $clientsView = Permission::query()->firstOrCreate(
+            ['name' => 'clients.view'],
+            ['label' => 'View clients and contacts'],
+        );
+
+        Permission::query()->firstOrCreate(
+            ['name' => 'clients.manage'],
+            ['label' => 'Create, update, and delete clients and contacts'],
+        );
+
+        $manager->permissions()->syncWithoutDetaching([$organizationView->id, $staffView->id, $clientsView->id]);
+        $staff->permissions()->syncWithoutDetaching([$organizationView->id, $staffView->id, $clientsView->id]);
 
         $this->command?->info('Role/permission catalog ready (Administrator, Manager, Staff).');
     }

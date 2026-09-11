@@ -194,4 +194,21 @@ No automated tests apply to this phase — no application code exists yet.
 | GitHub Actions CI | — | NOT RUN (this session) | No PR opened and no push to `main` this session (same as Phase 6's session) — the path-filtered trigger (DEC-015) never fired. All commands the workflow runs were executed directly and passed (rows above). |
 | UAT | — | NOT RUN | No UAT scenario recorded yet for Phase 7 — see `docs/testing/UAT_LOG.md`. This phase introduced no Admin Backoffice UI, so there is nothing yet for the product owner to click through visually. |
 
+## Phase 8 — Clients & Contacts
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `composer validate --strict` (apps/api) | Automated, local | PASS | unaffected — no new dependencies added |
+| `vendor/bin/pint --test` (apps/api) | Automated, local | PASS | `{"tool":"pint","result":"passed"}` — includes all new Client/Contact code and tests |
+| `vendor/bin/phpstan analyse` (apps/api) | Automated, local | PASS | `{"tool":"phpstan","result":"passed","errors":0}` at level 5 |
+| `php artisan test` (apps/api) | Automated, local | PASS | `{"tool":"phpunit","result":"passed","tests":176,"passed":176,"assertions":495}` (41 new: 16 `ClientTest`, 17 `ContactTest`, 6 `ClientsAuthorizationTest`, 2 new in `RolePermissionSeederTest`; 135 pre-existing Phase 1–7 tests unaffected in behavior — full regression suite healthy) |
+| Migrations (`migrate:fresh`) against SQLite | Automated, local | PASS | All 15 migrations (13 pre-existing + 2 new: `clients`, `contacts`) run cleanly |
+| `RolePermissionSeeder` (extended) / `AdminUserSeeder` chain | Automated, local | PASS | New `clients.view`/`clients.manage` permissions created; `clients.view` correctly attached to Manager and Staff; confirmed idempotent |
+| Manual: `php artisan serve` + curl — full CRUD + relationship smoke test | Manual | PASS | Administrator login → create Client (`CL-0001`, with address/email/website) → list clients (`contacts_count: 0`) → create a primary Contact for that Client → create a second Contact also marked primary → confirmed the first Contact's `is_primary` was automatically cleared (only one primary per client, enforced in a DB transaction) → attempted to delete the Client while Contacts still reference it (`409`, correctly rejected) → confirmed an unauthenticated request to `/api/v1/clients` returns `401` — all through a real HTTP server, not just PHPUnit's in-process client |
+| No projects/opportunities/sales-pipeline/leads/quotations/contracts/invoices/billing/payments/tasks/work-logs/portals/tickets/campaigns/messaging/notifications/documents/account-manager-ACLs/custom-fields/activity-timeline functionality introduced | Manual | PASS | Confirmed by reviewing the full staged diff before commit |
+| No Admin Backoffice CRUD UI | Manual | PASS | Confirmed — API/backend only, consistent with Phase 6/7's precedent |
+| Docker validation | — | NOT RUN (this session) | No Docker configuration changed this phase; consistent with Phase 6/7's sessions, Docker-based re-verification was not attempted. The last genuine Docker confirmation remains Phase 5's. |
+| GitHub Actions CI | — | NOT RUN (this session) | No PR opened and no push to `main` this session (same as Phase 6/7's sessions) — the path-filtered trigger (DEC-015) never fired. All commands the workflow runs were executed directly and passed (rows above). |
+| UAT | — | NOT RUN | No UAT scenario recorded yet for Phase 8 — see `docs/testing/UAT_LOG.md`. This phase introduced no Admin Backoffice UI, so there is nothing yet for the product owner to click through visually. |
+
 *(Future phases append their own section above this line, oldest first.)*

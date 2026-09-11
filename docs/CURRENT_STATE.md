@@ -3,14 +3,14 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** Phase 7 — Staff
+**Current phase:** Phase 8 — Clients & Contacts
 **Phase status:** COMPLETE (pending user review)
-**Last completed phase:** Phase 7 (Phases 1–6 are merged into `main`)
-**Next planned phase:** Phase 8 — Clients & Contacts (see `ROADMAP.md`) — **not authorized yet**
+**Last completed phase:** Phase 8 (Phases 1–7 are merged into `main`)
+**Next planned phase:** Phase 9 — Staff Status & Location Check-in (see `ROADMAP.md`) — **not authorized yet**
 
 ## Current Objective
 
-Phase 7 is implemented, tested, and pushed for review. Awaiting authorization for Phase 8.
+Phase 8 is implemented, tested, and pushed for review. Awaiting authorization for Phase 9.
 
 ## Completed
 
@@ -56,10 +56,20 @@ Phase 7 is implemented, tested, and pushed for review. Awaiting authorization fo
   - `StaffResource` is a single Staff Directory shape; the linked User's own identity is only visible to a `staff.manage` holder.
   - Recorded DEC-030.
   - No payroll, attendance, leave, HR documents, performance reviews, project/task assignment, messaging, or client management; no Admin Backoffice CRUD UI (consistent with Phase 6's precedent); no operational/current-status tracking (Phase 9).
+- **Phase 8:** Clients & Contacts. See `docs/handoffs/V1_PHASE_08_HANDOFF.md` for full detail.
+  - `clients`/`contacts` tables; `App\Models\Client`/`Contact`, each with a ULID `public_id` (DEC-017) and its own two-state lifecycle (`App\Enums\ClientStatus`/`ContactStatus`, both `active`/`inactive`).
+  - Client↔Contact relationship (DEC-031): `contacts.client_id` is **required** (never nullable), `restrictOnDelete()` — a Contact always belongs to exactly one Client; no many-to-many Contact↔Client relationship, no client-less contacts.
+  - `client_code` is nullable, unique when present, admin-supplied — deliberately different from Staff's required `employee_number`. A small structured inline address on `clients` (no polymorphic/multi-address subsystem).
+  - At most one primary Contact per Client (`is_primary`), enforced by `ContactController` inside a DB transaction (clear-then-set), not a DB constraint.
+  - `ClientController::destroy` blocks deleting a Client while Contacts still reference it (`409`); `ContactController::destroy` allows free deletion (nothing yet depends on Contacts).
+  - New permissions `clients.view` (Manager/Staff) and `clients.manage` (Administrator-only) — Contacts share these permissions, no separate `contacts.*` pair.
+  - New versioned REST endpoints (`/api/v1/clients`, `/api/v1/contacts`) — full CRUD, route-model-bound by `public_id`, permission-gated, both flat top-level resources (Contact filterable by `?client=<public_id>`, not nested).
+  - Recorded DEC-031.
+  - No projects, opportunities, sales pipeline, leads, quotations, contracts, invoices, billing, payments, tasks, work logs, client portals, support tickets, service desk, email campaigns, marketing automation, messaging, notifications, file/document management, account-manager ownership rules, complex tagging, custom fields framework, activity timeline, contact interaction history, multiple addresses, branch/location hierarchy, or advanced CRM segmentation; no Admin Backoffice CRUD UI (consistent with Phase 6/7's precedent).
 
 ## Pending / Not Started
 
-- Clients & Contacts (Phase 8) and everything after it on the roadmap.
+- Staff Status & Location Check-in (Phase 9) and everything after it on the roadmap.
 
 ## Known Blockers / Issues
 
@@ -71,13 +81,13 @@ Phase 7 is implemented, tested, and pushed for review. Awaiting authorization fo
 ## Repository / Branch Information
 
 - Repository: `jaaan44/company-app`
-- Default branch: `main` (contains the approved Phase 0–6 baseline)
-- Phase 7 branch: `claude/company-app-phase-7-staff` (branched from `main`, not merged)
+- Default branch: `main` (contains the approved Phase 0–7 baseline)
+- Phase 8 branch: `claude/company-app-v1-phase-8-bo1282` (branched from `main`, not merged)
 
 ## Latest Relevant Handoff
 
-`docs/handoffs/V1_PHASE_07_HANDOFF.md`
+`docs/handoffs/V1_PHASE_08_HANDOFF.md`
 
 ## For the Next Session
 
-Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 8 (Clients & Contacts) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.
+Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_08_HANDOFF.md` for Clients & Contacts, `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 9 (Staff Status & Location Check-in) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.

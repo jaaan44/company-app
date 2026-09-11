@@ -1,6 +1,6 @@
 # 02 — Architecture (Initial)
 
-Status: **Mostly confirmed as of Phase 7** (repository layout, versions, database engine, identifier strategy, Admin Backoffice direction, API foundation, authentication, local Docker environment, authorization, organization structure, staff — see §2, §3, §12, §13, §14, §15, §16, §17). Remaining open items are listed in §9.
+Status: **Mostly confirmed as of Phase 8** (repository layout, versions, database engine, identifier strategy, Admin Backoffice direction, API foundation, authentication, local Docker environment, authorization, organization structure, staff, clients & contacts — see §2, §3, §12, §13, §14, §15, §16, §17, §18). Remaining open items are listed in §9.
 
 ## 0. Resource-Efficiency Direction
 
@@ -196,3 +196,21 @@ Because this runs through Laravel's real Gate resolution, every existing authori
 **API resource shape:** `StaffResource` is a single Staff Directory shape (name, contact, department/team/position, manager, status) visible to anyone holding `staff.view`; the linked User's own identity (beyond a plain `has_user_account` boolean) is only included for a requester who also holds `staff.manage` — keeping directory data and administrative data distinct without a second, near-duplicate resource class.
 
 **Not introduced:** payroll, salary/compensation, government/tax IDs, attendance/timekeeping, biometrics, leave balances/requests, employee documents, medical data, emergency contacts, performance reviews, recruitment, onboarding workflow, benefits, expense claims, work logs, project/task assignment, messaging, or client management; no Admin Backoffice CRUD UI; no operational/current-status tracking (Phase 9); no auto-generated employee numbers.
+
+## 18. Clients & Contacts (confirmed, Phase 8)
+
+**Schema (DEC-031):** `clients` (`id`, `public_id` ULID, `client_code` nullable/unique, `name`, `status`, `email`/`phone`/`website`, a small structured inline address — `address_line1`/`address_line2`/`city`/`state_province`/`postal_code`/`country` — `notes`) and `contacts` (`id`, `public_id` ULID, **required** `client_id` `restrictOnDelete()`, `first_name`/`last_name`, `job_title`, `email`/`phone`, `is_primary` boolean, `status`, `notes`). `App\Enums\ClientStatus` and `App\Enums\ContactStatus` (both `active`/`inactive`) are two-state lifecycles — Client mirrors `OrganizationStatus`'s master-data pattern (§16); Contact is a lightweight preserve-don't-delete lifecycle, not a richer employment-style state machine like `StaffStatus`.
+
+**Client↔Contact relationship:** a Contact always belongs to exactly one Client — `client_id` is required, never nullable, and there is no many-to-many Contact↔Client relationship or client-less contact.
+
+**Primary contact:** at most one Contact per Client may have `is_primary = true`, enforced in `ContactController` inside a DB transaction (clear any other primary contact for the same client, then save) — not a DB partial-unique-index (MySQL/SQLite portability).
+
+**Relational integrity:** a Client cannot be deleted while any Contact still references it (`409`, application-enforced, backed by a `restrictOnDelete()` foreign key) — the same philosophy as Department (§16) and Staff (§17). A Contact may be freely deleted (nothing yet depends on it).
+
+**API:** versioned REST endpoints (`/api/v1/clients`, `/api/v1/contacts`), full CRUD, route-model-bound by `public_id`. Both are flat top-level resources — Contact is filtered by `?client=<public_id>`, not nested under `/clients/{client}/contacts` — matching §16/§17's established "prefer a top-level filterable resource over nesting" precedent. Clients filterable by `?status=`/`?q=` (name/client_code search); Contacts filterable by `?client=`/`?status=`/`?is_primary=`/`?q=` (name/email search). Status changes go through the same update endpoint as every other field.
+
+**Authorization:** two new permissions (`clients.view`, `clients.manage`) added to `RolePermissionSeeder` (same pattern as §16/§17, no new mechanism). `clients.view` is attached to Manager and Staff — the Client/Contact directory is company-wide; `clients.manage` remains Administrator-only via the centralized `Gate::before` override. Contacts share these same permissions — no separate `contacts.*` pair, since a Contact has no independent meaning apart from its Client.
+
+**API resource shape:** `ClientResource` exposes a `contacts_count` (via `withCount`), never a nested Contacts array, keeping list responses lightweight; the full contact list is fetched via `/api/v1/contacts?client=<public_id>`. `ContactResource` nests only a minimal `client` reference (`public_id` + `name`).
+
+**Not introduced:** projects, opportunities, sales pipeline, leads, quotations, contracts, invoices, billing, payments, tasks, work logs, client portals, support tickets, service desk, email campaigns, marketing automation, messaging, notifications, file/document management, account-manager ownership rules, complex tagging, custom fields framework, activity timeline, contact interaction history, multiple addresses, branch/location hierarchy, or advanced CRM segmentation; no Admin Backoffice CRUD UI; no auto-generated client codes.
