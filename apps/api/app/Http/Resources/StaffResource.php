@@ -18,6 +18,13 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * requester who also holds `staff.manage` (see `user` below);
  * `has_user_account` (a plain boolean) is always safe to expose.
  *
+ * `operational_status` (Phase 9, DEC-032) is likewise always safe to
+ * expose to any `staff.view` holder: its grantees are identical to
+ * `staff-status.view`'s (Manager/Staff broad + Administrator), and an
+ * operational-status word is materially less sensitive than precise
+ * location — which is deliberately NOT added here (see
+ * CheckInController/`location.view`).
+ *
  * @mixin Staff
  */
 class StaffResource extends JsonResource
@@ -56,6 +63,10 @@ class StaffResource extends JsonResource
                 'display_name' => $this->manager->displayName(),
             ]),
             'has_user_account' => $this->user_id !== null,
+            'operational_status' => $this->whenLoaded(
+                'latestOperationalStatus',
+                fn () => $this->latestOperationalStatus?->status->value,
+            ),
             'user' => $this->when(
                 $request->user()?->can('staff.manage') ?? false,
                 fn () => $this->whenLoaded('user', fn () => $this->user === null ? null : [

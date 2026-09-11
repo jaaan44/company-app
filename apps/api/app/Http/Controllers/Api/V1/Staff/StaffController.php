@@ -25,7 +25,7 @@ use Illuminate\Validation\Rules\Enum;
  */
 class StaffController extends Controller
 {
-    private const WITH_RELATIONS = ['department', 'team', 'position', 'manager', 'user'];
+    private const WITH_RELATIONS = ['department', 'team', 'position', 'manager', 'user', 'latestOperationalStatus'];
 
     public function index(Request $request): AnonymousResourceCollection
     {

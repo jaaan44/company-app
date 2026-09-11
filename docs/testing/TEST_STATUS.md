@@ -211,4 +211,22 @@ No automated tests apply to this phase — no application code exists yet.
 | GitHub Actions CI | — | NOT RUN (this session) | No PR opened and no push to `main` this session (same as Phase 6/7's sessions) — the path-filtered trigger (DEC-015) never fired. All commands the workflow runs were executed directly and passed (rows above). |
 | UAT | — | NOT RUN | No UAT scenario recorded yet for Phase 8 — see `docs/testing/UAT_LOG.md`. This phase introduced no Admin Backoffice UI, so there is nothing yet for the product owner to click through visually. |
 
+## Phase 9 — Staff Status & Location Check-in
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `composer validate --strict` (apps/api) | Automated, local | PASS | `./composer.json is valid` — unaffected, no new dependencies added |
+| `vendor/bin/pint --test` (apps/api) | Automated, local | PASS | `{"tool":"pint","result":"passed"}` — includes all new Staff Operations code and tests (initial run flagged one test file for trailing-comma style; fixed by `vendor/bin/pint` and re-verified clean) |
+| `vendor/bin/phpstan analyse` (apps/api) | Automated, local | PASS | `{"tool":"phpstan","result":"passed","errors":0}` at level 5 |
+| `php artisan test` (apps/api) | Automated, local | PASS | `{"tool":"phpunit","result":"passed","tests":216,"passed":216,"assertions":623}` (40 new: 11 `OperationalStatusTest`, 17 `CheckInTest`, 9 `StaffOperationsAuthorizationTest`, 2 new in `RolePermissionSeederTest`, 1 new in `StaffTest`; 176 pre-existing Phase 1–8 tests unaffected in behavior — full regression suite healthy) |
+| Migrations (`migrate:fresh`) against SQLite | Automated, local | PASS | All 17 migrations (15 pre-existing + 2 new: `staff_statuses`, `staff_checkins`) run cleanly |
+| `RolePermissionSeeder` (extended) / `AdminUserSeeder` chain | Automated, local | PASS | New `staff-status.view`/`staff-status.manage`/`location.view`/`location.manage` permissions created; `staff-status.view` attached to Manager and Staff, `location.view` attached to Manager only; confirmed idempotent |
+| Manual: `php artisan serve` + curl — self-service, manager scoping, admin correction, deletion smoke test | Manual | PASS | Staff-linked user login → `POST /me/status` (`in_field`, `201`) → `GET /me/status` (current-first list, `200`) → `POST /me/check-ins` (coordinates + label, `201`) → `GET /me/check-ins` (`200`) → Manager login → `GET /staff/{direct-report}/check-ins` (`200`) → `GET /staff/{non-report}/check-ins` (`403`, correctly scoped) → Administrator login → `POST /staff/{other}/status` (correction, `201`) → `GET /staff/{other}` confirms `operational_status: "off_duty"` in the Staff Directory response → Staff attempts `DELETE /check-ins/{public_id}` on their own check-in (`403`, `location.manage` is Administrator-only) → Administrator `DELETE /check-ins/{public_id}` (`204`) → unauthenticated `GET /me/status` (`401`) — all through a real HTTP server, not just PHPUnit's in-process client |
+| No attendance/timesheet/payroll/leave/biometric/continuous-GPS/geocoding/messaging/notification functionality introduced | Manual | PASS | Confirmed by reviewing the full staged diff before commit |
+| `Staff.status` (employment) unaffected by operational status changes | Automated | PASS | Asserted directly in `OperationalStatusTest::test_setting_operational_status_never_changes_employment_status` |
+| No Admin Backoffice CRUD UI or Flutter mobile screens | Manual | PASS | Confirmed — API/backend only, consistent with Phase 6/7/8's precedent |
+| Docker validation | — | NOT RUN (this session) | No Docker configuration changed this phase; consistent with prior sessions, Docker-based re-verification was not attempted. The last genuine Docker confirmation remains Phase 5's. |
+| GitHub Actions CI | — | NOT RUN (this session) | No PR opened and no push to `main` this session — the path-filtered trigger (DEC-015) never fired. All commands the workflow runs were executed directly and passed (rows above). |
+| UAT | — | NOT RUN | No UAT scenario recorded yet for Phase 9 — see `docs/testing/UAT_LOG.md` (`UAT-09-01`, `UAT-09-02`). This phase introduced no Admin Backoffice UI or Flutter mobile screens, so there is nothing yet for the product owner to click through visually. |
+
 *(Future phases append their own section above this line, oldest first.)*

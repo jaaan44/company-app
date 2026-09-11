@@ -47,7 +47,7 @@ Staff records, profiles, employment data, manager relationships. Staff Directory
 **Phase 8 — Clients & Contacts** *(complete — see `docs/handoffs/V1_PHASE_08_HANDOFF.md`)*
 Client records and their contacts.
 
-**Phase 9 — Staff Status & Location Check-in**
+**Phase 9 — Staff Status & Location Check-in** *(complete — see `docs/handoffs/V1_PHASE_09_HANDOFF.md`)*
 Current status tracking (with history, DEC-010), explicit check-in flow (DEC-005).
 
 ### Work Management

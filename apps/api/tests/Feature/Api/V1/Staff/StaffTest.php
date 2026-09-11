@@ -460,4 +460,20 @@ class StaffTest extends TestCase
             ->assertJson(['data' => ['has_user_account' => true]])
             ->assertJsonMissingPath('data.user');
     }
+
+    public function test_the_staff_directory_reflects_current_operational_status(): void
+    {
+        $this->actingAsAdministrator();
+        $staffMember = Staff::factory()->create();
+
+        $this->getJson("/api/v1/staff/{$staffMember->public_id}")
+            ->assertOk()
+            ->assertJson(['data' => ['operational_status' => null]]);
+
+        $staffMember->operationalStatuses()->create(['status' => 'in_field']);
+
+        $this->getJson("/api/v1/staff/{$staffMember->public_id}")
+            ->assertOk()
+            ->assertJson(['data' => ['operational_status' => 'in_field']]);
+    }
 }

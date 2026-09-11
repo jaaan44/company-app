@@ -3,14 +3,14 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** Phase 8 — Clients & Contacts
+**Current phase:** Phase 9 — Staff Status & Location Check-in
 **Phase status:** COMPLETE (pending user review)
-**Last completed phase:** Phase 8 (Phases 1–7 are merged into `main`)
-**Next planned phase:** Phase 9 — Staff Status & Location Check-in (see `ROADMAP.md`) — **not authorized yet**
+**Last completed phase:** Phase 9 (Phases 1–8 are merged into `main`)
+**Next planned phase:** Phase 10 — Projects & Project Membership (see `ROADMAP.md`) — **not authorized yet**
 
 ## Current Objective
 
-Phase 8 is implemented, tested, and pushed for review. Awaiting authorization for Phase 9.
+Phase 9 is implemented, tested, and pushed for review. Awaiting authorization for Phase 10.
 
 ## Completed
 
@@ -66,28 +66,38 @@ Phase 8 is implemented, tested, and pushed for review. Awaiting authorization fo
   - New versioned REST endpoints (`/api/v1/clients`, `/api/v1/contacts`) — full CRUD, route-model-bound by `public_id`, permission-gated, both flat top-level resources (Contact filterable by `?client=<public_id>`, not nested).
   - Recorded DEC-031.
   - No projects, opportunities, sales pipeline, leads, quotations, contracts, invoices, billing, payments, tasks, work logs, client portals, support tickets, service desk, email campaigns, marketing automation, messaging, notifications, file/document management, account-manager ownership rules, complex tagging, custom fields framework, activity timeline, contact interaction history, multiple addresses, branch/location hierarchy, or advanced CRM segmentation; no Admin Backoffice CRUD UI (consistent with Phase 6/7's precedent).
+- **Phase 9:** Staff Status & Location Check-in. See `docs/handoffs/V1_PHASE_09_HANDOFF.md` for full detail.
+  - `staff_statuses`/`staff_checkins` tables; `App\Models\StaffOperationalStatus`/`StaffCheckIn` — two append-only history tables, deliberately separate from `staff.status` (Phase 7 employment lifecycle) and from attendance/leave/payroll, which this phase never touches. `App\Enums\OperationalStatus` (`available`/`busy`/`in_meeting`/`in_field`/`off_duty`).
+  - No denormalized "current" column on either table or on `staff` — `Staff::latestOperationalStatus()`/`latestCheckIn()` (`hasOne(...)->latestOfMany()`) derive it from the latest row; a staff member with no history has `null` current status/location, never an assumed default.
+  - `staff_checkins` requires `latitude`/`longitude` (`decimal(10,7)`, validated), accepts optional `accuracy_meters`/`location_label`/`note`/an informational `status` snapshot; `public_id` (ULID) lets an Administrator address one directly for deletion. Both tables `cascadeOnDelete()` on their parent `staff` row (child data, unlike master-data `restrictOnDelete()` relationships elsewhere).
+  - Four new permissions: `staff-status.view`/`staff-status.manage` (status; view is Manager/Staff company-wide, manage is Administrator-only) and `location.view`/`location.manage` (location; view is **Manager only**, further scoped in `CheckInController` to a Manager's own direct reports via `Staff.manager_id` — the first real row-level data isolation in the codebase; manage is Administrator-only).
+  - New versioned REST endpoints under `/api/v1`: `GET`/`POST /me/status`, `GET`/`POST /me/check-ins` (self-service, requiring the authenticated User to have a linked Staff record — `403` otherwise, no new permission, mirroring `GET /auth/me`); `GET`/`POST /staff/{public_id}/status`; `GET /staff/{public_id}/check-ins`; `DELETE /check-ins/{public_id}`. "Updating" is modeled as appending to the same paginated, latest-first list the `GET` returns.
+  - `App\Http\Resources\StaffResource` gains `operational_status` (nullable) — no location data of any kind was added to it.
+  - Recorded DEC-032.
+  - No attendance, clock-in/clock-out, timesheets, payroll, salary, overtime, leave management/balances/approvals, biometric integration, continuous/background GPS tracking, automatic location polling, geofencing, route/movement history, employee surveillance, GPS spoofing detection, Google Maps/Mapbox/geocoding integration, device tracking, project/task assignment, work logs, messaging, notifications, or performance/productivity monitoring; no Admin Backoffice CRUD UI or Flutter mobile screens (deferred to a future UI phase).
 
 ## Pending / Not Started
 
-- Staff Status & Location Check-in (Phase 9) and everything after it on the roadmap.
+- Projects & Project Membership (Phase 10) and everything after it on the roadmap.
 
 ## Known Blockers / Issues
 
 - **This session's environment:** Docker's own image-pull path worked (via `mirror.gcr.io`, a legitimate Docker Hub mirror, when the default registry endpoint was blocked), but package installation *during* an image build (`apt-get`, reaching `deb.debian.org`) is blocked by this sandbox's network policy — confirmed as a real, deliberate block, not a transient failure. Worked around for validation purposes only (a temporary, uncommitted Dockerfile variant skipping just that one step) without weakening the real, committed Dockerfile, which still includes the `apt-get` step real developers and CI-less environments need. See `docs/handoffs/V1_PHASE_04A_HANDOFF.md` for the full account — this does not affect the correctness of what was committed.
 - **Phase 6 session's environment:** `composer install` could not complete over the network — GitHub's zipball API (`api.github.com`) and even its git-source fallback consistently failed authentication/connectivity for the entire dependency tree (not just the 1–3 packages seen in Phase 5). Recovered without touching `composer.json`/`composer.lock` by extracting each locked package directly from Composer's own local VCS mirror cache (already present from a prior partial attempt) at its exact locked commit, hand-building `vendor/composer/installed.json`/`installed.php`, and copying Composer's own `InstalledVersions.php` runtime class from the installed `composer` phar. See `docs/handoffs/V1_PHASE_06_HANDOFF.md` for the full account — every quality gate then passed normally, and this does not affect the correctness of what was committed (no vendor files are committed either way).
 - **Phase 7 session's environment:** `vendor/` from the Phase 6 session's manual recovery was already present and functional in this container, so no repeat of the Phase 6 `composer install` recovery was needed. Docker-based re-verification was again not attempted this session (no Docker configuration changed); see `docs/handoffs/V1_PHASE_07_HANDOFF.md`.
+- **Phase 9 session's environment:** this container started with no `vendor/` at all (unlike Phase 7/8's sessions, which inherited one). `composer install` reproduced the same `api.github.com` zipball-scoping issue documented in Phase 6/8 for every third-party dependency, recovered the same way (`--prefer-source` git-clone fallback). `phpstan/phpstan` again hit its dist-only/no-`source`-entry exception (Phase 8 §13) — its own `git clone --mirror` this time additionally exceeded Composer's 300s process timeout (a large monorepo history) before completing. Recovered by shallow-cloning (`--depth 1 --branch <tag>`) the exact locked commit directly (seconds, not the timeout), pre-seeding Composer's local VCS mirror cache from that shallow clone so Composer's own retry found it immediately, then — when Composer's final reference-clone step still failed because a mirror sourced from a shallow clone is itself shallow — copying the four files `phpstan`/`phpstan.phar`/`bootstrap.php`/`composer.json` directly into `vendor/phpstan/phpstan/` (the phar is fully self-contained; nothing else in the repository is needed to run the tool), hand-writing `vendor/bin/phpstan`/`phpstan.phar` proxy scripts (mirroring Composer's own generated pattern, as Phase 8 did), adding the package's metadata to `vendor/composer/installed.json`, and running `composer dump-autoload` to regenerate the rest normally. `vendor/bin/phpstan --version`/`vendor/bin/phpstan analyse` both ran cleanly against this phase's real code (0 errors) — see `docs/handoffs/V1_PHASE_09_HANDOFF.md` for the full account. `vendor/` is never committed either way, so none of this recovery is part of the diff.
 - Open design questions: real-time transport, object storage provider — see `docs/02_ARCHITECTURE.md` §9. (Departments/Teams hierarchy shape was resolved by Phase 6 — see DEC-029. Staff↔User relationship and manager/reporting structure were resolved by Phase 7 — see DEC-030.)
 
 ## Repository / Branch Information
 
 - Repository: `jaaan44/company-app`
-- Default branch: `main` (contains the approved Phase 0–7 baseline)
-- Phase 8 branch: `claude/company-app-v1-phase-8-bo1282` (branched from `main`, not merged)
+- Default branch: `main` (contains the approved Phase 0–8 baseline)
+- Phase 9 branch: `claude/company-app-v1-phase-9-status-checkin` (branched from `main`, not merged)
 
 ## Latest Relevant Handoff
 
-`docs/handoffs/V1_PHASE_08_HANDOFF.md`
+`docs/handoffs/V1_PHASE_09_HANDOFF.md`
 
 ## For the Next Session
 
-Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_08_HANDOFF.md` for Clients & Contacts, `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 9 (Staff Status & Location Check-in) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.
+Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_09_HANDOFF.md` for Staff Status & Location Check-in, `docs/handoffs/V1_PHASE_08_HANDOFF.md` for Clients & Contacts, `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 10 (Projects & Project Membership) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.

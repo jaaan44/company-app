@@ -4,6 +4,17 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-09-11 — Phase 9: Staff Status & Location Check-in
+- **Backend:** added `staff_statuses` and `staff_checkins` tables; `App\Models\StaffOperationalStatus`/`StaffCheckIn`. `App\Enums\OperationalStatus` (`available`/`busy`/`in_meeting`/`in_field`/`off_duty`) is deliberately distinct from `staff.status` (Phase 7 employment lifecycle) and from attendance/leave/payroll — neither exists in this phase and none is affected by it.
+- Both tables are append-only history; "current" status/location is a derived read (`Staff::latestOperationalStatus()`/`latestCheckIn()`, `latestOfMany()`), not a denormalized mutable column — a staff member with no history has `null` current status/location, never an assumed default.
+- `staff_checkins` requires `latitude`/`longitude` (`decimal(10,7)`, validated -90..90/-180..180) and accepts optional `accuracy_meters`/`location_label`/`note`/an informational `status` snapshot. Both tables `cascadeOnDelete()` on their parent `staff` row (child data, unlike master-data `restrictOnDelete()` relationships elsewhere).
+- Four new permissions added to `RolePermissionSeeder`: `staff-status.view` (Manager/Staff — company-wide) and `staff-status.manage` (Administrator-only); `location.view` (**Manager only**, further scoped in `CheckInController` to a Manager's own direct reports via `Staff.manager_id` — the first real row-level data isolation in the codebase) and `location.manage` (Administrator-only, check-in deletion/correction).
+- New versioned REST endpoints under `/api/v1`: `GET`/`POST /me/status`, `GET`/`POST /me/check-ins` (self-service, requiring the authenticated User to have a linked Staff record — `403` otherwise, no new permission); `GET`/`POST /staff/{public_id}/status`; `GET /staff/{public_id}/check-ins`; `DELETE /check-ins/{public_id}`. "Updating" status/creating a check-in is modeled as appending to the same paginated, latest-first list the `GET` returns.
+- `App\Http\Resources\StaffResource` gains `operational_status` (nullable) — no location data of any kind was added to it.
+- `StaffOperationalStatusFactory`/`StaffCheckInFactory` added.
+- Recorded DEC-032 (Staff Operations domain model, derived-current pattern, and scoped location-visibility decisions).
+- No attendance, clock-in/clock-out, timesheets, payroll, salary, overtime, leave management/balances/approvals, biometric integration, continuous/background GPS tracking, automatic location polling, geofencing, route/movement history, employee surveillance, GPS spoofing detection, Google Maps/Mapbox/geocoding integration, device tracking, project/task assignment, work logs, messaging, notifications, or performance/productivity monitoring was introduced; no Admin Backoffice CRUD UI or Flutter mobile screens (consistent with Phase 6/7/8's precedent).
+
 ### 2026-09-11 — Phase 8: Clients & Contacts
 - **Backend:** added `clients` and `contacts` tables; `App\Models\Client`/`Contact` (each carries a ULID `public_id`, DEC-017). `App\Enums\ClientStatus` and `App\Enums\ContactStatus` (both `active`/`inactive`) are two-state lifecycles — Client mirrors `OrganizationStatus`'s master-data pattern; Contact is a lightweight preserve-don't-delete lifecycle.
 - `contacts.client_id` is **required** (never nullable), `restrictOnDelete()` — a Contact always belongs to exactly one Client; no many-to-many Contact↔Client relationship.

@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\V1\Organization\DepartmentController;
 use App\Http\Controllers\Api\V1\Organization\PositionController;
 use App\Http\Controllers\Api\V1\Organization\TeamController;
 use App\Http\Controllers\Api\V1\Staff\StaffController;
+use App\Http\Controllers\Api\V1\StaffOperations\CheckInController;
+use App\Http\Controllers\Api\V1\StaffOperations\OperationalStatusController;
 use Illuminate\Support\Facades\Route;
 
 // v1 API routes. A future breaking version adds routes/api/v2.php and a
@@ -108,5 +110,47 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
         Route::post('contacts', [ContactController::class, 'store'])->name('contacts.store');
         Route::match(['put', 'patch'], 'contacts/{contact:public_id}', [ContactController::class, 'update'])->name('contacts.update');
         Route::delete('contacts/{contact:public_id}', [ContactController::class, 'destroy'])->name('contacts.destroy');
+    });
+});
+
+// Staff Operational Status & Location Check-in (Phase 9): lightweight
+// operational visibility, deliberately separate from Staff.status
+// (employment lifecycle, Phase 7), attendance, and continuous tracking —
+// see DEC-005/DEC-032. Self-service ("me") routes require the
+// authenticated user to have a linked Staff record (enforced in the
+// controller, a domain check — not a permission) and need no permission
+// beyond auth:sanctum + account.active, mirroring GET /api/v1/auth/me.
+Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
+    Route::get('me/status', [OperationalStatusController::class, 'myIndex'])->name('me.status.index');
+    Route::post('me/status', [OperationalStatusController::class, 'myStore'])->name('me.status.store');
+
+    Route::get('me/check-ins', [CheckInController::class, 'myIndex'])->name('me.checkins.index');
+    Route::post('me/check-ins', [CheckInController::class, 'myStore'])->name('me.checkins.store');
+
+    // Viewing another staff member's operational status is company-wide,
+    // low-sensitivity information (same grantees as staff.view/
+    // organization.view/clients.view). Setting/correcting another staff
+    // member's status on their behalf is Administrator-only.
+    Route::middleware('can:staff-status.view')->group(function (): void {
+        Route::get('staff/{staff:public_id}/status', [OperationalStatusController::class, 'staffIndex'])->name('staff.status.index');
+    });
+
+    Route::middleware('can:staff-status.manage')->group(function (): void {
+        Route::post('staff/{staff:public_id}/status', [OperationalStatusController::class, 'staffStore'])->name('staff.status.store');
+    });
+
+    // Viewing another staff member's check-in history/current location is
+    // materially more sensitive than operational status: `location.view`
+    // is granted to Manager (not Staff), and CheckInController further
+    // scopes a Manager to their own direct reports only (Staff.manager_id)
+    // — Administrator is unscoped via the centralized Gate::before
+    // override. Deleting/correcting a specific check-in is
+    // Administrator-only (`location.manage`).
+    Route::middleware('can:location.view')->group(function (): void {
+        Route::get('staff/{staff:public_id}/check-ins', [CheckInController::class, 'staffIndex'])->name('staff.checkins.index');
+    });
+
+    Route::middleware('can:location.manage')->group(function (): void {
+        Route::delete('check-ins/{checkIn:public_id}', [CheckInController::class, 'destroy'])->name('checkins.destroy');
     });
 });
