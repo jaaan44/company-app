@@ -180,7 +180,16 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
         Route::delete('projects/{project:public_id}', [ProjectController::class, 'destroy'])->name('projects.destroy');
 
         Route::post('projects/{project:public_id}/members', [ProjectMembershipController::class, 'store'])->name('projects.members.store');
-        Route::match(['put', 'patch'], 'projects/{project:public_id}/members/{staff:public_id}', [ProjectMembershipController::class, 'update'])->name('projects.members.update');
-        Route::delete('projects/{project:public_id}/members/{staff:public_id}', [ProjectMembershipController::class, 'destroy'])->name('projects.members.destroy');
+
+        // withoutScopedBindings(): explicit `:public_id` binding fields on
+        // two consecutive Eloquent route parameters otherwise make Laravel
+        // try to resolve {staff} via a guessed relationship on Project
+        // (e.g. Project::staff()/staffs(), which doesn't exist) instead of
+        // resolving Staff directly — membership is verified explicitly in
+        // ProjectMembershipController::update()/destroy() instead.
+        Route::match(['put', 'patch'], 'projects/{project:public_id}/members/{staff:public_id}', [ProjectMembershipController::class, 'update'])
+            ->name('projects.members.update')->withoutScopedBindings();
+        Route::delete('projects/{project:public_id}/members/{staff:public_id}', [ProjectMembershipController::class, 'destroy'])
+            ->name('projects.members.destroy')->withoutScopedBindings();
     });
 });

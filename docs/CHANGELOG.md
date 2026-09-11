@@ -16,6 +16,7 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 - `App\Http\Resources\ProjectResource` exposes a `members_count` (not a nested roster) and the requester's own `my_role`; `App\Http\Resources\ProjectMembershipResource` nests a minimal Staff identity only.
 - `ProjectFactory`/`ProjectMembershipFactory` added.
 - Recorded DEC-033 (Projects & Project Membership domain model, membership-based leadership, and scoped-visibility decisions).
+- Found and fixed one real routing bug during this phase's own test run: Laravel's automatic nested-route-binding scoping (triggered by two consecutive `:public_id`-bound Eloquent route parameters) guessed a nonexistent `Project::staff()` relation for the member-update/remove routes; fixed via `->withoutScopedBindings()` since membership is already verified explicitly in the controller.
 - No tasks, task assignment, subtasks, Kanban, task comments/dependencies, work logs, time tracking, timesheets, payroll, billing, project invoicing, quotations, contracts, CRM opportunity pipelines, file/document management, messaging, notifications, calendars, Gantt charts, resource forecasting, project budgeting/financials, utilization metrics, project profitability, performance scoring, or approval workflows was introduced; no Admin Backoffice CRUD UI or Flutter mobile screens (consistent with Phase 6/7/8/9's precedent).
 
 ### 2026-09-11 — Phase 9: Staff Status & Location Check-in

@@ -93,37 +93,45 @@ No `apps/mobile` files changed — Flutter is entirely unaffected.
 
 ## 11. Tests Added/Changed
 
-**PHPUnit tests added this phase:**
-- `ProjectTest` — CRUD (list/create/validation/unique-project_code/view-by-public_id/internal-id-404/update/delete/delete-with-members-rejected); Client relationship (with/without client, invalid client public_id, project may be created for an inactive client); lifecycle (status change, completed requires completed_date, reopening a completed project, date-order validation); filters/search (status, client, member, name/project_code); member count reporting; `my_role` convenience field.
-- `ProjectMembershipTest` — list, add (default role, explicit role), validation (missing/unknown staff_id, unknown project), duplicate membership rejected, Staff eligibility (inactive/separated rejected on new assignment, existing membership survives a later status change), role change, removal, role filter.
-- `ProjectsAuthorizationTest` — Administrator full access; Manager view-all/no-manage; a Staff project member scoped to only their own project (list/show/members) and denied on any other project; a Staff project member cannot manage projects or membership; a Staff member with no memberships sees an empty list; a no-role user with no linked Staff is denied entirely; a no-role user *with* a linked Staff record still sees their own memberships (mirroring Phase 9's self-service-needs-no-permission precedent); unauthenticated `401`; suspended mid-session `403`.
+**49 new PHPUnit tests:**
+- `ProjectTest` (23) — CRUD (list/create/validation/unique-project_code/view-by-public_id/internal-id-404/update/delete/delete-with-members-rejected); Client relationship (with/without client, invalid client public_id, project may be created for an inactive client); lifecycle (status change, completed requires completed_date, reopening a completed project, date-order validation); filters/search (status, client, member, name/project_code); member count reporting; `my_role` convenience field.
+- `ProjectMembershipTest` (13) — list, add (default role, explicit role), validation (missing/unknown staff_id, unknown/wrong-public_id project), duplicate membership rejected, Staff eligibility (inactive/separated rejected on new assignment, existing membership survives a later status change), role change, updating a non-member's role fails (`404`), removal, role filter.
+- `ProjectsAuthorizationTest` (9) — Administrator full access; Manager view-all/no-manage; a Staff project member scoped to only their own project (list/show/members) and denied on any other project; a Staff project member cannot manage projects or membership; a Staff member with no memberships sees an empty list; a no-role user with no linked Staff is denied entirely; a no-role user *with* a linked Staff record still sees their own memberships (mirroring Phase 9's self-service-needs-no-permission precedent); unauthenticated `401`; suspended mid-session `403`.
 - 2 new tests in `RolePermissionSeederTest` for the extended permission catalog (including the `projects.view` Manager-only-not-Staff assertion).
 - 1 new test in `ClientTest` (delete blocked while Projects reference the Client).
 - 1 new test in `StaffTest` (delete blocked while Project Memberships reference the Staff member).
 
-**Unaffected in behavior:** the full Phase 1–9 regression suite passes unmodified.
+**Unaffected in behavior:** all 216 Phase 1–9 tests pass unmodified.
 
 ## 12. Commands/Checks Executed
 
-*(Filled in after this phase's quality gates were run — see §13 for exact output.)*
-
 | Command | Result |
 |---|---|
-| `composer validate --strict` | PENDING |
-| `vendor/bin/pint --test` | PENDING |
-| `vendor/bin/phpstan analyse` | PENDING |
-| `php artisan test` | PENDING |
-| `php artisan migrate:fresh --force` (SQLite) | PENDING |
-| `php artisan db:seed --class=...AdminUserSeeder` | PENDING |
-| API smoke test | PENDING |
+| `composer validate --strict` | `./composer.json is valid` |
+| `vendor/bin/pint --test` | `{"tool":"pint","result":"passed"}` — clean on the first run |
+| `vendor/bin/phpstan analyse` | `{"tool":"phpstan","result":"passed","errors":0}` at level 5 |
+| `php artisan test` | `{"tool":"phpunit","result":"passed","tests":265,"passed":265,"assertions":766}` (3 tests failed on the first run — a real routing bug, fixed and re-verified; see §14) |
+| `php artisan migrate:fresh --force` (SQLite) | All 19 migrations (17 pre-existing + 2 new) ran cleanly |
+| `php artisan db:seed --class=...AdminUserSeeder` | `RolePermissionSeeder` ran (extended catalog created — 14 permissions total; `projects.view` attached to Manager only, confirmed via `tinker`); `AdminUserSeeder` ran |
+| `php artisan serve` + curl — full CRUD + membership + visibility-scoping smoke test | See §17 — all steps passed as designed |
 
 ## 13. Results
 
-See §12; the same results are recorded per-check in `docs/testing/TEST_STATUS.md`'s new Phase 10 section.
+See §12's table; the same results are recorded per-check in `docs/testing/TEST_STATUS.md`'s new Phase 10 section.
 
-## 14. Deviations from Specification
+## 14. Deviations from Specification — One Real Bug Found and Fixed
 
-None from `docs/phases/V1_PHASE_10_DEFINITION.md` (written at the start of this same session, so it already reflects the as-built design — see that document for the full reasoning behind every choice summarized in §3–§8 above).
+Caught by the automated test suite itself before this handoff was written, not left as a known issue:
+
+**Nested route model binding auto-scoping.** `PUT`/`PATCH`/`DELETE /api/v1/projects/{project:public_id}/members/{staff:public_id}` initially returned `500` for every request (`BadMethodCallException: Call to undefined method App\Models\Project::staff()`). Root cause: Laravel's implicit route-model-binding resolver automatically enables "scoped bindings" for a route whenever a later Eloquent parameter has an explicit `:field` binding suffix following an earlier one (`array_key_exists($parameterName, $route->bindingFields())`) — it then tries to resolve the second model via a *guessed relationship name on the first model* (`Project::staff()`/`staffs()`, pluralized from the parameter name), which doesn't exist and was never intended to (membership existence is verified explicitly inside `ProjectMembershipController::update()`/`destroy()` via `$project->memberships()->where('staff_id', $staff->id)->firstOrFail()`). Fixed by calling `->withoutScopedBindings()` on both routes (`routes/api/v1.php`), which disables Laravel's automatic parent-scoping guess and lets each parameter resolve independently by its own `public_id`, exactly as the controller already expects. Covered by the existing tests (`test_administrator_can_change_a_members_role`, `test_updating_a_non_members_role_fails`, `test_administrator_can_remove_a_member`) — no new test was needed, they simply went from failing to passing once the routing fix landed.
+
+No other deviations from `docs/phases/V1_PHASE_10_DEFINITION.md`.
+
+## 14a. Environment Notes
+
+This session's container started with no `vendor/` at all. `composer install` reproduced the same `api.github.com` zipball-scoping issue documented in Phase 6/8/9's handoffs for every third-party dependency (recovered via `--prefer-source`-style git-mirror caching, which composer falls back to automatically), and `phpstan/phpstan` again hit its dist-only/no-usable-`source`-entry exception — its own `git clone --mirror` exceeded Composer's 300s process timeout (large repository history). Recovered exactly as Phase 9 documented: shallow-cloned (`--depth 1 --branch 2.2.13`) the exact locked commit (`9ba9ac76ee9c5cf5b56d58eb5deec6315b7a0260`) directly over plain `https://github.com/...` (seconds, not the timeout), pre-seeded Composer's local VCS mirror cache from that shallow clone, then — when Composer's reference-clone step still failed because a mirror sourced from a shallow clone is itself shallow — copied `phpstan`/`phpstan.phar`/`bootstrap.php`/`composer.json` directly into `vendor/phpstan/phpstan/`, hand-wrote `vendor/bin/phpstan`/`phpstan.phar` proxy scripts (mirroring Composer's own generated pattern), added the package's metadata to `vendor/composer/installed.json`, and ran `composer dump-autoload` to regenerate the rest normally. `vendor/bin/phpstan --version`/`vendor/bin/phpstan analyse` both ran cleanly against this phase's real code (0 errors). `vendor/` is never committed either way, so none of this recovery is part of the diff — `composer.lock` already carried a `source` entry for `phpstan/phpstan` from Phase 8, so no lock-file change was needed this time.
+
+GitHub Actions CI did not run this session — no PR was opened (this session's operating instructions direct not to open one unless the user explicitly asks), so the path-filtered trigger (DEC-015) never fired. All CLAUDE.md §5 quality-gate commands were run directly and locally (§12/§13). Docker-based re-verification was not attempted this session — no Docker configuration changed; the last genuine Docker confirmation remains Phase 5's.
 
 ## 15. Known Issues/Limitations
 
@@ -173,6 +181,8 @@ curl -s -X POST http://localhost:8012/api/v1/projects -H "Authorization: Bearer 
 curl -s http://localhost:8012/api/v1/projects -H "Authorization: Bearer $TOKEN"
 ```
 Expect a `201` with the new project (a `public_id`, never a numeric `id`), then a `200` list. To verify membership, first create a Staff record (Phase 7 endpoints), then `POST /api/v1/projects/{public_id}/members` with `{"staff_id": "<staff public_id>", "role": "project_lead"}` — expect `201`. To verify Staff-scoped visibility, link that Staff record's `user_id` to a Staff-role test account (as in Phase 7's UAT instructions), sign in as that account, and confirm `GET /api/v1/projects` returns only the one project they are a member of. To verify delete protection, attempt to `DELETE` the Project while the membership still exists — expect `409`.
+
+**This exact sequence was run in this session** via `php artisan serve` (port `8123`) against the real HTTP server, not just PHPUnit's in-process test client: Administrator login → create a Client (`Acme Corp`) → create a Project (`PRJ-0001`, linked to that Client — response correctly nested a minimal `{public_id, name}` Client object, never a numeric id) → create a Staff record → add that Staff as `project_lead` (`201`) → list members (`200`, one entry) → change the member's role to `member` via `PATCH .../members/{staff}` (`200`) — this specific request is what surfaced and confirmed the fix for the nested-route-binding bug in §14 — → attempt to delete the Project while the membership still existed (`409`, correctly rejected) → remove the member (`204`) → delete the now-empty Project (`204`). Separately: created a second Staff-linked Staff-role account, added her to one of two Projects, confirmed `GET /api/v1/projects` returned only her own Project (with the correct `my_role`), confirmed `GET /api/v1/projects/{the-other-project}` returned `403`, and confirmed an unauthenticated request returned `401`.
 
 **UAT:** logged as **NOT RUN** (`UAT-10-01`, `UAT-10-02`, `UAT-10-03` in `docs/testing/UAT_LOG.md`) — this phase built no Admin Backoffice UI or Flutter screens, so there is nothing yet for the product owner to click through visually; all three scenarios are ready for the product owner to exercise via the API directly if desired, per CLAUDE.md §7 (only the product owner may record a `PASS`).
 

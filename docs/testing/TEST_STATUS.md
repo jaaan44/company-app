@@ -229,4 +229,22 @@ No automated tests apply to this phase — no application code exists yet.
 | GitHub Actions CI | — | NOT RUN (this session) | No PR opened and no push to `main` this session — the path-filtered trigger (DEC-015) never fired. All commands the workflow runs were executed directly and passed (rows above). |
 | UAT | — | NOT RUN | No UAT scenario recorded yet for Phase 9 — see `docs/testing/UAT_LOG.md` (`UAT-09-01`, `UAT-09-02`). This phase introduced no Admin Backoffice UI or Flutter mobile screens, so there is nothing yet for the product owner to click through visually. |
 
+## Phase 10 — Projects & Project Membership
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `composer validate --strict` (apps/api) | Automated, local | PASS | `./composer.json is valid` — unaffected, no new dependencies added |
+| `vendor/bin/pint --test` (apps/api) | Automated, local | PASS | `{"tool":"pint","result":"passed"}` — clean on the first run, includes all new Projects/Project Membership code and tests |
+| `vendor/bin/phpstan analyse` (apps/api) | Automated, local | PASS | `{"tool":"phpstan","result":"passed","errors":0}` at level 5 |
+| `php artisan test` (apps/api) | Automated, local | PASS | `{"tool":"phpunit","result":"passed","tests":265,"passed":265,"assertions":766}` (49 new: 23 `ProjectTest`, 13 `ProjectMembershipTest`, 9 `ProjectsAuthorizationTest`, 2 new in `RolePermissionSeederTest`, 1 new in `ClientTest`, 1 new in `StaffTest`; 216 pre-existing Phase 1–9 tests unaffected in behavior — full regression suite healthy). A real routing bug (Laravel's automatic nested-route-binding scoping guessing a nonexistent `Project::staff()` relation) was caught by 3 failing tests and fixed before this suite went green — see Deviations in the handoff. |
+| Migrations (`migrate:fresh`) against SQLite | Automated, local | PASS | All 19 migrations (17 pre-existing + 2 new: `projects`, `project_memberships`) ran cleanly |
+| `RolePermissionSeeder` (extended) / `AdminUserSeeder` chain | Automated, local | PASS | New `projects.view`/`projects.manage` permissions created (14 total); `projects.view` correctly attached to Manager only, confirmed absent from Staff via `tinker`; confirmed idempotent |
+| Manual: `php artisan serve` + curl — full CRUD + membership + delete-protection smoke test | Manual | PASS | Administrator login → create Client → create Project linked to that Client (minimal nested Client object confirmed in response) → create Staff → add as `project_lead` (`201`) → list members (`200`) → change role to `member` (`200`) → attempt to delete the Project while the member still existed (`409`) → remove the member (`204`) → delete the now-empty Project (`204`) — all through a real HTTP server, not just PHPUnit's in-process client |
+| Manual: Staff-scoped visibility smoke test | Manual | PASS | A Staff-linked, Staff-role account was added to one of two Projects; `GET /api/v1/projects` correctly returned only that one Project (with the correct `my_role`); `GET` on the other Project returned `403`; an unauthenticated request returned `401` |
+| No tasks/work-logs/time-tracking/billing/quotations/contracts/CRM-pipeline/file-management/messaging/notifications/calendar/Gantt/budgeting/utilization/performance-scoring/approval-workflow functionality introduced | Manual | PASS | Confirmed by reviewing the full staged diff before commit |
+| No Admin Backoffice CRUD UI or Flutter mobile screens | Manual | PASS | Confirmed — API/backend only, consistent with Phase 6/7/8/9's precedent |
+| Docker validation | — | NOT RUN (this session) | No Docker configuration changed this phase; consistent with prior sessions, Docker-based re-verification was not attempted. The last genuine Docker confirmation remains Phase 5's. |
+| GitHub Actions CI | — | NOT RUN (this session) | No PR opened and no push to `main` this session — the path-filtered trigger (DEC-015) never fired. All commands the workflow runs were executed directly and passed (rows above). |
+| UAT | — | NOT RUN | No UAT scenario recorded yet for Phase 10 — see `docs/testing/UAT_LOG.md` (`UAT-10-01`, `UAT-10-02`, `UAT-10-03`). This phase introduced no Admin Backoffice UI or Flutter mobile screens, so there is nothing yet for the product owner to click through visually. |
+
 *(Future phases append their own section above this line, oldest first.)*
