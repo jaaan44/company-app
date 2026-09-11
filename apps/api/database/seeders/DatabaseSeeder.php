@@ -15,6 +15,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Foundational authorization system data (Phase 5) — safe,
+        // deterministic, run in every environment. See
+        // RolePermissionSeeder's own docblock for why this is kept
+        // separate from AdminUserSeeder's local-only demo credentials.
+        $this->call(RolePermissionSeeder::class);
+
         // User::factory(10)->create();
 
         User::factory()->create([

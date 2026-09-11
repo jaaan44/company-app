@@ -134,4 +134,28 @@ No automated tests apply to this phase — no application code exists yet.
 | Host (non-Docker) quality gates, post-port-change | Automated, local | PASS | `composer validate --strict`, `vendor/bin/pint --test`, `vendor/bin/phpstan analyse`, `php artisan test` (31/31) — unaffected, confirming the change is scoped to Docker port configuration only. |
 | Backend CI workflow (re-confirmed after port configuration + UAT documentation) | Automated, GitHub Actions | PASS | Run [34577973012](https://github.com/jaaan44/company-app/actions/runs/34577973012), commit `3b418ce`, ~20s. |
 
+---
+
+## Phase 5 — Roles & Permissions
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `composer validate --strict` (apps/api) | Automated, local | PASS | unaffected — no new dependencies added |
+| `vendor/bin/pint --test` (apps/api) | Automated, local | PASS | includes all new Role/Permission/authorization code and tests |
+| `vendor/bin/phpstan analyse` (apps/api) | Automated, local | PASS | 0 errors — `Gate::before` closure, Role/Permission generics, and all new relations type-check cleanly at level 5 |
+| `php artisan test` (apps/api) | Automated, local | PASS | 51 tests, 136 assertions (20 new: 8 `PermissionMechanismTest`, 7 `AdminBackofficeAuthorizationTest`, 2 `AdminUserSeederTest`, 3 `RolePermissionSeederTest`; 31 pre-existing Phase 3/4 tests unaffected in behavior, `AdminLoginTest` updated only for the retired `admin()` factory state) |
+| Migrations (`migrate:fresh`) against SQLite | Automated, local | PASS | All 9 migrations (5 pre-existing + 4 new) run cleanly |
+| `RolePermissionSeeder` / `AdminUserSeeder` / `DatabaseSeeder` chain | Automated, local | PASS | Confirmed idempotent; Administrator role correctly assigned to the seeded local Admin account |
+| Manual: `php artisan serve` + curl — `/login`, `/api/v1/health`, `/api/v1/auth/login` | Manual | PASS | Login response confirmed to include `"role":"administrator"`; `is_admin` absent |
+| Manual: `tinker` — role/permission/Gate behavior | Manual | PASS | Administrator `can('admin.access')` → true; Staff → false; `Schema::hasColumn('users','is_admin')` → false |
+| Docker build (real, committed `docker/php/Dockerfile` — unchanged by this phase) | Automated, local | BLOCKED (local only) | Same documented sandbox network-policy limitation as Phase 4A (`apt-get` → `deb.debian.org` blocked) — not a regression, not caused by this phase. Confirmed via a temporary, uncommitted Dockerfile variant skipping only that step (same technique as Phase 4A), discarded after use. |
+| Full Docker stack (temporary Dockerfile variant, same method as Phase 4A) | Automated, local | PASS | All 3 containers up, `mysql` healthy |
+| Migrations against real MySQL 8.4 (Docker) | Automated, local | PASS | All 9 migrations, including the 4 new Phase 5 ones, ran cleanly against MySQL |
+| `AdminUserSeeder` inside Docker (MySQL) | Automated, local | PASS | Administrator role assigned correctly |
+| `php artisan test` inside Docker (MySQL-configured env; tests still isolated to SQLite per `phpunit.xml`) | Automated, local | PASS | 51/51, 136 assertions |
+| `vendor/bin/pint --test` / `vendor/bin/phpstan analyse` inside Docker | Automated, local | PASS | Pint clean (57 files); PHPStan 0 errors |
+| `GET /api/v1/health`, `GET /login`, `POST /api/v1/auth/login` through Nginx (Docker) | Automated, local | PASS | All `200`; login response includes the new `role` field via a full MySQL round-trip |
+| No Staff/Clients/Projects/Leave/Tasks/Work Logs/Messaging or other business module introduced | Manual | PASS | Confirmed by reviewing the full staged diff before commit |
+| No third-party RBAC package introduced | Manual | PASS | `composer.json` diff contains no new dependencies |
+
 *(Future phases append their own section above this line, oldest first.)*

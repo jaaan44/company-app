@@ -60,7 +60,7 @@ class LoginForm extends Component
             ]);
         }
 
-        if (! $user->is_admin) {
+        if ($user->cannot('admin.access')) {
             Auth::logout();
 
             throw ValidationException::withMessages([

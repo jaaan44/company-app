@@ -31,8 +31,8 @@ Login, logout, token issuance/refresh for both mobile and admin, password handli
 Docker Compose (`nginx` + `app`/PHP-FPM + `mysql`) as the standard local backend development environment, superseding DEC-013. Flutter remains outside Docker. No business functionality.
 *Depends on: Phase 4*
 
-**Phase 5 — Roles & Permissions**
-Final role/permission catalog, role-permission and user-role storage, policy/gate scaffolding, permission-checking middleware/pattern established for reuse by every later module.
+**Phase 5 — Roles & Permissions** *(complete — see `docs/handoffs/V1_PHASE_05_HANDOFF.md`)*
+V1 role catalog (Administrator/Manager/Staff, one role per user) and a foundational permission catalog, role-permission storage, a centralized `Gate::before`-based authorization pattern established for reuse by every later module. The full permission catalog for each business module is added when that module is actually built, not here.
 *Depends on: Phase 4*
 
 ### Company Core
