@@ -127,6 +127,31 @@ class RolePermissionSeederTest extends TestCase
         $this->assertFalse($staff->permissions->contains('name', 'location.manage'));
     }
 
+    public function test_it_creates_the_phase_10_projects_permissions(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+
+        $this->assertTrue(Permission::query()->where('name', 'projects.view')->exists());
+        $this->assertTrue(Permission::query()->where('name', 'projects.manage')->exists());
+    }
+
+    public function test_only_manager_is_granted_projects_view_not_staff(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+
+        $manager = Role::query()->where('name', Role::MANAGER)->firstOrFail();
+        $staff = Role::query()->where('name', Role::STAFF)->firstOrFail();
+
+        // Unlike every other *.view permission so far, Projects are
+        // membership-scoped business information, not company-wide
+        // directory data — Staff never gets 'projects.view' (see
+        // docs/phases/V1_PHASE_10_DEFINITION.md).
+        $this->assertTrue($manager->permissions->contains('name', 'projects.view'));
+        $this->assertFalse($staff->permissions->contains('name', 'projects.view'));
+        $this->assertFalse($manager->permissions->contains('name', 'projects.manage'));
+        $this->assertFalse($staff->permissions->contains('name', 'projects.manage'));
+    }
+
     public function test_running_it_twice_does_not_duplicate_rows(): void
     {
         $this->seed(RolePermissionSeeder::class);
@@ -135,11 +160,12 @@ class RolePermissionSeederTest extends TestCase
         $manager = Role::query()->where('name', Role::MANAGER)->firstOrFail();
 
         $this->assertSame(3, Role::query()->count());
-        $this->assertSame(12, Permission::query()->count());
+        $this->assertSame(14, Permission::query()->count());
         $this->assertSame(1, $manager->permissions()->where('name', 'organization.view')->count());
         $this->assertSame(1, $manager->permissions()->where('name', 'staff.view')->count());
         $this->assertSame(1, $manager->permissions()->where('name', 'clients.view')->count());
         $this->assertSame(1, $manager->permissions()->where('name', 'staff-status.view')->count());
         $this->assertSame(1, $manager->permissions()->where('name', 'location.view')->count());
+        $this->assertSame(1, $manager->permissions()->where('name', 'projects.view')->count());
     }
 }

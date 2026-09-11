@@ -3,14 +3,14 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** Phase 9 — Staff Status & Location Check-in
+**Current phase:** Phase 10 — Projects & Project Membership
 **Phase status:** COMPLETE (pending user review)
-**Last completed phase:** Phase 9 (Phases 1–8 are merged into `main`)
-**Next planned phase:** Phase 10 — Projects & Project Membership (see `ROADMAP.md`) — **not authorized yet**
+**Last completed phase:** Phase 10 (Phases 1–9 are merged into `main`)
+**Next planned phase:** Phase 11 — Tasks (see `ROADMAP.md`) — **not authorized yet**
 
 ## Current Objective
 
-Phase 9 is implemented, tested, and pushed for review. Awaiting authorization for Phase 10.
+Phase 10 is implemented, tested, and pushed for review. Awaiting authorization for Phase 11.
 
 ## Completed
 
@@ -76,9 +76,20 @@ Phase 9 is implemented, tested, and pushed for review. Awaiting authorization fo
   - Recorded DEC-032.
   - No attendance, clock-in/clock-out, timesheets, payroll, salary, overtime, leave management/balances/approvals, biometric integration, continuous/background GPS tracking, automatic location polling, geofencing, route/movement history, employee surveillance, GPS spoofing detection, Google Maps/Mapbox/geocoding integration, device tracking, project/task assignment, work logs, messaging, notifications, or performance/productivity monitoring; no Admin Backoffice CRUD UI or Flutter mobile screens (deferred to a future UI phase).
 
+- **Phase 10:** Projects & Project Membership. See `docs/handoffs/V1_PHASE_10_HANDOFF.md` for full detail.
+  - `projects`/`project_memberships` tables; `App\Models\Project`/`ProjectMembership` (`projects` carries a ULID `public_id`, DEC-017; `project_memberships` deliberately doesn't). `App\Enums\ProjectStatus` (`planned`/`active`/`on_hold`/`completed`/`cancelled`); `App\Enums\ProjectMembershipRole` (`project_lead`/`member`, project-scoped, distinct from the global application role).
+  - No `project_manager_staff_id` — leadership lives entirely on Project Membership's `role`. `projects.client_id` is nullable (`restrictOnDelete()`) — a Project may be internal; an inactive Client neither loses existing Projects nor is blocked from new ones.
+  - `project_memberships` represents the current roster only (no historical-period tracking, hard-delete on removal), unique on `(project_id, staff_id)`, both FKs `restrictOnDelete()`. Only `active` Staff may be newly assigned; existing memberships survive a later status change.
+  - `ClientController`/`StaffController::destroy` (Phases 8/7) extended to also block deletion while a Project/Project Membership references them; `ProjectController::destroy` blocks deletion while memberships exist.
+  - New permissions `projects.view` (**Manager only** — the first `*.view` not also granted to Staff) and `projects.manage` (Administrator-only, covers Project CRUD and all membership writes).
+  - An ordinary Staff member sees only Projects where they hold a membership — enforced in-controller (`AuthorizesProjectVisibility`), applied directly to `GET /api/v1/projects`/`{public_id}` rather than a `can:` route middleware — the second real row-level authorization pattern after Phase 9.
+  - New versioned REST endpoints (`/api/v1/projects` full CRUD; nested `/api/v1/projects/{public_id}/members` — the first genuinely nested resource in this API, addressed by the member's Staff `public_id`).
+  - Recorded DEC-033.
+  - No tasks, task assignment, work logs, time tracking, billing, quotations, contracts, CRM opportunity pipelines, file/document management, messaging, notifications, calendars, Gantt charts, budgeting/financials, utilization metrics, or approval workflows; no Admin Backoffice CRUD UI (consistent with Phase 6/7/8/9's precedent).
+
 ## Pending / Not Started
 
-- Projects & Project Membership (Phase 10) and everything after it on the roadmap.
+- Tasks (Phase 11) and everything after it on the roadmap.
 
 ## Known Blockers / Issues
 
@@ -86,18 +97,19 @@ Phase 9 is implemented, tested, and pushed for review. Awaiting authorization fo
 - **Phase 6 session's environment:** `composer install` could not complete over the network — GitHub's zipball API (`api.github.com`) and even its git-source fallback consistently failed authentication/connectivity for the entire dependency tree (not just the 1–3 packages seen in Phase 5). Recovered without touching `composer.json`/`composer.lock` by extracting each locked package directly from Composer's own local VCS mirror cache (already present from a prior partial attempt) at its exact locked commit, hand-building `vendor/composer/installed.json`/`installed.php`, and copying Composer's own `InstalledVersions.php` runtime class from the installed `composer` phar. See `docs/handoffs/V1_PHASE_06_HANDOFF.md` for the full account — every quality gate then passed normally, and this does not affect the correctness of what was committed (no vendor files are committed either way).
 - **Phase 7 session's environment:** `vendor/` from the Phase 6 session's manual recovery was already present and functional in this container, so no repeat of the Phase 6 `composer install` recovery was needed. Docker-based re-verification was again not attempted this session (no Docker configuration changed); see `docs/handoffs/V1_PHASE_07_HANDOFF.md`.
 - **Phase 9 session's environment:** this container started with no `vendor/` at all (unlike Phase 7/8's sessions, which inherited one). `composer install` reproduced the same `api.github.com` zipball-scoping issue documented in Phase 6/8 for every third-party dependency, recovered the same way (`--prefer-source` git-clone fallback). `phpstan/phpstan` again hit its dist-only/no-`source`-entry exception (Phase 8 §13) — its own `git clone --mirror` this time additionally exceeded Composer's 300s process timeout (a large monorepo history) before completing. Recovered by shallow-cloning (`--depth 1 --branch <tag>`) the exact locked commit directly (seconds, not the timeout), pre-seeding Composer's local VCS mirror cache from that shallow clone so Composer's own retry found it immediately, then — when Composer's final reference-clone step still failed because a mirror sourced from a shallow clone is itself shallow — copying the four files `phpstan`/`phpstan.phar`/`bootstrap.php`/`composer.json` directly into `vendor/phpstan/phpstan/` (the phar is fully self-contained; nothing else in the repository is needed to run the tool), hand-writing `vendor/bin/phpstan`/`phpstan.phar` proxy scripts (mirroring Composer's own generated pattern, as Phase 8 did), adding the package's metadata to `vendor/composer/installed.json`, and running `composer dump-autoload` to regenerate the rest normally. `vendor/bin/phpstan --version`/`vendor/bin/phpstan analyse` both ran cleanly against this phase's real code (0 errors) — see `docs/handoffs/V1_PHASE_09_HANDOFF.md` for the full account. `vendor/` is never committed either way, so none of this recovery is part of the diff.
+- **Phase 10 session's environment:** same pattern again — no `vendor/` at session start, `composer install` needed the git-mirror-cache fallback for every third-party dependency, and `phpstan/phpstan`'s own `git clone --mirror` again exceeded the 300s process timeout. Recovered identically to Phase 9 (shallow-clone the exact locked commit, pre-seed the mirror cache, manually copy the four essential files into `vendor/phpstan/phpstan/`, hand-write `vendor/bin/phpstan`/`phpstan.phar`, patch `vendor/composer/installed.json`, `composer dump-autoload`) — see `docs/handoffs/V1_PHASE_10_HANDOFF.md` §14a. Once installed, this phase's own automated test suite caught one real application bug (unrelated to the environment): Laravel's automatic nested-route-binding scoping guessed a nonexistent `Project::staff()` relation for the two-parameter member routes, fixed via `->withoutScopedBindings()` — see the handoff's Deviations section.
 - Open design questions: real-time transport, object storage provider — see `docs/02_ARCHITECTURE.md` §9. (Departments/Teams hierarchy shape was resolved by Phase 6 — see DEC-029. Staff↔User relationship and manager/reporting structure were resolved by Phase 7 — see DEC-030.)
 
 ## Repository / Branch Information
 
 - Repository: `jaaan44/company-app`
-- Default branch: `main` (contains the approved Phase 0–8 baseline)
-- Phase 9 branch: `claude/company-app-v1-phase-9-status-checkin` (branched from `main`, not merged)
+- Default branch: `main` (contains the approved Phase 0–9 baseline)
+- Phase 10 branch: `claude/eager-archimedes-8ze14i` (branched from `main`, not merged)
 
 ## Latest Relevant Handoff
 
-`docs/handoffs/V1_PHASE_09_HANDOFF.md`
+`docs/handoffs/V1_PHASE_10_HANDOFF.md`
 
 ## For the Next Session
 
-Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_09_HANDOFF.md` for Staff Status & Location Check-in, `docs/handoffs/V1_PHASE_08_HANDOFF.md` for Clients & Contacts, `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 10 (Projects & Project Membership) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.
+Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_10_HANDOFF.md` for Projects & Project Membership, `docs/handoffs/V1_PHASE_09_HANDOFF.md` for Staff Status & Location Check-in, `docs/handoffs/V1_PHASE_08_HANDOFF.md` for Clients & Contacts, `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 11 (Tasks) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.

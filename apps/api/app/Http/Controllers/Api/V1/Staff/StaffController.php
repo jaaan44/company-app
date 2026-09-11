@@ -100,16 +100,23 @@ class StaffController extends Controller
     }
 
     /**
-     * A staff member who still has direct reports cannot be deleted until
-     * they're reassigned — preventing an orphaned/invalid reporting
-     * structure, the same relational-integrity philosophy as
-     * DepartmentController::destroy.
+     * A staff member who still has direct reports, or who is still a
+     * member of any project, cannot be deleted — preventing an orphaned/
+     * invalid reporting structure or project roster, the same relational-
+     * integrity philosophy as DepartmentController::destroy (and, for
+     * project memberships, docs/phases/V1_PHASE_10_DEFINITION.md).
      */
     public function destroy(Staff $staff): JsonResponse
     {
         if ($staff->directReports()->exists()) {
             return response()->json([
                 'message' => 'This staff member still has direct reports and cannot be deleted.',
+            ], 409);
+        }
+
+        if ($staff->projectMemberships()->exists()) {
+            return response()->json([
+                'message' => 'This staff member still has project memberships and cannot be deleted.',
             ], 409);
         }
 

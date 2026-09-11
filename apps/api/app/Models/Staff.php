@@ -192,6 +192,18 @@ class Staff extends Model
     }
 
     /**
+     * This staff member's current Project Membership rows (Phase 10) —
+     * the projects they are currently assigned to, and their role on
+     * each. No historical-period tracking (see ProjectMembership).
+     *
+     * @return HasMany<ProjectMembership, $this>
+     */
+    public function projectMemberships(): HasMany
+    {
+        return $this->hasMany(ProjectMembership::class);
+    }
+
+    /**
      * Whether assigning $proposedManagerId as this staff member's manager
      * would create a reporting cycle — i.e. $proposedManagerId's own
      * manager chain eventually loops back to this staff member. Walks a

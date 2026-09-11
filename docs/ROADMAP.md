@@ -53,8 +53,8 @@ Current status tracking (with history, DEC-010), explicit check-in flow (DEC-005
 ### Work Management
 *Depends on: Phase 7 (Staff); Phase 8 (Clients, for project↔client linkage)*
 
-**Phase 10 — Projects & Project Membership**
-Projects, project members, project milestones.
+**Phase 10 — Projects & Project Membership** *(complete — see `docs/handoffs/V1_PHASE_10_HANDOFF.md`)*
+Projects, project members. (Project milestones were not part of the governing Phase 10 instructions and remain unimplemented — see `03_DATABASE_MODEL.md`.)
 
 **Phase 11 — Tasks**
 Tasks (project-linked and independent, DEC-006), assignments, comments.

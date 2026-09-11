@@ -74,4 +74,15 @@ class Client extends Model
     {
         return $this->hasMany(Contact::class);
     }
+
+    /**
+     * Projects associated with this Client (Phase 10). Optional — a
+     * Project may be internal (client_id = null) and never appears here.
+     *
+     * @return HasMany<Project, $this>
+     */
+    public function projects(): HasMany
+    {
+        return $this->hasMany(Project::class);
+    }
 }

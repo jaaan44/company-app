@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\Organization\DepartmentController;
 use App\Http\Controllers\Api\V1\Organization\PositionController;
 use App\Http\Controllers\Api\V1\Organization\TeamController;
+use App\Http\Controllers\Api\V1\Projects\ProjectController;
+use App\Http\Controllers\Api\V1\Projects\ProjectMembershipController;
 use App\Http\Controllers\Api\V1\Staff\StaffController;
 use App\Http\Controllers\Api\V1\StaffOperations\CheckInController;
 use App\Http\Controllers\Api\V1\StaffOperations\OperationalStatusController;
@@ -152,5 +154,42 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
 
     Route::middleware('can:location.manage')->group(function (): void {
         Route::delete('check-ins/{checkIn:public_id}', [CheckInController::class, 'destroy'])->name('checkins.destroy');
+    });
+});
+
+// Projects & Project Membership (Phase 10): the foundation later modules
+// (Tasks, Work Logs, project activity, reporting) will reference.
+// Deliberately NOT gated by a bare 'can:projects.view' route middleware
+// on the read routes below — visibility is scoped in-controller
+// (AuthorizesProjectVisibility): an Administrator/Manager ('projects.view')
+// sees every Project; an ordinary Staff member sees only Projects where
+// they hold a Project Membership. Writes (Project CRUD and all Project
+// Membership changes) require 'projects.manage' (Administrator-only, via
+// the centralized Gate::before override — DEC-028) — no project-lead
+// self-management carve-out. Route-model-bound by public_id (DEC-017);
+// membership rows are addressed by their member's Staff public_id within
+// the nested collection, not an independent membership public_id.
+Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
+    Route::get('projects', [ProjectController::class, 'index'])->name('projects.index');
+    Route::get('projects/{project:public_id}', [ProjectController::class, 'show'])->name('projects.show');
+    Route::get('projects/{project:public_id}/members', [ProjectMembershipController::class, 'index'])->name('projects.members.index');
+
+    Route::middleware('can:projects.manage')->group(function (): void {
+        Route::post('projects', [ProjectController::class, 'store'])->name('projects.store');
+        Route::match(['put', 'patch'], 'projects/{project:public_id}', [ProjectController::class, 'update'])->name('projects.update');
+        Route::delete('projects/{project:public_id}', [ProjectController::class, 'destroy'])->name('projects.destroy');
+
+        Route::post('projects/{project:public_id}/members', [ProjectMembershipController::class, 'store'])->name('projects.members.store');
+
+        // withoutScopedBindings(): explicit `:public_id` binding fields on
+        // two consecutive Eloquent route parameters otherwise make Laravel
+        // try to resolve {staff} via a guessed relationship on Project
+        // (e.g. Project::staff()/staffs(), which doesn't exist) instead of
+        // resolving Staff directly — membership is verified explicitly in
+        // ProjectMembershipController::update()/destroy() instead.
+        Route::match(['put', 'patch'], 'projects/{project:public_id}/members/{staff:public_id}', [ProjectMembershipController::class, 'update'])
+            ->name('projects.members.update')->withoutScopedBindings();
+        Route::delete('projects/{project:public_id}/members/{staff:public_id}', [ProjectMembershipController::class, 'destroy'])
+            ->name('projects.members.destroy')->withoutScopedBindings();
     });
 });

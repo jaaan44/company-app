@@ -5,6 +5,7 @@ namespace Tests\Feature\Api\V1\Staff;
 use App\Enums\StaffStatus;
 use App\Models\Department;
 use App\Models\Position;
+use App\Models\ProjectMembership;
 use App\Models\Staff;
 use App\Models\Team;
 use App\Models\User;
@@ -180,6 +181,17 @@ class StaffTest extends TestCase
         $this->deleteJson("/api/v1/staff/{$manager->public_id}")->assertStatus(409);
 
         $this->assertDatabaseHas('staff', ['id' => $manager->id]);
+    }
+
+    public function test_deleting_a_staff_member_with_project_memberships_is_rejected(): void
+    {
+        $this->actingAsAdministrator();
+        $staff = Staff::factory()->create();
+        ProjectMembership::factory()->for($staff, 'staff')->create();
+
+        $this->deleteJson("/api/v1/staff/{$staff->public_id}")->assertStatus(409);
+
+        $this->assertDatabaseHas('staff', ['id' => $staff->id]);
     }
 
     // --- Filters / search ----------------------------------------------
