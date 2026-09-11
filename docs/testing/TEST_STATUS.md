@@ -116,8 +116,8 @@ No automated tests apply to this phase — no application code exists yet.
 | `GET /login` (Admin) through Nginx | Automated, local | PASS | `200`, Livewire component present — after fixing the entrypoint permissions bug (see handoff). |
 | `POST /api/v1/auth/login` through Nginx | Automated, local | PASS | Full request → MySQL → Sanctum token issuance cycle confirmed working end-to-end through the Docker stack. |
 | Host (non-Docker) `composer validate --strict` / `vendor/bin/pint --test` / `vendor/bin/phpstan analyse` / `php artisan test` | Automated, local | PASS | Unaffected by this phase — 31/31 tests, 0 PHPStan errors, Pint clean. |
-| Backend CI workflow | Automated, GitHub Actions | PENDING | To be confirmed on the Phase 4A PR — Docker changes don't affect this workflow's own SQLite-based run, but it must still pass. |
-| Mobile CI workflow | Automated, GitHub Actions | PENDING | Unaffected by this phase (no `apps/mobile` changes) — expected to pass, to be confirmed on the PR. |
+| Backend CI workflow | Automated, GitHub Actions | PASS | Run [34552289717](https://github.com/jaaan44/company-app/actions/runs/34552289717), commit `f13de5a`, ~25s. |
+| Mobile CI workflow | Automated, GitHub Actions | N/A (did not trigger) | No `apps/mobile` changes in this phase — correctly respects the path-filtered CI design (DEC-015). |
 | No RBAC/business functionality introduced | Manual | PASS | Confirmed by reviewing the full staged diff before commit. |
 
 *(Future phases append their own section above this line, oldest first.)*

@@ -130,7 +130,15 @@ See §15's table and `docs/testing/TEST_STATUS.md`'s Phase 4A section for the co
 
 ## 18. GitHub Actions Status
 
-Not yet available at the time of writing — the branch had not been pushed / a PR had not been opened yet when this section was drafted. Per CLAUDE.md §36/23, this is updated (or a follow-up note added) once the PR is opened and Actions run.
+A draft pull request ([#6](https://github.com/jaaan44/company-app/pull/6), `claude/v1-phase-04a-docker-development` → `main`, not merged) was opened to exercise CI, matching the established pattern.
+
+**Backend CI ran and passed on commit `f13de5a`:**
+
+| Workflow | Job | Result | Duration | Run |
+|---|---|---|---|---|
+| Backend CI | Backend quality gates (PHP 8.4) | ✅ success | ~25s | [run 34552289717](https://github.com/jaaan44/company-app/actions/runs/34552289717) |
+
+Mobile CI did not trigger — no `apps/mobile` files changed, correctly respecting the path-filtered CI design (DEC-015). This confirms `composer.json`/`composer.lock` remain correctly resolved and that this phase's one new tracked file under `apps/api` (`.env.docker.example`) doesn't affect any existing check on GitHub's unrestricted-network runner.
 
 ## 19. Deviations
 
