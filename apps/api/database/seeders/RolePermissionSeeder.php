@@ -26,6 +26,14 @@ use Illuminate\Database\Seeder;
  * permission to it (see DEC-028). Manager and Staff intentionally start
  * with no permissions in V1 (CLAUDE.md §10) — later phases attach real
  * permissions as their modules are built.
+ *
+ * Phase 6 (Organization Structure) adds `organization.view` /
+ * `organization.manage` and attaches `organization.view` to Manager and
+ * Staff — viewing the company's Department/Team/Position structure is
+ * low-sensitivity, broadly useful company metadata, unlike
+ * `organization.manage` (create/update/delete), which remains
+ * Administrator-only via the centralized override, same as every other
+ * `*.manage` permission so far.
  */
 class RolePermissionSeeder extends Seeder
 {
@@ -36,12 +44,12 @@ class RolePermissionSeeder extends Seeder
             ['label' => 'Administrator'],
         );
 
-        Role::query()->firstOrCreate(
+        $manager = Role::query()->firstOrCreate(
             ['name' => Role::MANAGER],
             ['label' => 'Manager'],
         );
 
-        Role::query()->firstOrCreate(
+        $staff = Role::query()->firstOrCreate(
             ['name' => Role::STAFF],
             ['label' => 'Staff'],
         );
@@ -55,6 +63,19 @@ class RolePermissionSeeder extends Seeder
             ['name' => 'authorization.manage'],
             ['label' => "Manage users' roles and permissions"],
         );
+
+        $organizationView = Permission::query()->firstOrCreate(
+            ['name' => 'organization.view'],
+            ['label' => 'View departments, teams, and positions'],
+        );
+
+        Permission::query()->firstOrCreate(
+            ['name' => 'organization.manage'],
+            ['label' => 'Create, update, and delete departments, teams, and positions'],
+        );
+
+        $manager->permissions()->syncWithoutDetaching([$organizationView->id]);
+        $staff->permissions()->syncWithoutDetaching([$organizationView->id]);
 
         $this->command?->info('Role/permission catalog ready (Administrator, Manager, Staff).');
     }
