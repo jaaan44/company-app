@@ -56,6 +56,17 @@ use Illuminate\Database\Seeder;
  * Manager's own direct reports — never company-wide precise-location
  * visibility for Manager/Staff. `location.manage` (deleting/correcting a
  * historical check-in) remains Administrator-only.
+ *
+ * Phase 10 (Projects & Project Membership) adds `projects.view` /
+ * `projects.manage`. Unlike every `*.view` permission before it,
+ * `projects.view` is attached to **Manager only** (not Staff) — Projects
+ * are membership-scoped business information, not company-wide directory
+ * data like Staff/Clients/Organization; an ordinary Staff member instead
+ * sees only Projects where they hold a Project Membership, enforced
+ * in-controller (ProjectController/ProjectMembershipController), not via
+ * this permission. `projects.manage` (Project CRUD and all Project
+ * Membership writes) remains Administrator-only, same pattern as every
+ * other `*.manage` permission.
  */
 class RolePermissionSeeder extends Seeder
 {
@@ -136,8 +147,18 @@ class RolePermissionSeeder extends Seeder
             ['label' => 'Delete or correct a historical location check-in'],
         );
 
+        $projectsView = Permission::query()->firstOrCreate(
+            ['name' => 'projects.view'],
+            ['label' => 'View all projects'],
+        );
+
+        Permission::query()->firstOrCreate(
+            ['name' => 'projects.manage'],
+            ['label' => 'Create, update, and delete projects and project memberships'],
+        );
+
         $manager->permissions()->syncWithoutDetaching([
-            $organizationView->id, $staffView->id, $clientsView->id, $staffStatusView->id, $locationView->id,
+            $organizationView->id, $staffView->id, $clientsView->id, $staffStatusView->id, $locationView->id, $projectsView->id,
         ]);
         $staff->permissions()->syncWithoutDetaching([
             $organizationView->id, $staffView->id, $clientsView->id, $staffStatusView->id,

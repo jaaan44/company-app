@@ -1,6 +1,6 @@
 # 03 — Conceptual Database Model (Provisional)
 
-Status: **Conceptual, with the Identity & Organization group's Roles/Permissions, Departments/Teams/Positions, and Staff (Phases 5–7), the Clients group (Phase 8), and the Staff Operations group (Phase 9) now implemented.** This document identifies likely entities, relationships, ownership concepts, and areas needing later design decisions. It intentionally does not specify every column — that happens per-phase, when each area is actually implemented.
+Status: **Conceptual, with the Identity & Organization group's Roles/Permissions, Departments/Teams/Positions, and Staff (Phases 5–7), the Clients group (Phase 8), the Staff Operations group (Phase 9), and the Work Management group's Projects/Project Membership (Phase 10) now implemented.** This document identifies likely entities, relationships, ownership concepts, and areas needing later design decisions. It intentionally does not specify every column — that happens per-phase, when each area is actually implemented.
 
 ## 1. Entity Groups
 
@@ -24,10 +24,11 @@ Status: **Conceptual, with the Identity & Organization group's Roles/Permissions
 - `staff_checkins` — explicit check-in events (DEC-005: not continuous tracking). **Implemented as of Phase 9 (DEC-032):** `public_id` (ULID), `staff_id`, required `latitude`/`longitude` (`decimal(10,7)`), optional `accuracy_meters`/`location_label` (free text — no separate `locations` catalog table was built; not warranted for V1)/`note`/`status` (an informational snapshot). "Current location" is likewise a derived read (`Staff::latestCheckIn()`, `latestOfMany()`). No `client_id` reference was added — check-ins are not yet connected to Clients/Projects (a future phase's concern if ever needed).
 
 ### Work Management
-`projects`, `project_members`, `project_milestones`, `tasks`, `task_assignees`, `task_comments`, `work_logs`
+`projects`, `project_memberships`, `project_milestones`, `tasks`, `task_assignees`, `task_comments`, `work_logs`
 
-- `projects` optionally belong to a `client`. `project_members` is the many-to-many join between `projects` and `staff`, likely carrying a role-on-project (e.g. Project Manager vs Member).
-- `project_milestones` belong to a `project`.
+- `projects` optionally belong to a `client`. **Implemented as of Phase 10 (DEC-033):** `public_id` (ULID), `project_code` (nullable, unique when present), `name`, `description`, `client_id` (nullable, `restrictOnDelete()`), `status` (`App\Enums\ProjectStatus` — `planned`/`active`/`on_hold`/`completed`/`cancelled`), `start_date`/`target_end_date`/`completed_date`, `notes`. No `project_manager_staff_id` — leadership lives entirely on Project Membership's role.
+- `project_memberships` is the join between `projects` and `staff`, carrying a role-on-project (`App\Enums\ProjectMembershipRole` — `project_lead`/`member`). **Implemented as of Phase 10:** `project_id`/`staff_id` (both `restrictOnDelete()`), `role`, unique on `(project_id, staff_id)`. Represents the current roster only — no historical-period tracking, no `public_id` (addressed via its Project's/Staff's `public_id`).
+- `project_milestones` belong to a `project`. **Not yet implemented** — deferred past Phase 10 (no milestone concept was introduced; see docs/phases/V1_PHASE_10_DEFINITION.md's explicit exclusions).
 - `tasks` optionally belong to a `project` (DEC-006 — must support project-less tasks). `task_assignees` is many-to-many `tasks`↔`staff` (supports multiple assignees, or could be simplified to one primary + watchers — open question for the Tasks phase). `task_comments` belong to a `task` and an author (`staff`/`user`).
 - `work_logs` belong to `staff` and optionally to a `task` and/or `project` — time or activity entries.
 
@@ -96,5 +97,7 @@ Status: **Conceptual, with the Identity & Organization group's Roles/Permissions
 **Resolved (Phase 8):** `clients`/`contacts` were added — see §1 above and DEC-031. Each carries a `public_id` (ULID, DEC-017 — admin-manageable business entities). `contacts.client_id` is required (never nullable) and `restrictOnDelete()` — a Contact always belongs to exactly one Client. `clients`/`contacts` each carry their own two-state lifecycle (`App\Enums\ClientStatus`/`ContactStatus`) rather than reusing `OrganizationStatus` (a distinct domain concept, even though the state shape is identical) or introducing `SoftDeletes`.
 
 **Resolved (Phase 9):** `staff_statuses`/`staff_checkins` were added — see §1 above and DEC-032. Neither carries a `public_id` matching Department/Team/Position/Staff/Client/Contact's admin-manageable-entity pattern: `staff_checkins` does get one (an Administrator addresses a single check-in directly for deletion), but `staff_statuses` deliberately doesn't (a status entry is never independently addressed by URL — DEC-017's "pivot/history tables generally don't need one"). Both `cascadeOnDelete()` on their parent `staff` row (child data with no independent meaning), unlike every `restrictOnDelete()` relationship elsewhere in the schema (which protects master data other rows still depend on).
+
+**Resolved (Phase 10):** `projects`/`project_memberships` were added — see §1 above and DEC-033. `projects` carries a `public_id` (ULID, DEC-017 — an admin-manageable business entity); `project_memberships` deliberately doesn't (never independently addressed by URL — addressed via its Project's/Staff's `public_id`, same reasoning as `staff_statuses`, Phase 9). Both `project_memberships` foreign keys are `restrictOnDelete()` (master data future modules will anchor to), not `cascadeOnDelete()` (contrast Phase 9's Staff-owned child data).
 
 This document should be revisited and updated (not silently replaced) each time a phase implements one of these areas for real, so it stays a useful map rather than going stale.

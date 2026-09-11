@@ -66,18 +66,26 @@ class ClientController extends Controller
     }
 
     /**
-     * A client that still has any contact referencing it cannot be
-     * deleted — preventing an orphaned contact record and preserving
-     * business history (see docs/phases/V1_PHASE_08_DEFINITION.md). The
-     * `restrictOnDelete()` foreign key on `contacts.client_id` backs this
-     * up at the database level; this check exists to return a clear 409
-     * instead of a raw database constraint error.
+     * A client that still has any contact or project referencing it
+     * cannot be deleted — preventing an orphaned record and preserving
+     * business history (see docs/phases/V1_PHASE_08_DEFINITION.md and,
+     * for projects, docs/phases/V1_PHASE_10_DEFINITION.md). The
+     * `restrictOnDelete()` foreign keys on `contacts.client_id` and
+     * `projects.client_id` back this up at the database level; these
+     * checks exist to return a clear 409 instead of a raw database
+     * constraint error.
      */
     public function destroy(Client $client): JsonResponse
     {
         if ($client->contacts()->exists()) {
             return response()->json([
                 'message' => 'This client still has contacts assigned to it and cannot be deleted.',
+            ], 409);
+        }
+
+        if ($client->projects()->exists()) {
+            return response()->json([
+                'message' => 'This client still has projects assigned to it and cannot be deleted.',
             ], 409);
         }
 

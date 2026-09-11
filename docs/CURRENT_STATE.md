@@ -3,14 +3,14 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** Phase 9 — Staff Status & Location Check-in
+**Current phase:** Phase 10 — Projects & Project Membership
 **Phase status:** COMPLETE (pending user review)
-**Last completed phase:** Phase 9 (Phases 1–8 are merged into `main`)
-**Next planned phase:** Phase 10 — Projects & Project Membership (see `ROADMAP.md`) — **not authorized yet**
+**Last completed phase:** Phase 10 (Phases 1–9 are merged into `main`)
+**Next planned phase:** Phase 11 — Tasks (see `ROADMAP.md`) — **not authorized yet**
 
 ## Current Objective
 
-Phase 9 is implemented, tested, and pushed for review. Awaiting authorization for Phase 10.
+Phase 10 is implemented, tested, and pushed for review. Awaiting authorization for Phase 11.
 
 ## Completed
 
@@ -76,9 +76,20 @@ Phase 9 is implemented, tested, and pushed for review. Awaiting authorization fo
   - Recorded DEC-032.
   - No attendance, clock-in/clock-out, timesheets, payroll, salary, overtime, leave management/balances/approvals, biometric integration, continuous/background GPS tracking, automatic location polling, geofencing, route/movement history, employee surveillance, GPS spoofing detection, Google Maps/Mapbox/geocoding integration, device tracking, project/task assignment, work logs, messaging, notifications, or performance/productivity monitoring; no Admin Backoffice CRUD UI or Flutter mobile screens (deferred to a future UI phase).
 
+- **Phase 10:** Projects & Project Membership. See `docs/handoffs/V1_PHASE_10_HANDOFF.md` for full detail.
+  - `projects`/`project_memberships` tables; `App\Models\Project`/`ProjectMembership` (`projects` carries a ULID `public_id`, DEC-017; `project_memberships` deliberately doesn't). `App\Enums\ProjectStatus` (`planned`/`active`/`on_hold`/`completed`/`cancelled`); `App\Enums\ProjectMembershipRole` (`project_lead`/`member`, project-scoped, distinct from the global application role).
+  - No `project_manager_staff_id` — leadership lives entirely on Project Membership's `role`. `projects.client_id` is nullable (`restrictOnDelete()`) — a Project may be internal; an inactive Client neither loses existing Projects nor is blocked from new ones.
+  - `project_memberships` represents the current roster only (no historical-period tracking, hard-delete on removal), unique on `(project_id, staff_id)`, both FKs `restrictOnDelete()`. Only `active` Staff may be newly assigned; existing memberships survive a later status change.
+  - `ClientController`/`StaffController::destroy` (Phases 8/7) extended to also block deletion while a Project/Project Membership references them; `ProjectController::destroy` blocks deletion while memberships exist.
+  - New permissions `projects.view` (**Manager only** — the first `*.view` not also granted to Staff) and `projects.manage` (Administrator-only, covers Project CRUD and all membership writes).
+  - An ordinary Staff member sees only Projects where they hold a membership — enforced in-controller (`AuthorizesProjectVisibility`), applied directly to `GET /api/v1/projects`/`{public_id}` rather than a `can:` route middleware — the second real row-level authorization pattern after Phase 9.
+  - New versioned REST endpoints (`/api/v1/projects` full CRUD; nested `/api/v1/projects/{public_id}/members` — the first genuinely nested resource in this API, addressed by the member's Staff `public_id`).
+  - Recorded DEC-033.
+  - No tasks, task assignment, work logs, time tracking, billing, quotations, contracts, CRM opportunity pipelines, file/document management, messaging, notifications, calendars, Gantt charts, budgeting/financials, utilization metrics, or approval workflows; no Admin Backoffice CRUD UI (consistent with Phase 6/7/8/9's precedent).
+
 ## Pending / Not Started
 
-- Projects & Project Membership (Phase 10) and everything after it on the roadmap.
+- Tasks (Phase 11) and everything after it on the roadmap.
 
 ## Known Blockers / Issues
 
@@ -91,13 +102,13 @@ Phase 9 is implemented, tested, and pushed for review. Awaiting authorization fo
 ## Repository / Branch Information
 
 - Repository: `jaaan44/company-app`
-- Default branch: `main` (contains the approved Phase 0–8 baseline)
-- Phase 9 branch: `claude/company-app-v1-phase-9-status-checkin` (branched from `main`, not merged)
+- Default branch: `main` (contains the approved Phase 0–9 baseline)
+- Phase 10 branch: `claude/eager-archimedes-8ze14i` (branched from `main`, not merged)
 
 ## Latest Relevant Handoff
 
-`docs/handoffs/V1_PHASE_09_HANDOFF.md`
+`docs/handoffs/V1_PHASE_10_HANDOFF.md`
 
 ## For the Next Session
 
-Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_09_HANDOFF.md` for Staff Status & Location Check-in, `docs/handoffs/V1_PHASE_08_HANDOFF.md` for Clients & Contacts, `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 10 (Projects & Project Membership) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.
+Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_10_HANDOFF.md` for Projects & Project Membership, `docs/handoffs/V1_PHASE_09_HANDOFF.md` for Staff Status & Location Check-in, `docs/handoffs/V1_PHASE_08_HANDOFF.md` for Clients & Contacts, `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 11 (Tasks) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.
