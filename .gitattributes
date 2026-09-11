@@ -1,0 +1,9 @@
+# Normalize line endings for text files across platforms.
+* text=auto eol=lf
+
+# Executed directly inside Linux containers via shebang — a CRLF line
+# ending breaks the interpreter lookup (e.g. "#!/bin/sh\r" resolves to a
+# nonexistent "/bin/sh\r"), so these must always be checked out with LF
+# regardless of the developer's platform/git config.
+*.sh text eol=lf
+Dockerfile text eol=lf
