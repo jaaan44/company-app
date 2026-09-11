@@ -98,4 +98,40 @@ No automated tests apply to this phase — no application code exists yet.
 | Mobile CI workflow | Automated, GitHub Actions | PASS | Run [34548321404](https://github.com/jaaan44/company-app/actions/runs/34548321404), commit `7eb3717`, ~49s. |
 | No unrelated business functionality introduced | Manual | PASS | confirmed by reviewing the full staged diff before commit |
 
+---
+
+## Phase 4A — Docker Development Environment
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `docker compose config` | Automated, local | PASS | Validates cleanly against the real, committed `docker-compose.yml`. |
+| `docker compose build app` (real, committed Dockerfile) | Automated, local | BLOCKED (local only) | Fails at the `apt-get` step — this sandbox's network policy blocks `deb.debian.org` (confirmed a deliberate block, not a transient failure). A real developer's or CI's unrestricted network has no such restriction. |
+| Full stack build/startup/validation (temporary, uncommitted Dockerfile variant skipping only the network-blocked `apt-get` step) | Automated, local | PASS | Genuinely built and ran; see handoff for exact steps. Confirms every other line of the real Dockerfile and the full compose stack. |
+| MySQL healthcheck | Automated, local | PASS | `mysqladmin ping` — `app` container correctly waited for `service_healthy` before starting. |
+| Laravel ↔ MySQL connectivity | Automated, local | PASS | `DB::connection()->getPdo()` succeeded inside the `app` container. |
+| Migrations against real MySQL 8.4 | Automated, local | PASS | All 5 migrations ran cleanly. |
+| `AdminUserSeeder` inside Docker | Automated, local | PASS | Created the local dev admin account as expected. |
+| `composer validate --strict` / `vendor/bin/pint --test` / `vendor/bin/phpstan analyse` / `php artisan test` inside the `app` container | Automated, local | PASS | 31/31 tests, 96 assertions; PHPStan 0 errors (after raising `memory_limit` to 512M — see Known Issues in the handoff); Pint clean. |
+| `GET /api/v1/health` through Nginx | Automated, local | PASS | `curl http://localhost:8000/api/v1/health` → `200`. |
+| `GET /login` (Admin) through Nginx | Automated, local | PASS | `200`, Livewire component present — after fixing the entrypoint permissions bug (see handoff). |
+| `POST /api/v1/auth/login` through Nginx | Automated, local | PASS | Full request → MySQL → Sanctum token issuance cycle confirmed working end-to-end through the Docker stack. |
+| Host (non-Docker) `composer validate --strict` / `vendor/bin/pint --test` / `vendor/bin/phpstan analyse` / `php artisan test` | Automated, local | PASS | Unaffected by this phase — 31/31 tests, 0 PHPStan errors, Pint clean. |
+| Backend CI workflow | Automated, GitHub Actions | PASS | Run [34552289717](https://github.com/jaaan44/company-app/actions/runs/34552289717), commit `f13de5a`, ~25s. |
+| Mobile CI workflow | Automated, GitHub Actions | N/A (did not trigger) | No `apps/mobile` changes in this phase — correctly respects the path-filtered CI design (DEC-015). |
+| No RBAC/business functionality introduced | Manual | PASS | Confirmed by reviewing the full staged diff before commit. |
+| Windows UAT — `docker compose up` | Manual, product owner | **FAIL → FIXED** | `app` container failed: `exec /usr/local/bin/entrypoint.sh: no such file or directory`. Root cause: no `.gitattributes`, so Windows `core.autocrlf=true` checked out `docker/php/entrypoint.sh` as CRLF (`git ls-files --eol` showed `i/lf w/crlf`), breaking its shebang inside the Linux container. Fixed by adding `.gitattributes` (LF enforced for `*.sh`/`Dockerfile`, repo-wide `text=auto eol=lf` default). See handoff §26. |
+| CRLF fix verification: reproduce failure from a deliberately CRLF-converted `entrypoint.sh` | Automated, local | PASS | Built a throwaway image from the CRLF copy; got the identical reported error, confirming root-cause diagnosis before trusting the fix. |
+| CRLF fix verification: simulated Windows checkout (`git -c core.autocrlf=true clone` + checkout) | Automated, local | PASS | `docker/php/entrypoint.sh` and `docker/php/Dockerfile` both check out with pure LF after the fix — the exact scenario the product owner hit. |
+| CRLF fix verification: all three containers up post-fix | Automated, local | PASS | `nginx`, `app`, `mysql` all started; `mysql` reported `healthy`; `app` did not crash-loop; `GET /api/v1/health` → `200` through the full stack — matches the product owner's own successful Windows retest. |
+| Host (non-Docker) quality gates re-verified after the CRLF fix | Automated, local | PASS | `composer validate --strict`, `vendor/bin/pint --test`, `vendor/bin/phpstan analyse`, `php artisan test` (31/31) — unaffected, confirming the fix touched nothing beyond line-ending normalization. |
+| Backend CI workflow (re-confirmed after CRLF fix) | Automated, GitHub Actions | PASS | Run [34573583090](https://github.com/jaaan44/company-app/actions/runs/34573583090), commit `272625e`, ~17s. |
+| Windows UAT — full first-time setup + Authentication (Admin and Flutter) against Docker | Manual, product owner | **PASS** | Full list in `docs/testing/UAT_LOG.md` (UAT-04-01, 04-03, 04-04, 04-06, 04A-01–03) — Docker stack, `composer install`, `key:generate`, migrations, `AdminUserSeeder`, `/api/v1/health`, Admin `/login`/login/logout/logged-out redirect, Flutter login/invalid-password/state-restoration/logout. Reported directly by the product owner; recorded as `PASS` only for the exact scenarios reported — see the handoff §27.2. |
+| `docker compose config` (port defaults) | Automated, local | PASS | Resolved config shows `nginx` → `published: "8012"`, `target: 80`; `mysql` → `published: "3347"`, `target: 3306` — internal ports unchanged. |
+| `docker compose config` (`APP_PORT`/`MYSQL_PORT` overrides) | Automated, local | PASS | Tested with `APP_PORT=9000 MYSQL_PORT=3399` — both override correctly with no `docker-compose.yml` edit needed. |
+| Full stack on new default ports (temporary Dockerfile variant, same method as §109) | Automated, local | PASS | All 3 containers up; `docker compose ps` confirmed `0.0.0.0:8012->80/tcp` and `127.0.0.1:3347->3306/tcp`; `mysql` healthy. |
+| `GET /api/v1/health`, `GET /login`, `POST /api/v1/auth/login` on port `8012` | Automated, local | PASS | All `200`; login returned a valid token via a full MySQL round-trip. |
+| Migrations / `AdminUserSeeder` / `php artisan test` (31/31) / `vendor/bin/pint --test` / `vendor/bin/phpstan analyse` (0 errors) inside `app`, post-port-change | Automated, local | PASS | Re-verified after the port change; unaffected. |
+| Host (non-Docker) quality gates, post-port-change | Automated, local | PASS | `composer validate --strict`, `vendor/bin/pint --test`, `vendor/bin/phpstan analyse`, `php artisan test` (31/31) — unaffected, confirming the change is scoped to Docker port configuration only. |
+| Backend CI workflow (re-confirmed after port configuration + UAT documentation) | Automated, GitHub Actions | PASS | Run [34577973012](https://github.com/jaaan44/company-app/actions/runs/34577973012), commit `3b418ce`, ~20s. |
+
 *(Future phases append their own section above this line, oldest first.)*

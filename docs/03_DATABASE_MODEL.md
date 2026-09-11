@@ -86,4 +86,6 @@ Status: **Conceptual only. No migrations exist.** This document identifies likel
 
 **Resolved (Phase 4):** `users` gained real authentication columns (`public_id`, `status`, `is_admin`) and `personal_access_tokens` (Sanctum) was added — see §1 above and DEC-022/DEC-024.
 
+**Resolved (Phase 4A):** the production database direction (MySQL, DEC-016) is now also the standard local development database, via the Docker Compose `mysql` service (DEC-027) — all current migrations were verified to run cleanly against real MySQL 8.4, not just SQLite. SQLite remains the automated-test database (unaffected, isolated per `phpunit.xml`) and is still an option for a developer running the backend directly rather than via Docker.
+
 This document should be revisited and updated (not silently replaced) each time a phase implements one of these areas for real, so it stays a useful map rather than going stale.

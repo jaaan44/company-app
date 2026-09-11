@@ -4,6 +4,28 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-09-11 — Phase 4A correction: Windows UAT results + configurable Docker ports
+- **UAT:** product owner completed full Windows UAT — Docker stack (post-CRLF-fix), first-time setup (`composer install`, `key:generate`, migrations, `AdminUserSeeder`), `/api/v1/health`, and the full Admin + Flutter authentication flow against the Dockerized API — all passing. Recorded as `PASS` in `docs/testing/UAT_LOG.md` (UAT-04-01, 04-03, 04-04, 04-06, 04A-01–03), attributed to the product owner per CLAUDE.md §7; untested scenarios (Admin suspended/inactive/non-admin rejection, Flutter simulated network failure) remain `NOT RUN`.
+- **Port configuration:** both Docker host ports are now configurable rather than fixed, after the product owner hit port collisions on Windows (host `3306` already in use). `docker-compose.yml`: `nginx`'s host port is `${APP_PORT:-8012}:80` (was fixed `8000:80`); `mysql`'s host port is `127.0.0.1:${MYSQL_PORT:-3347}:3306` (was fixed `127.0.0.1:3306:3306`). Neither container's internal port changed. Updated `apps/api/.env.docker.example` (`APP_URL`), `README.md`, and `docs/02_ARCHITECTURE.md` §14 accordingly. Flutter's own built-in default (`http://localhost:8000/api/v1`) is deliberately unchanged — the Docker-path examples now pass `--dart-define=API_BASE_URL=http://localhost:8012/api/v1` explicitly, per the existing DEC-021 mechanism.
+- Re-verified via a genuinely running Docker stack on the new default ports (build, MySQL healthy, migrations, seeder, full 31-test suite, Pint, PHPStan, health/login/login-API endpoints) plus the unaffected host (non-Docker) quality gates. GitHub Actions re-confirmed green.
+- Updated `docs/handoffs/V1_PHASE_04A_HANDOFF.md` (§5, §9, §12, §24, new §27), `docs/testing/TEST_STATUS.md`, `docs/testing/UAT_LOG.md`, `docs/CURRENT_STATE.md`.
+- No RBAC, Staff Management, or other business functionality was introduced.
+
+### 2026-09-11 — Phase 4A: Docker Development Environment
+- Added `docker-compose.yml` (repo root) defining three services — `nginx` (`nginx:1.27-alpine`), `app` (`docker/php/Dockerfile`, `php:8.4-fpm` + `pdo_mysql`/`bcmath` + Composer), `mysql` (`mysql:8.4`) — as the new standard local backend development environment. No Redis, queue worker, scheduler, WebSocket server, Mailpit, phpMyAdmin, or other always-on service added.
+- `mysql-data` named volume persists database state; a separate `vendor` named volume isolates the container's Composer install from whatever exists (or doesn't) in the host's `apps/api/vendor`, avoiding host/container dependency mismatches.
+- Added `apps/api/.env.docker.example` (MySQL-pointing: `DB_HOST=mysql`, matching the `mysql` service's local-only dev credentials) alongside the existing SQLite-based `.env.example`.
+- Added `docker/php/entrypoint.sh` (grants write access to `storage`/`bootstrap/cache` only, not the whole application) and `docker/php/conf.d/local-dev.ini` (raises `memory_limit` to 512M — the base image's 128M default crashes Larastan/PHPStan's parallel workers).
+- Genuinely verified in this session by actually building and running the stack: MySQL healthcheck, Laravel↔MySQL connectivity, all 5 migrations, `AdminUserSeeder`, the full 31-test Phase 4 Authentication suite, `vendor/bin/pint --test`, `vendor/bin/phpstan analyse`, and `/api/v1/health` / `/login` / `POST /api/v1/auth/login` through Nginx — all passing. This validation surfaced and fixed two real bugs: the entrypoint's original `chmod ug+rwX` didn't actually grant the container's `www-data` PHP-FPM process write access (fixed to `a+rwX`, still scoped to just those two directories); and an initial `env_file` directive on the `app` service silently defeated `phpunit.xml`'s testing-environment overrides (PHPUnit's `<env>` doesn't force-replace an already-set variable), which would have pointed `php artisan test` inside the container at the real dev database instead of the isolated in-memory SQLite it uses everywhere else — removed, since Laravel already reads `apps/api/.env` directly via the bind mount.
+- Recorded DEC-027 (Docker Compose as the standard local backend environment), formally superseding DEC-013 (marked `SUPERSEDED`, not deleted, per `DECISIONS.md`'s own rules).
+- GitHub Actions CI is unchanged — still SQLite-based (DEC-015) and runs directly on the runner, no Docker.
+- Flutter (`apps/mobile`) is entirely unaffected — it remains outside Docker.
+- Updated `CLAUDE.md` (§5 Docker note, §9 repository layout), `README.md`, `docs/02_ARCHITECTURE.md` (new §14), `docs/03_DATABASE_MODEL.md`, `docs/DECISIONS.md`, `docs/ROADMAP.md` (Phase 4A inserted between Phase 4 and Phase 5), `docs/CURRENT_STATE.md`, `docs/testing/TEST_STATUS.md`.
+- No RBAC, Staff Management, or other business functionality was introduced.
+
+### 2026-09-11 — Phase 4 merged into `main`
+- PR #5 merged. `main` now contains Authentication.
+
 ### 2026-09-11 — Phase 4: Authentication
 - **Backend:** added `App\Enums\AccountStatus` (`active`/`suspended`/`inactive`); migrated `users` to add `public_id` (ULID), `status`, and a transitional `is_admin` boolean; installed `laravel/sanctum` (^4.0) with its `personal_access_tokens` migration and config published.
 - Admin Backoffice: `App\Livewire\Auth\LoginForm` (Blade + Livewire) at `GET /login`, session regeneration on success, `POST /logout`, a protected `GET /home` placeholder — all gated by `auth`/`guest` middleware plus a new `App\Http\Middleware\EnsureAccountIsActive` (alias `account.active`) that also enforces account status on already-authenticated access (not just login), logging a now-suspended session out.

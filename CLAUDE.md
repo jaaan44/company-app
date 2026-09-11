@@ -67,6 +67,8 @@ flutter test
 
 If a future phase changes these versions or commands, update this section — don't let it go stale.
 
+**Local development environment (Phase 4A, DEC-027):** Docker Compose (`docker compose up -d`, three services — `nginx`, `app`, `mysql`) is the standard way to run the backend locally, superseding DEC-013. The commands above are unchanged and remain what CI runs and what this section governs; inside the Docker environment, run them as `docker compose exec app <command>` (e.g. `docker compose exec app php artisan test`). See `README.md` "Backend (Docker)" for the full setup and `docs/handoffs/V1_PHASE_04A_HANDOFF.md` for what was built. Flutter is not Dockerized — `apps/mobile`'s commands are unaffected.
+
 ## 6. Documentation Duties
 
 Every implementation phase must update, at minimum:
@@ -103,6 +105,10 @@ After completing an authorized phase:
 ```
 CLAUDE.md                      — this file
 README.md                      — project overview / getting started
+docker-compose.yml              — standard local backend dev environment (Phase 4A, DEC-027)
+docker/
+  php/                          — app (PHP-FPM) image: Dockerfile, entrypoint.sh
+  nginx/                        — default.conf (Laravel vhost)
 apps/
   api/                          — Laravel backend/API (+ future Admin Backoffice)
   mobile/                       — Flutter staff mobile app
