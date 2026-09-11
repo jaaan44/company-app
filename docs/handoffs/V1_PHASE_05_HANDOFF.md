@@ -168,7 +168,15 @@ Genuinely performed against a running Docker stack, not assumed — see §17. Th
 
 ## 20. GitHub Actions Status
 
-*To be updated after the branch is pushed and CI runs — see the final report at the end of this session for confirmed run links/results. GitHub Actions is authoritative regardless of local results per CLAUDE.md's established pattern from Phases 2–4A.*
+A draft pull request ([#7](https://github.com/jaaan44/company-app/pull/7), `claude/wonderful-darwin-whxeyg` → `main`, not merged) was opened to exercise the `pull_request` trigger, matching the established pattern from Phases 2–4A.
+
+**Backend CI ran and passed on commit `d1c7d73`:**
+
+| Workflow | Job | Result | Duration | Run |
+|---|---|---|---|---|
+| Backend CI | Backend quality gates (PHP 8.4) | ✅ success | ~24s | [run 34581275152](https://github.com/jaaan44/company-app/actions/runs/34581275152) |
+
+Mobile CI did not trigger — no `apps/mobile` files changed, correctly respecting the path-filtered CI design (DEC-015). PR mergeability confirmed `clean` (no conflict with `main`) at the time of this check. This confirms, independently of this session's local vendor-recovery work (§21), that `composer.json`/`composer.lock` remain correctly resolved and every dependency (including the hand-recovered `phpstan/phpstan`, `larastan/larastan`, `iamcal/sql-parser`) installs and runs cleanly on GitHub's unrestricted-network runner.
 
 ## 21. Deviations
 
