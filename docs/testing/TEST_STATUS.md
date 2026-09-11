@@ -160,4 +160,20 @@ No automated tests apply to this phase — no application code exists yet.
 | UAT-05-01 — Admin: sign in with the seeded Administrator account, reach `/home` | UAT, product owner | **PASS** | Tested on the DigitalOcean VPS Dockerized environment. See `docs/testing/UAT_LOG.md`; recorded by the product owner, not this session, per CLAUDE.md §7. |
 | UAT-05-02 — Admin: a Staff-role account is denied Admin Backoffice access | UAT, product owner | **PASS** | Tested on the DigitalOcean VPS Dockerized environment, using a Staff-role test account created via the Phase 5 role system. See `docs/testing/UAT_LOG.md`; recorded by the product owner, not this session, per CLAUDE.md §7. |
 
+## Phase 6 — Organization Structure
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `composer validate --strict` (apps/api) | Automated, local | PASS | unaffected — no new dependencies added |
+| `vendor/bin/pint --test` (apps/api) | Automated, local | PASS | includes all new Department/Team/Position/authorization code and tests |
+| `vendor/bin/phpstan analyse` (apps/api) | Automated, local | PASS | 0 errors at level 5 |
+| `php artisan test` (apps/api) | Automated, local | PASS | 93 tests, 249 assertions (42 new: 14 `DepartmentTest`, 11 `TeamTest`, 9 `PositionTest`, 6 `OrganizationAuthorizationTest`, 2 new in `RolePermissionSeederTest`; 51 pre-existing Phase 1–5 tests unaffected in behavior — full regression suite healthy) |
+| Migrations (`migrate:fresh`) against SQLite | Automated, local | PASS | All 12 migrations (9 pre-existing + 3 new) run cleanly |
+| `RolePermissionSeeder` (extended) / `AdminUserSeeder` chain | Automated, local | PASS | New `organization.view`/`organization.manage` permissions created; `organization.view` correctly attached to Manager and Staff; confirmed idempotent |
+| Manual: `php artisan serve` + curl — full CRUD smoke test | Manual | PASS | Administrator login → create Department → list Departments (with `teams_count`/`positions_count`) → create Team scoped to that Department (via its `public_id`) → attempt to delete the Department while the Team exists (`409`, correctly rejected) → fetch a Department by its internal numeric id (`404`, confirming `public_id`-only route binding) — all through a real HTTP server, not just PHPUnit's in-process client |
+| No Staff/Clients/Projects/Leave/Tasks/Work Logs/Messaging or other business module introduced | Manual | PASS | Confirmed by reviewing the full staged diff before commit |
+| No department hierarchy / no many-to-many Team↔Department | Manual | PASS | `teams.department_id`/`positions.department_id` are single nullable FKs; confirmed by schema review and tests (`test_team_names_can_repeat_across_different_departments`, etc.) |
+| Docker validation | — | NOT RUN (this session) | This session's sandbox could not reach `deb.debian.org` for an image *build* (same pre-existing, already-documented limitation as Phases 4A/5 — see `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_05_HANDOFF.md`); given this session's *additional* difficulty reaching `api.github.com` for `composer install` itself (see the handoff's Environment/Deviations section), Docker-based re-verification was not attempted this session. All checks above were run directly (non-Docker). Since this phase changed no Docker configuration, the Phase 5 Docker verification (MySQL 8.4, Nginx, full stack) remains the last genuine Docker confirmation; a future session should re-verify Phase 6's migrations/tests inside Docker when network conditions allow, per CLAUDE.md §5. |
+| UAT | — | NOT RUN | No UAT scenario recorded yet for Phase 6 — see `docs/testing/UAT_LOG.md`. This phase introduced no Admin Backoffice UI, so there is nothing yet for the product owner to click through; UAT for organization structure becomes meaningful once a later phase (Staff Directory, or an Admin UI phase) actually surfaces it visually. |
+
 *(Future phases append their own section above this line, oldest first.)*

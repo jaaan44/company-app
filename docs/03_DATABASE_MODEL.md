@@ -1,6 +1,6 @@
 # 03 — Conceptual Database Model (Provisional)
 
-Status: **Conceptual only. No migrations exist.** This document identifies likely entities, relationships, ownership concepts, and areas needing later design decisions. It intentionally does not specify every column — that happens per-phase, when each area is actually implemented.
+Status: **Conceptual, with the Identity & Organization group's Roles/Permissions and Departments/Teams/Positions now implemented (Phases 5–6).** This document identifies likely entities, relationships, ownership concepts, and areas needing later design decisions. It intentionally does not specify every column — that happens per-phase, when each area is actually implemented.
 
 ## 1. Entity Groups
 
@@ -8,8 +8,8 @@ Status: **Conceptual only. No migrations exist.** This document identifies likel
 `users`, `staff`, `departments`, `teams`, `positions`, `roles`, `permissions`
 
 - `users` — authentication identity (login, credentials, account state). Likely 1:1 with `staff` for employees, but kept separate so the concept of "a login" isn't inherently the same as "an HR staff record" (e.g. future non-staff users, or staff without app access). **Implemented as of Phase 4:** beyond Laravel's framework-default columns, `users` carries `public_id` (ULID, DEC-017) and `status` (`active`/`suspended`/`inactive`, `App\Enums\AccountStatus`). `personal_access_tokens` (Sanctum, DEC-022) stores mobile API tokens, polymorphically linked to `users` via `tokenable`. **Implemented as of Phase 5:** the transitional `is_admin` boolean (DEC-024) is retired/dropped; `users` now carries a nullable `role_id` FK instead (see below).
-- `staff` — the HR/organizational record: name, position, department/team, employment status, manager relationship.
-- `departments`, `teams`, `positions` — organizational structure. Likely relationships: a `team` belongs to a `department`; `staff` belongs to a `department`/`team` and holds a `position`. Whether teams can span departments is an **open question** for the Organization Structure phase.
+- `staff` — the HR/organizational record: name, position, department/team, employment status, manager relationship. Not yet implemented — Phase 7.
+- `departments`, `teams`, `positions` — organizational structure. **Implemented as of Phase 6 (DEC-029):** flat `departments` (no sub-department hierarchy); `teams` and `positions` each belong to **at most one** department via a nullable `department_id` FK — teams do not span multiple departments. `staff` belonging to a `department`/`team` and holding a `position` is deferred to Phase 7, once `staff` exists.
 - `roles`, `permissions` — authorization. **Implemented as of Phase 5 (DEC-028):** many-to-many `roles`↔`permissions` (via `role_permissions`), but **one role per user** — `users.role_id`, a nullable FK, not a many-to-many `users`↔`roles` table. This is a deliberate resolution, not a placeholder: V1's actual requirement is one role per employee (CLAUDE.md's Phase 5 instructions); many-to-many user↔role infrastructure is explicitly not built without a demonstrated need. See `05_SECURITY_MODEL.md` and DEC-028.
 
 ### Clients
@@ -82,12 +82,14 @@ Status: **Conceptual only. No migrations exist.** This document identifies likel
 - Whether `calendar_events` is unified or composed from source tables.
 - Multi-step vs single-step leave approval.
 
-**Resolved (Phase 3, DEC-017):** primary keys are numeric `BIGINT` (`$table->id()`); externally addressable entities additionally get a `ULID public_id` column, added when each entity is actually built. Likely candidates: `staff`, `clients`, `projects`, `tasks`, `leave_requests`, `service_reports`, `incidents` (all listed in §1 above) — decided per-entity, not applied blanket. Pivot/history tables (`project_members`, `staff_statuses`, `leave_approvals`, etc.) generally don't need one. **Applied in Phase 4** to `users` — the first entity to actually carry one.
+**Resolved (Phase 3, DEC-017):** primary keys are numeric `BIGINT` (`$table->id()`); externally addressable entities additionally get a `ULID public_id` column, added when each entity is actually built. Likely candidates: `staff`, `clients`, `projects`, `tasks`, `leave_requests`, `service_reports`, `incidents` (all listed in §1 above) — decided per-entity, not applied blanket. Pivot/history tables (`project_members`, `staff_statuses`, `leave_approvals`, etc.) generally don't need one. **Applied in Phase 4** to `users` — the first entity to actually carry one. **Applied in Phase 6** to `departments`/`teams`/`positions` (admin-manageable organization structure, unlike the fixed internal `roles`/`permissions` catalog, which deliberately does not carry one — see below).
 
 **Resolved (Phase 4):** `users` gained real authentication columns (`public_id`, `status`, `is_admin`) and `personal_access_tokens` (Sanctum) was added — see §1 above and DEC-022/DEC-024.
 
 **Resolved (Phase 5):** `roles`, `permissions`, `role_permissions` were added; `users.is_admin` (DEC-024) was retired and replaced with `users.role_id` (nullable FK, one role per user) — see §1 above and DEC-028. `roles`/`permissions` deliberately do **not** carry a `public_id` — they're a small, fixed, internally-managed system catalog (not a user-facing externally addressable business entity in DEC-017's sense), so the numeric PK strategy alone is sufficient; `UserResource` exposes the role's *name*, never its internal ID, so nothing external needs to address a role by public identifier.
 
 **Resolved (Phase 4A):** the production database direction (MySQL, DEC-016) is now also the standard local development database, via the Docker Compose `mysql` service (DEC-027) — all current migrations were verified to run cleanly against real MySQL 8.4, not just SQLite. SQLite remains the automated-test database (unaffected, isolated per `phpunit.xml`) and is still an option for a developer running the backend directly rather than via Docker.
+
+**Resolved (Phase 6):** `departments`, `teams`, `positions` were added — see §1 above and DEC-029. Each carries a `public_id` (ULID, DEC-017 — these are admin-manageable business entities, not an internal fixed catalog like `roles`/`permissions`). `teams`/`positions` carry a nullable `department_id` (`restrictOnDelete()`); all three share `App\Enums\OrganizationStatus` (`active`/`inactive`) rather than soft-deletes.
 
 This document should be revisited and updated (not silently replaced) each time a phase implements one of these areas for real, so it stays a useful map rather than going stale.

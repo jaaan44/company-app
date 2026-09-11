@@ -4,6 +4,17 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-09-11 — Phase 6: Organization Structure
+- **Backend:** added `departments`, `teams`, `positions` tables; `App\Models\Department`, `App\Models\Team`, `App\Models\Position` (each carries a ULID `public_id`, DEC-017). `App\Enums\OrganizationStatus` (`active`/`inactive`) is the shared lifecycle column for all three — retiring a unit flips this rather than deleting the row.
+- Departments are flat (no sub-department hierarchy); Teams/Positions belong to **at most one** Department via a nullable `department_id` FK (resolving `02_ARCHITECTURE.md` §9's open question) — never a many-to-many span across departments. Team names / Position titles are unique within their department scope (or the "no department" scope), not globally.
+- Relational integrity: a Department cannot be deleted while any Team or Position still references it (`409`, application-enforced, backed by a `restrictOnDelete()` FK). Teams/Positions may be freely deleted (nothing yet depends on them in this phase).
+- Two new permissions added to `RolePermissionSeeder`: `organization.view` (attached to Manager and Staff) and `organization.manage` (Administrator-only, via the existing centralized `Gate::before` override — no new authorization mechanism).
+- New versioned REST endpoints under `/api/v1`: full CRUD for `departments`, `teams`, `positions` — route-model-bound by `public_id` (never the internal numeric id), permission-gated (`organization.view` reads / `organization.manage` writes), behind the existing `auth:sanctum` + `account.active` chain. Filterable by `?status=` (all three) and `?department=<public_id>` (Teams/Positions).
+- `App\Http\Requests\Organization\*` Form Requests validate all writes, including safe resolution of a client-supplied `department_id` (submitted as the department's public ULID, never its internal numeric id) and department-scoped uniqueness. `App\Http\Resources\{Department,Team,Position}Resource` expose only `public_id` (never internal ids); Team/Position nest a minimal `department` (public_id + name).
+- `DepartmentFactory`, `TeamFactory`, `PositionFactory` added.
+- Recorded DEC-029 (organization structure architecture).
+- No Staff/Employee management, Clients, Projects, Leave, Tasks, Messaging, or other later business module was introduced; no department hierarchy; no Admin Backoffice (Blade/Livewire) CRUD UI (consistent with Phase 5's precedent — no such UI pattern exists yet for any module).
+
 ### 2026-09-11 — Phase 5: Roles & Permissions
 - **Backend:** added `roles`, `permissions`, `role_permissions` tables; `App\Models\Role` (constants `ADMINISTRATOR`/`MANAGER`/`STAFF`) and `App\Models\Permission` (dot-notation identifiers, e.g. `admin.access`). `users.role_id` (nullable FK, `nullOnDelete`) replaces the retired Phase 4 transitional `users.is_admin` boolean — **one role per user**, not a many-to-many `users`↔`roles` table.
 - Retirement migration (`2026_09_11_050003_add_role_id_to_users_table.php`) backfills any pre-existing `is_admin = true` row onto the Administrator role before dropping the column — no two competing authorization mechanisms coexist even transiently.

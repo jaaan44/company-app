@@ -1,6 +1,6 @@
 # 02 — Architecture (Initial)
 
-Status: **Mostly confirmed as of Phase 5** (repository layout, versions, database engine, identifier strategy, Admin Backoffice direction, API foundation, authentication, local Docker environment, authorization — see §2, §3, §12, §13, §14, §15). Remaining open items are listed in §9.
+Status: **Mostly confirmed as of Phase 6** (repository layout, versions, database engine, identifier strategy, Admin Backoffice direction, API foundation, authentication, local Docker environment, authorization, organization structure — see §2, §3, §12, §13, §14, §15, §16). Remaining open items are listed in §9.
 
 ## 0. Resource-Efficiency Direction
 
@@ -77,9 +77,8 @@ These require a decision at the appropriate future phase, not now:
 
 - Real-time transport for messaging/notifications
 - Object storage provider for production
-- Whether Departments/Teams need a dedicated hierarchy table or a simpler self-referencing structure
 
-*(Resolved: monorepo vs polyrepo — §2, DEC-011. Database engine — §1, DEC-016. Admin Backoffice implementation style — §1/§2, DEC-019. Primary key/public ID strategy — §12, DEC-017.)*
+*(Resolved: monorepo vs polyrepo — §2, DEC-011. Database engine — §1, DEC-016. Admin Backoffice implementation style — §1/§2, DEC-019. Primary key/public ID strategy — §12, DEC-017. Departments/Teams hierarchy shape — §16, DEC-029.)*
 
 ## 10. Non-Goals for V1
 
@@ -167,3 +166,15 @@ Because this runs through Laravel's real Gate resolution, every existing authori
 **API impact:** `UserResource` gains a stable `role` field — the role's *name* (e.g. `"administrator"`), never the internal numeric `role_id`. No new API endpoints were added; no endpoint is currently permission-gated beyond what Phase 4 already authenticates.
 
 **Not introduced:** third-party RBAC packages, external IAM/OAuth authorization server, a policy engine service, Redis-backed permission caching, multi-tenant/organization-level ACL infrastructure, or many-to-many user↔role assignment — none demonstrably needed at ~100-user V1 scale (CLAUDE.md §4/§6).
+
+## 16. Organization Structure (confirmed, Phase 6)
+
+**Schema (DEC-029):** `departments` (`id`, `public_id` ULID, `name` unique, `description`, `status`, `sort_order`), `teams` and `positions` (same shape plus a nullable `department_id` FK to `departments`, `restrictOnDelete()`). Flat — no sub-department hierarchy; a Team/Position belongs to **at most one** Department, never a many-to-many span (resolves §9's former open question). `App\Enums\OrganizationStatus` (`active`/`inactive`) is the shared lifecycle column for all three — no `SoftDeletes`, avoiding two overlapping "is this still around" mechanisms on the same row.
+
+**Relational integrity:** a Department cannot be deleted while any Team or Position still references it — enforced at the application layer (a clear `409`), backed by a DB-level `restrictOnDelete()` foreign key as a defense-in-depth backstop. Teams/Positions may be freely deleted in this phase (nothing yet depends on them — Phase 7 introduces Staff, the first thing that will).
+
+**API:** versioned REST endpoints (`/api/v1/departments`, `/teams`, `/positions`), full CRUD, route-model-bound by `public_id` (DEC-017 — never the internal numeric id, including for the `department_id` a client submits when creating/updating a Team or Position). Filterable by `?status=` (all three) and `?department=<public_id>` (Teams/Positions) — a top-level filterable resource rather than deep nesting, per `04_API_CONVENTIONS.md`.
+
+**Authorization:** two new permissions (`organization.view`, `organization.manage`) added to the existing `RolePermissionSeeder` (Phase 5 pattern, no new mechanism). `organization.view` is attached to Manager and Staff; `organization.manage` remains Administrator-only via the existing centralized `Gate::before` override (§15/DEC-028).
+
+**Not introduced:** Staff/Employee management or any staff↔organization assignment (Phase 7), Admin Backoffice CRUD UI (no such UI pattern exists yet for any module), department hierarchy, or generic/polymorphic organization infrastructure.
