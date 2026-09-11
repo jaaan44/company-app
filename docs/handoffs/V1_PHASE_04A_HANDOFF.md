@@ -286,7 +286,13 @@ The product owner also reported two port collisions on their machine (host `3306
 
 ### 27.4 GitHub Actions Status (this correction)
 
-See the commit/CI table reported alongside this correction in the session's final report to the user (this document is updated in place before that push, per the established pattern in §18/§26 — check `docs/testing/TEST_STATUS.md` for the most current confirmed run if this note wasn't itself updated with a specific run link).
+**Backend CI ran and passed on commit `3b418ce`** (the port-configuration + UAT-documentation commit):
+
+| Workflow | Job | Result | Duration | Run |
+|---|---|---|---|---|
+| Backend CI | Backend quality gates (PHP 8.4) | ✅ success | ~20s | [run 34577973012](https://github.com/jaaan44/company-app/actions/runs/34577973012) |
+
+Mobile CI did not trigger — no `apps/mobile` changes in this correction.
 
 ---
 
