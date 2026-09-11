@@ -157,5 +157,7 @@ No automated tests apply to this phase — no application code exists yet.
 | `GET /api/v1/health`, `GET /login`, `POST /api/v1/auth/login` through Nginx (Docker) | Automated, local | PASS | All `200`; login response includes the new `role` field via a full MySQL round-trip |
 | No Staff/Clients/Projects/Leave/Tasks/Work Logs/Messaging or other business module introduced | Manual | PASS | Confirmed by reviewing the full staged diff before commit |
 | No third-party RBAC package introduced | Manual | PASS | `composer.json` diff contains no new dependencies |
+| UAT-05-01 — Admin: sign in with the seeded Administrator account, reach `/home` | UAT, product owner | **PASS** | Tested on the DigitalOcean VPS Dockerized environment. See `docs/testing/UAT_LOG.md`; recorded by the product owner, not this session, per CLAUDE.md §7. |
+| UAT-05-02 — Admin: a Staff-role account is denied Admin Backoffice access | UAT, product owner | **PASS** | Tested on the DigitalOcean VPS Dockerized environment, using a Staff-role test account created via the Phase 5 role system. See `docs/testing/UAT_LOG.md`; recorded by the product owner, not this session, per CLAUDE.md §7. |
 
 *(Future phases append their own section above this line, oldest first.)*

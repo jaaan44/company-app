@@ -244,7 +244,11 @@ curl -X POST http://localhost:8012/api/v1/auth/login -H 'Content-Type: applicati
 ```
 Note the new `"role":"administrator"` field, absent in Phase 4's response shape.
 
-**UAT:** two scenarios logged in `docs/testing/UAT_LOG.md` as `NOT RUN` (UAT-05-01, UAT-05-02) — ready for the product owner's review; not marked `PASS` by this session per CLAUDE.md §7. No new Flutter/mobile UI exists to review (the mobile app has no role-aware behavior yet).
+**UAT:** two scenarios logged in `docs/testing/UAT_LOG.md`, both now recorded **PASS** by the product owner (not by this session, per CLAUDE.md §7):
+- **UAT-05-01** — Administrator login (`admin@example.test`) on the DigitalOcean VPS Dockerized environment: succeeded, redirected to `/home`, Admin Backoffice placeholder loaded normally.
+- **UAT-05-02** — a Staff-role test account (created via the Phase 5 role system) on the same environment: valid login credentials, correctly denied Admin Backoffice access, with the expected "This account does not have Admin Backoffice access." message shown.
+
+No new Flutter/mobile UI exists to review (the mobile app has no role-aware behavior yet).
 
 ## 26. Recommended Next Phase
 
