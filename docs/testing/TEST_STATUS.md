@@ -124,5 +124,6 @@ No automated tests apply to this phase — no application code exists yet.
 | CRLF fix verification: simulated Windows checkout (`git -c core.autocrlf=true clone` + checkout) | Automated, local | PASS | `docker/php/entrypoint.sh` and `docker/php/Dockerfile` both check out with pure LF after the fix — the exact scenario the product owner hit. |
 | CRLF fix verification: all three containers up post-fix | Automated, local | PASS | `nginx`, `app`, `mysql` all started; `mysql` reported `healthy`; `app` did not crash-loop; `GET /api/v1/health` → `200` through the full stack — matches the product owner's own successful Windows retest. |
 | Host (non-Docker) quality gates re-verified after the CRLF fix | Automated, local | PASS | `composer validate --strict`, `vendor/bin/pint --test`, `vendor/bin/phpstan analyse`, `php artisan test` (31/31) — unaffected, confirming the fix touched nothing beyond line-ending normalization. |
+| Backend CI workflow (re-confirmed after CRLF fix) | Automated, GitHub Actions | PASS | Run [34573583090](https://github.com/jaaan44/company-app/actions/runs/34573583090), commit `272625e`, ~17s. |
 
 *(Future phases append their own section above this line, oldest first.)*

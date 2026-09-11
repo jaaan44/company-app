@@ -140,6 +140,12 @@ A draft pull request ([#6](https://github.com/jaaan44/company-app/pull/6), `clau
 
 Mobile CI did not trigger — no `apps/mobile` files changed, correctly respecting the path-filtered CI design (DEC-015). This confirms `composer.json`/`composer.lock` remain correctly resolved and that this phase's one new tracked file under `apps/api` (`.env.docker.example`) doesn't affect any existing check on GitHub's unrestricted-network runner.
 
+**Re-confirmed green after the CRLF fix (§26), commit `272625e`:**
+
+| Workflow | Job | Result | Duration | Run |
+|---|---|---|---|---|
+| Backend CI | Backend quality gates (PHP 8.4) | ✅ success | ~17s | [run 34573583090](https://github.com/jaaan44/company-app/actions/runs/34573583090) |
+
 ## 19. Deviations
 
 None from `docs/phases/V1_PHASE_04A_DEFINITION.md`'s scope. Two **real bugs were found and fixed** during genuine runtime validation — recorded here rather than silently corrected, since they materially affect what "Docker environment works" means:
