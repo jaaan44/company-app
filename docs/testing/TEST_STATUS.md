@@ -94,8 +94,8 @@ No automated tests apply to this phase — no application code exists yet.
 | Flutter: unauthenticated shows login, loading, successful/failed login, logout, token restoration | Automated | PASS | `auth_gate_test.dart`, `auth_controller_test.dart`, `login_page_test.dart` — network and secure storage faked, no live server dependency |
 | Manual: full login→me→logout→revoked-token cycle via `php artisan serve` + curl | Manual | PASS | see handoff for exact commands/output |
 | Manual: Admin login page renders Livewire component; `/home` redirects when unauthenticated | Manual | PASS | see handoff |
-| Backend CI workflow | Automated, GitHub Actions | PENDING | to be confirmed on the Phase 4 PR — see handoff for run link once available |
-| Mobile CI workflow | Automated, GitHub Actions | PENDING | to be confirmed on the Phase 4 PR — see handoff for run link once available |
+| Backend CI workflow | Automated, GitHub Actions | PASS | Run [34548321478](https://github.com/jaaan44/company-app/actions/runs/34548321478), commit `7eb3717`, ~18s. |
+| Mobile CI workflow | Automated, GitHub Actions | PASS | Run [34548321404](https://github.com/jaaan44/company-app/actions/runs/34548321404), commit `7eb3717`, ~49s. |
 | No unrelated business functionality introduced | Manual | PASS | confirmed by reviewing the full staged diff before commit |
 
 *(Future phases append their own section above this line, oldest first.)*

@@ -179,7 +179,18 @@ See §20 above and `docs/testing/TEST_STATUS.md`'s Phase 4 section for the full 
 
 ## 22. GitHub CI Status
 
-Not yet available at the time of writing this handoff — the branch had not been pushed / a PR had not been opened yet. Per CLAUDE.md §36, this will be updated (or a follow-up note added) once the PR is opened and Actions run; see the session's final report to the user for the actual PR/CI status if this section wasn't updated in place.
+A draft pull request ([#5](https://github.com/jaaan44/company-app/pull/5), `claude/v1-phase-04-authentication-grt1ca` → `main`, not merged) was opened to exercise the `pull_request` trigger, matching the Phase 2/3 approach.
+
+**Both workflows ran and passed on commit `7eb3717`:**
+
+| Workflow | Job | Result | Duration | Run |
+|---|---|---|---|---|
+| Backend CI | Backend quality gates (PHP 8.4) | ✅ success | ~18s | [run 34548321478](https://github.com/jaaan44/company-app/actions/runs/34548321478) |
+| Mobile CI | Mobile quality gates (Flutter 3.47.2) | ✅ success | ~49s | [run 34548321404](https://github.com/jaaan44/company-app/actions/runs/34548321404) |
+
+This confirms, independently of this session's local recovery work (§23), that `composer.json`/`composer.lock` and `pubspec.yaml`/`pubspec.lock` are correctly resolved and that every dependency (including `laravel/sanctum`, `phpstan/phpstan`, `larastan/larastan`, `http`, `flutter_secure_storage`) installs cleanly on GitHub's unrestricted-network runners.
+
+**All of AC-01 through AC-20 are satisfied**, including AC-16 through AC-19 (backend/Flutter tests, static analysis/formatting, and GitHub Actions all passing) via this confirmed run.
 
 ## 23. Deviations
 
