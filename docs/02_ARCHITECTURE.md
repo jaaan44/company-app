@@ -1,6 +1,6 @@
 # 02 — Architecture (Initial)
 
-Status: **Mostly confirmed as of Phase 6** (repository layout, versions, database engine, identifier strategy, Admin Backoffice direction, API foundation, authentication, local Docker environment, authorization, organization structure — see §2, §3, §12, §13, §14, §15, §16). Remaining open items are listed in §9.
+Status: **Mostly confirmed as of Phase 7** (repository layout, versions, database engine, identifier strategy, Admin Backoffice direction, API foundation, authentication, local Docker environment, authorization, organization structure, staff — see §2, §3, §12, §13, §14, §15, §16, §17). Remaining open items are listed in §9.
 
 ## 0. Resource-Efficiency Direction
 
@@ -178,3 +178,21 @@ Because this runs through Laravel's real Gate resolution, every existing authori
 **Authorization:** two new permissions (`organization.view`, `organization.manage`) added to the existing `RolePermissionSeeder` (Phase 5 pattern, no new mechanism). `organization.view` is attached to Manager and Staff; `organization.manage` remains Administrator-only via the existing centralized `Gate::before` override (§15/DEC-028).
 
 **Not introduced:** Staff/Employee management or any staff↔organization assignment (Phase 7), Admin Backoffice CRUD UI (no such UI pattern exists yet for any module), department hierarchy, or generic/polymorphic organization infrastructure.
+
+## 17. Staff (confirmed, Phase 7)
+
+**Schema (DEC-030):** `staff` (`id`, `public_id` ULID, `employee_number` unique, `first_name`, `last_name`, `preferred_name`, `company_email`/`company_phone`, `status`, `hire_date`, `separation_date`, nullable `department_id`/`team_id`/`position_id` FKs to the Phase 6 tables, `restrictOnDelete()`, a nullable self-referencing `manager_id` `restrictOnDelete()`, and a nullable **unique** `user_id` FK to `users`, `nullOnDelete()`). `App\Enums\StaffStatus` (`active`/`inactive`/`separated`) is Staff's own employment lifecycle — a three-state pattern (mirroring `AccountStatus`, not `OrganizationStatus`'s simpler two states), distinct from both `AccountStatus` (login/account state) and the future Phase 9 operational/current status (available, on leave, in the field, off duty).
+
+**Staff↔User separation:** `Staff` is the personnel record; `User` remains the sole authentication/account model — no credentials or account-state data live on `staff`. `user_id` is optional in both directions (a Staff record may have no login access; a User may have no Staff record, e.g. the seeded local Administrator) and unique (one User links to at most one Staff record, DB-enforced).
+
+**Organization consistency:** a Staff record's `team_id`/`department_id` must be mutually consistent when the Team itself belongs to a Department (matching, or auto-derived from the Team when `department_id` is omitted). The **Manager** relationship is a self-referencing `manager_id`; a staff member cannot be their own manager, and an assignment that would create a reporting cycle is rejected via a bounded manager-chain walk (`Staff::wouldCreateCycleWith()`, capped at 50 steps) rather than general-purpose cycle detection.
+
+**Relational integrity extends Phase 6:** `DepartmentController`/`TeamController`/`PositionController::destroy` now also reject deletion (`409`) when Staff still reference the record; `StaffController::destroy` itself rejects deleting a staff member who still has direct reports — the same philosophy as §16's Department protection, backed by `restrictOnDelete()` foreign keys.
+
+**API:** versioned REST endpoints (`/api/v1/staff`), full CRUD, route-model-bound by `public_id`. Filterable by `?status=`, `?department=`/`?team=`/`?position=`/`?manager=` (all by `public_id`), and a directory `?q=` search (name/employee number). Status changes (including offboarding) go through the same `update` endpoint as Organization Structure's own `status` field — no separate action route.
+
+**Authorization:** two new permissions (`staff.view`, `staff.manage`) added to `RolePermissionSeeder` (same pattern as §16, no new mechanism). `staff.view` is attached to Manager and Staff — the Staff Directory is company-wide; `staff.manage` remains Administrator-only via the centralized `Gate::before` override.
+
+**API resource shape:** `StaffResource` is a single Staff Directory shape (name, contact, department/team/position, manager, status) visible to anyone holding `staff.view`; the linked User's own identity (beyond a plain `has_user_account` boolean) is only included for a requester who also holds `staff.manage` — keeping directory data and administrative data distinct without a second, near-duplicate resource class.
+
+**Not introduced:** payroll, salary/compensation, government/tax IDs, attendance/timekeeping, biometrics, leave balances/requests, employee documents, medical data, emergency contacts, performance reviews, recruitment, onboarding workflow, benefits, expense claims, work logs, project/task assignment, messaging, or client management; no Admin Backoffice CRUD UI; no operational/current-status tracking (Phase 9); no auto-generated employee numbers.

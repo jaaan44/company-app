@@ -72,8 +72,20 @@ class TeamController extends Controller
         return new TeamResource($team->load('department'));
     }
 
+    /**
+     * A team that still has any (Phase 7) staff assigned to it cannot be
+     * deleted — same relational-integrity protection as
+     * DepartmentController::destroy, backed by the `staff.team_id`
+     * `restrictOnDelete()` foreign key.
+     */
     public function destroy(Team $team): JsonResponse
     {
+        if ($team->staff()->exists()) {
+            return response()->json([
+                'message' => 'This team still has staff assigned to it and cannot be deleted.',
+            ], 409);
+        }
+
         $team->delete();
 
         return response()->json(status: 204);

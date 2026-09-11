@@ -1,10 +1,12 @@
 # 04 — API Conventions (Initial Principles)
 
-Status: **Principles, implemented for a growing set of endpoints as of Phase 4/5/6** (`GET /api/v1/health` since Phase 3; `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me` since Phase 4; full CRUD for `departments`/`teams`/`positions` since Phase 6) to establish the conventions with real, tested code. These conventions guide every future endpoint so the API stays consistent without needing a per-endpoint style debate. Prefer standard Laravel/REST practice over inventing custom conventions.
+Status: **Principles, implemented for a growing set of endpoints as of Phase 4/5/6/7** (`GET /api/v1/health` since Phase 3; `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me` since Phase 4; full CRUD for `departments`/`teams`/`positions` since Phase 6; full CRUD for `staff` since Phase 7) to establish the conventions with real, tested code. These conventions guide every future endpoint so the API stays consistent without needing a per-endpoint style debate. Prefer standard Laravel/REST practice over inventing custom conventions.
 
 **Phase 5:** no new endpoints were added; `UserResource` (used by `/auth/login` and `/auth/me`) gained a `role` field — see `05_SECURITY_MODEL.md` API Access.
 
 **Phase 6:** first real demonstration of the "top-level filterable resource" and "route-model-bound by `public_id`" conventions below with genuine CRUD endpoints — `GET/POST /api/v1/departments`, `GET/POST /api/v1/teams`, `GET/POST /api/v1/positions`, plus `GET/PUT/PATCH/DELETE .../{public_id}` for each. See `05_SECURITY_MODEL.md` and `docs/handoffs/V1_PHASE_06_HANDOFF.md`.
+
+**Phase 7:** `GET/POST /api/v1/staff` plus `GET/PUT/PATCH/DELETE .../{public_id}` — this document's own `/staff` example (Resource Naming, below) is now a real endpoint. Confirms the "status changes go through the normal update endpoint, not a separate action route" convention for a second resource (first shown by Departments/Teams/Positions in Phase 6). See `05_SECURITY_MODEL.md` and `docs/handoffs/V1_PHASE_07_HANDOFF.md`.
 
 ## Versioning
 
@@ -70,7 +72,7 @@ Status: **Principles, implemented for a growing set of endpoints as of Phase 4/5
 
 ## Filtering & Sorting
 
-- Filtering via query params scoped to the resource, e.g. `GET /tasks?status=open&assignee_id=5`. **Implemented (Phase 6):** `GET /api/v1/departments?status=active`, `GET /api/v1/teams?department=<public_id>&status=active` — filter values that reference another resource use its `public_id`, never an internal numeric id.
+- Filtering via query params scoped to the resource, e.g. `GET /tasks?status=open&assignee_id=5`. **Implemented (Phase 6):** `GET /api/v1/departments?status=active`, `GET /api/v1/teams?department=<public_id>&status=active` — filter values that reference another resource use its `public_id`, never an internal numeric id. **Implemented (Phase 7):** `GET /api/v1/staff?department=<public_id>&team=<public_id>&position=<public_id>&manager=<public_id>&status=active`, plus a simple `?q=` directory search (matched against name fields and employee number) — a genuinely useful lookup for a personnel directory, not a filter added for completeness.
 - Sorting via `?sort=due_date` / `?sort=-due_date` (leading `-` = descending) — a common, unsurprising convention; avoid bespoke sort syntax. Not yet implemented for any endpoint (Phase 6's organization-structure lists are small enough that a fixed `sort_order`-then-name ordering was sufficient; a genuine `?sort=` param is introduced when a future endpoint's data actually needs it).
 - Document supported filter/sort fields per endpoint as it's built; don't expose arbitrary column filtering.
 

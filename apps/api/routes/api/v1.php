@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\Organization\DepartmentController;
 use App\Http\Controllers\Api\V1\Organization\PositionController;
 use App\Http\Controllers\Api\V1\Organization\TeamController;
+use App\Http\Controllers\Api\V1\Staff\StaffController;
 use Illuminate\Support\Facades\Route;
 
 // v1 API routes. A future breaking version adds routes/api/v2.php and a
@@ -56,5 +57,25 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
         Route::post('positions', [PositionController::class, 'store'])->name('positions.store');
         Route::match(['put', 'patch'], 'positions/{position:public_id}', [PositionController::class, 'update'])->name('positions.update');
         Route::delete('positions/{position:public_id}', [PositionController::class, 'destroy'])->name('positions.destroy');
+    });
+});
+
+// Staff (Phase 7): the company personnel directory. Reads require
+// 'staff.view' (granted to Administrator/Manager/Staff); writes require
+// 'staff.manage' (Administrator only, via the centralized Gate::before
+// override — DEC-028). Route-model-bound by public_id (DEC-017), never
+// the internal numeric id. Status changes (including offboarding) go
+// through the same update endpoint as Organization Structure's own
+// status field — no separate action route.
+Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
+    Route::middleware('can:staff.view')->group(function (): void {
+        Route::get('staff', [StaffController::class, 'index'])->name('staff.index');
+        Route::get('staff/{staff:public_id}', [StaffController::class, 'show'])->name('staff.show');
+    });
+
+    Route::middleware('can:staff.manage')->group(function (): void {
+        Route::post('staff', [StaffController::class, 'store'])->name('staff.store');
+        Route::match(['put', 'patch'], 'staff/{staff:public_id}', [StaffController::class, 'update'])->name('staff.update');
+        Route::delete('staff/{staff:public_id}', [StaffController::class, 'destroy'])->name('staff.destroy');
     });
 });

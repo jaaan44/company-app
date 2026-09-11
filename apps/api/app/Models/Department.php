@@ -71,4 +71,12 @@ class Department extends Model
     {
         return $this->hasMany(Position::class);
     }
+
+    /**
+     * @return HasMany<Staff, $this>
+     */
+    public function staff(): HasMany
+    {
+        return $this->hasMany(Staff::class);
+    }
 }

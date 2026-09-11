@@ -58,18 +58,18 @@ class DepartmentController extends Controller
     }
 
     /**
-     * A department that still has any team or position referencing it
-     * cannot be deleted — preventing an invalid/orphaned organization
-     * structure (see docs/phases/V1_PHASE_06_DEFINITION.md). The
-     * `restrictOnDelete()` foreign keys on `teams`/`positions` back this
-     * up at the database level; this check exists to return a clear 409
-     * instead of a raw database constraint error.
+     * A department that still has any team, position, or (Phase 7) staff
+     * referencing it cannot be deleted — preventing an invalid/orphaned
+     * organization structure (see docs/phases/V1_PHASE_06_DEFINITION.md).
+     * The `restrictOnDelete()` foreign keys on `teams`/`positions`/`staff`
+     * back this up at the database level; this check exists to return a
+     * clear 409 instead of a raw database constraint error.
      */
     public function destroy(Department $department): JsonResponse
     {
-        if ($department->teams()->exists() || $department->positions()->exists()) {
+        if ($department->teams()->exists() || $department->positions()->exists() || $department->staff()->exists()) {
             return response()->json([
-                'message' => 'This department still has teams or positions assigned to it and cannot be deleted.',
+                'message' => 'This department still has teams, positions, or staff assigned to it and cannot be deleted.',
             ], 409);
         }
 

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
@@ -82,5 +83,18 @@ class User extends Authenticatable
     public function hasPermission(string $name): bool
     {
         return $this->role?->permissions->contains('name', $name) ?? false;
+    }
+
+    /**
+     * The Staff (personnel) record linked to this login account, if any
+     * (Phase 7). Optional in both directions — a User may have no Staff
+     * record (e.g. the seeded local Administrator), and a Staff record
+     * may have no User (no login access). See DEC-030.
+     *
+     * @return HasOne<Staff, $this>
+     */
+    public function staff(): HasOne
+    {
+        return $this->hasOne(Staff::class);
     }
 }

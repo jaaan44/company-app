@@ -4,6 +4,18 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-09-11 — Phase 7: Staff
+- **Backend:** added `staff` table; `App\Models\Staff` (ULID `public_id`, DEC-017). `App\Enums\StaffStatus` (`active`/`inactive`/`separated`) is Staff's own three-state employment lifecycle — distinct from `AccountStatus` (login/account state) and the future Phase 9 operational status.
+- `staff.user_id` (nullable, **unique** FK to `users`) — a Staff record may exist without login access, a User may exist without a Staff record, and one User can link to at most one Staff record. No authentication data was duplicated onto `staff`.
+- `staff.department_id`/`team_id`/`position_id` (nullable FKs to the Phase 6 tables, `restrictOnDelete`) and a self-referencing nullable `manager_id` (`restrictOnDelete`). A staff member cannot be their own manager; a manager assignment that would create a reporting cycle is rejected via a bounded manager-chain walk (`Staff::wouldCreateCycleWith()`), not general-purpose cycle detection. Team/Department assignment is validated for mutual consistency, with `department_id` auto-derived from `team_id` when omitted.
+- `DepartmentController`/`TeamController`/`PositionController::destroy` (Phase 6) extended to also reject deletion (`409`) when Staff still reference the record; `StaffController::destroy` itself rejects deleting a staff member with direct reports.
+- Two new permissions added to `RolePermissionSeeder`: `staff.view` (Manager/Staff) and `staff.manage` (Administrator-only, via the existing `Gate::before` override).
+- New versioned REST endpoints under `/api/v1`: full CRUD for `staff`, route-model-bound by `public_id`, permission-gated, filterable by `status`/`department`/`team`/`position`/`manager` and a directory `q` search (name/employee number).
+- `App\Http\Resources\StaffResource` — a single Staff Directory shape; the linked User's own identity (beyond a plain `has_user_account` boolean) is only included for a requester holding `staff.manage`.
+- `StaffFactory` added.
+- Recorded DEC-030 (Staff domain model, lifecycle, and User separation).
+- No payroll, salary/compensation, government/tax IDs, attendance, biometrics, leave balances/requests, employee documents, medical data, emergency contacts, performance reviews, recruitment, onboarding workflow, benefits, expense claims, work logs, project/task assignment, messaging, or client management was introduced; no Admin Backoffice CRUD UI (consistent with Phase 6's precedent); no operational/current-status tracking (Phase 9).
+
 ### 2026-09-11 — Phase 6: Organization Structure
 - **Backend:** added `departments`, `teams`, `positions` tables; `App\Models\Department`, `App\Models\Team`, `App\Models\Position` (each carries a ULID `public_id`, DEC-017). `App\Enums\OrganizationStatus` (`active`/`inactive`) is the shared lifecycle column for all three — retiring a unit flips this rather than deleting the row.
 - Departments are flat (no sub-department hierarchy); Teams/Positions belong to **at most one** Department via a nullable `department_id` FK (resolving `02_ARCHITECTURE.md` §9's open question) — never a many-to-many span across departments. Team names / Position titles are unique within their department scope (or the "no department" scope), not globally.

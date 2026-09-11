@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api\V1\Organization;
 
 use App\Models\Department;
+use App\Models\Staff;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -157,5 +158,16 @@ class TeamTest extends TestCase
 
         $this->assertDatabaseMissing('teams', ['id' => $team->id]);
         $this->assertDatabaseHas('departments', ['id' => $department->id]);
+    }
+
+    public function test_deleting_a_team_with_staff_is_rejected(): void
+    {
+        $this->actingAsAdministrator();
+        $team = Team::factory()->create();
+        Staff::factory()->create(['team_id' => $team->id]);
+
+        $this->deleteJson("/api/v1/teams/{$team->public_id}")->assertStatus(409);
+
+        $this->assertDatabaseHas('teams', ['id' => $team->id]);
     }
 }
