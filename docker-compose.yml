@@ -1,0 +1,83 @@
+# Standard local backend development environment (Phase 4A — DEC-027,
+# superseding DEC-013). Three services only: nginx, app (PHP-FPM), mysql.
+# Flutter (apps/mobile) deliberately stays outside Docker — see
+# docs/handoffs/V1_PHASE_04A_HANDOFF.md.
+#
+# Quick start: docker compose up -d --build
+# Full first-time setup: README.md "Backend (Docker)".
+
+services:
+  app:
+    build:
+      context: ./docker/php
+    container_name: company-app-api
+    working_dir: /var/www/html
+    volumes:
+      - ./apps/api:/var/www/html
+      - vendor:/var/www/html/vendor
+    # Deliberately no `env_file`/`environment` here: Laravel reads
+    # apps/api/.env directly (it's part of the bind mount above) via its
+    # own Dotenv loading. Injecting the same values as container OS
+    # environment variables would make them outrank phpunit.xml's
+    # testing-environment overrides (PHPUnit's <env> doesn't force-replace
+    # an already-set variable), silently pointing `php artisan test`
+    # inside the container at the real dev database instead of the
+    # isolated in-memory SQLite it uses everywhere else — see
+    # docs/handoffs/V1_PHASE_04A_HANDOFF.md §Environment configuration.
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - company-app
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: company-app-nginx
+    ports:
+      # Matches the port already used/documented for `php artisan serve`
+      # and Flutter's default API_BASE_URL — no new port to remember.
+      - "8000:80"
+    volumes:
+      - ./apps/api:/var/www/html:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    networks:
+      - company-app
+
+  mysql:
+    image: mysql:8.4
+    container_name: company-app-mysql
+    environment:
+      # Local development credentials only — never used in production,
+      # never committed as real secrets. Must match apps/api/.env's
+      # DB_DATABASE/DB_USERNAME/DB_PASSWORD (see .env.docker.example).
+      MYSQL_DATABASE: company_app
+      MYSQL_USER: company_app
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: secret
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      # Bound to localhost only — convenient for a local GUI client,
+      # not exposed beyond the developer's own machine.
+      - "127.0.0.1:3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-psecret"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - company-app
+
+volumes:
+  mysql-data:
+  # Isolates the container's Composer-installed dependencies from
+  # whatever (or nothing) exists in the host's apps/api/vendor, so the
+  # bind mount above never shadows/mismatches them — see
+  # docs/handoffs/V1_PHASE_04A_HANDOFF.md §Composer/vendor strategy.
+  vendor:
+
+networks:
+  company-app:
+    driver: bridge

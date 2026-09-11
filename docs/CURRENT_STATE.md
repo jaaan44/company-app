@@ -3,14 +3,14 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** Phase 4 — Authentication
+**Current phase:** Phase 4A — Docker Development Environment
 **Phase status:** COMPLETE (pending user review)
-**Last completed phase:** Phase 4 (Phases 1–3 are merged into `main`)
+**Last completed phase:** Phase 4A (Phases 1–4 are merged into `main`)
 **Next planned phase:** Phase 5 — Roles & Permissions (see `ROADMAP.md`) — **not authorized yet**
 
 ## Current Objective
 
-Awaiting review of Phase 4 and authorization for Phase 5.
+Awaiting review of Phase 4A and authorization for Phase 5.
 
 ## Completed
 
@@ -18,14 +18,15 @@ Awaiting review of Phase 4 and authorization for Phase 5.
 - **Phase 1:** Monorepo bootstrap — `apps/api` (Laravel) and `apps/mobile` (Flutter). Merged into `main`.
 - **Phase 2:** Development environment & CI (Larastan, GitHub Actions). Merged into `main`.
 - **Phase 3:** Core architecture — `/api/v1` routing, health endpoint, MySQL production direction (DEC-016), numeric+ULID identifier strategy (DEC-017), Blade+Livewire Admin direction (DEC-019). Merged into `main`.
-- **Phase 4:** Authentication. See `docs/handoffs/V1_PHASE_04_HANDOFF.md` for full detail.
-  - Backend: `users` table gained `public_id` (ULID), `status` (`active`/`suspended`/`inactive`), and a transitional `is_admin` boolean. Laravel Sanctum installed (DEC-022) for mobile bearer-token auth; `personal_access_tokens` table added.
-  - Admin Backoffice: Blade + Livewire login (`App\Livewire\Auth\LoginForm`), session regeneration, logout, a protected `/home` placeholder, account-state and `is_admin`-gated access, rate limiting.
-  - Mobile API: `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me`, all under `/api/v1/auth`. Account status (`account.active` middleware) enforced on already-authenticated access, not just login.
-  - No public self-registration (DEC-023); accounts are seeded via a local-only `AdminUserSeeder`.
-  - Flutter: `lib/features/auth/` — login screen, `AuthApiClient` (`package:http`), `AuthController` (`ChangeNotifier`, DEC-025), secure token storage (`flutter_secure_storage`, DEC-026), `AuthGate` flow. Existing `HomePage` placeholder reused as the authenticated destination with a logout action added.
-  - All local checks pass, including `vendor/bin/phpstan analyse` — this session was able to fully recover/verify the backend toolchain locally (see Known Blockers) — and the full Flutter toolchain (`flutter analyze`, `flutter test`) after fetching Flutter 3.47.2 into this sandbox.
-  - No RBAC, Staff Management, or other future-phase business functionality was introduced.
+- **Phase 4:** Authentication — Admin session/cookie login (Blade+Livewire), Sanctum bearer tokens for the mobile API, account states enforced centrally, full Flutter auth flow. Merged into `main`. See `docs/handoffs/V1_PHASE_04_HANDOFF.md`.
+- **Phase 4A:** Docker Development Environment. See `docs/handoffs/V1_PHASE_04A_HANDOFF.md` for full detail.
+  - `docker-compose.yml` (repo root) — three services: `nginx`, `app` (PHP-FPM 8.4), `mysql` (8.4). No Redis, queue worker, scheduler, WebSocket server, or other always-on infrastructure.
+  - MySQL data persists in a named volume; `vendor/` is a separate named volume isolating the container's Composer install from the host bind mount.
+  - `apps/api/.env.docker.example` added for Docker-specific config (`DB_HOST=mysql`).
+  - Verified in this session via a genuinely running Docker stack: build, MySQL healthcheck, Laravel↔MySQL connectivity, all 5 migrations, the Admin seeder, the full 31-test Authentication suite, `vendor/bin/pint`, `vendor/bin/phpstan analyse`, `/api/v1/health` and `/login` through Nginx — all passing. Two real bugs were found and fixed during this validation (an entrypoint permissions bug and an `env_file` misconfiguration that silently defeated test-database isolation) — see the handoff.
+  - DEC-027 records Docker Compose as the new standard local backend environment, formally superseding DEC-013 (not deleted — marked superseded per `DECISIONS.md`'s own rules).
+  - Flutter remains entirely outside Docker, unaffected.
+  - No RBAC or other business functionality was introduced.
 
 ## Pending / Not Started
 
@@ -33,20 +34,19 @@ Awaiting review of Phase 4 and authorization for Phase 5.
 
 ## Known Blockers / Issues
 
-- **Session-specific, resolved this phase:** earlier phases (2–3) could not run `vendor/bin/phpstan analyse` locally because this sandbox's outbound access to `api.github.com` (needed for Composer's dist-zip downloads) is unreliable/blocked, and relied on GitHub Actions for that one check. This session hit the same limitation — more severely, an interrupted `composer require laravel/sanctum` briefly left the entire `vendor/` directory in a broken state — but fully recovered it (and PHPStan itself) using this sandbox's working plain `git clone` access to GitHub's git protocol (as opposed to Composer's API-based dist downloads) to manually restore/verify packages at their exact locked commits, then let Composer regenerate its own metadata locally. `composer.json`/`composer.lock` are correctly resolved regardless of this session's local recovery; GitHub Actions remains the authoritative, unrestricted-network verification. See the Phase 4 handoff §20 for the full account.
-- **New this session:** the Flutter SDK was not preinstalled in this sandbox (earlier phases' sessions apparently had it available). Flutter 3.47.2 (matching the project's pinned version exactly) was fetched via `git clone` from the official `flutter/flutter` repository to run the real toolchain locally rather than relying solely on CI.
+- **This session's environment:** Docker's own image-pull path worked (via `mirror.gcr.io`, a legitimate Docker Hub mirror, when the default registry endpoint was blocked), but package installation *during* an image build (`apt-get`, reaching `deb.debian.org`) is blocked by this sandbox's network policy — confirmed as a real, deliberate block, not a transient failure. Worked around for validation purposes only (a temporary, uncommitted Dockerfile variant skipping just that one step) without weakening the real, committed Dockerfile, which still includes the `apt-get` step real developers and CI-less environments need. See `docs/handoffs/V1_PHASE_04A_HANDOFF.md` for the full account — this does not affect the correctness of what was committed.
 - Open design questions: real-time transport, object storage provider, Departments/Teams hierarchy shape — see `docs/02_ARCHITECTURE.md` §9.
 
 ## Repository / Branch Information
 
 - Repository: `jaaan44/company-app`
-- Default branch: `main` (contains the approved Phase 0–3 baseline)
-- Phase 4 branch: `claude/v1-phase-04-authentication-grt1ca` (branched from `main`, not merged)
+- Default branch: `main` (contains the approved Phase 0–4 baseline)
+- Phase 4A branch: `claude/v1-phase-04a-docker-development` (branched from `main`, not merged)
 
 ## Latest Relevant Handoff
 
-`docs/handoffs/V1_PHASE_04_HANDOFF.md`
+`docs/handoffs/V1_PHASE_04A_HANDOFF.md`
 
 ## For the Next Session
 
-Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_04_HANDOFF.md` if working on anything authentication- or authorization-related. Phase 5 (Roles & Permissions) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.
+Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_04A_HANDOFF.md` for the Docker environment and `docs/handoffs/V1_PHASE_04_HANDOFF.md` for Authentication. Phase 5 (Roles & Permissions) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.

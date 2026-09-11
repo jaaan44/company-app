@@ -6,13 +6,15 @@ Internal company operations and communication platform: staff, clients, projects
 
 ## Project Status
 
-Phase 4 (Authentication) is complete: session/cookie login for the Admin Backoffice (Blade + Livewire) and Laravel Sanctum bearer-token login for the Flutter mobile app, account states (active/suspended/inactive) enforced centrally, and a Flutter authentication flow with secure token storage. No RBAC, Staff Management, or other business functionality implemented yet — see `docs/DECISIONS.md` DEC-022 through DEC-026 and `docs/handoffs/V1_PHASE_04_HANDOFF.md`.
+Phase 4A (Docker Development Environment) is complete: Docker Compose (`nginx` + `app`/PHP-FPM + `mysql`) is now the standard way to run the backend locally, on top of Phase 4's Authentication (session/cookie login for the Admin Backoffice, Sanctum bearer tokens for the mobile API, account states enforced centrally). No RBAC, Staff Management, or other business functionality implemented yet — see `docs/DECISIONS.md` DEC-022 through DEC-027 and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`.
 
 For current status, always check `docs/CURRENT_STATE.md` — it is kept accurate and up to date; this README is not.
 
 ## Repository Structure
 
 ```
+docker-compose.yml — standard local backend dev environment (nginx + app + mysql)
+docker/     — Dockerfile, entrypoint, nginx vhost config
 apps/
   api/      — Laravel backend/API (and, eventually, the Admin Backoffice)
   mobile/   — Flutter staff mobile app
@@ -50,11 +52,26 @@ Company App is built through explicitly authorized, numbered phases. The reposit
 
 ### Prerequisites
 
-- PHP 8.3+ and Composer (backend requires `apps/api/composer.json`'s `^8.3`; developed against PHP 8.4.19)
-- Node.js + npm (for the backend's default Vite/Tailwind frontend tooling)
-- Flutter stable SDK (developed against 3.47.2 / Dart 3.13.2)
+- Docker + Docker Compose (standard path — see "Backend (Docker)" below), **or** PHP 8.3+ and Composer directly (backend requires `apps/api/composer.json`'s `^8.3`; developed against PHP 8.4.19)
+- Node.js + npm (for the backend's default Vite/Tailwind frontend tooling, direct-install path only)
+- Flutter stable SDK (developed against 3.47.2 / Dart 3.13.2) — always installed directly; Flutter is never Dockerized
 
-### Backend (`apps/api`)
+### Backend (Docker — standard, as of Phase 4A)
+
+```sh
+cd apps/api
+cp .env.docker.example .env
+cd ..
+docker compose up -d --build
+docker compose exec app php artisan key:generate
+docker compose exec app composer install       # first run only — populates the vendor/ named volume
+docker compose exec app php artisan migrate
+docker compose exec app php artisan db:seed --class="Database\Seeders\AdminUserSeeder"  # local dev only — admin@example.test / password
+```
+
+Once up, `http://localhost:8000/api/v1/health` and `http://localhost:8000/login` are reachable through Nginx. Lifecycle: `docker compose up -d` / `down` / `ps` / `logs`. Run any backend command via `docker compose exec app <command>`, e.g. `docker compose exec app php artisan test`, `docker compose exec app vendor/bin/pint --test`. See `docs/handoffs/V1_PHASE_04A_HANDOFF.md` for full detail (MySQL connection info, volume strategy, troubleshooting).
+
+### Backend (direct install — still supported)
 
 ```sh
 cd apps/api
@@ -66,11 +83,13 @@ php artisan db:seed --class="Database\Seeders\AdminUserSeeder"  # local dev only
 php artisan serve
 ```
 
-Checks: `composer validate --strict` · `vendor/bin/pint --test` · `vendor/bin/phpstan analyse` · `php artisan test`
+Checks (either path — prefix with `docker compose exec app` for Docker): `composer validate --strict` · `vendor/bin/pint --test` · `vendor/bin/phpstan analyse` · `php artisan test`
 
 Once running, `GET /api/v1/health` returns `{"data": {"status": "ok", "timestamp": "..."}}` — the versioned API foundation, not a business endpoint. Authentication (Phase 4): visit `/login` for the Admin Backoffice, or use `POST /api/v1/auth/login` for the mobile API — see `docs/handoffs/V1_PHASE_04_HANDOFF.md` for full manual-verification steps.
 
 ### Mobile (`apps/mobile`)
+
+Flutter always runs directly on the host/emulator/device — never in Docker.
 
 ```sh
 cd apps/mobile
@@ -78,16 +97,21 @@ flutter pub get
 flutter run --dart-define=API_BASE_URL=http://localhost:8000/api/v1
 ```
 
+`API_BASE_URL` examples by target (the API itself, Dockerized or not, listens on `localhost:8000`):
+- Desktop/web: `http://localhost:8000/api/v1` (default)
+- Android emulator: `http://10.0.2.2:8000/api/v1` (the emulator's alias for the host machine)
+- Physical device on the same LAN: `http://<your-machine's-LAN-IP>:8000/api/v1`
+
 Checks: `dart format --output=none --set-exit-if-changed .` · `flutter analyze` · `flutter test`
 
 The app starts on a login screen (Phase 4); sign in with an account seeded via `AdminUserSeeder` above (or any account created via Tinker) to reach the authenticated placeholder shell.
 
 ## Quality Gates / CI
 
-GitHub Actions runs the exact checks above on every pull request targeting `main` and every push to `main` — `.github/workflows/backend-ci.yml` and `.github/workflows/mobile-ci.yml`, each scoped (via `paths:`) to run only when its own app changes. No Docker, no build matrix, no Android/iOS artifact builds — a single PHP version and a single Flutter version, matching the resource-efficiency direction in `docs/02_ARCHITECTURE.md` §0. `CLAUDE.md` §5 is the authoritative list of commands; this section and CI both mirror it.
+GitHub Actions runs the exact checks above on every pull request targeting `main` and every push to `main` — `.github/workflows/backend-ci.yml` and `.github/workflows/mobile-ci.yml`, each scoped (via `paths:`) to run only when its own app changes. CI runs directly on the runner, not via Docker — a single PHP version and a single Flutter version, no build matrix, no Android/iOS artifact builds, matching the resource-efficiency direction in `docs/02_ARCHITECTURE.md` §0. `CLAUDE.md` §5 is the authoritative list of commands; this section and CI both mirror it.
 
 ## Local Development
 
-No Docker is used by default — PHP, Composer, Node.js, and the Flutter SDK installed locally are sufficient for this project's size (~100 users). See DEC-013 in `docs/DECISIONS.md` for rationale; this can be revisited if a real need emerges.
+Docker Compose (`nginx` + `app`/PHP-FPM + `mysql`) is the standard local backend environment as of Phase 4A (DEC-027, superseding DEC-013) — see "Backend (Docker)" above and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`. Direct install remains fully supported for a developer who prefers it. Flutter is never Dockerized — the SDK installed directly is the only path.
 
 No business features exist in either app yet — see `docs/ROADMAP.md` for what's planned and `docs/CURRENT_STATE.md` for what's authorized next.

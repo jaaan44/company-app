@@ -27,6 +27,10 @@ Base API response/error conventions actually implemented, base Flutter app shell
 Login, logout, token issuance/refresh for both mobile and admin, password handling, account states (active/suspended).
 *Depends on: Phase 3*
 
+**Phase 4A — Docker Development Environment**
+Docker Compose (`nginx` + `app`/PHP-FPM + `mysql`) as the standard local backend development environment, superseding DEC-013. Flutter remains outside Docker. No business functionality.
+*Depends on: Phase 4*
+
 **Phase 5 — Roles & Permissions**
 Final role/permission catalog, role-permission and user-role storage, policy/gate scaffolding, permission-checking middleware/pattern established for reuse by every later module.
 *Depends on: Phase 4*

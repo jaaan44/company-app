@@ -98,4 +98,26 @@ No automated tests apply to this phase — no application code exists yet.
 | Mobile CI workflow | Automated, GitHub Actions | PASS | Run [34548321404](https://github.com/jaaan44/company-app/actions/runs/34548321404), commit `7eb3717`, ~49s. |
 | No unrelated business functionality introduced | Manual | PASS | confirmed by reviewing the full staged diff before commit |
 
+---
+
+## Phase 4A — Docker Development Environment
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `docker compose config` | Automated, local | PASS | Validates cleanly against the real, committed `docker-compose.yml`. |
+| `docker compose build app` (real, committed Dockerfile) | Automated, local | BLOCKED (local only) | Fails at the `apt-get` step — this sandbox's network policy blocks `deb.debian.org` (confirmed a deliberate block, not a transient failure). A real developer's or CI's unrestricted network has no such restriction. |
+| Full stack build/startup/validation (temporary, uncommitted Dockerfile variant skipping only the network-blocked `apt-get` step) | Automated, local | PASS | Genuinely built and ran; see handoff for exact steps. Confirms every other line of the real Dockerfile and the full compose stack. |
+| MySQL healthcheck | Automated, local | PASS | `mysqladmin ping` — `app` container correctly waited for `service_healthy` before starting. |
+| Laravel ↔ MySQL connectivity | Automated, local | PASS | `DB::connection()->getPdo()` succeeded inside the `app` container. |
+| Migrations against real MySQL 8.4 | Automated, local | PASS | All 5 migrations ran cleanly. |
+| `AdminUserSeeder` inside Docker | Automated, local | PASS | Created the local dev admin account as expected. |
+| `composer validate --strict` / `vendor/bin/pint --test` / `vendor/bin/phpstan analyse` / `php artisan test` inside the `app` container | Automated, local | PASS | 31/31 tests, 96 assertions; PHPStan 0 errors (after raising `memory_limit` to 512M — see Known Issues in the handoff); Pint clean. |
+| `GET /api/v1/health` through Nginx | Automated, local | PASS | `curl http://localhost:8000/api/v1/health` → `200`. |
+| `GET /login` (Admin) through Nginx | Automated, local | PASS | `200`, Livewire component present — after fixing the entrypoint permissions bug (see handoff). |
+| `POST /api/v1/auth/login` through Nginx | Automated, local | PASS | Full request → MySQL → Sanctum token issuance cycle confirmed working end-to-end through the Docker stack. |
+| Host (non-Docker) `composer validate --strict` / `vendor/bin/pint --test` / `vendor/bin/phpstan analyse` / `php artisan test` | Automated, local | PASS | Unaffected by this phase — 31/31 tests, 0 PHPStan errors, Pint clean. |
+| Backend CI workflow | Automated, GitHub Actions | PENDING | To be confirmed on the Phase 4A PR — Docker changes don't affect this workflow's own SQLite-based run, but it must still pass. |
+| Mobile CI workflow | Automated, GitHub Actions | PENDING | Unaffected by this phase (no `apps/mobile` changes) — expected to pass, to be confirmed on the PR. |
+| No RBAC/business functionality introduced | Manual | PASS | Confirmed by reviewing the full staged diff before commit. |
+
 *(Future phases append their own section above this line, oldest first.)*

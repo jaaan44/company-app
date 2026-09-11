@@ -79,7 +79,7 @@ Durable record of accepted decisions. Each entry is permanent once recorded — 
 
 ### DEC-013 — No Docker by default for local development
 **Date:** 2026-09-09
-**Status:** ACCEPTED
+**Status:** SUPERSEDED by DEC-027
 **Decision:** Company App's default local development workflow does not use Docker. PHP, Composer, Node.js, and the Flutter SDK installed directly on the developer's machine are sufficient and are what both apps have actually been built and validated against (Phases 1–2).
 **Rationale:** At ~100 users, an always-running container layer adds idle resource overhead and setup complexity with no demonstrated need — both apps run cleanly without it. This does not forbid Docker later for a specific, demonstrated need (e.g. standardizing a chosen non-SQLite database across contributors); it only sets the default.
 
@@ -160,6 +160,12 @@ Durable record of accepted decisions. Each entry is permanent once recorded — 
 **Status:** ACCEPTED
 **Decision:** The Sanctum bearer token is persisted on-device via the `flutter_secure_storage` package (iOS Keychain; Android EncryptedSharedPreferences/Keystore), behind a `TokenStorage` interface (`lib/features/auth/data/token_storage.dart`) so tests can substitute an in-memory fake. The token is never written to plain `SharedPreferences`, source code, or an unencrypted file.
 **Rationale:** CLAUDE.md's Phase 4 instructions explicitly require platform secure storage for the auth token, not ordinary local storage. `flutter_secure_storage` is the standard, actively maintained Flutter package for this and is the only new package this phase adds for storage (paired with `http` for the API client itself).
+
+### DEC-027 — Docker Compose is now the standard local backend development environment
+**Date:** 2026-09-11
+**Status:** ACCEPTED — supersedes DEC-013
+**Decision:** A three-service Docker Compose stack (`nginx`, `app` = PHP-FPM, `mysql`) at the repository root is now the standard way to run the Laravel backend locally, replacing direct-install PHP/Composer/MySQL as the default. Flutter (`apps/mobile`) remains outside Docker entirely — it continues to run on the developer's machine, an emulator, or a physical device, connecting to the Dockerized (or directly-run) API via the existing `API_BASE_URL` build-time configuration (DEC-021). Direct installation of PHP/Composer, as documented before this phase, remains possible for a developer who prefers it — Docker is the new *standard*, not the only supported path. GitHub Actions CI is unchanged (still SQLite-based, per DEC-015) — Docker is a local development environment concern, not a CI concern.
+**Rationale:** DEC-013's original reasoning (avoid idle container overhead and setup complexity at ~100-user scale) held while the backend had no real database engine decision to standardize around. Phase 3 (DEC-016) fixed MySQL as the production direction, and Phase 4 introduced Authentication — the first phase where "works on my machine" schema/engine drift (SQLite locally vs. MySQL in production) becomes a real correctness risk worth eliminating, not just a resource-efficiency tradeoff. A lean three-service stack (no Redis, queue worker, scheduler, WebSocket server, Mailpit, phpMyAdmin, or other always-on infrastructure beyond what's demonstrably needed) keeps this consistent with the resource-efficiency direction (`02_ARCHITECTURE.md` §0) while giving every contributor the same MySQL-backed environment the production system actually runs on.
 
 ---
 

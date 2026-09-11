@@ -1,6 +1,6 @@
 # 02 — Architecture (Initial)
 
-Status: **Mostly confirmed as of Phase 4** (repository layout, versions, database engine, identifier strategy, Admin Backoffice direction, API foundation, authentication — see §2, §3, §12, §13). Remaining open items are listed in §9.
+Status: **Mostly confirmed as of Phase 4A** (repository layout, versions, database engine, identifier strategy, Admin Backoffice direction, API foundation, authentication, local Docker environment — see §2, §3, §12, §13, §14). Remaining open items are listed in §9.
 
 ## 0. Resource-Efficiency Direction
 
@@ -89,7 +89,7 @@ These require a decision at the appropriate future phase, not now:
 
 ## 11. Development Environment & CI (confirmed, Phase 2)
 
-**Local development:** No Docker by default (DEC-013). PHP, Composer, Node.js, and the Flutter SDK installed directly are sufficient at this project's scale — both apps have already been built and validated this way in Phases 1–2. Docker remains an option to introduce later for a specific, demonstrated need (e.g. standardizing a non-SQLite database across contributors once one is chosen), not a default.
+**Local development:** Docker Compose is the standard local backend environment as of Phase 4A (DEC-027, superseding DEC-013) — see §14. Direct install of PHP/Composer/Node.js remains possible for a developer who prefers it; the Flutter SDK is always installed directly regardless (Flutter is never Dockerized).
 
 **CI:** Two path-filtered GitHub Actions workflows (DEC-015) — `.github/workflows/backend-ci.yml` and `.github/workflows/mobile-ci.yml` — each triggered on pull requests targeting `main` and pushes to `main`, scoped via `paths:` so a backend-only change doesn't run the mobile suite and vice versa. Single PHP version (8.4), single Flutter version (3.47.2) — no build matrix, per the resource-efficiency direction (§0). No Android/iOS artifact builds in CI (release packaging is a later concern, not fast quality validation).
 
@@ -120,3 +120,28 @@ These require a decision at the appropriate future phase, not now:
 **Registration (DEC-023):** none. Accounts are company-provisioned (a local-only seeder for now; a future Staff Management phase may add an Admin-driven flow).
 
 **Flutter (DEC-025, DEC-026):** `lib/features/auth/` — `AuthApiClient` (wraps `package:http`), `TokenStorage`/`SecureTokenStorage` (`flutter_secure_storage`), `AuthController` (`ChangeNotifier` — the first state-management choice made under DEC-021's deferral), `AuthGate`/`LoginPage` presentation. The existing `HomePage` placeholder (Phase 3) is reused as the authenticated destination, extended with a logout action — not replaced with a real dashboard.
+
+## 14. Docker Development Environment (confirmed, Phase 4A)
+
+**Standard, not exclusive (DEC-027, superseding DEC-013):** `docker-compose.yml` at the repository root defines exactly three services:
+
+```
+Flutter (host/device)
+        │
+        ▼
+     nginx  ──►  app (PHP-FPM 8.4)  ──►  mysql
+```
+
+- `nginx` (`nginx:1.27-alpine`) — conventional Laravel vhost (`docker/nginx/default.conf`), document root `apps/api/public`, PHP requests proxied to `app:9000`, dotfiles/non-`public` paths denied. Published on host port 8000 — deliberately the same port `php artisan serve` and Flutter's default `API_BASE_URL` already use, so nothing else needs to change to point at the Dockerized backend.
+- `app` (`docker/php/Dockerfile`, built from `php:8.4-fpm`) — only `pdo_mysql`/`bcmath` added via `docker-php-ext-install` (`mbstring` etc. already ship in the base image), `git`/`unzip` for Composer, and Composer itself copied from the official `composer:2` image. A `local-dev.ini` raises `memory_limit` to 512M (Larastan/PHPStan's parallel workers otherwise crash on the base image's 128M default). No application code is baked into the image — it's bind-mounted (see below).
+- `mysql` (`mysql:8.4`) — matches the production direction (DEC-016). Data persists in a named volume (`mysql-data`); a healthcheck (`mysqladmin ping`) gates the `app` container's startup so migrations never race an unready database.
+
+**No Redis, queue worker, scheduler, WebSocket server, Mailpit, phpMyAdmin, Elasticsearch, Node container, or Kubernetes** — none is demonstrably needed yet, per the resource-efficiency direction (§0). A future phase adds a service only when it has a real requirement to satisfy.
+
+**Source mounting / Composer strategy:** `apps/api` is bind-mounted into `app` (and read-only into `nginx`) so the host's editor sees every change instantly. `vendor/` is a *separate* named volume mounted over the bind mount's `vendor/` path — this is deliberate: it stops whatever is (or isn't) in the host's `apps/api/vendor` from shadowing or conflicting with what the container installs via `composer install`, avoiding the classic "works on my host, breaks in the container" dependency mismatch. First-time setup therefore includes one `docker compose exec app composer install`.
+
+**Environment configuration:** Laravel reads `apps/api/.env` directly (it's part of the bind mount) — the `app` service deliberately does **not** use Compose's `env_file`/`environment` to inject the same values as container-level OS environment variables. Testing this the other way during the phase revealed why: PHPUnit's `<env>` overrides in `phpunit.xml` don't force-replace a variable that already exists, so OS-level env vars from `env_file` silently defeated the testing-environment overrides, pointing `php artisan test` inside the container at the real MySQL dev database instead of the isolated in-memory SQLite it uses everywhere else. `apps/api/.env.docker.example` provides the MySQL-pointing example (`DB_HOST=mysql`, matching the `mysql` service's hardcoded local-only dev credentials) to copy to `.env`.
+
+**Permissions:** the container's `php-fpm` runs as `www-data`, which essentially never matches whatever UID owns the bind-mounted files across Windows/macOS/Linux. Rather than attempt UID-mapping across three host platforms, the image's `entrypoint.sh` grants `a+rwX` (not a blanket `777`, and scoped only to `storage/` and `bootstrap/cache/`, never the whole application) on container start.
+
+**CI unaffected:** GitHub Actions continues to run directly on the runner (no Docker), still SQLite-based per DEC-015 — Docker is a local development environment concern, not a CI concern; see `docs/handoffs/V1_PHASE_04A_HANDOFF.md` for the full rationale and verification detail.
