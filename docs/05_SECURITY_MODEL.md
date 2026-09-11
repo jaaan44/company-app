@@ -1,6 +1,6 @@
 # 05 — Security Model (Initial)
 
-Status: **Authentication implemented as of Phase 4** (this section and Account States/Rate Limiting/API Access below now describe real, tested code — see `docs/handoffs/V1_PHASE_04_HANDOFF.md`). Authorization (RBAC) remains strategy only, pending Phase 5. Do not overstate guarantees to users or the product owner beyond what's actually built and tested.
+Status: **Authentication implemented as of Phase 4, Authorization (RBAC foundation) implemented as of Phase 5** (see `docs/handoffs/V1_PHASE_04_HANDOFF.md` and `docs/handoffs/V1_PHASE_05_HANDOFF.md`). Do not overstate guarantees to users or the product owner beyond what's actually built and tested.
 
 ## Authentication
 
@@ -14,7 +14,12 @@ Status: **Authentication implemented as of Phase 4** (this section and Account S
 
 - **Permission-oriented, not purely role-hardcoded** (DEC-004). Every protected action checks a specific permission (e.g. `leave.approve`), not just "is this user an Administrator."
 - Roles are named bundles of permissions for manageability, not the authorization primitive itself.
-- **Data isolation is deliberate**, not implicit: e.g. a Supervisor's visibility into staff records, work logs, or leave requests must be explicitly scoped (own team vs. everyone) at the query/policy level, not just hidden in the UI. Server-side enforcement is mandatory; the UI hiding a button is never sufficient.
+- **Implemented as of Phase 5 (DEC-028):** `roles` (`Administrator`/`Manager`/`Staff`, a fixed V1 catalog), `permissions` (dot-notation identifiers), and a many-to-many `role_permissions` join. **One role per user** — `users.role_id`, nullable — not a many-to-many `users`↔`roles` table; a user with no role has no permissions (default-deny).
+  - **Centralized enforcement:** a single `Gate::before` callback (`App\Providers\AppServiceProvider::boot()`) is the one place Administrator's "may do everything" behavior is expressed — not `if ($user->is_admin)`/`if ($user->role === 'admin')` checks scattered through controllers, Livewire components, or Blade views. Every other user's ability check resolves against their role's attached permissions via `App\Models\User::hasPermission()`.
+  - **Reusable across every Laravel authorization surface:** because this is a real `Gate::before` override (not a bespoke helper function), Laravel's built-in `can` route middleware, `Gate::allows()`/`authorize()`, Blade's `@can`, and `$user->can()`/`$user->cannot()` inside a future Policy all work against permission names with zero per-permission `Gate::define` boilerplate. A future developer protects a new action by asking "does Laravel already have a mechanism for this surface (route, Blade view, Policy method)?" and calling `can('module.action')` through it — not by inventing a new check.
+  - **Foundational permission catalog only** — `admin.access`, `authorization.manage` — enough to prove the mechanism; each future module's permissions arrive with that module, not speculatively here (CLAUDE.md §7).
+  - Manager and Staff hold **no permissions** as of Phase 5 — acceptable (CLAUDE.md §10); this is not a gap, it's the correct default-deny starting state until real modules attach real permissions to these roles.
+- **Data isolation is deliberate**, not implicit: e.g. a Supervisor's visibility into staff records, work logs, or leave requests must be explicitly scoped (own team vs. everyone) at the query/policy level, not just hidden in the UI. Server-side enforcement is mandatory; the UI hiding a button is never sufficient. Not yet applicable — no module with row-level ownership exists yet.
 
 ## Least Privilege
 
@@ -31,11 +36,12 @@ Status: **Authentication implemented as of Phase 4** (this section and Account S
 ## Administrative Access
 
 - Administrative actions (staff suspension, role changes, settings changes, data exports) are higher-risk and are candidates for stricter checks (e.g. requiring a specific elevated permission, and always audit-logged).
-- **Implemented as a transitional mechanism (DEC-024):** a boolean `users.is_admin` flag, checked once at Admin login, is the only thing distinguishing "may enter the Admin Backoffice" from "is an authenticated user" today. It is not a permissions system and is superseded by Phase 5.
+- **Implemented as of Phase 5 (DEC-028), retiring the Phase 4 transitional `is_admin` flag (DEC-024):** the Admin Backoffice's access chain is `auth` → `account.active` → `can:admin.access` → `/home` (`routes/web.php`), enforced both at login (`App\Livewire\Auth\LoginForm`) and on every subsequent request to `/home` via Laravel's built-in `can` route middleware — not a one-time login-only check. `is_admin` no longer exists on `users`; there is no remaining reference to it in application authorization logic.
 
 ## API Access
 
 - The API is the enforcement boundary (see `04_API_CONVENTIONS.md`) — every endpoint independently authorizes, regardless of what the calling client (mobile/admin) already filtered client-side.
+- **Implemented as of Phase 5:** `UserResource` exposes a stable `role` field (the role's *name*, e.g. `"administrator"` — never the internal numeric `role_id`) for legitimate future mobile UI use (e.g. role-aware navigation). No endpoint is currently permission-gated beyond what Phase 4 already authenticates (`auth:sanctum`/`account.active`) — the same `Gate::before`-backed mechanism (`05_SECURITY_MODEL.md` Authorization, above) is available to future API endpoints via `Route::middleware(['auth:sanctum', 'can:<permission>'])` when a real permission-gated endpoint is built.
 - Tokens scoped appropriately per client type where the auth mechanism supports it (e.g. Sanctum token abilities), to limit blast radius of a leaked mobile token vs. an admin session — no token abilities are defined yet (single mobile client type; revisit if a second API-consuming client type is added).
 - **`GET /api/v1/health` (Phase 3) and `POST /api/v1/auth/login` (Phase 4) are the deliberate public exceptions** — health returns only `{status, timestamp}`; login is otherwise unauthenticated by necessity but rate-limited and returns a generic failure message that never confirms or denies whether a given email is registered. Any future unauthenticated endpoint must be an equally deliberate, narrow, documented exception — not a default.
 - `POST /api/v1/auth/logout` revokes only the token used for the request (`$request->user()->currentAccessToken()->delete()`), not every device's token — a deliberate choice leaving room for future multi-device use without inventing a session-management UI in this phase.

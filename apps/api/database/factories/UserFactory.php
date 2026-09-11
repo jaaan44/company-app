@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\AccountStatus;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -32,7 +33,7 @@ class UserFactory extends Factory
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
             'status' => AccountStatus::Active,
-            'is_admin' => false,
+            'role_id' => null,
         ];
     }
 
@@ -47,13 +48,46 @@ class UserFactory extends Factory
     }
 
     /**
-     * Indicate that the account may enter the Admin Backoffice (DEC-023 —
-     * transitional mechanism, superseded by Phase 5 RBAC).
+     * Assign the Administrator role (Phase 5 — DEC-028; supersedes the
+     * retired `is_admin` flag / former `admin()` state). The role row is
+     * looked up-or-created idempotently, so this works regardless of
+     * whether RolePermissionSeeder has run.
      */
-    public function admin(): static
+    public function administrator(): static
     {
         return $this->state(fn (array $attributes) => [
-            'is_admin' => true,
+            'role_id' => Role::query()->firstOrCreate(
+                ['name' => Role::ADMINISTRATOR],
+                ['label' => 'Administrator'],
+            )->id,
+        ]);
+    }
+
+    /**
+     * Assign the Manager role (Phase 5). Manager intentionally carries no
+     * permissions in V1 — see CLAUDE.md §10.
+     */
+    public function manager(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role_id' => Role::query()->firstOrCreate(
+                ['name' => Role::MANAGER],
+                ['label' => 'Manager'],
+            )->id,
+        ]);
+    }
+
+    /**
+     * Assign the Staff role (Phase 5). Staff intentionally carries no
+     * permissions in V1 — see CLAUDE.md §10.
+     */
+    public function staff(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role_id' => Role::query()->firstOrCreate(
+                ['name' => Role::STAFF],
+                ['label' => 'Staff'],
+            )->id,
         ]);
     }
 

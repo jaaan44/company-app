@@ -24,7 +24,7 @@ class AdminLoginTest extends TestCase
     {
         // Guest-only route; a real product may redirect authenticated
         // users away, but that's a UX nicety, not an auth boundary.
-        $user = User::factory()->admin()->create();
+        $user = User::factory()->administrator()->create();
         $this->actingAs($user);
 
         $this->get('/login')->assertRedirect(route('home'));
@@ -32,7 +32,7 @@ class AdminLoginTest extends TestCase
 
     public function test_admin_user_can_log_in_with_valid_credentials(): void
     {
-        $user = User::factory()->admin()->create([
+        $user = User::factory()->administrator()->create([
             'password' => Hash::make('correct-password'),
         ]);
 
@@ -47,7 +47,7 @@ class AdminLoginTest extends TestCase
 
     public function test_session_id_is_regenerated_after_successful_login(): void
     {
-        $user = User::factory()->admin()->create([
+        $user = User::factory()->administrator()->create([
             'password' => Hash::make('correct-password'),
         ]);
 
@@ -64,7 +64,7 @@ class AdminLoginTest extends TestCase
 
     public function test_invalid_credentials_are_rejected(): void
     {
-        $user = User::factory()->admin()->create([
+        $user = User::factory()->administrator()->create([
             'password' => Hash::make('correct-password'),
         ]);
 
@@ -79,9 +79,8 @@ class AdminLoginTest extends TestCase
 
     public function test_non_admin_account_is_rejected_from_admin_backoffice(): void
     {
-        $user = User::factory()->create([
+        $user = User::factory()->staff()->create([
             'password' => Hash::make('correct-password'),
-            'is_admin' => false,
         ]);
 
         Livewire::test(LoginForm::class)
@@ -95,7 +94,7 @@ class AdminLoginTest extends TestCase
 
     public function test_suspended_admin_account_cannot_log_in(): void
     {
-        $user = User::factory()->admin()->suspended()->create([
+        $user = User::factory()->administrator()->suspended()->create([
             'password' => Hash::make('correct-password'),
         ]);
 
@@ -110,7 +109,7 @@ class AdminLoginTest extends TestCase
 
     public function test_inactive_admin_account_cannot_log_in(): void
     {
-        $user = User::factory()->admin()->inactive()->create([
+        $user = User::factory()->administrator()->inactive()->create([
             'password' => Hash::make('correct-password'),
         ]);
 
@@ -125,7 +124,7 @@ class AdminLoginTest extends TestCase
 
     public function test_login_is_rate_limited_after_repeated_failures(): void
     {
-        $user = User::factory()->admin()->create([
+        $user = User::factory()->administrator()->create([
             'password' => Hash::make('correct-password'),
         ]);
 
@@ -149,7 +148,7 @@ class AdminLoginTest extends TestCase
 
     public function test_logout_ends_the_admin_session(): void
     {
-        $user = User::factory()->admin()->create();
+        $user = User::factory()->administrator()->create();
 
         $this->actingAs($user)
             ->post('/logout')
@@ -165,7 +164,7 @@ class AdminLoginTest extends TestCase
 
     public function test_suspended_account_loses_access_to_the_home_placeholder_mid_session(): void
     {
-        $user = User::factory()->admin()->create();
+        $user = User::factory()->administrator()->create();
         $this->actingAs($user);
 
         // Direct attribute assignment (not update()) since 'status' is
@@ -186,7 +185,7 @@ class AdminLoginTest extends TestCase
 
     public function test_authenticated_admin_can_view_the_home_placeholder(): void
     {
-        $user = User::factory()->admin()->create();
+        $user = User::factory()->administrator()->create();
 
         $this->actingAs($user)
             ->get('/home')

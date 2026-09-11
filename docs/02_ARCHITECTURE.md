@@ -1,6 +1,6 @@
 # 02 — Architecture (Initial)
 
-Status: **Mostly confirmed as of Phase 4A** (repository layout, versions, database engine, identifier strategy, Admin Backoffice direction, API foundation, authentication, local Docker environment — see §2, §3, §12, §13, §14). Remaining open items are listed in §9.
+Status: **Mostly confirmed as of Phase 5** (repository layout, versions, database engine, identifier strategy, Admin Backoffice direction, API foundation, authentication, local Docker environment, authorization — see §2, §3, §12, §13, §14, §15). Remaining open items are listed in §9.
 
 ## 0. Resource-Efficiency Direction
 
@@ -52,6 +52,7 @@ Monorepo, no orchestration tooling (Nx/Turborepo/Melos) — the two apps operate
 ## 4. Authorization Layer
 
 - Permission-oriented, not purely role-hardcoded (DEC-004). Roles are collections of permissions; authorization checks are expressed in terms of permissions (`staff.suspend`, `leave.approve`, etc.), typically via Laravel Policies/Gates backed by a permission store.
+- **Implemented as of Phase 5** (DEC-028): `roles`/`permissions`/`role_permissions` tables, one role per user (`users.role_id`), a centralized `Gate::before` override for the Administrator role plus role-derived permission resolution for everyone else. See §15.
 - Data isolation (e.g., a Manager only seeing their team, a Field Staff only seeing their own work logs) is a first-class design concern, not bolted on later — see `05_SECURITY_MODEL.md`.
 
 ## 5. Real-Time Capabilities
@@ -145,3 +146,24 @@ Flutter (host/device)
 **Permissions:** the container's `php-fpm` runs as `www-data`, which essentially never matches whatever UID owns the bind-mounted files across Windows/macOS/Linux. Rather than attempt UID-mapping across three host platforms, the image's `entrypoint.sh` grants `a+rwX` (not a blanket `777`, and scoped only to `storage/` and `bootstrap/cache/`, never the whole application) on container start.
 
 **CI unaffected:** GitHub Actions continues to run directly on the runner (no Docker), still SQLite-based per DEC-015 — Docker is a local development environment concern, not a CI concern; see `docs/handoffs/V1_PHASE_04A_HANDOFF.md` for the full rationale and verification detail.
+
+## 15. Roles & Permissions (confirmed, Phase 5)
+
+**Schema (DEC-028):** `roles` (`id`, `name` unique — `administrator`/`manager`/`staff`, `label`), `permissions` (`id`, `name` unique — dot-notation, e.g. `admin.access`, `label`), `role_permissions` (composite PK `role_id`+`permission_id`, a plain pivot with no surrogate key). `users.role_id` is a nullable FK to `roles` (`nullOnDelete`) — **one role per user**, not a many-to-many `users`↔`roles` table; a user with no role has no permissions. The Phase 4 transitional `users.is_admin` boolean (DEC-024) is retired — the column is dropped; a data-migration step backfills any pre-existing `is_admin = true` row onto the Administrator role before dropping it.
+
+**Enforcement pattern:** a single `Gate::before` callback, registered in `App\Providers\AppServiceProvider::boot()`:
+1. A user holding the Administrator role (`App\Models\User::hasRole(Role::ADMINISTRATOR)`) passes every ability check, unconditionally. This is the one deliberate, centralized override — not `if ($user->is_admin)`/`if ($user->role === 'admin')` checks scattered through controllers or Livewire components.
+2. Otherwise, the ability name is resolved against the user's role-derived permission set (`App\Models\User::hasPermission()`) — `true` if granted, `null` (defer, not deny) if not, so an unrelated Policy/Gate ability continues to resolve normally rather than being silently intercepted.
+3. An ability matching neither ends up denied by Laravel's own default-deny Gate behavior.
+
+Because this runs through Laravel's real Gate resolution, every existing authorization surface already works against permission names with no per-permission boilerplate: route middleware (`Route::middleware('can:admin.access')`, Laravel's built-in `can` alias), `Gate::allows()`/`authorize()`, Blade's `@can`, and `$user->can()`/`$user->cannot()` inside a future Policy. Future modules protect an action by picking whichever of these fits the surface, checking a permission name — not by inventing a new mechanism.
+
+**Administrator behavior:** does not hold explicit `role_permissions` rows — see the `Gate::before` override above. This avoids the maintenance risk of a new permission being added to the catalog and someone forgetting to attach it to Administrator (silently locking out the highest-privilege role); Administrator's "does everything" behavior is expressed in exactly one place.
+
+**Manager/Staff:** exist as of Phase 5 with **no attached permissions** — acceptable and expected (CLAUDE.md §10); later phases attach real permissions as their modules are built.
+
+**Admin Backoffice access chain:** `auth` → `account.active` → `can:admin.access` → `/home` (`routes/web.php`). `App\Livewire\Auth\LoginForm` performs the same `admin.access` check at login time (mirroring the account-status check's login-time + mid-session double enforcement established in Phase 4).
+
+**API impact:** `UserResource` gains a stable `role` field — the role's *name* (e.g. `"administrator"`), never the internal numeric `role_id`. No new API endpoints were added; no endpoint is currently permission-gated beyond what Phase 4 already authenticates.
+
+**Not introduced:** third-party RBAC packages, external IAM/OAuth authorization server, a policy engine service, Redis-backed permission caching, multi-tenant/organization-level ACL infrastructure, or many-to-many user↔role assignment — none demonstrably needed at ~100-user V1 scale (CLAUDE.md §4/§6).

@@ -1,0 +1,36 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('permissions', function (Blueprint $table) {
+            $table->id();
+
+            // Dot-notation permission identifier (e.g. 'admin.access',
+            // 'authorization.manage') — the convention future modules
+            // reuse ('<module>.<action>', per DEC-004's examples).
+            $table->string('name')->unique();
+
+            // Human-readable description.
+            $table->string('label');
+
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('permissions');
+    }
+};

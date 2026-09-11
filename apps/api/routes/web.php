@@ -11,7 +11,7 @@ Route::middleware('guest')->group(function (): void {
     Route::get('login', fn () => view('auth.login'))->name('login');
 });
 
-Route::middleware(['auth', 'account.active'])->group(function (): void {
+Route::middleware(['auth', 'account.active', 'can:admin.access'])->group(function (): void {
     Route::get('home', fn () => view('home'))->name('home');
 });
 
