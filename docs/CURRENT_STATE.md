@@ -10,7 +10,7 @@
 
 ## Current Objective
 
-Awaiting review of Phase 4A and authorization for Phase 5.
+Phase 4A is UAT-confirmed by the product owner on Windows. Awaiting authorization for Phase 5.
 
 ## Completed
 
@@ -27,6 +27,8 @@ Awaiting review of Phase 4A and authorization for Phase 5.
   - DEC-027 records Docker Compose as the new standard local backend environment, formally superseding DEC-013 (not deleted — marked superseded per `DECISIONS.md`'s own rules).
   - Flutter remains entirely outside Docker, unaffected.
   - No RBAC or other business functionality was introduced.
+  - **Windows UAT (product owner, post-handoff):** an initial `.gitattributes`-related CRLF failure was found and fixed (`docker/php/entrypoint.sh` checked out as CRLF, breaking its shebang) — see handoff §26. A full retest then passed: Docker stack, first-time setup (`composer install`, `key:generate`, migrations, `AdminUserSeeder`), `/api/v1/health`, and the full Admin + Flutter authentication flow against the Dockerized API. Recorded in `docs/testing/UAT_LOG.md`.
+  - **Port reconfiguration (product owner request, post-handoff):** both host ports made configurable — application `APP_PORT` (default `8012`, was fixed `8000`), MySQL `MYSQL_PORT` (default `3347`, was fixed `3306` — host-tool access only, never affects Laravel's internal `DB_HOST=mysql`/`DB_PORT=3306` connection). See handoff §27.
 
 ## Pending / Not Started
 

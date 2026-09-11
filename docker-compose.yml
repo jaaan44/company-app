@@ -5,6 +5,11 @@
 #
 # Quick start: docker compose up -d --build
 # Full first-time setup: README.md "Backend (Docker)".
+#
+# Host ports (application 8012, MySQL 3347 by default) are configurable
+# via APP_PORT/MYSQL_PORT — export them, or set them in a root-level
+# .env, if either default is already taken on your machine. Neither
+# affects the containers' own internal ports.
 
 services:
   app:
@@ -34,9 +39,14 @@ services:
     image: nginx:1.27-alpine
     container_name: company-app-nginx
     ports:
-      # Matches the port already used/documented for `php artisan serve`
-      # and Flutter's default API_BASE_URL — no new port to remember.
-      - "8000:80"
+      # Host port is configurable (APP_PORT) to avoid clashing with
+      # whatever else a developer's machine already has on a given port;
+      # 8012 is the project's standard default. Override by exporting
+      # APP_PORT or setting it in a root-level .env before `docker
+      # compose up` — never edit this file to change it. The container's
+      # own internal port (80, Nginx's normal listen port) is unaffected
+      # either way.
+      - "${APP_PORT:-8012}:80"
     volumes:
       - ./apps/api:/var/www/html:ro
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
@@ -59,9 +69,16 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
     ports:
-      # Bound to localhost only — convenient for a local GUI client,
-      # not exposed beyond the developer's own machine.
-      - "127.0.0.1:3306:3306"
+      # Host port is configurable (MYSQL_PORT) since 3306 is commonly
+      # already taken by another local MySQL install/service — 3347 is
+      # the project's non-conflicting default. This mapping is for host
+      # tools only (e.g. MySQL Workbench, a CLI client on the developer's
+      # machine) — it has NO effect on Laravel's own connection, which
+      # always uses DB_HOST=mysql / DB_PORT=3306 (the container's
+      # internal port, container-to-container, unaffected by this host
+      # mapping). Still bound to 127.0.0.1 only — not exposed beyond the
+      # developer's own machine.
+      - "127.0.0.1:${MYSQL_PORT:-3347}:3306"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-psecret"]
       interval: 5s

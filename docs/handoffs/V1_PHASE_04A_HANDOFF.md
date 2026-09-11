@@ -29,8 +29,12 @@ Three services only, defined in a root `docker-compose.yml`. No Redis, queue wor
 
 ## 5. Ports
 
-- `nginx`: host `8000` → container `80`. Deliberately the same port `php artisan serve` and Flutter's default `API_BASE_URL` already use — nothing else changes to point Flutter at the Dockerized backend.
-- `mysql`: host `127.0.0.1:3306` → container `3306` — localhost-bound only, for an optional local GUI client; not exposed beyond the developer's own machine.
+**Updated post-handoff (product-owner Windows UAT, see §27):** both host ports are now configurable rather than fixed, since the original fixed defaults each collided with something already running on the product owner's machine.
+
+- `nginx`: host `${APP_PORT:-8012}` → container `80` (container's own internal port, 80, unchanged and unaffected by the host mapping). `8012` is the project's standard default, chosen not to collide with common locally-run services; override by exporting `APP_PORT` or setting it in a root-level `.env`. Flutter's `API_BASE_URL` must be pointed at whichever port is actually in use, via the existing `--dart-define` mechanism (DEC-021) — never hard-coded into Flutter application code.
+- `mysql`: host `127.0.0.1:${MYSQL_PORT:-3347}` → container `3306` (container's own internal port, `DB_PORT=3306` in Laravel's config, unchanged and unaffected by the host mapping) — localhost-bound only, for an optional local GUI client (e.g. MySQL Workbench); not exposed beyond the developer's own machine. `3347` is the project's non-conflicting default (3306 is commonly already taken by another local MySQL install, as it was on the product owner's machine); override via `MYSQL_PORT`.
+
+*(Original, since-superseded text: `nginx` host `8000`, `mysql` host `127.0.0.1:3306`, both fixed — see §27 for why and how this changed.)*
 
 ## 6. Volume Strategy
 
@@ -48,7 +52,7 @@ Laravel reads `apps/api/.env` directly — it's part of the bind mount, so Larav
 
 ## 9. MySQL Configuration
 
-`MYSQL_DATABASE=company_app`, `MYSQL_USER=company_app`, `MYSQL_PASSWORD=secret`, `MYSQL_ROOT_PASSWORD=secret` — hardcoded directly in `docker-compose.yml` (not templated from a root-level `.env`, to avoid a second, confusing environment-file layer alongside Laravel's own `apps/api/.env`). A healthcheck (`mysqladmin ping -h localhost -uroot -psecret`, 5s interval, 10 retries) gates `app`'s startup via `depends_on: mysql: condition: service_healthy`, so migrations never race an unready database.
+`MYSQL_DATABASE=company_app`, `MYSQL_USER=company_app`, `MYSQL_PASSWORD=secret`, `MYSQL_ROOT_PASSWORD=secret` — hardcoded directly in `docker-compose.yml` (not templated from a root-level `.env`, to avoid a second, confusing environment-file layer alongside Laravel's own `apps/api/.env`). These credentials are unaffected by the host-port change in §5/§27 — only the *host* mapping (for external tools) is configurable; the container's own internal port (`3306`) and all credentials are unchanged. A healthcheck (`mysqladmin ping -h localhost -uroot -psecret`, 5s interval, 10 retries) gates `app`'s startup via `depends_on: mysql: condition: service_healthy`, so migrations never race an unready database.
 
 ## 10. Nginx Configuration
 
@@ -60,12 +64,12 @@ The container's `php-fpm` runs as `www-data` (the base image's default), which e
 
 ## 12. Flutter Connectivity
 
-Flutter is unchanged and untouched by this phase. `README.md` documents `API_BASE_URL` examples for the three target types the governing instructions asked for:
-- Desktop/web: `http://localhost:8000/api/v1` (already the default in `app_config.dart`, DEC-021/Phase 3)
-- Android emulator: `http://10.0.2.2:8000/api/v1` (the emulator's standard alias for the host machine)
-- Physical device on the same LAN: `http://<host-LAN-IP>:8000/api/v1`
+Flutter's own code is unchanged and untouched by this phase — `lib/core/config/app_config.dart`'s built-in default (`http://localhost:8000/api/v1`, matching direct-install `php artisan serve`) was deliberately left as-is (the governing instructions for the port change explicitly said not to hard-code `8012` into Flutter application behavior). `README.md` documents `API_BASE_URL` examples for the three target types, now pointed at the standard Docker backend's default port (`8012`, updated post-handoff — see §27):
+- Desktop/web: `http://localhost:8012/api/v1`
+- Android emulator: `http://10.0.2.2:8012/api/v1` (the emulator's standard alias for the host machine)
+- Physical device on the same LAN: `http://<host-LAN-IP>:8012/api/v1`
 
-None of these are hard-coded into application code — all via the existing `--dart-define=API_BASE_URL=...` mechanism.
+None of these are hard-coded into application code — all via the existing `--dart-define=API_BASE_URL=...` mechanism (DEC-021). A developer running the backend via direct install instead can omit `--dart-define` entirely and get the unchanged `8000` default.
 
 ## 13. Authentication Verification
 
@@ -193,7 +197,7 @@ docker compose exec app php artisan migrate
 docker compose exec app php artisan db:seed --class="Database\Seeders\AdminUserSeeder"
 ```
 
-Then: `http://localhost:8000/api/v1/health` should return `{"data":{"status":"ok",...}}`; `http://localhost:8000/login` should show the Admin sign-in screen; signing in with `admin@example.test` / `password` should reach the placeholder home. `docker compose exec app php artisan test` should show `31 passed`. `docker compose down` stops everything; `docker compose down -v` also removes the MySQL data volume for a clean slate.
+Then: `http://localhost:8012/api/v1/health` should return `{"data":{"status":"ok",...}}`; `http://localhost:8012/login` should show the Admin sign-in screen; signing in with `admin@example.test` / `password` should reach the placeholder home. `docker compose exec app php artisan test` should show `31 passed`. `docker compose down` stops everything; `docker compose down -v` also removes the MySQL data volume for a clean slate. If `8012` or `3347` (MySQL, host-tools only) is already taken on your machine, set `APP_PORT`/`MYSQL_PORT` before `docker compose up` — see §5/§27.
 
 ## 25. Recommended Next Phase
 
@@ -229,6 +233,60 @@ Dockerfile text eol=lf
 4. Re-ran the full host (non-Docker) quality gate suite — `composer validate --strict`, `vendor/bin/pint --test`, `vendor/bin/phpstan analyse`, `php artisan test` (31/31) — all unaffected and passing, confirming this fix touched nothing beyond line-ending normalization.
 
 A genuine Windows machine was not available in this sandbox; the Git-level simulation (step 2) is the mechanistically correct test for this specific bug class, since `core.autocrlf` conversion happens entirely within Git during checkout, before Docker is ever involved — it is not a Docker-specific or platform-emulation concern.
+
+## 27. Post-Handoff Correction: Final Windows UAT Results and Port Configuration Update
+
+### 27.1 Provenance of every claim below
+
+Per the governing instruction for this correction, verification sources are kept explicitly separate — nothing below blurs who actually ran what:
+
+- **Product-owner Windows UAT** — performed by the product owner, on their own Windows machine, reported to this session as a list of outcomes. This session did not run these steps and cannot independently confirm a Windows result; §27.2 records exactly what was reported, no more.
+- **Claude automated/runtime verification** — performed by this session, in its Linux sandbox, for the port-configuration change specifically (§27.3). Same category as, and using the same method as, all this phase's earlier Docker validation (§13, §17, §26) — genuinely executed, not assumed.
+- **GitHub CI** — the existing `backend-ci.yml`/`mobile-ci.yml` workflows, unaffected by this change (no Docker build/run in CI) — re-confirmed green in §27.4.
+
+### 27.2 Product-Owner Windows UAT Results (as reported — not independently re-run by this session)
+
+The product owner reported successfully completing, on their real Windows development machine, against the branch containing the `.gitattributes` CRLF fix (§26):
+
+- Docker stack starts successfully; all three containers run; `mysql` reports healthy.
+- `docker compose exec app composer install` succeeds.
+- `php artisan key:generate` succeeds.
+- Migrations run successfully against Docker MySQL.
+- `AdminUserSeeder` runs successfully.
+- `/api/v1/health` works through Nginx.
+- Admin `/login` loads successfully.
+- A valid Admin login redirects to the protected `/home`.
+- Admin logout works.
+- Direct `/home` access while logged out redirects to `/login`.
+- Flutter successfully authenticates against the Dockerized Laravel API.
+- An invalid Flutter password produces a clean error and the app remains unauthenticated.
+- Authenticated Flutter state is restored after completely closing and reopening the app.
+- Flutter logout returns to the login screen.
+
+This is recorded in `docs/testing/UAT_LOG.md` and `docs/testing/TEST_STATUS.md` as `PASS`, dated, and attributed to the product owner — exactly this list, nothing broader. Scenarios not in this list (e.g. suspended/inactive/non-admin Admin rejection, a simulated Flutter network failure) remain `NOT RUN` — not inferred, not marked passing on the product owner's behalf, per CLAUDE.md §7.
+
+### 27.3 Port Configuration Change
+
+The product owner also reported two port collisions on their machine (host `3306` already in use by another local MySQL install; no `8000` collision was reported, but a configurable default was requested regardless) and asked for both host ports to be made configurable with new project-standard defaults: application `8012`, MySQL `3347`.
+
+**Changed:**
+- `docker-compose.yml`: `nginx`'s host port is now `${APP_PORT:-8012}:80` (was the fixed `8000:80`); `mysql`'s host port is now `127.0.0.1:${MYSQL_PORT:-3347}:3306` (was the fixed `127.0.0.1:3306:3306`). Neither container's *internal* port changed — Nginx still listens on `80` inside its container, MySQL still listens on `3306` inside its container, and Laravel's own connection (`DB_HOST=mysql`, `DB_PORT=3306`, entirely internal to the Docker network) is completely unaffected by either host mapping. Overriding either variable requires no edit to `docker-compose.yml` — export it, or set it in a root-level `.env` (Compose's own, separate from `apps/api/.env`), before `docker compose up`.
+- `apps/api/.env.docker.example`: `APP_URL` updated to `http://localhost:8012` to match the new default.
+- `README.md`, `docs/02_ARCHITECTURE.md` §14: every Docker-context `localhost:8000` reference updated to `8012`, Flutter `API_BASE_URL` examples updated to `8012` for all three target types (desktop/web, Android emulator via `10.0.2.2`, physical device via LAN IP), and both host ports' configurability documented.
+- **Not changed:** `apps/mobile/lib/core/config/app_config.dart`'s built-in default (`http://localhost:8000/api/v1`) — per the explicit instruction not to hard-code `8012` into Flutter application behavior. The existing `--dart-define=API_BASE_URL=...` mechanism (DEC-021) already handles this: the README's Docker-path examples now pass `8012` explicitly; a developer running the backend via direct install (`php artisan serve`, still port `8000`) can omit `--dart-define` and get the unchanged default.
+- MySQL credentials (`company_app`/`secret`, root/`secret`) are unchanged — only the host-side port mapping changed, not the database, user, or password.
+
+**Claude verification performed in this session** (Linux sandbox, using the same validated method as §13/§17/§26 — a temporary, uncommitted Dockerfile variant skipping only the network-blocked `apt-get` step, discarded after use, never committed):
+1. `docker compose config` (both default and with `APP_PORT`/`MYSQL_PORT` overrides set) — confirmed the resolved configuration correctly shows `published: "8012"` → `target: 80` for `nginx` and `published: "3347"` → `target: 3306` for `mysql` by default, and correctly picks up overrides (tested with `APP_PORT=9000 MYSQL_PORT=3399`) without any `docker-compose.yml` edit.
+2. Rebuilt and brought up all three containers on the new defaults — `docker compose ps` confirmed `0.0.0.0:8012->80/tcp` (nginx) and `127.0.0.1:3347->3306/tcp` (mysql), `mysql` reported `healthy`.
+3. Populated the `vendor` named volume (`docker cp` from the already-verified host `vendor/`, same approach as §17) and ran, all against the new `8012` port: `GET /api/v1/health` → `200`; `GET /login` → `200`; `POST /api/v1/auth/login` → `200` with a valid token (full MySQL round-trip); `php artisan migrate --force` → all 5 migrations; `php artisan db:seed --class=...AdminUserSeeder` → admin account created; `mysqladmin ping` against the container directly confirmed still healthy on the new host mapping.
+4. `php artisan test` (31/31), `vendor/bin/pint --test`, and `vendor/bin/phpstan analyse` (0 errors) — all re-run inside the `app` container after the change, all passing.
+5. Re-ran the full host (non-Docker) quality gate suite — unaffected, all passing, confirming the change is scoped to Docker port configuration only.
+6. Torn down (`docker compose down -v`) and all temporary test artifacts deleted after use, same discipline as every prior validation pass this phase.
+
+### 27.4 GitHub Actions Status (this correction)
+
+See the commit/CI table reported alongside this correction in the session's final report to the user (this document is updated in place before that push, per the established pattern in §18/§26 — check `docs/testing/TEST_STATUS.md` for the most current confirmed run if this note wasn't itself updated with a specific run link).
 
 ---
 

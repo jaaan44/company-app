@@ -69,7 +69,9 @@ docker compose exec app php artisan migrate
 docker compose exec app php artisan db:seed --class="Database\Seeders\AdminUserSeeder"  # local dev only — admin@example.test / password
 ```
 
-Once up, `http://localhost:8000/api/v1/health` and `http://localhost:8000/login` are reachable through Nginx. Lifecycle: `docker compose up -d` / `down` / `ps` / `logs`. Run any backend command via `docker compose exec app <command>`, e.g. `docker compose exec app php artisan test`, `docker compose exec app vendor/bin/pint --test`. See `docs/handoffs/V1_PHASE_04A_HANDOFF.md` for full detail (MySQL connection info, volume strategy, troubleshooting).
+Once up, `http://localhost:8012/api/v1/health` and `http://localhost:8012/login` are reachable through Nginx. Lifecycle: `docker compose up -d` / `down` / `ps` / `logs`. Run any backend command via `docker compose exec app <command>`, e.g. `docker compose exec app php artisan test`, `docker compose exec app vendor/bin/pint --test`. See `docs/handoffs/V1_PHASE_04A_HANDOFF.md` for full detail (MySQL connection info, volume strategy, troubleshooting).
+
+Both host ports are configurable if the defaults are already taken on your machine: `APP_PORT` (application, default `8012`) and `MYSQL_PORT` (MySQL, default `3347` — for host tools like MySQL Workbench only; Laravel's own container-to-container connection always uses `DB_HOST=mysql`/`DB_PORT=3306` regardless). Export them, or set them in a root-level `.env`, before `docker compose up` — e.g. `APP_PORT=8080 MYSQL_PORT=3307 docker compose up -d --build`.
 
 ### Backend (direct install — still supported)
 
@@ -94,13 +96,15 @@ Flutter always runs directly on the host/emulator/device — never in Docker.
 ```sh
 cd apps/mobile
 flutter pub get
-flutter run --dart-define=API_BASE_URL=http://localhost:8000/api/v1
+flutter run --dart-define=API_BASE_URL=http://localhost:8012/api/v1
 ```
 
-`API_BASE_URL` examples by target (the API itself, Dockerized or not, listens on `localhost:8000`):
-- Desktop/web: `http://localhost:8000/api/v1` (default)
-- Android emulator: `http://10.0.2.2:8000/api/v1` (the emulator's alias for the host machine)
-- Physical device on the same LAN: `http://<your-machine's-LAN-IP>:8000/api/v1`
+`API_BASE_URL` examples by target, against the standard Docker backend (port `8012`; see "Backend (Docker)" above — adjust if you overrode `APP_PORT`):
+- Desktop/web: `http://localhost:8012/api/v1`
+- Android emulator: `http://10.0.2.2:8012/api/v1` (the emulator's alias for the host machine)
+- Physical device on the same LAN: `http://<your-machine's-LAN-IP>:8012/api/v1`
+
+Running the backend via direct install instead (`php artisan serve`, port `8000`)? Omit `--dart-define` entirely — `AppConfig.apiBaseUrl`'s built-in default already points at `http://localhost:8000/api/v1` (`lib/core/config/app_config.dart`, unchanged since Phase 3). The `--dart-define` mechanism itself is what makes both cases possible without touching application code — see DEC-021.
 
 Checks: `dart format --output=none --set-exit-if-changed .` · `flutter analyze` · `flutter test`
 
