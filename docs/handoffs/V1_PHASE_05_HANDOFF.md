@@ -206,7 +206,19 @@ Mobile CI did not trigger — no `apps/mobile` files changed, correctly respecti
 
 ## 25. Manual/UAT Testing Instructions
 
-**Backend setup (direct install or Docker — both unaffected by this phase beyond the new migrations/seeder):**
+**Backend setup — Docker (standard as of Phase 4A/DEC-027; port `8012` by default, `APP_PORT`-configurable):**
+```sh
+cd apps/api
+cp .env.docker.example .env
+cd ..
+docker compose up -d --build
+docker compose exec app php artisan key:generate
+docker compose exec app composer install
+docker compose exec app php artisan migrate
+docker compose exec app php artisan db:seed --class="Database\Seeders\AdminUserSeeder"   # admin@example.test / password — local only, now Administrator-role-based
+```
+
+**Backend setup — direct install (alternative; port `8000`, `php artisan serve`'s own default):**
 ```sh
 cd apps/api
 composer install
@@ -216,7 +228,9 @@ php artisan db:seed --class="Database\Seeders\AdminUserSeeder"   # admin@example
 php artisan serve
 ```
 
-**Admin Backoffice:** visit `http://localhost:8000/login`, sign in with `admin@example.test` / `password`, confirm redirect to `/home` exactly as in Phase 4 (no visible change is expected — this confirms `is_admin`'s retirement didn't regress the flow). There is currently no way to create a non-Administrator account through the UI (no Staff Management yet); to manually verify denial, use `php artisan tinker`:
+Both paths are unaffected by this phase beyond the new migrations/seeder. The examples below use the Docker-standard port (`8012`); substitute `8000` (or `${APP_PORT}` if overridden) if testing against a direct install instead.
+
+**Admin Backoffice:** visit `http://localhost:8012/login`, sign in with `admin@example.test` / `password`, confirm redirect to `/home` exactly as in Phase 4 (no visible change is expected — this confirms `is_admin`'s retirement didn't regress the flow). There is currently no way to create a non-Administrator account through the UI (no Staff Management yet); to manually verify denial, use `docker compose exec app php artisan tinker` (or plain `php artisan tinker` for a direct install):
 ```php
 $staff = App\Models\User::factory()->staff()->create(['email' => 'staff@example.test', 'password' => Hash::make('password')]);
 ```
@@ -224,7 +238,7 @@ then attempt to log in as `staff@example.test` at `/login` — expect the same "
 
 **Mobile API (curl):**
 ```sh
-curl -X POST http://localhost:8000/api/v1/auth/login -H 'Content-Type: application/json' \
+curl -X POST http://localhost:8012/api/v1/auth/login -H 'Content-Type: application/json' \
   -d '{"email":"admin@example.test","password":"password"}'
 # {"data":{"user":{"public_id":"...","name":"Local Admin","email":"admin@example.test","status":"active","role":"administrator"},"token":"..."}}
 ```
