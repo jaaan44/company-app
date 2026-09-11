@@ -7,7 +7,7 @@ Status: **Conceptual only. No migrations exist.** This document identifies likel
 ### Identity & Organization
 `users`, `staff`, `departments`, `teams`, `positions`, `roles`, `permissions`
 
-- `users` — authentication identity (login, credentials, account state). Likely 1:1 with `staff` for employees, but kept separate so the concept of "a login" isn't inherently the same as "an HR staff record" (e.g. future non-staff users, or staff without app access).
+- `users` — authentication identity (login, credentials, account state). Likely 1:1 with `staff` for employees, but kept separate so the concept of "a login" isn't inherently the same as "an HR staff record" (e.g. future non-staff users, or staff without app access). **Implemented as of Phase 4:** beyond Laravel's framework-default columns, `users` carries `public_id` (ULID, DEC-017), `status` (`active`/`suspended`/`inactive`, `App\Enums\AccountStatus`), and a transitional `is_admin` boolean (DEC-024, superseded by Phase 5 RBAC). `personal_access_tokens` (Sanctum, DEC-022) stores mobile API tokens, polymorphically linked to `users` via `tokenable`.
 - `staff` — the HR/organizational record: name, position, department/team, employment status, manager relationship.
 - `departments`, `teams`, `positions` — organizational structure. Likely relationships: a `team` belongs to a `department`; `staff` belongs to a `department`/`team` and holds a `position`. Whether teams can span departments is an **open question** for the Organization Structure phase.
 - `roles`, `permissions` — authorization. Many-to-many `roles`↔`permissions`, many-to-many `users`↔`roles` (a user may hold more than one role). See `05_SECURITY_MODEL.md`.
@@ -82,6 +82,8 @@ Status: **Conceptual only. No migrations exist.** This document identifies likel
 - Whether `calendar_events` is unified or composed from source tables.
 - Multi-step vs single-step leave approval.
 
-**Resolved (Phase 3, DEC-017):** primary keys are numeric `BIGINT` (`$table->id()`); externally addressable entities additionally get a `ULID public_id` column, added when each entity is actually built. Likely candidates: `staff`, `clients`, `projects`, `tasks`, `leave_requests`, `service_reports`, `incidents` (all listed in §1 above) — decided per-entity, not applied blanket. Pivot/history tables (`project_members`, `staff_statuses`, `leave_approvals`, etc.) generally don't need one.
+**Resolved (Phase 3, DEC-017):** primary keys are numeric `BIGINT` (`$table->id()`); externally addressable entities additionally get a `ULID public_id` column, added when each entity is actually built. Likely candidates: `staff`, `clients`, `projects`, `tasks`, `leave_requests`, `service_reports`, `incidents` (all listed in §1 above) — decided per-entity, not applied blanket. Pivot/history tables (`project_members`, `staff_statuses`, `leave_approvals`, etc.) generally don't need one. **Applied in Phase 4** to `users` — the first entity to actually carry one.
+
+**Resolved (Phase 4):** `users` gained real authentication columns (`public_id`, `status`, `is_admin`) and `personal_access_tokens` (Sanctum) was added — see §1 above and DEC-022/DEC-024.
 
 This document should be revisited and updated (not silently replaced) each time a phase implements one of these areas for real, so it stays a useful map rather than going stale.

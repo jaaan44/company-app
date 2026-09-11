@@ -1,14 +1,36 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 
 import 'package:mobile/app/app.dart';
+import 'package:mobile/features/auth/data/auth_api_client.dart';
+import 'package:mobile/features/auth/presentation/login_page.dart';
+import 'package:mobile/features/auth/state/auth_controller.dart';
+
+import 'features/auth/fake_token_storage.dart';
 
 void main() {
-  testWidgets('bootstrap shell renders the Company App title', (
-    WidgetTester tester,
+  testWidgets('an unauthenticated app boot shows the login screen', (
+    tester,
   ) async {
-    await tester.pumpWidget(const CompanyApp());
+    final controller = AuthController(
+      apiClient: AuthApiClient(
+        httpClient: MockClient((request) async {
+          return http.Response(
+            jsonEncode({'message': 'Unauthenticated.'}),
+            401,
+          );
+        }),
+      ),
+      tokenStorage: FakeTokenStorage(),
+    );
 
-    expect(find.text('Company App'), findsOneWidget);
-    expect(find.text('Company App — bootstrap shell'), findsOneWidget);
+    await tester.pumpWidget(CompanyApp(authController: controller));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Company App'), findsWidgets);
+    expect(find.byType(LoginPage), findsOneWidget);
   });
 }
