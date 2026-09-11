@@ -1,12 +1,14 @@
 # 05 — Security Model (Initial)
 
-Status: **Strategy and principles only.** No authentication/authorization implementation exists yet. This document should not be read as a claim that any of these protections currently exist in code — it is the target to build toward, phase by phase. Do not overstate guarantees to users or the product owner based on this document alone.
+Status: **Authentication implemented as of Phase 4** (this section and Account States/Rate Limiting/API Access below now describe real, tested code — see `docs/handoffs/V1_PHASE_04_HANDOFF.md`). Authorization (RBAC) remains strategy only, pending Phase 5. Do not overstate guarantees to users or the product owner beyond what's actually built and tested.
 
 ## Authentication
 
-- Token-based authentication suitable for both the Flutter app and the Admin Backoffice (mechanism confirmed at the Authentication phase, e.g. Laravel Sanctum).
-- Passwords hashed with a strong, framework-standard algorithm (Laravel default: bcrypt/argon2) — never rolled by hand.
-- Account lockout / throttling on repeated failed logins is expected (see Rate Limiting below), tuned when the Authentication phase is built.
+- **Implemented (DEC-022):** the Admin Backoffice authenticates via Laravel's session/secure-cookie `web` guard (Blade + Livewire login). The Flutter mobile app authenticates via Laravel Sanctum personal access tokens (`Authorization: Bearer <token>`) — bearer-token only, no cookie-based SPA/stateful authentication. No OAuth server, JWT infrastructure, or Passport.
+- Passwords hashed with Laravel's default facilities (bcrypt, `password` cast to `hashed`) — never rolled by hand, never logged, never returned in any response (`UserResource` exposes only `public_id`, `name`, `email`, `status`).
+- **Implemented:** rate limiting on both login surfaces — see Rate Limiting below.
+- **No public self-registration (DEC-023):** no `POST /register` route on either surface; accounts are company-provisioned.
+- **Not implemented (deliberately deferred):** password reset and email verification workflows. `email_verified_at` is retained on `users` for future use but nothing populates or checks it yet.
 
 ## Authorization
 
@@ -21,18 +23,22 @@ Status: **Strategy and principles only.** No authentication/authorization implem
 
 ## Account States
 
-- Staff/user accounts need at least: active, suspended, and (likely) a distinct "offboarded/inactive" state — distinguishing "temporarily blocked" from "no longer employed." Exact state machine confirmed at the Staff / Authentication phases.
-- A suspended/inactive account must lose API access immediately, not just UI visibility.
+- **Implemented (Phase 4):** `users.status` is one of `active`, `suspended`, `inactive` (`App\Enums\AccountStatus`) — distinguishing "temporarily blocked" from "no longer employed" is deferred to whenever a real offboarding workflow is designed; for now `inactive` and `suspended` both simply block authentication identically.
+- Active may authenticate normally. Suspended and inactive may not start a new session/token — enforced explicitly in `AuthController::login` (API) and `LoginForm::login` (Admin), returning a generic-but-honest message rather than a raw 500 or misleading "invalid credentials."
+- **A suspended/inactive account also loses already-authenticated access**, not just the ability to log in again: a single `App\Http\Middleware\EnsureAccountIsActive` (alias `account.active`) is applied to `GET /api/v1/auth/me` and the Admin `/home` placeholder. For the API it revokes the current Sanctum token and returns `403`; for the Admin session it logs the user out and redirects to `/login`. Deliberately not applied to either surface's logout route — revoking one's own access is always allowed.
+- This is centralized in one middleware plus `User::isActive()`, not scattered per-controller checks (CLAUDE.md §7).
 
 ## Administrative Access
 
 - Administrative actions (staff suspension, role changes, settings changes, data exports) are higher-risk and are candidates for stricter checks (e.g. requiring a specific elevated permission, and always audit-logged).
+- **Implemented as a transitional mechanism (DEC-024):** a boolean `users.is_admin` flag, checked once at Admin login, is the only thing distinguishing "may enter the Admin Backoffice" from "is an authenticated user" today. It is not a permissions system and is superseded by Phase 5.
 
 ## API Access
 
 - The API is the enforcement boundary (see `04_API_CONVENTIONS.md`) — every endpoint independently authorizes, regardless of what the calling client (mobile/admin) already filtered client-side.
-- Tokens scoped appropriately per client type where the auth mechanism supports it (e.g. Sanctum token abilities), to limit blast radius of a leaked mobile token vs. an admin session.
-- **`GET /api/v1/health` (Phase 3) is the one deliberate exception** — intentionally public, no authentication middleware, and returns only `{status, timestamp}` (no environment, database, dependency-version, or configuration details). Any future unauthenticated endpoint must be an equally deliberate, narrow, documented exception — not a default.
+- Tokens scoped appropriately per client type where the auth mechanism supports it (e.g. Sanctum token abilities), to limit blast radius of a leaked mobile token vs. an admin session — no token abilities are defined yet (single mobile client type; revisit if a second API-consuming client type is added).
+- **`GET /api/v1/health` (Phase 3) and `POST /api/v1/auth/login` (Phase 4) are the deliberate public exceptions** — health returns only `{status, timestamp}`; login is otherwise unauthenticated by necessity but rate-limited and returns a generic failure message that never confirms or denies whether a given email is registered. Any future unauthenticated endpoint must be an equally deliberate, narrow, documented exception — not a default.
+- `POST /api/v1/auth/logout` revokes only the token used for the request (`$request->user()->currentAccessToken()->delete()`), not every device's token — a deliberate choice leaving room for future multi-device use without inventing a session-management UI in this phase.
 
 ## Input Validation
 
@@ -66,7 +72,12 @@ Status: **Strategy and principles only.** No authentication/authorization implem
 
 ## Rate Limiting
 
-- Standard Laravel throttling middleware on authentication endpoints and, where appropriate, on write-heavy or abuse-prone endpoints (e.g. messaging). Exact thresholds tuned per endpoint when built, not decided in the abstract here.
+- **Implemented (Phase 4):** both login surfaces are limited to 5 attempts per minute, keyed by `email|ip` (a single named `login` limiter, `App\Providers\AppServiceProvider::boot()`), so one abusive client can't lock out another legitimate user of the same account. The API route (`POST /api/v1/auth/login`) uses the `throttle:login` route middleware; the Admin Livewire component enforces the same limiter directly in `LoginForm::login()` (a route-level `throttle` middleware would not see Livewire's internal AJAX update requests). Exceeding the limit returns `429 Too Many Attempts` (API) or a form validation error (Admin).
+- Thresholds for future write-heavy or abuse-prone endpoints (e.g. messaging) remain to be tuned per endpoint when built, not decided in the abstract here.
+
+## Client-Side Token Storage
+
+- **Implemented (Phase 4, DEC-026):** the Flutter app persists its Sanctum bearer token via `flutter_secure_storage` (iOS Keychain; Android EncryptedSharedPreferences/Keystore) — never plain `SharedPreferences`, source code, or an unencrypted file.
 
 ## Secrets & Configuration
 

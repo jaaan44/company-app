@@ -1,6 +1,6 @@
 # 04 — API Conventions (Initial Principles)
 
-Status: **Principles, now implemented for one endpoint as of Phase 3** (`GET /api/v1/health`) to establish the conventions with real, tested code. These conventions guide every future endpoint so the API stays consistent without needing a per-endpoint style debate. Prefer standard Laravel/REST practice over inventing custom conventions.
+Status: **Principles, implemented for a handful of endpoints as of Phase 4** (`GET /api/v1/health` since Phase 3; `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me` since Phase 4) to establish the conventions with real, tested code. These conventions guide every future endpoint so the API stays consistent without needing a per-endpoint style debate. Prefer standard Laravel/REST practice over inventing custom conventions.
 
 ## Versioning
 
@@ -15,8 +15,9 @@ Status: **Principles, now implemented for one endpoint as of Phase 3** (`GET /ap
 
 ## Authentication
 
-- Token-based (exact mechanism — e.g. Laravel Sanctum — confirmed at the Authentication phase), suited to both the mobile app and the Admin Backoffice/SPA.
-- All endpoints require authentication by default; explicitly document any exception (e.g. login itself).
+- **Implemented as of Phase 4** (DEC-022): Laravel Sanctum personal access tokens, `Authorization: Bearer <token>`. The Admin Backoffice does not call this API (see `02_ARCHITECTURE.md` §1) and is therefore not part of this token scheme.
+- All endpoints require authentication by default; the only current exception is `POST /api/v1/auth/login` itself (and the pre-existing, deliberately public `GET /api/v1/health`).
+- Endpoints implemented so far: `POST /api/v1/auth/login` (public, rate-limited), `POST /api/v1/auth/logout` (authenticated — revokes only the current token), `GET /api/v1/auth/me` (authenticated — also enforces account status via `account.active` middleware).
 
 ## Authorization
 
@@ -81,4 +82,4 @@ Status: **Principles, now implemented for one endpoint as of Phase 3** (`GET /ap
 
 ## Explicitly Not Decided Here
 
-- Rate limiting thresholds (see `05_SECURITY_MODEL.md`) — the health endpoint intentionally has none yet; real thresholds are tuned when Authentication (Phase 4) and later write-heavy endpoints are built.
+- Rate limiting thresholds for future write-heavy endpoints beyond authentication (see `05_SECURITY_MODEL.md` for the Phase 4 authentication thresholds now in place).

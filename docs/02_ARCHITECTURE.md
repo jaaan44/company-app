@@ -1,6 +1,6 @@
 # 02 — Architecture (Initial)
 
-Status: **Mostly confirmed as of Phase 3** (repository layout, versions, database engine, identifier strategy, Admin Backoffice direction, API foundation — see §2, §3, §12). Remaining open items are listed in §9.
+Status: **Mostly confirmed as of Phase 4** (repository layout, versions, database engine, identifier strategy, Admin Backoffice direction, API foundation, authentication — see §2, §3, §12, §13). Remaining open items are listed in §9.
 
 ## 0. Resource-Efficiency Direction
 
@@ -47,7 +47,7 @@ Monorepo, no orchestration tooling (Nx/Turborepo/Melos) — the two apps operate
 
 - The API is the primary integration point for the Flutter app (the Admin Backoffice reads business logic directly — see §1).
 - Versioned, rooted at `/api/v1` — **implemented as of Phase 3** (DEC-020): `routes/api.php` → `routes/api/v1.php`; a future breaking version adds `routes/api/v2.php` without touching or duplicating v1's controllers. A minimal `GET /api/v1/health` endpoint (tested) establishes the routing and response conventions in `04_API_CONVENTIONS.md` — success responses wrapped in `{"data": ...}`, standard Laravel JSON error/validation rendering, no custom envelope. Intentionally public — no authentication middleware yet.
-- Authentication via token-based auth suited to both mobile and Admin clients (e.g. Laravel Sanctum) — exact mechanism confirmed at the Authentication phase (Phase 4).
+- Authentication — **implemented as of Phase 4** (DEC-022): the API authenticates via Laravel Sanctum personal access tokens (`Authorization: Bearer <token>`), used by the Flutter mobile app. The Admin Backoffice does not call the API at all (see §1) — it authenticates separately via Laravel's session/cookie `web` guard. `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me` are the first authenticated (and one unauthenticated: login) business endpoints. See `05_SECURITY_MODEL.md` for enforcement detail.
 
 ## 4. Authorization Layer
 
@@ -108,3 +108,15 @@ These require a decision at the appropriate future phase, not now:
 **Mobile configuration (§14 of the governing Phase 3 instruction):** the API base URL is supplied at build/run time via `--dart-define=API_BASE_URL=...` (`lib/core/config/app_config.dart`), defaulting to the local dev server. No production URLs or secrets are hard-coded.
 
 **MySQL-specific behavior (§16 of the governing Phase 3 instruction):** future features must remain compatible with MySQL. If a feature's behavior genuinely can't be faithfully tested against SQLite (e.g. a MySQL-specific function or locking behavior), that feature's phase should add MySQL-backed integration testing for that feature specifically — CI does not gain a general-purpose MySQL service preemptively.
+
+## 13. Authentication (confirmed, Phase 4)
+
+**Mechanisms (DEC-022):** Admin Backoffice uses Laravel's session/secure-cookie authentication (`web` guard). The Flutter mobile app uses Laravel Sanctum personal access tokens (bearer-token only — no cookie-based SPA/stateful authentication). No OAuth server, JWT infrastructure, or Passport.
+
+**Account state:** `users.status` (`active`/`suspended`/`inactive`, `App\Enums\AccountStatus`) is enforced both at login (both surfaces) and on already-authenticated access via a single `App\Http\Middleware\EnsureAccountIsActive` middleware (alias `account.active`) — not scattered per-controller checks. A suspended/inactive account cannot start a new session/token and loses access mid-session the next time it's checked.
+
+**Admin Backoffice access (DEC-024):** a transitional `users.is_admin` boolean, checked once at login by `App\Livewire\Auth\LoginForm`. Deliberately temporary — Phase 5 replaces it with permission-based authorization (DEC-004).
+
+**Registration (DEC-023):** none. Accounts are company-provisioned (a local-only seeder for now; a future Staff Management phase may add an Admin-driven flow).
+
+**Flutter (DEC-025, DEC-026):** `lib/features/auth/` — `AuthApiClient` (wraps `package:http`), `TokenStorage`/`SecureTokenStorage` (`flutter_secure_storage`), `AuthController` (`ChangeNotifier` — the first state-management choice made under DEC-021's deferral), `AuthGate`/`LoginPage` presentation. The existing `HomePage` placeholder (Phase 3) is reused as the authenticated destination, extended with a logout action — not replaced with a real dashboard.

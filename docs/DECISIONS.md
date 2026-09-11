@@ -131,6 +131,36 @@ Durable record of accepted decisions. Each entry is permanent once recorded — 
 **Decision:** `apps/mobile/lib` is organized as `app/` (root widget/theme), `core/config/` (build-time configuration, e.g. API base URL via `--dart-define`), and `features/` (one folder per future feature area; `home/` exists today as a placeholder). No routing package (e.g. `go_router`) and no state-management framework (Provider/Riverpod/Bloc) are introduced — Flutter's built-in `Navigator`/`MaterialApp.home` is sufficient until a real feature (starting with Authentication) needs more.
 **Rationale:** Matches "structure, not screens" — a maintainable foundation for future modules without speculative packages or layering that nothing yet needs. Both choices should be revisited when Phase 4 (Authentication) introduces the first real navigation/state requirements, not decided in the abstract now.
 
+### DEC-022 — Authentication mechanisms: session/cookie for Admin, Sanctum bearer tokens for Mobile
+**Date:** 2026-09-11
+**Status:** ACCEPTED
+**Decision:** The Admin Backoffice (Blade + Livewire) authenticates using Laravel's conventional session/secure-cookie authentication via the `web` guard — no bearer tokens for ordinary browser sessions. The Flutter mobile app authenticates using Laravel Sanctum personal access tokens, sent as `Authorization: Bearer <token>` — no cookie-based SPA/stateful authentication for Flutter, no OAuth server, no JWT infrastructure, no Passport. `laravel/sanctum` (^4.0) is installed; its `personal_access_tokens` migration is published as-is.
+**Rationale:** Two client types, two conventional Laravel-native mechanisms, matching CLAUDE.md's Phase 4 instructions and the ~100-employee resource-efficiency direction (`02_ARCHITECTURE.md` §0) — avoids the operational overhead of an OAuth/JWT server for an internal tool this size. Sanctum's token model supports future multi-device use without inventing a refresh-token scheme.
+
+### DEC-023 — No public self-registration
+**Date:** 2026-09-11
+**Status:** ACCEPTED
+**Decision:** Company App has no `POST /register` route (web or API) and no public registration screen in either surface. All accounts are company-provisioned: for this phase, via `php artisan db:seed --class=Database\Seeders\AdminUserSeeder` (local/testing environments only) or Tinker; a future Staff Management phase may add an Admin-driven account-creation UI.
+**Rationale:** Company App accounts represent employees of a specific organization — self-service signup has no product meaning here and would be a security liability (arbitrary account creation) for an internal system.
+
+### DEC-024 — Transitional Admin Backoffice access flag, pending Phase 5 RBAC
+**Date:** 2026-09-11
+**Status:** ACCEPTED
+**Decision:** A boolean `users.is_admin` column (default `false`, not mass-assignable) is the sole gate on whether an authenticated account may enter the Admin Backoffice. It is checked once, at login time, in `App\Livewire\Auth\LoginForm`. This is deliberately minimal and will be superseded by Phase 5's granular role/permission system — `is_admin` is not intended to survive as a permanent authorization primitive.
+**Rationale:** Phase 4 must distinguish "may enter the Admin Backoffice" from "is an authenticated user" (CLAUDE.md §9) without building any part of Phase 5's RBAC. A single boolean is the smallest mechanism that satisfies this without pre-building roles/permissions tables or policies.
+
+### DEC-025 — Flutter authentication state management: plain `ChangeNotifier`
+**Date:** 2026-09-11
+**Status:** ACCEPTED
+**Decision:** `AuthController` (in `lib/features/auth/state/`) extends Flutter's built-in `ChangeNotifier` and is consumed via `ListenableBuilder` — no third-party state-management package (Provider, Riverpod, Bloc, GetX) is introduced. `CompanyApp` owns a single `AuthController` instance for the app's lifetime and injects it into `AuthGate`.
+**Rationale:** Phase 4 is the first phase with a genuine shared-state need (DEC-021 deferred this exact decision to here). One piece of app-wide state (authentication) doesn't justify a dependency-injection/state-management framework at this project's scale — `ChangeNotifier` is part of the Flutter SDK already in use and is sufficient. Revisit if a later phase's state needs (e.g., multiple independent feature stores, computed/derived state across many providers) outgrow it.
+
+### DEC-026 — Flutter token persistence: `flutter_secure_storage`
+**Date:** 2026-09-11
+**Status:** ACCEPTED
+**Decision:** The Sanctum bearer token is persisted on-device via the `flutter_secure_storage` package (iOS Keychain; Android EncryptedSharedPreferences/Keystore), behind a `TokenStorage` interface (`lib/features/auth/data/token_storage.dart`) so tests can substitute an in-memory fake. The token is never written to plain `SharedPreferences`, source code, or an unencrypted file.
+**Rationale:** CLAUDE.md's Phase 4 instructions explicitly require platform secure storage for the auth token, not ordinary local storage. `flutter_secure_storage` is the standard, actively maintained Flutter package for this and is the only new package this phase adds for storage (paired with `http` for the API client itself).
+
 ---
 
 ## Template for Future Decisions

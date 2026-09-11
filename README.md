@@ -6,7 +6,7 @@ Internal company operations and communication platform: staff, clients, projects
 
 ## Project Status
 
-Phase 3 (Core Architecture) is complete: `/api/v1` routing with a health endpoint, MySQL recorded as the production database direction, a numeric-ID + ULID public-ID identifier convention, Blade + Livewire as the Admin Backoffice direction, and a maintainable Flutter foundation (`app/`, `core/`, `features/`). No Company App business functionality implemented yet.
+Phase 4 (Authentication) is complete: session/cookie login for the Admin Backoffice (Blade + Livewire) and Laravel Sanctum bearer-token login for the Flutter mobile app, account states (active/suspended/inactive) enforced centrally, and a Flutter authentication flow with secure token storage. No RBAC, Staff Management, or other business functionality implemented yet — see `docs/DECISIONS.md` DEC-022 through DEC-026 and `docs/handoffs/V1_PHASE_04_HANDOFF.md`.
 
 For current status, always check `docs/CURRENT_STATE.md` — it is kept accurate and up to date; this README is not.
 
@@ -62,22 +62,25 @@ composer install
 cp .env.example .env
 php artisan key:generate
 php artisan migrate
+php artisan db:seed --class="Database\Seeders\AdminUserSeeder"  # local dev only — admin@example.test / password
 php artisan serve
 ```
 
 Checks: `composer validate --strict` · `vendor/bin/pint --test` · `vendor/bin/phpstan analyse` · `php artisan test`
 
-Once running, `GET /api/v1/health` returns `{"data": {"status": "ok", "timestamp": "..."}}` — the versioned API foundation, not a business endpoint.
+Once running, `GET /api/v1/health` returns `{"data": {"status": "ok", "timestamp": "..."}}` — the versioned API foundation, not a business endpoint. Authentication (Phase 4): visit `/login` for the Admin Backoffice, or use `POST /api/v1/auth/login` for the mobile API — see `docs/handoffs/V1_PHASE_04_HANDOFF.md` for full manual-verification steps.
 
 ### Mobile (`apps/mobile`)
 
 ```sh
 cd apps/mobile
 flutter pub get
-flutter run
+flutter run --dart-define=API_BASE_URL=http://localhost:8000/api/v1
 ```
 
 Checks: `dart format --output=none --set-exit-if-changed .` · `flutter analyze` · `flutter test`
+
+The app starts on a login screen (Phase 4); sign in with an account seeded via `AdminUserSeeder` above (or any account created via Tinker) to reach the authenticated placeholder shell.
 
 ## Quality Gates / CI
 

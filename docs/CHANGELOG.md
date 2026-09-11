@@ -4,6 +4,21 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-09-11 — Phase 4: Authentication
+- **Backend:** added `App\Enums\AccountStatus` (`active`/`suspended`/`inactive`); migrated `users` to add `public_id` (ULID), `status`, and a transitional `is_admin` boolean; installed `laravel/sanctum` (^4.0) with its `personal_access_tokens` migration and config published.
+- Admin Backoffice: `App\Livewire\Auth\LoginForm` (Blade + Livewire) at `GET /login`, session regeneration on success, `POST /logout`, a protected `GET /home` placeholder — all gated by `auth`/`guest` middleware plus a new `App\Http\Middleware\EnsureAccountIsActive` (alias `account.active`) that also enforces account status on already-authenticated access (not just login), logging a now-suspended session out.
+- Mobile API: `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me` (`App\Http\Controllers\Api\V1\Auth\AuthController`), returning safe identity data via `App\Http\Resources\UserResource` (`public_id`, `name`, `email`, `status` — never the password hash, remember token, internal numeric id, or `is_admin`).
+- Rate limiting: a shared `login` limiter (5/minute, keyed by email+IP) applied via route middleware on the API and enforced directly inside the Livewire component for the Admin surface (Livewire's AJAX update endpoint isn't reachable by route-level throttling).
+- No public self-registration; a local-only `Database\Seeders\AdminUserSeeder` (refuses to run outside `local`/`testing`) provisions the first Admin account.
+- **Mobile:** added `lib/features/auth/` (domain/data/state/presentation) — `AuthApiClient` (`package:http`), `TokenStorage`/`SecureTokenStorage` (`flutter_secure_storage`), `AuthController` (`ChangeNotifier`), `LoginPage`, `AuthGate`. `CompanyApp` now owns the `AuthController` and renders `AuthGate` as its home. The existing `HomePage` placeholder gained an optional `userName`/`onLogout` for reuse as the authenticated destination.
+- Recorded DEC-022 (session for Admin / Sanctum tokens for Mobile), DEC-023 (no public self-registration), DEC-024 (transitional `is_admin` flag), DEC-025 (Flutter state management: `ChangeNotifier`), DEC-026 (Flutter token storage: `flutter_secure_storage`).
+- Backend tests: 23 new PHPUnit feature tests (8 Admin auth, 15 API auth) — 31 total, all passing, including `vendor/bin/phpstan analyse` (0 errors) and `vendor/bin/pint --test`. Mobile tests: 16 new `flutter_test` tests (auth controller, login page, auth gate) plus the existing smoke test rewritten for the new flow — 17 total, all passing, alongside `flutter analyze` and `dart format`.
+- Updated `docs/02_ARCHITECTURE.md` (new §13), `docs/03_DATABASE_MODEL.md` (`users`/`personal_access_tokens` resolved), `docs/04_API_CONVENTIONS.md` (auth endpoints, authentication section), `docs/05_SECURITY_MODEL.md` (Authentication, Account States, Administrative Access, API Access, Rate Limiting, and a new Client-Side Token Storage section — now describing implemented, tested behavior rather than strategy only), `docs/06_UI_UX_GUIDELINES.md`, `README.md`, `docs/CURRENT_STATE.md`, `docs/testing/TEST_STATUS.md`, `docs/testing/UAT_LOG.md`.
+- No RBAC, Staff Management, or other future-phase business functionality was introduced.
+
+### 2026-09-10 — Phase 3 merged into `main`
+- PR #3 merged. `main` now contains Core Architecture.
+
 ### 2026-09-10 — Phase 2 merged into `main`
 - PR #2 merged. `main` now contains Development Environment & CI.
 

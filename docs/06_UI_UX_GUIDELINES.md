@@ -1,6 +1,6 @@
 # 06 — UI/UX Guidelines (Initial Principles)
 
-Status: **Principles, not screen designs.** No UI has been implemented. These guidelines steer future design/implementation phases; they are not a substitute for actual UX design work when a phase reaches UI.
+Status: **Principles, not screen designs — with one deliberate, minimal exception.** Phase 4 built a functional (not visually refined) login screen for both the Admin Backoffice and the Flutter app, and a neutral authenticated placeholder, to make Authentication actually usable. These guidelines otherwise steer future design/implementation phases and are not a substitute for actual UX design work when a phase reaches real UI (a dedicated Mobile UI/UX Audit phase exists in the roadmap).
 
 ## Staff Mobile App (Flutter) — Navigation
 
@@ -38,7 +38,7 @@ Principles:
 
 ## Shared Principles (Both Surfaces)
 
-- **Loading / empty / error states are mandatory, not optional polish.** Every list/detail view needs a defined loading state, a defined "nothing here yet" empty state, and a defined error state before it's considered done — not just a happy-path implementation.
+- **Loading / empty / error states are mandatory, not optional polish.** Every list/detail view needs a defined loading state, a defined "nothing here yet" empty state, and a defined error state before it's considered done — not just a happy-path implementation. Phase 4's login screens follow this: initial, submitting/loading, invalid-credential, and network-failure states are all handled — see `docs/handoffs/V1_PHASE_04_HANDOFF.md`.
 - **Confirmation for destructive actions.** Suspending staff, deleting a record, rejecting a leave request, resolving/closing an incident — anything hard to reverse gets an explicit confirmation step. Mirrors the engineering-side "check before destructive action" discipline in `CLAUDE.md`.
 - **Accessibility.** Sufficient color contrast, readable type sizes, tappable/clickable target sizes, and semantic structure (labels on form fields, alt text where relevant) are baseline requirements for any shipped screen, not a later audit-only concern — though a dedicated Mobile UI/UX Audit phase exists in the roadmap to catch what was missed.
 - **Status consistency.** A given status concept (e.g. "Pending," "Approved," "In Progress," "Resolved") should look and read the same way everywhere it appears across both the mobile app and the Admin Backoffice.

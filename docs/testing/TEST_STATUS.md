@@ -69,4 +69,33 @@ No automated tests apply to this phase — no application code exists yet.
 
 ---
 
+---
+
+## Phase 4 — Authentication
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `composer validate --strict` (apps/api) | Automated, local | PASS | re-verified after adding laravel/sanctum |
+| `vendor/bin/pint --test` (apps/api) | Automated, local | PASS | includes all new auth code/tests |
+| `vendor/bin/phpstan analyse` (apps/api) | Automated, local | PASS | **Ran successfully in this session** (unlike Phases 2/3) — see handoff §20 for how the sandbox's dependency-download limitation was worked around; 0 errors after two genuine type-safety fixes it surfaced |
+| `php artisan test` (apps/api) | Automated, local | PASS | 31 tests, 96 assertions (23 new: 8 admin auth, 6 API login, 6 API me/logout, 3 pre-existing unaffected) |
+| `dart format --output=none --set-exit-if-changed .` (apps/mobile) | Automated, local | PASS | **Ran successfully in this session** — Flutter SDK not preinstalled in this sandbox; 3.47.2 was fetched to match the pinned version (see handoff) |
+| `flutter analyze` (apps/mobile) | Automated, local | PASS | no issues found |
+| `flutter test` (apps/mobile) | Automated, local | PASS | 17 tests (1 pre-existing, rewritten for the new auth flow; 16 new across auth_controller/login_page/auth_gate) |
+| Admin login page accessible to guests | Automated | PASS | `AdminLoginTest::test_login_page_is_accessible_to_guests` |
+| Admin valid login / session regeneration | Automated | PASS | `test_admin_user_can_log_in_with_valid_credentials`, `test_session_id_is_regenerated_after_successful_login` |
+| Admin invalid credentials / non-admin / suspended / inactive rejected | Automated | PASS | 4 tests in `AdminLoginTest` |
+| Admin logout / unauthenticated redirect / mid-session suspension | Automated | PASS | 3 tests in `AdminLoginTest` |
+| Admin login rate limiting | Automated | PASS | `test_login_is_rate_limited_after_repeated_failures` |
+| API login (valid/invalid/unknown-email/suspended/inactive/required-fields/rate-limited) | Automated | PASS | 7 tests in `LoginTest` |
+| API no public registration | Automated | PASS | `test_no_public_registration_endpoint_exists` |
+| API `/me` authenticated/unauthenticated | Automated | PASS | `MeAndLogoutTest` |
+| API logout revokes current token only; revoked token rejected; suspended-mid-session revokes access | Automated | PASS | `MeAndLogoutTest` |
+| Flutter: unauthenticated shows login, loading, successful/failed login, logout, token restoration | Automated | PASS | `auth_gate_test.dart`, `auth_controller_test.dart`, `login_page_test.dart` — network and secure storage faked, no live server dependency |
+| Manual: full login→me→logout→revoked-token cycle via `php artisan serve` + curl | Manual | PASS | see handoff for exact commands/output |
+| Manual: Admin login page renders Livewire component; `/home` redirects when unauthenticated | Manual | PASS | see handoff |
+| Backend CI workflow | Automated, GitHub Actions | PENDING | to be confirmed on the Phase 4 PR — see handoff for run link once available |
+| Mobile CI workflow | Automated, GitHub Actions | PENDING | to be confirmed on the Phase 4 PR — see handoff for run link once available |
+| No unrelated business functionality introduced | Manual | PASS | confirmed by reviewing the full staged diff before commit |
+
 *(Future phases append their own section above this line, oldest first.)*
