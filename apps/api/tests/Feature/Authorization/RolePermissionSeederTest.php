@@ -75,6 +75,27 @@ class RolePermissionSeederTest extends TestCase
         $this->assertFalse($staff->permissions->contains('name', 'staff.manage'));
     }
 
+    public function test_it_creates_the_phase_8_clients_permissions(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+
+        $this->assertTrue(Permission::query()->where('name', 'clients.view')->exists());
+        $this->assertTrue(Permission::query()->where('name', 'clients.manage')->exists());
+    }
+
+    public function test_manager_and_staff_are_granted_clients_view(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+
+        $manager = Role::query()->where('name', Role::MANAGER)->firstOrFail();
+        $staff = Role::query()->where('name', Role::STAFF)->firstOrFail();
+
+        $this->assertTrue($manager->permissions->contains('name', 'clients.view'));
+        $this->assertTrue($staff->permissions->contains('name', 'clients.view'));
+        $this->assertFalse($manager->permissions->contains('name', 'clients.manage'));
+        $this->assertFalse($staff->permissions->contains('name', 'clients.manage'));
+    }
+
     public function test_running_it_twice_does_not_duplicate_rows(): void
     {
         $this->seed(RolePermissionSeeder::class);
@@ -83,8 +104,9 @@ class RolePermissionSeederTest extends TestCase
         $manager = Role::query()->where('name', Role::MANAGER)->firstOrFail();
 
         $this->assertSame(3, Role::query()->count());
-        $this->assertSame(6, Permission::query()->count());
+        $this->assertSame(8, Permission::query()->count());
         $this->assertSame(1, $manager->permissions()->where('name', 'organization.view')->count());
         $this->assertSame(1, $manager->permissions()->where('name', 'staff.view')->count());
+        $this->assertSame(1, $manager->permissions()->where('name', 'clients.view')->count());
     }
 }

@@ -1,6 +1,6 @@
 # 03 — Conceptual Database Model (Provisional)
 
-Status: **Conceptual, with the Identity & Organization group's Roles/Permissions, Departments/Teams/Positions, and Staff now implemented (Phases 5–7).** This document identifies likely entities, relationships, ownership concepts, and areas needing later design decisions. It intentionally does not specify every column — that happens per-phase, when each area is actually implemented.
+Status: **Conceptual, with the Identity & Organization group's Roles/Permissions, Departments/Teams/Positions, and Staff (Phases 5–7), and the Clients group (Phase 8) now implemented.** This document identifies likely entities, relationships, ownership concepts, and areas needing later design decisions. It intentionally does not specify every column — that happens per-phase, when each area is actually implemented.
 
 ## 1. Entity Groups
 
@@ -15,7 +15,7 @@ Status: **Conceptual, with the Identity & Organization group's Roles/Permissions
 ### Clients
 `clients`, `contacts`
 
-- `contacts` belong to a `client` (many contacts per client). A `contact` is not a `user` — clients are external parties, not system logins, in V1.
+- `contacts` belong to a `client` (many contacts per client). A `contact` is not a `user` — clients are external parties, not system logins, in V1. **Implemented as of Phase 8 (DEC-031):** `clients` — `public_id` (ULID), `client_code` (nullable, unique when present, admin-supplied), `name`, `status` (`App\Enums\ClientStatus` — `active`/`inactive`), `email`/`phone`/`website`, a small structured inline address (`address_line1`/`address_line2`/`city`/`state_province`/`postal_code`/`country`), `notes`. `contacts` — `public_id` (ULID), **required** `client_id` (`restrictOnDelete()` — never nullable, no client-less contacts, no many-to-many Contact↔Client relationship), `first_name`/`last_name`, `job_title`, `email`/`phone`, `is_primary` (boolean, at most one per client, application-enforced), `status` (`App\Enums\ContactStatus` — `active`/`inactive`), `notes`.
 
 ### Staff Operations
 `staff_statuses`, `locations`, `staff_checkins`
@@ -93,5 +93,7 @@ Status: **Conceptual, with the Identity & Organization group's Roles/Permissions
 **Resolved (Phase 6):** `departments`, `teams`, `positions` were added — see §1 above and DEC-029. Each carries a `public_id` (ULID, DEC-017 — these are admin-manageable business entities, not an internal fixed catalog like `roles`/`permissions`). `teams`/`positions` carry a nullable `department_id` (`restrictOnDelete()`); all three share `App\Enums\OrganizationStatus` (`active`/`inactive`) rather than soft-deletes.
 
 **Resolved (Phase 7):** `staff` was added — see §1 above and DEC-030. Deliberately separate from `users` (see "Ownership & Ambient Concepts" below); `staff.user_id` is nullable and unique, not a forced 1:1. `staff` carries its own three-state `App\Enums\StaffStatus` (`active`/`inactive`/`separated`) rather than reusing `AccountStatus` or `OrganizationStatus`. The Manager relationship is a self-referencing `manager_id`, guarded against self-reference and (bounded) reporting cycles at the application layer.
+
+**Resolved (Phase 8):** `clients`/`contacts` were added — see §1 above and DEC-031. Each carries a `public_id` (ULID, DEC-017 — admin-manageable business entities). `contacts.client_id` is required (never nullable) and `restrictOnDelete()` — a Contact always belongs to exactly one Client. `clients`/`contacts` each carry their own two-state lifecycle (`App\Enums\ClientStatus`/`ContactStatus`) rather than reusing `OrganizationStatus` (a distinct domain concept, even though the state shape is identical) or introducing `SoftDeletes`.
 
 This document should be revisited and updated (not silently replaced) each time a phase implements one of these areas for real, so it stays a useful map rather than going stale.

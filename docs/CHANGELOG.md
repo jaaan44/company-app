@@ -4,6 +4,20 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-09-11 — Phase 8: Clients & Contacts
+- **Backend:** added `clients` and `contacts` tables; `App\Models\Client`/`Contact` (each carries a ULID `public_id`, DEC-017). `App\Enums\ClientStatus` and `App\Enums\ContactStatus` (both `active`/`inactive`) are two-state lifecycles — Client mirrors `OrganizationStatus`'s master-data pattern; Contact is a lightweight preserve-don't-delete lifecycle.
+- `contacts.client_id` is **required** (never nullable), `restrictOnDelete()` — a Contact always belongs to exactly one Client; no many-to-many Contact↔Client relationship.
+- `client_code` is nullable, unique when present, admin-supplied — deliberately different from Staff's required `employee_number`.
+- A small structured inline address (`address_line1`/`address_line2`/`city`/`state_province`/`postal_code`/`country`) on `clients` — no polymorphic/multi-address subsystem.
+- At most one primary Contact per Client (`is_primary`), enforced in `ContactController` inside a DB transaction (clear-then-set), not a DB constraint.
+- `ClientController`/`ContactController::destroy` (Phase 8) reject deletion (`409`) when a Client still has Contacts referencing it; a Contact may be freely deleted.
+- Two new permissions added to `RolePermissionSeeder`: `clients.view` (Manager/Staff) and `clients.manage` (Administrator-only, via the existing `Gate::before` override). Contacts share these permissions — no separate `contacts.*` pair.
+- New versioned REST endpoints under `/api/v1`: full CRUD for `clients` and `contacts`, both flat top-level resources, route-model-bound by `public_id`, permission-gated, filterable — Clients by `status`/`q` (name/client_code search); Contacts by `client`/`status`/`is_primary`/`q` (name/email search).
+- `App\Http\Resources\ClientResource` exposes a `contacts_count` (not a nested list); `App\Http\Resources\ContactResource` nests only a minimal `client` reference (public_id + name).
+- `ClientFactory`/`ContactFactory` added.
+- Recorded DEC-031 (Clients & Contacts domain model, lifecycle, and relationship decisions).
+- No projects, opportunities, sales pipeline, leads, quotations, contracts, invoices, billing, payments, tasks, work logs, client portals, support tickets, service desk, email campaigns, marketing automation, messaging, notifications, file/document management, account-manager ownership rules, complex tagging, custom fields framework, activity timeline, contact interaction history, multiple addresses, branch/location hierarchy, or advanced CRM segmentation was introduced; no Admin Backoffice CRUD UI (consistent with Phase 6/7's precedent).
+
 ### 2026-09-11 — Phase 7: Staff
 - **Backend:** added `staff` table; `App\Models\Staff` (ULID `public_id`, DEC-017). `App\Enums\StaffStatus` (`active`/`inactive`/`separated`) is Staff's own three-state employment lifecycle — distinct from `AccountStatus` (login/account state) and the future Phase 9 operational status.
 - `staff.user_id` (nullable, **unique** FK to `users`) — a Staff record may exist without login access, a User may exist without a Staff record, and one User can link to at most one Staff record. No authentication data was duplicated onto `staff`.

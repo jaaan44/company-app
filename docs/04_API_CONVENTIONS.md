@@ -1,12 +1,14 @@
 # 04 — API Conventions (Initial Principles)
 
-Status: **Principles, implemented for a growing set of endpoints as of Phase 4/5/6/7** (`GET /api/v1/health` since Phase 3; `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me` since Phase 4; full CRUD for `departments`/`teams`/`positions` since Phase 6; full CRUD for `staff` since Phase 7) to establish the conventions with real, tested code. These conventions guide every future endpoint so the API stays consistent without needing a per-endpoint style debate. Prefer standard Laravel/REST practice over inventing custom conventions.
+Status: **Principles, implemented for a growing set of endpoints as of Phase 4/5/6/7/8** (`GET /api/v1/health` since Phase 3; `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me` since Phase 4; full CRUD for `departments`/`teams`/`positions` since Phase 6; full CRUD for `staff` since Phase 7; full CRUD for `clients`/`contacts` since Phase 8) to establish the conventions with real, tested code. These conventions guide every future endpoint so the API stays consistent without needing a per-endpoint style debate. Prefer standard Laravel/REST practice over inventing custom conventions.
 
 **Phase 5:** no new endpoints were added; `UserResource` (used by `/auth/login` and `/auth/me`) gained a `role` field — see `05_SECURITY_MODEL.md` API Access.
 
 **Phase 6:** first real demonstration of the "top-level filterable resource" and "route-model-bound by `public_id`" conventions below with genuine CRUD endpoints — `GET/POST /api/v1/departments`, `GET/POST /api/v1/teams`, `GET/POST /api/v1/positions`, plus `GET/PUT/PATCH/DELETE .../{public_id}` for each. See `05_SECURITY_MODEL.md` and `docs/handoffs/V1_PHASE_06_HANDOFF.md`.
 
 **Phase 7:** `GET/POST /api/v1/staff` plus `GET/PUT/PATCH/DELETE .../{public_id}` — this document's own `/staff` example (Resource Naming, below) is now a real endpoint. Confirms the "status changes go through the normal update endpoint, not a separate action route" convention for a second resource (first shown by Departments/Teams/Positions in Phase 6). See `05_SECURITY_MODEL.md` and `docs/handoffs/V1_PHASE_07_HANDOFF.md`.
+
+**Phase 8:** `GET/POST /api/v1/clients` and `GET/POST /api/v1/contacts`, plus `GET/PUT/PATCH/DELETE .../{public_id}` for each — this document's own `/clients` example (Resource Naming, below) is now a real endpoint. A deliberate deviation from this document's original nested-resource illustration: Contact is genuinely owned by Client (a required, never-nullable `client_id`), yet is still implemented as a **flat, top-level, filterable resource** (`/api/v1/contacts?client=<public_id>`) rather than `/clients/{client}/contacts` — this document's original "nested resources only where genuinely owned/scoped" example predates any real endpoint; the "prefer a top-level filterable resource" guidance, now demonstrated three times over (Staff→Department/Team/Position/Manager, Staff→User, Contact→Client), is the pattern this API actually follows. See `05_SECURITY_MODEL.md`, DEC-031, and `docs/handoffs/V1_PHASE_08_HANDOFF.md`.
 
 ## Versioning
 
@@ -15,8 +17,8 @@ Status: **Principles, implemented for a growing set of endpoints as of Phase 4/5
 
 ## Resource Naming
 
-- Plural, lowercase, kebab/snake-free where possible: `/staff`, `/clients`, `/projects`, `/tasks`, `/leave-requests`.
-- Nested resources only where genuinely owned/scoped: `/projects/{project}/tasks`, `/clients/{client}/contacts`. Avoid deep nesting beyond two levels — prefer a top-level filterable resource instead (e.g. `/tasks?project_id=`) when a resource is more independent than owned.
+- Plural, lowercase, kebab/snake-free where possible: `/staff`, `/clients`, `/contacts`, `/projects`, `/tasks`, `/leave-requests`.
+- Nested resources only where genuinely owned/scoped: `/projects/{project}/tasks`. Avoid deep nesting beyond two levels — prefer a top-level filterable resource instead (e.g. `/tasks?project_id=`) when a resource is more independent than owned, or (as Phase 8 confirmed for `/contacts?client=`) even when it's genuinely owned but a flat, filterable resource still serves it well — see the Phase 8 note above.
 - Standard REST verbs/methods: `GET`, `POST`, `PUT/PATCH`, `DELETE`. Avoid verb-in-URL actions except for genuine non-CRUD operations (e.g. `POST /leave-requests/{id}/approve`, `POST /tasks/{id}/complete`), which are acceptable and preferred over overloading `PATCH` with implicit state-machine semantics.
 
 ## Authentication
@@ -72,7 +74,7 @@ Status: **Principles, implemented for a growing set of endpoints as of Phase 4/5
 
 ## Filtering & Sorting
 
-- Filtering via query params scoped to the resource, e.g. `GET /tasks?status=open&assignee_id=5`. **Implemented (Phase 6):** `GET /api/v1/departments?status=active`, `GET /api/v1/teams?department=<public_id>&status=active` — filter values that reference another resource use its `public_id`, never an internal numeric id. **Implemented (Phase 7):** `GET /api/v1/staff?department=<public_id>&team=<public_id>&position=<public_id>&manager=<public_id>&status=active`, plus a simple `?q=` directory search (matched against name fields and employee number) — a genuinely useful lookup for a personnel directory, not a filter added for completeness.
+- Filtering via query params scoped to the resource, e.g. `GET /tasks?status=open&assignee_id=5`. **Implemented (Phase 6):** `GET /api/v1/departments?status=active`, `GET /api/v1/teams?department=<public_id>&status=active` — filter values that reference another resource use its `public_id`, never an internal numeric id. **Implemented (Phase 7):** `GET /api/v1/staff?department=<public_id>&team=<public_id>&position=<public_id>&manager=<public_id>&status=active`, plus a simple `?q=` directory search (matched against name fields and employee number) — a genuinely useful lookup for a personnel directory, not a filter added for completeness. **Implemented (Phase 8):** `GET /api/v1/clients?status=active&q=`, `GET /api/v1/contacts?client=<public_id>&status=active&is_primary=1&q=`.
 - Sorting via `?sort=due_date` / `?sort=-due_date` (leading `-` = descending) — a common, unsurprising convention; avoid bespoke sort syntax. Not yet implemented for any endpoint (Phase 6's organization-structure lists are small enough that a fixed `sort_order`-then-name ordering was sufficient; a genuine `?sort=` param is introduced when a future endpoint's data actually needs it).
 - Document supported filter/sort fields per endpoint as it's built; don't expose arbitrary column filtering.
 

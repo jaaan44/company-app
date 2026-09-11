@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Auth\AuthController;
+use App\Http\Controllers\Api\V1\Clients\ClientController;
+use App\Http\Controllers\Api\V1\Clients\ContactController;
 use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\Organization\DepartmentController;
 use App\Http\Controllers\Api\V1\Organization\PositionController;
@@ -77,5 +79,34 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
         Route::post('staff', [StaffController::class, 'store'])->name('staff.store');
         Route::match(['put', 'patch'], 'staff/{staff:public_id}', [StaffController::class, 'update'])->name('staff.update');
         Route::delete('staff/{staff:public_id}', [StaffController::class, 'destroy'])->name('staff.destroy');
+    });
+});
+
+// Clients & Contacts (Phase 8): the customer-data foundation later
+// modules (Projects, Tasks, Work Logs, Messaging, reporting) reference.
+// Reads require 'clients.view' (granted to Administrator/Manager/Staff);
+// writes require 'clients.manage' (Administrator only, via the
+// centralized Gate::before override — DEC-028). Contacts share Client's
+// permissions — no separate 'contacts.*' pair. Both are flat top-level
+// resources (Contact filterable by ?client=<public_id>), route-model-bound
+// by public_id (DEC-017), never the internal numeric id. Status changes
+// go through the same update endpoint as every other field.
+Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
+    Route::middleware('can:clients.view')->group(function (): void {
+        Route::get('clients', [ClientController::class, 'index'])->name('clients.index');
+        Route::get('clients/{client:public_id}', [ClientController::class, 'show'])->name('clients.show');
+
+        Route::get('contacts', [ContactController::class, 'index'])->name('contacts.index');
+        Route::get('contacts/{contact:public_id}', [ContactController::class, 'show'])->name('contacts.show');
+    });
+
+    Route::middleware('can:clients.manage')->group(function (): void {
+        Route::post('clients', [ClientController::class, 'store'])->name('clients.store');
+        Route::match(['put', 'patch'], 'clients/{client:public_id}', [ClientController::class, 'update'])->name('clients.update');
+        Route::delete('clients/{client:public_id}', [ClientController::class, 'destroy'])->name('clients.destroy');
+
+        Route::post('contacts', [ContactController::class, 'store'])->name('contacts.store');
+        Route::match(['put', 'patch'], 'contacts/{contact:public_id}', [ContactController::class, 'update'])->name('contacts.update');
+        Route::delete('contacts/{contact:public_id}', [ContactController::class, 'destroy'])->name('contacts.destroy');
     });
 });

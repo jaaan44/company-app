@@ -44,7 +44,7 @@ Departments, Teams, Positions and their relationships.
 **Phase 7 — Staff** *(complete — see `docs/handoffs/V1_PHASE_07_HANDOFF.md`)*
 Staff records, profiles, employment data, manager relationships. Staff Directory.
 
-**Phase 8 — Clients & Contacts**
+**Phase 8 — Clients & Contacts** *(complete — see `docs/handoffs/V1_PHASE_08_HANDOFF.md`)*
 Client records and their contacts.
 
 **Phase 9 — Staff Status & Location Check-in**
