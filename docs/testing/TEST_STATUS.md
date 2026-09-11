@@ -177,4 +177,21 @@ No automated tests apply to this phase — no application code exists yet.
 | Backend CI workflow | Automated, GitHub Actions | NOT RUN (this session) | Unlike Phases 2–5, no PR was opened this session (this session's operating instructions direct not to open one unless the user explicitly asks) and no push to `main` was made, so the path-filtered `pull_request`/`push`-to-`main` trigger (DEC-015) never fired. All of the same commands the workflow runs were executed directly and passed (see rows above) — this is a CI-confirmation gap relative to prior phases, not a quality gap. Opening a PR for this branch in a future session will produce a real run to record here. |
 | UAT | — | NOT RUN | No UAT scenario recorded yet for Phase 6 — see `docs/testing/UAT_LOG.md`. This phase introduced no Admin Backoffice UI, so there is nothing yet for the product owner to click through; UAT for organization structure becomes meaningful once a later phase (Staff Directory, or an Admin UI phase) actually surfaces it visually. |
 
+## Phase 7 — Staff
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `composer validate --strict` (apps/api) | Automated, local | PASS | unaffected — no new dependencies added |
+| `vendor/bin/pint --test` (apps/api) | Automated, local | PASS | includes all new Staff code and tests (initial run flagged two files for import-ordering; fixed by `vendor/bin/pint` and re-verified clean) |
+| `vendor/bin/phpstan analyse` (apps/api) | Automated, local | PASS | 0 errors at level 5 |
+| `php artisan test` (apps/api) | Automated, local | PASS | 135 tests, 370 assertions (42 new: 26 `StaffTest`, 6 `StaffAuthorizationTest`, 3 new delete-protection tests across `DepartmentTest`/`TeamTest`/`PositionTest`, 2 new in `RolePermissionSeederTest`, plus the surviving Phase 1–6 suite unaffected in behavior — full regression suite healthy). Two real bugs were caught by this suite and fixed before it went green — see Deviations in the handoff. |
+| Migrations (`migrate:fresh`) against SQLite | Automated, local | PASS | All 13 migrations (12 pre-existing + 1 new `staff` table) run cleanly |
+| `RolePermissionSeeder` (extended) / `AdminUserSeeder` chain | Automated, local | PASS | New `staff.view`/`staff.manage` permissions created; `staff.view` correctly attached to Manager and Staff; confirmed idempotent |
+| Manual: `php artisan serve` + curl — full CRUD + relationship smoke test | Manual | PASS | Administrator login → create Department/Team/Position → create Staff assigned only to the Team (department correctly auto-derived from the Team's own department in the response and the DB) → list staff → attempt to delete the Department while Staff reference it (`409`, correctly rejected) → create a second Staff reporting to the first (`manager` field correctly nested) → attempt to delete the manager while they have a direct report (`409`, correctly rejected) → attempt to set a staff member as their own manager (`422`, correctly rejected) — all through a real HTTP server, not just PHPUnit's in-process client |
+| No payroll/attendance/leave/HR-document/performance-review/project-task/messaging/client functionality introduced | Manual | PASS | Confirmed by reviewing the full staged diff before commit |
+| No Admin Backoffice CRUD UI | Manual | PASS | Confirmed — API/backend only, consistent with Phase 6's precedent |
+| Docker validation | — | NOT RUN (this session) | No Docker configuration changed this phase; consistent with Phase 6's session, Docker-based re-verification was not attempted. The last genuine Docker confirmation remains Phase 5's. |
+| GitHub Actions CI | — | NOT RUN (this session) | No PR opened and no push to `main` this session (same as Phase 6's session) — the path-filtered trigger (DEC-015) never fired. All commands the workflow runs were executed directly and passed (rows above). |
+| UAT | — | NOT RUN | No UAT scenario recorded yet for Phase 7 — see `docs/testing/UAT_LOG.md`. This phase introduced no Admin Backoffice UI, so there is nothing yet for the product owner to click through visually. |
+
 *(Future phases append their own section above this line, oldest first.)*

@@ -74,8 +74,20 @@ class PositionController extends Controller
         return new PositionResource($position->load('department'));
     }
 
+    /**
+     * A position that still has any (Phase 7) staff assigned to it cannot
+     * be deleted — same relational-integrity protection as
+     * DepartmentController::destroy, backed by the `staff.position_id`
+     * `restrictOnDelete()` foreign key.
+     */
     public function destroy(Position $position): JsonResponse
     {
+        if ($position->staff()->exists()) {
+            return response()->json([
+                'message' => 'This position still has staff assigned to it and cannot be deleted.',
+            ], 409);
+        }
+
         $position->delete();
 
         return response()->json(status: 204);

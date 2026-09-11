@@ -3,14 +3,14 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** Phase 6 — Organization Structure
+**Current phase:** Phase 7 — Staff
 **Phase status:** COMPLETE (pending user review)
-**Last completed phase:** Phase 6 (Phases 1–5 are merged into `main`)
-**Next planned phase:** Phase 7 — Staff (see `ROADMAP.md`) — **not authorized yet**
+**Last completed phase:** Phase 7 (Phases 1–6 are merged into `main`)
+**Next planned phase:** Phase 8 — Clients & Contacts (see `ROADMAP.md`) — **not authorized yet**
 
 ## Current Objective
 
-Phase 6 is implemented, tested, and pushed for review. Awaiting authorization for Phase 7.
+Phase 7 is implemented, tested, and pushed for review. Awaiting authorization for Phase 8.
 
 ## Completed
 
@@ -46,27 +46,38 @@ Phase 6 is implemented, tested, and pushed for review. Awaiting authorization fo
   - New versioned REST endpoints (`/api/v1/departments`, `/teams`, `/positions`) — full CRUD, route-model-bound by `public_id`, permission-gated, filterable by `status`/`department`.
   - Recorded DEC-029 (organization structure architecture).
   - No Staff/Employee management, Clients, Projects, Leave, Tasks, Messaging, or other later business module; no department hierarchy; no Admin Backoffice CRUD UI (consistent with Phase 5's precedent).
+- **Phase 7:** Staff. See `docs/handoffs/V1_PHASE_07_HANDOFF.md` for full detail.
+  - `staff` table; `App\Models\Staff`, with a ULID `public_id` (DEC-017) and its own three-state `App\Enums\StaffStatus` (`active`/`inactive`/`separated`) employment lifecycle — distinct from `AccountStatus` and the future Phase 9 operational status.
+  - Staff↔User separation (DEC-030): `staff.user_id` nullable and unique — Staff may exist without login access, a User may exist without a Staff record, one User links to at most one Staff. No authentication data duplicated onto `staff`.
+  - Staff references Department/Team/Position (nullable FKs, `restrictOnDelete`) with enforced Team/Department consistency (auto-derived when omitted), and a self-referencing `manager_id` with self-reference and bounded-cycle rejection (`Staff::wouldCreateCycleWith()`).
+  - `DepartmentController`/`TeamController`/`PositionController::destroy` (Phase 6) extended to also block deletion when Staff reference the record; `StaffController::destroy` blocks deleting a staff member with direct reports.
+  - New permissions `staff.view` (Manager/Staff) and `staff.manage` (Administrator-only, via the existing `Gate::before` override).
+  - New versioned REST endpoints (`/api/v1/staff`) — full CRUD, route-model-bound by `public_id`, permission-gated, filterable by `status`/`department`/`team`/`position`/`manager` plus a directory `q` search.
+  - `StaffResource` is a single Staff Directory shape; the linked User's own identity is only visible to a `staff.manage` holder.
+  - Recorded DEC-030.
+  - No payroll, attendance, leave, HR documents, performance reviews, project/task assignment, messaging, or client management; no Admin Backoffice CRUD UI (consistent with Phase 6's precedent); no operational/current-status tracking (Phase 9).
 
 ## Pending / Not Started
 
-- Staff (Phase 7) and everything after it on the roadmap.
+- Clients & Contacts (Phase 8) and everything after it on the roadmap.
 
 ## Known Blockers / Issues
 
 - **This session's environment:** Docker's own image-pull path worked (via `mirror.gcr.io`, a legitimate Docker Hub mirror, when the default registry endpoint was blocked), but package installation *during* an image build (`apt-get`, reaching `deb.debian.org`) is blocked by this sandbox's network policy — confirmed as a real, deliberate block, not a transient failure. Worked around for validation purposes only (a temporary, uncommitted Dockerfile variant skipping just that one step) without weakening the real, committed Dockerfile, which still includes the `apt-get` step real developers and CI-less environments need. See `docs/handoffs/V1_PHASE_04A_HANDOFF.md` for the full account — this does not affect the correctness of what was committed.
 - **Phase 6 session's environment:** `composer install` could not complete over the network — GitHub's zipball API (`api.github.com`) and even its git-source fallback consistently failed authentication/connectivity for the entire dependency tree (not just the 1–3 packages seen in Phase 5). Recovered without touching `composer.json`/`composer.lock` by extracting each locked package directly from Composer's own local VCS mirror cache (already present from a prior partial attempt) at its exact locked commit, hand-building `vendor/composer/installed.json`/`installed.php`, and copying Composer's own `InstalledVersions.php` runtime class from the installed `composer` phar. See `docs/handoffs/V1_PHASE_06_HANDOFF.md` for the full account — every quality gate then passed normally, and this does not affect the correctness of what was committed (no vendor files are committed either way).
-- Open design questions: real-time transport, object storage provider — see `docs/02_ARCHITECTURE.md` §9. (Departments/Teams hierarchy shape was resolved by Phase 6 — see DEC-029.)
+- **Phase 7 session's environment:** `vendor/` from the Phase 6 session's manual recovery was already present and functional in this container, so no repeat of the Phase 6 `composer install` recovery was needed. Docker-based re-verification was again not attempted this session (no Docker configuration changed); see `docs/handoffs/V1_PHASE_07_HANDOFF.md`.
+- Open design questions: real-time transport, object storage provider — see `docs/02_ARCHITECTURE.md` §9. (Departments/Teams hierarchy shape was resolved by Phase 6 — see DEC-029. Staff↔User relationship and manager/reporting structure were resolved by Phase 7 — see DEC-030.)
 
 ## Repository / Branch Information
 
 - Repository: `jaaan44/company-app`
-- Default branch: `main` (contains the approved Phase 0–5 baseline)
-- Phase 6 branch: `claude/company-app-phase-6-2s09wk` (branched from `main`, not merged)
+- Default branch: `main` (contains the approved Phase 0–6 baseline)
+- Phase 7 branch: `claude/company-app-phase-7-staff` (branched from `main`, not merged)
 
 ## Latest Relevant Handoff
 
-`docs/handoffs/V1_PHASE_06_HANDOFF.md`
+`docs/handoffs/V1_PHASE_07_HANDOFF.md`
 
 ## For the Next Session
 
-Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 7 (Staff) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.
+Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 8 (Clients & Contacts) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.

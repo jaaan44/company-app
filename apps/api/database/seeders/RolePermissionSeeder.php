@@ -34,6 +34,11 @@ use Illuminate\Database\Seeder;
  * `organization.manage` (create/update/delete), which remains
  * Administrator-only via the centralized override, same as every other
  * `*.manage` permission so far.
+ *
+ * Phase 7 (Staff) adds `staff.view` / `staff.manage` following the exact
+ * same pattern: the Staff Directory is a company-wide feature, so
+ * `staff.view` is attached to Manager and Staff; `staff.manage`
+ * (create/update/delete/status changes) remains Administrator-only.
  */
 class RolePermissionSeeder extends Seeder
 {
@@ -74,8 +79,18 @@ class RolePermissionSeeder extends Seeder
             ['label' => 'Create, update, and delete departments, teams, and positions'],
         );
 
-        $manager->permissions()->syncWithoutDetaching([$organizationView->id]);
-        $staff->permissions()->syncWithoutDetaching([$organizationView->id]);
+        $staffView = Permission::query()->firstOrCreate(
+            ['name' => 'staff.view'],
+            ['label' => 'View the staff directory'],
+        );
+
+        Permission::query()->firstOrCreate(
+            ['name' => 'staff.manage'],
+            ['label' => 'Create, update, and delete staff records'],
+        );
+
+        $manager->permissions()->syncWithoutDetaching([$organizationView->id, $staffView->id]);
+        $staff->permissions()->syncWithoutDetaching([$organizationView->id, $staffView->id]);
 
         $this->command?->info('Role/permission catalog ready (Administrator, Manager, Staff).');
     }

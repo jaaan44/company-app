@@ -38,10 +38,10 @@ V1 role catalog (Administrator/Manager/Staff, one role per user) and a foundatio
 ### Company Core
 *Depends on: Phase 5*
 
-**Phase 6 — Organization Structure**
+**Phase 6 — Organization Structure** *(complete — see `docs/handoffs/V1_PHASE_06_HANDOFF.md`)*
 Departments, Teams, Positions and their relationships.
 
-**Phase 7 — Staff**
+**Phase 7 — Staff** *(complete — see `docs/handoffs/V1_PHASE_07_HANDOFF.md`)*
 Staff records, profiles, employment data, manager relationships. Staff Directory.
 
 **Phase 8 — Clients & Contacts**

@@ -5,6 +5,7 @@ namespace Tests\Feature\Api\V1\Organization;
 use App\Enums\OrganizationStatus;
 use App\Models\Department;
 use App\Models\Position;
+use App\Models\Staff;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -157,6 +158,17 @@ class DepartmentTest extends TestCase
         $this->actingAsAdministrator();
         $department = Department::factory()->create();
         Position::factory()->create(['department_id' => $department->id]);
+
+        $this->deleteJson("/api/v1/departments/{$department->public_id}")->assertStatus(409);
+
+        $this->assertDatabaseHas('departments', ['id' => $department->id]);
+    }
+
+    public function test_deleting_a_department_with_staff_is_rejected(): void
+    {
+        $this->actingAsAdministrator();
+        $department = Department::factory()->create();
+        Staff::factory()->create(['department_id' => $department->id]);
 
         $this->deleteJson("/api/v1/departments/{$department->public_id}")->assertStatus(409);
 

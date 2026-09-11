@@ -4,6 +4,7 @@ namespace Tests\Feature\Api\V1\Organization;
 
 use App\Models\Department;
 use App\Models\Position;
+use App\Models\Staff;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -130,5 +131,16 @@ class PositionTest extends TestCase
         $this->deleteJson("/api/v1/positions/{$position->public_id}")->assertNoContent();
 
         $this->assertDatabaseHas('departments', ['id' => $department->id]);
+    }
+
+    public function test_deleting_a_position_with_staff_is_rejected(): void
+    {
+        $this->actingAsAdministrator();
+        $position = Position::factory()->create();
+        Staff::factory()->create(['position_id' => $position->id]);
+
+        $this->deleteJson("/api/v1/positions/{$position->public_id}")->assertStatus(409);
+
+        $this->assertDatabaseHas('positions', ['id' => $position->id]);
     }
 }
