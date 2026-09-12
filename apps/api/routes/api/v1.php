@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\Projects\ProjectMembershipController;
 use App\Http\Controllers\Api\V1\Staff\StaffController;
 use App\Http\Controllers\Api\V1\StaffOperations\CheckInController;
 use App\Http\Controllers\Api\V1\StaffOperations\OperationalStatusController;
+use App\Http\Controllers\Api\V1\Tasks\TaskController;
 use Illuminate\Support\Facades\Route;
 
 // v1 API routes. A future breaking version adds routes/api/v2.php and a
@@ -191,5 +192,33 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
             ->name('projects.members.update')->withoutScopedBindings();
         Route::delete('projects/{project:public_id}/members/{staff:public_id}', [ProjectMembershipController::class, 'destroy'])
             ->name('projects.members.destroy')->withoutScopedBindings();
+    });
+});
+
+// Tasks (Phase 11): built on top of Projects & Project Membership.
+// Optionally belongs to a Project (DEC-006 — independent tasks are
+// supported). A flat top-level resource, filterable by ?project=,
+// rather than nested under /projects/{project}/tasks — a Task is not
+// inherently contextual to a Project the way Project Membership is.
+// Reads, creates, and updates are deliberately NOT gated by a bare
+// 'can:tasks.manage'/'can:tasks.view' route middleware — visibility and
+// management authority are both scoped in-controller
+// (AuthorizesTaskAccess): 'tasks.view' (Administrator/Manager) sees
+// every Task; otherwise a linked Staff record scopes visibility to
+// Projects they're a member of plus Tasks assigned to them.
+// 'tasks.manage' (Administrator-only) may create/update/delete any
+// Task; a Project Lead may create/update Tasks scoped to their own
+// Project; a Task's assignee may update only its own `status` field.
+// DELETE remains a plain 'can:tasks.manage' route (Administrator-only,
+// and only while a Task is still in its initial 'todo' state — see
+// TaskController::destroy).
+Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
+    Route::get('tasks', [TaskController::class, 'index'])->name('tasks.index');
+    Route::get('tasks/{task:public_id}', [TaskController::class, 'show'])->name('tasks.show');
+    Route::post('tasks', [TaskController::class, 'store'])->name('tasks.store');
+    Route::match(['put', 'patch'], 'tasks/{task:public_id}', [TaskController::class, 'update'])->name('tasks.update');
+
+    Route::middleware('can:tasks.manage')->group(function (): void {
+        Route::delete('tasks/{task:public_id}', [TaskController::class, 'destroy'])->name('tasks.destroy');
     });
 });

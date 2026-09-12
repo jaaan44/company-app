@@ -152,6 +152,30 @@ class RolePermissionSeederTest extends TestCase
         $this->assertFalse($staff->permissions->contains('name', 'projects.manage'));
     }
 
+    public function test_it_creates_the_phase_11_tasks_permissions(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+
+        $this->assertTrue(Permission::query()->where('name', 'tasks.view')->exists());
+        $this->assertTrue(Permission::query()->where('name', 'tasks.manage')->exists());
+    }
+
+    public function test_only_manager_is_granted_tasks_view_not_staff(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+
+        $manager = Role::query()->where('name', Role::MANAGER)->firstOrFail();
+        $staff = Role::query()->where('name', Role::STAFF)->firstOrFail();
+
+        // Mirrors 'projects.view' exactly (docs/phases/
+        // V1_PHASE_11_DEFINITION.md) — Tasks may carry the same
+        // client-engagement sensitivity as their Project.
+        $this->assertTrue($manager->permissions->contains('name', 'tasks.view'));
+        $this->assertFalse($staff->permissions->contains('name', 'tasks.view'));
+        $this->assertFalse($manager->permissions->contains('name', 'tasks.manage'));
+        $this->assertFalse($staff->permissions->contains('name', 'tasks.manage'));
+    }
+
     public function test_running_it_twice_does_not_duplicate_rows(): void
     {
         $this->seed(RolePermissionSeeder::class);
@@ -160,7 +184,7 @@ class RolePermissionSeederTest extends TestCase
         $manager = Role::query()->where('name', Role::MANAGER)->firstOrFail();
 
         $this->assertSame(3, Role::query()->count());
-        $this->assertSame(14, Permission::query()->count());
+        $this->assertSame(16, Permission::query()->count());
         $this->assertSame(1, $manager->permissions()->where('name', 'organization.view')->count());
         $this->assertSame(1, $manager->permissions()->where('name', 'staff.view')->count());
         $this->assertSame(1, $manager->permissions()->where('name', 'clients.view')->count());

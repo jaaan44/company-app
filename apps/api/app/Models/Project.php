@@ -86,4 +86,16 @@ class Project extends Model
     {
         return $this->hasMany(ProjectMembership::class);
     }
+
+    /**
+     * Tasks belonging to this Project (Phase 11). restrictOnDelete on
+     * tasks.project_id backs the deletion guard in
+     * ProjectController::destroy.
+     *
+     * @return HasMany<Task, $this>
+     */
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
+    }
 }

@@ -114,18 +114,25 @@ class ProjectController extends Controller
     }
 
     /**
-     * A project that still has any membership referencing it cannot be
-     * deleted — preserving business history and the anchor future Tasks/
-     * Work Logs will reference (see docs/phases/V1_PHASE_10_DEFINITION.md).
-     * The `restrictOnDelete()` foreign key on `project_memberships.
-     * project_id` backs this up at the database level; this check exists
-     * to return a clear 409 instead of a raw database constraint error.
+     * A project that still has any membership or task referencing it
+     * cannot be deleted — preserving business history (see docs/phases/
+     * V1_PHASE_10_DEFINITION.md / V1_PHASE_11_DEFINITION.md). The
+     * `restrictOnDelete()` foreign keys on `project_memberships.
+     * project_id` and `tasks.project_id` back this up at the database
+     * level; these checks exist to return a clear 409 instead of a raw
+     * database constraint error.
      */
     public function destroy(Project $project): JsonResponse
     {
         if ($project->memberships()->exists()) {
             return response()->json([
                 'message' => 'This project still has members assigned to it and cannot be deleted.',
+            ], 409);
+        }
+
+        if ($project->tasks()->exists()) {
+            return response()->json([
+                'message' => 'This project still has tasks and cannot be deleted.',
             ], 409);
         }
 

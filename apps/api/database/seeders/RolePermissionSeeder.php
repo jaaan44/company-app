@@ -67,6 +67,17 @@ use Illuminate\Database\Seeder;
  * this permission. `projects.manage` (Project CRUD and all Project
  * Membership writes) remains Administrator-only, same pattern as every
  * other `*.manage` permission.
+ *
+ * Phase 11 (Tasks) adds `tasks.view` / `tasks.manage`, following
+ * `projects.view`'s precedent exactly: `tasks.view` is attached to
+ * **Manager only** (not Staff) — Tasks may carry the same
+ * client-engagement sensitivity as their Project. `tasks.manage`
+ * (Administrator-only) covers unrestricted Task CRUD; a Project Lead's
+ * Task-management authority (scoped to their own Project) and a Task
+ * assignee's status-only self-service are both enforced in-controller
+ * (TaskController's AuthorizesTaskAccess), not via a permission — no
+ * `tasks.assign`/`tasks.complete`/`tasks.delete` granular permissions
+ * were introduced.
  */
 class RolePermissionSeeder extends Seeder
 {
@@ -157,8 +168,18 @@ class RolePermissionSeeder extends Seeder
             ['label' => 'Create, update, and delete projects and project memberships'],
         );
 
+        $tasksView = Permission::query()->firstOrCreate(
+            ['name' => 'tasks.view'],
+            ['label' => 'View all tasks'],
+        );
+
+        Permission::query()->firstOrCreate(
+            ['name' => 'tasks.manage'],
+            ['label' => 'Create, update, and delete any task'],
+        );
+
         $manager->permissions()->syncWithoutDetaching([
-            $organizationView->id, $staffView->id, $clientsView->id, $staffStatusView->id, $locationView->id, $projectsView->id,
+            $organizationView->id, $staffView->id, $clientsView->id, $staffStatusView->id, $locationView->id, $projectsView->id, $tasksView->id,
         ]);
         $staff->permissions()->syncWithoutDetaching([
             $organizationView->id, $staffView->id, $clientsView->id, $staffStatusView->id,

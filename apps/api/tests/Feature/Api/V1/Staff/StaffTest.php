@@ -7,6 +7,7 @@ use App\Models\Department;
 use App\Models\Position;
 use App\Models\ProjectMembership;
 use App\Models\Staff;
+use App\Models\Task;
 use App\Models\Team;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
@@ -192,6 +193,26 @@ class StaffTest extends TestCase
         $this->deleteJson("/api/v1/staff/{$staff->public_id}")->assertStatus(409);
 
         $this->assertDatabaseHas('staff', ['id' => $staff->id]);
+    }
+
+    public function test_deleting_a_staff_member_with_an_assigned_task_is_rejected(): void
+    {
+        $this->actingAsAdministrator();
+        $staff = Staff::factory()->create();
+        Task::factory()->create(['assignee_staff_id' => $staff->id]);
+
+        $this->deleteJson("/api/v1/staff/{$staff->public_id}")->assertStatus(409);
+
+        $this->assertDatabaseHas('staff', ['id' => $staff->id]);
+    }
+
+    public function test_deleting_a_staff_member_with_a_completed_assigned_task_is_still_rejected(): void
+    {
+        $this->actingAsAdministrator();
+        $staff = Staff::factory()->create();
+        Task::factory()->completed()->create(['assignee_staff_id' => $staff->id]);
+
+        $this->deleteJson("/api/v1/staff/{$staff->public_id}")->assertStatus(409);
     }
 
     // --- Filters / search ----------------------------------------------

@@ -204,6 +204,21 @@ class Staff extends Model
     }
 
     /**
+     * Tasks currently assigned to this staff member (Phase 11) —
+     * assignment history is preserved even after a Project Membership
+     * that originally made them eligible is later removed (docs/phases/
+     * V1_PHASE_11_DEFINITION.md). restrictOnDelete on
+     * tasks.assignee_staff_id backs the deletion guard in
+     * StaffController::destroy.
+     *
+     * @return HasMany<Task, $this>
+     */
+    public function assignedTasks(): HasMany
+    {
+        return $this->hasMany(Task::class, 'assignee_staff_id');
+    }
+
+    /**
      * Whether assigning $proposedManagerId as this staff member's manager
      * would create a reporting cycle — i.e. $proposedManagerId's own
      * manager chain eventually loops back to this staff member. Walks a
