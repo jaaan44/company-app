@@ -67,7 +67,7 @@ Historical time/activity logging against tasks and/or projects (never neither), 
 ### HR
 *Depends on: Phase 7 (Staff)*
 
-**Phase 13 — Leave Management**
+**Phase 13 — Leave Management** *(complete — see `docs/handoffs/V1_PHASE_13_HANDOFF.md`)*
 Leave types, requests, approvals (with history), balances.
 
 ### Communication

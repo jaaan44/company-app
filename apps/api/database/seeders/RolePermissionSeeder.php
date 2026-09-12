@@ -93,6 +93,21 @@ use Illuminate\Database\Seeder;
  * this module at all (deliberately stricter than Tasks). Self-service
  * (`/me/work-logs`) needs no permission, mirroring Phase 9's domain-check
  * pattern.
+ *
+ * Phase 13 (Leave Management) adds four permissions. `leave-types.view`
+ * follows `organization.view`/`staff.view`'s company-wide pattern
+ * (Manager and Staff both — a Staff member must browse active Leave
+ * Types to submit a request); `leave-types.manage` is Administrator-only.
+ * `leave-requests.view` follows `work-logs.view`'s Phase 12 pattern
+ * exactly: **Manager only** (not Staff — leave reasons/dates are
+ * materially more sensitive than a company directory), further scoped
+ * in LeaveRequestController/LeaveBalanceController to the Manager's own
+ * direct reports, and also the permission checked (alongside the
+ * manager-of-record relationship) for approve/reject authority.
+ * `leave-requests.manage` is Administrator-only (create a request on a
+ * Staff member's behalf; Administrator-cancel). Self-service
+ * (`/me/leave-requests`, `/me/leave-balances`) needs no permission,
+ * mirroring Phase 9/12's domain-check pattern.
  */
 class RolePermissionSeeder extends Seeder
 {
@@ -203,11 +218,31 @@ class RolePermissionSeeder extends Seeder
             ['label' => 'Create, correct, and delete any work log'],
         );
 
+        $leaveTypesView = Permission::query()->firstOrCreate(
+            ['name' => 'leave-types.view'],
+            ['label' => 'View leave types'],
+        );
+
+        Permission::query()->firstOrCreate(
+            ['name' => 'leave-types.manage'],
+            ['label' => 'Create, update, and delete leave types'],
+        );
+
+        $leaveRequestsView = Permission::query()->firstOrCreate(
+            ['name' => 'leave-requests.view'],
+            ['label' => "View direct reports' leave requests and balances"],
+        );
+
+        Permission::query()->firstOrCreate(
+            ['name' => 'leave-requests.manage'],
+            ['label' => 'Create a leave request on behalf of a staff member, cancel any request, and manage leave balances'],
+        );
+
         $manager->permissions()->syncWithoutDetaching([
-            $organizationView->id, $staffView->id, $clientsView->id, $staffStatusView->id, $locationView->id, $projectsView->id, $tasksView->id, $workLogsView->id,
+            $organizationView->id, $staffView->id, $clientsView->id, $staffStatusView->id, $locationView->id, $projectsView->id, $tasksView->id, $workLogsView->id, $leaveTypesView->id, $leaveRequestsView->id,
         ]);
         $staff->permissions()->syncWithoutDetaching([
-            $organizationView->id, $staffView->id, $clientsView->id, $staffStatusView->id,
+            $organizationView->id, $staffView->id, $clientsView->id, $staffStatusView->id, $leaveTypesView->id,
         ]);
 
         $this->command?->info('Role/permission catalog ready (Administrator, Manager, Staff).');

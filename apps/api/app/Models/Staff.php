@@ -234,6 +234,33 @@ class Staff extends Model
     }
 
     /**
+     * Leave Requests submitted by this staff member (Phase 13) —
+     * historical HR records, preserved regardless of later employment
+     * status or manager changes (docs/phases/V1_PHASE_13_DEFINITION.md).
+     * restrictOnDelete on leave_requests.staff_id backs the deletion
+     * guard in StaffController::destroy.
+     *
+     * @return HasMany<LeaveRequest, $this>
+     */
+    public function leaveRequests(): HasMany
+    {
+        return $this->hasMany(LeaveRequest::class);
+    }
+
+    /**
+     * This staff member's Leave Balance allocations (Phase 13), one row
+     * per Leave Type/calendar year. restrictOnDelete on
+     * leave_balances.staff_id backs the deletion guard in
+     * StaffController::destroy.
+     *
+     * @return HasMany<LeaveBalance, $this>
+     */
+    public function leaveBalances(): HasMany
+    {
+        return $this->hasMany(LeaveBalance::class);
+    }
+
+    /**
      * Whether assigning $proposedManagerId as this staff member's manager
      * would create a reporting cycle — i.e. $proposedManagerId's own
      * manager chain eventually loops back to this staff member. Walks a
