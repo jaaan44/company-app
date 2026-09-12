@@ -7,6 +7,7 @@ use Database\Factories\DepartmentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
@@ -78,5 +79,17 @@ class Department extends Model
     public function staff(): HasMany
     {
         return $this->hasMany(Staff::class);
+    }
+
+    /**
+     * Announcements whose audience targets this Department (Phase 14) —
+     * restrictOnDelete on announcement_departments.department_id backs the
+     * deletion guard in DepartmentController::destroy.
+     *
+     * @return BelongsToMany<Announcement, $this>
+     */
+    public function announcements(): BelongsToMany
+    {
+        return $this->belongsToMany(Announcement::class, 'announcement_departments');
     }
 }

@@ -3,14 +3,14 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** Phase 13 — Leave Management
+**Current phase:** Phase 14 — Announcements
 **Phase status:** COMPLETE (pending user review)
-**Last completed phase:** Phase 13 (Phases 1–12 are merged into `main`)
-**Next planned phase:** Phase 14 — Announcements (see `ROADMAP.md`) — **not authorized yet**
+**Last completed phase:** Phase 14 (Phases 1–13 are merged into `main`)
+**Next planned phase:** Phase 15 — Notifications (see `ROADMAP.md`) — **not authorized yet**
 
 ## Current Objective
 
-Phase 13 is implemented, tested, and pushed for review. Awaiting authorization for Phase 14.
+Phase 14 is implemented, tested, and pushed for review. Awaiting authorization for Phase 15.
 
 ## Completed
 
@@ -122,9 +122,20 @@ Phase 13 is implemented, tested, and pushed for review. Awaiting authorization f
   - Recorded DEC-036.
   - No payroll, attendance, time tracking, Work Log integration, shift scheduling, overtime, holiday pay, accrual/carry-forward/encashment engine, medical-document attachments, multi-level/delegated approval, calendar sync, notifications, or partial-day leave; no Admin Backoffice CRUD UI or Flutter mobile screens (consistent with Phase 6–12's precedent).
 
+- **Phase 14:** Announcements. See `docs/handoffs/V1_PHASE_14_HANDOFF.md` for full detail.
+  - `announcements`/`announcement_departments`/`announcement_teams`/`announcement_acknowledgements` tables; `App\Models\Announcement`/`AnnouncementAcknowledgement`. `Announcement` carries a ULID `public_id` (DEC-017); the two audience pivots and the acknowledgement table deliberately don't. `App\Enums\AnnouncementStatus` (`draft`/`published`/`archived`), `App\Enums\AnnouncementAudienceType` (`company_wide`/`scoped`).
+  - Lifecycle via explicit action endpoints only (`/publish`, `/archive`), never a generic status `PATCH`. `published_at`/`published_by_user_id` are server-controlled, set only by `publish`. A `draft` may be freely edited/hard-deleted; a `published` announcement may still be edited but never hard-deleted (archive instead); `archived` is fully immutable and terminal (no un-archive/republish).
+  - Audience targeting is single-scope-type-per-announcement (`company_wide` or `scoped`, never both); a `scoped` announcement targets one or more Departments/Teams via two plain many-to-many pivots with **union**, never intersection, semantics, evaluated against a Staff member's **current** Department/Team membership at read time, not a snapshot. Manager status and Project membership grant no extra Announcement visibility.
+  - Acknowledgement (`announcement_acknowledgements`) is a lightweight, self-initiated, idempotent record — deliberately not read/unread tracking or a mandatory-acknowledgement workflow (the roadmap's own "recipients, acknowledgements" line, resolved narrowly). The management resource exposes a plain `acknowledgements_count`, never a per-staff breakdown.
+  - `StaffController::destroy`/`DepartmentController::destroy`/`TeamController::destroy` (Phases 7/6) extended to block deletion while any Announcement acknowledgement/audience row references the Staff member/Department/Team.
+  - A single new permission, `announcements.manage` (Administrator-only, via `Gate::before`) — gates the entire management surface (reads and writes alike). Unlike every prior module, there is **no** companion `announcements.view`: ordinary employee visibility is served entirely by `/me/announcements` (a domain check — a linked Staff record), and a Manager holds no elevated Announcement authority at all.
+  - New versioned REST endpoints: self-service `GET /me/announcements`, `GET /me/announcements/{public_id}` (404 outside audience/draft/archived), `POST /me/announcements/{public_id}/acknowledge`; management `GET/POST /announcements`, `GET/PUT/PATCH/DELETE /announcements/{public_id}`, `POST /announcements/{public_id}/publish`/`archive`.
+  - Recorded DEC-037.
+  - No direct messaging, chat, comments/reactions/polls, a social feed, attachments/file uploads, a rich-text editor, push/email/SMS delivery, a notification queue, calendar/event data, tasks, project activity, mandatory-acknowledgement compliance, engagement analytics/read-rate dashboards, revision history, categories/tags, scheduled/future publication, or expiry; no Admin Backoffice CRUD UI or Flutter mobile screens (consistent with Phase 6–13's precedent).
+
 ## Pending / Not Started
 
-- Announcements (Phase 14) and everything after it on the roadmap.
+- Notifications (Phase 15) and everything after it on the roadmap.
 
 ## Known Blockers / Issues
 
@@ -136,18 +147,19 @@ Phase 13 is implemented, tested, and pushed for review. Awaiting authorization f
 - **Phase 11 session's environment:** no `vendor/` at session start; `composer install` got through every package except `phpstan/phpstan` (whose own internal `git clone --mirror` again exceeded Composer's 300s process timeout), but this time the failure was fatal to the whole install (Composer aborted before writing `vendor/composer/installed.json`/`vendor/autoload.php` at all — a harder failure than Phase 9/10's, where installed.json already existed and only needed patching). Recovered by running the same `git clone --mirror` directly via a plain shell command (not through Composer) with a longer allowance — it completed in ~5m41s, just over Composer's internal 300s cap — which pre-seeded Composer's local VCS mirror cache with a *complete* (non-shallow) mirror; a full `composer install` retry then completed normally end-to-end, needing no manual `vendor/` file surgery this time. All quality gates then passed cleanly against real, complete code. This does not affect the correctness of what was committed (`vendor/` is never committed either way).
 - **Phase 12 session's environment:** no `vendor/` at session start; `composer install` again hit `phpstan/phpstan`'s own internal `git clone --mirror` exceeding Composer's 300s process timeout (the same recurring issue documented in Phases 9–11), fatal to the whole install this time (same as Phase 11's session). Recovered identically to Phase 11: ran the `git clone --mirror` directly via a plain shell command with a longer allowance, pre-seeding Composer's local VCS mirror cache with a complete (non-shallow) mirror, then retried `composer install` to completion. This does not affect the correctness of what was committed (`vendor/` is never committed either way) — see `docs/handoffs/V1_PHASE_12_HANDOFF.md` for the full account and quality-gate results.
 - **Phase 13 session's environment:** no `vendor/` at session start; the first `composer install` attempt failed harder than any prior session — nearly every third-party dependency's dist zipball download failed (`curl error 28`, proxy `CONNECT` timeout), not just `phpstan/phpstan`, and `phpstan/phpstan`'s own internal `git clone --mirror` again exceeded Composer's 300s process timeout, fatal to the whole install (same failure shape as Phases 11–12). Recovered with a simpler variant this time: re-ran `composer install` with `COMPOSER_PROCESS_TIMEOUT=1800` (Composer's own configurable process timeout, not a manual pre-seeded git mirror) so its internal `git clone --mirror` for `phpstan/phpstan` could run to completion without hitting the artificial 300s cap — no manual `vendor/` file surgery needed. This does not affect the correctness of what was committed (`vendor/` is never committed either way) — see `docs/handoffs/V1_PHASE_13_HANDOFF.md` for the full account and quality-gate results.
+- **Phase 14 session's environment:** the container started with no `vendor/` at all. `composer install --no-interaction --prefer-dist --no-progress` under `COMPOSER_PROCESS_TIMEOUT=1800` (the same recovery this repeatedly-documented `phpstan/phpstan` `git clone --mirror`-timeout issue has needed since Phase 9) completed successfully as a background command in a few minutes — no manual `vendor/` file surgery needed this time. This does not affect the correctness of what was committed (`vendor/` is never committed either way) — see `docs/handoffs/V1_PHASE_14_HANDOFF.md` for the full account and quality-gate results.
 - Open design questions: real-time transport, object storage provider — see `docs/02_ARCHITECTURE.md` §9. (Departments/Teams hierarchy shape was resolved by Phase 6 — see DEC-029. Staff↔User relationship and manager/reporting structure were resolved by Phase 7 — see DEC-030.)
 
 ## Repository / Branch Information
 
 - Repository: `jaaan44/company-app`
-- Default branch: `main` (contains the approved Phase 0–12 baseline)
-- Phase 13 branch: `claude/vibrant-johnson-vk7bhr` (branched from `main`, not merged)
+- Default branch: `main` (contains the approved Phase 0–13 baseline)
+- Phase 14 branch: `claude/company-app-v1-phase-14-dr23o2` (branched from `main`, not merged)
 
 ## Latest Relevant Handoff
 
-`docs/handoffs/V1_PHASE_13_HANDOFF.md`
+`docs/handoffs/V1_PHASE_14_HANDOFF.md`
 
 ## For the Next Session
 
-Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_13_HANDOFF.md` for Leave Management, `docs/handoffs/V1_PHASE_12_HANDOFF.md` for Work Logs, `docs/handoffs/V1_PHASE_11_HANDOFF.md` for Tasks, `docs/handoffs/V1_PHASE_10_HANDOFF.md` for Projects & Project Membership, `docs/handoffs/V1_PHASE_09_HANDOFF.md` for Staff Status & Location Check-in, `docs/handoffs/V1_PHASE_08_HANDOFF.md` for Clients & Contacts, `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 14 (Announcements) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.
+Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_14_HANDOFF.md` for Announcements, `docs/handoffs/V1_PHASE_13_HANDOFF.md` for Leave Management, `docs/handoffs/V1_PHASE_12_HANDOFF.md` for Work Logs, `docs/handoffs/V1_PHASE_11_HANDOFF.md` for Tasks, `docs/handoffs/V1_PHASE_10_HANDOFF.md` for Projects & Project Membership, `docs/handoffs/V1_PHASE_09_HANDOFF.md` for Staff Status & Location Check-in, `docs/handoffs/V1_PHASE_08_HANDOFF.md` for Clients & Contacts, `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 15 (Notifications) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.

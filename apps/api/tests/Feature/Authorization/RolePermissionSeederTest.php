@@ -226,6 +226,29 @@ class RolePermissionSeederTest extends TestCase
         $this->assertFalse($staff->permissions->contains('name', 'leave-requests.manage'));
     }
 
+    public function test_it_creates_the_phase_14_announcements_permission(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+
+        $this->assertTrue(Permission::query()->where('name', 'announcements.manage')->exists());
+    }
+
+    public function test_neither_manager_nor_staff_is_granted_announcements_manage(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+
+        $manager = Role::query()->where('name', Role::MANAGER)->firstOrFail();
+        $staff = Role::query()->where('name', Role::STAFF)->firstOrFail();
+
+        // Unlike every other module, there is no companion
+        // 'announcements.view' at all — ordinary employee visibility is
+        // served by /me/announcements (a domain check), and Manager holds
+        // no special Announcement authority in V1 (see docs/phases/
+        // V1_PHASE_14_DEFINITION.md).
+        $this->assertFalse($manager->permissions->contains('name', 'announcements.manage'));
+        $this->assertFalse($staff->permissions->contains('name', 'announcements.manage'));
+    }
+
     public function test_running_it_twice_does_not_duplicate_rows(): void
     {
         $this->seed(RolePermissionSeeder::class);
@@ -234,7 +257,7 @@ class RolePermissionSeederTest extends TestCase
         $manager = Role::query()->where('name', Role::MANAGER)->firstOrFail();
 
         $this->assertSame(3, Role::query()->count());
-        $this->assertSame(22, Permission::query()->count());
+        $this->assertSame(23, Permission::query()->count());
         $this->assertSame(1, $manager->permissions()->where('name', 'organization.view')->count());
         $this->assertSame(1, $manager->permissions()->where('name', 'staff.view')->count());
         $this->assertSame(1, $manager->permissions()->where('name', 'clients.view')->count());

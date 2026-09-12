@@ -58,10 +58,11 @@ class DepartmentController extends Controller
     }
 
     /**
-     * A department that still has any team, position, or (Phase 7) staff
-     * referencing it cannot be deleted — preventing an invalid/orphaned
-     * organization structure (see docs/phases/V1_PHASE_06_DEFINITION.md).
-     * The `restrictOnDelete()` foreign keys on `teams`/`positions`/`staff`
+     * A department that still has any team, position, (Phase 7) staff, or
+     * (Phase 14) announcement audience referencing it cannot be deleted —
+     * preventing an invalid/orphaned organization structure (see
+     * docs/phases/V1_PHASE_06_DEFINITION.md). The `restrictOnDelete()`
+     * foreign keys on `teams`/`positions`/`staff`/`announcement_departments`
      * back this up at the database level; this check exists to return a
      * clear 409 instead of a raw database constraint error.
      */
@@ -70,6 +71,12 @@ class DepartmentController extends Controller
         if ($department->teams()->exists() || $department->positions()->exists() || $department->staff()->exists()) {
             return response()->json([
                 'message' => 'This department still has teams, positions, or staff assigned to it and cannot be deleted.',
+            ], 409);
+        }
+
+        if ($department->announcements()->exists()) {
+            return response()->json([
+                'message' => 'This department is still targeted by an announcement audience and cannot be deleted.',
             ], 409);
         }
 

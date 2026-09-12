@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Announcements\AnnouncementController;
+use App\Http\Controllers\Api\V1\Announcements\MyAnnouncementController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Clients\ClientController;
 use App\Http\Controllers\Api\V1\Clients\ContactController;
@@ -313,5 +315,33 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
 
     Route::middleware('can:leave-requests.manage')->group(function (): void {
         Route::post('staff/{staff:public_id}/leave-balances', [LeaveBalanceController::class, 'staffStore'])->name('staff.leave-balances.store');
+    });
+});
+
+// Announcements (Phase 14): internal broadcast content — not messaging,
+// chat, comments, or a notification feed (see docs/phases/
+// V1_PHASE_14_DEFINITION.md). Self-service ("me") routes need only a
+// linked Staff record, no permission — mirroring Phase 9/12/13's
+// `/me/...` precedent; only ever return `published` (non-archived)
+// announcements within the requester's own audience (company-wide, or
+// their current Department/Team). The entire management surface requires
+// `announcements.manage` (Administrator-only, via the centralized
+// Gate::before override) — unlike every prior module, there is no
+// companion `announcements.view` for Manager/Staff. Lifecycle transitions
+// (publish/archive) are explicit action endpoints, never a generic status
+// PATCH.
+Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
+    Route::get('me/announcements', [MyAnnouncementController::class, 'myIndex'])->name('me.announcements.index');
+    Route::get('me/announcements/{announcement:public_id}', [MyAnnouncementController::class, 'myShow'])->name('me.announcements.show');
+    Route::post('me/announcements/{announcement:public_id}/acknowledge', [MyAnnouncementController::class, 'myAcknowledge'])->name('me.announcements.acknowledge');
+
+    Route::middleware('can:announcements.manage')->group(function (): void {
+        Route::get('announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
+        Route::get('announcements/{announcement:public_id}', [AnnouncementController::class, 'show'])->name('announcements.show');
+        Route::post('announcements', [AnnouncementController::class, 'store'])->name('announcements.store');
+        Route::match(['put', 'patch'], 'announcements/{announcement:public_id}', [AnnouncementController::class, 'update'])->name('announcements.update');
+        Route::delete('announcements/{announcement:public_id}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
+        Route::post('announcements/{announcement:public_id}/publish', [AnnouncementController::class, 'publish'])->name('announcements.publish');
+        Route::post('announcements/{announcement:public_id}/archive', [AnnouncementController::class, 'archive'])->name('announcements.archive');
     });
 });

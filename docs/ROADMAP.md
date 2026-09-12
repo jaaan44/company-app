@@ -73,8 +73,8 @@ Leave types, requests, approvals (with history), balances.
 ### Communication
 *Depends on: Phase 5 (Roles/Permissions); Phase 7 (Staff)*
 
-**Phase 14 — Announcements**
-Company-wide/scoped announcements, recipients, acknowledgements.
+**Phase 14 — Announcements** *(complete — see `docs/handoffs/V1_PHASE_14_HANDOFF.md`)*
+Company-wide/scoped announcements, recipients, acknowledgements. "Recipients" resolved as Department/Team audience targeting (union semantics), not arbitrary individual-Staff targeting; "acknowledgements" is a lightweight, idempotent, self-initiated acknowledgement record — deliberately not read/unread tracking, a mandatory-acknowledgement compliance workflow, or engagement analytics (see DEC-037).
 
 **Phase 15 — Notifications**
 Generic in-app notification infrastructure, feeding from other modules' events.

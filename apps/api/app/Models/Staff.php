@@ -261,6 +261,19 @@ class Staff extends Model
     }
 
     /**
+     * This staff member's Announcement acknowledgement history (Phase 14)
+     * — self-initiated, never a mandatory-read record. restrictOnDelete on
+     * announcement_acknowledgements.staff_id backs the deletion guard in
+     * StaffController::destroy.
+     *
+     * @return HasMany<AnnouncementAcknowledgement, $this>
+     */
+    public function announcementAcknowledgements(): HasMany
+    {
+        return $this->hasMany(AnnouncementAcknowledgement::class);
+    }
+
+    /**
      * Whether assigning $proposedManagerId as this staff member's manager
      * would create a reporting cycle — i.e. $proposedManagerId's own
      * manager chain eventually loops back to this staff member. Walks a
