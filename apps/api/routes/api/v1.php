@@ -4,6 +4,10 @@ use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Clients\ClientController;
 use App\Http\Controllers\Api\V1\Clients\ContactController;
 use App\Http\Controllers\Api\V1\HealthController;
+use App\Http\Controllers\Api\V1\Leave\LeaveBalanceController;
+use App\Http\Controllers\Api\V1\Leave\LeaveRequestController;
+use App\Http\Controllers\Api\V1\Leave\LeaveTypeController;
+use App\Http\Controllers\Api\V1\Leave\MyLeaveRequestController;
 use App\Http\Controllers\Api\V1\Organization\DepartmentController;
 use App\Http\Controllers\Api\V1\Organization\PositionController;
 use App\Http\Controllers\Api\V1\Organization\TeamController;
@@ -255,5 +259,59 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
         Route::post('work-logs', [WorkLogController::class, 'store'])->name('work-logs.store');
         Route::match(['put', 'patch'], 'work-logs/{workLog:public_id}', [WorkLogController::class, 'update'])->name('work-logs.update');
         Route::delete('work-logs/{workLog:public_id}', [WorkLogController::class, 'destroy'])->name('work-logs.destroy');
+    });
+});
+
+// Leave Management (Phase 13): Leave Types (configurable master data),
+// Leave Requests (a pending/approved/rejected/cancelled lifecycle with
+// explicit action endpoints, never a generic status PATCH — see
+// docs/phases/V1_PHASE_13_DEFINITION.md), and derived Leave Balances.
+// Not payroll, attendance, or Work Logs. Leave Type reads require
+// `leave-types.view` (Administrator/Manager/Staff — company-wide, a
+// Staff member must browse active types to submit a request); writes
+// require `leave-types.manage` (Administrator-only). Self-service
+// (`/me/leave-requests`, `/me/leave-balances`) needs no permission
+// beyond a linked Staff record, mirroring Phase 9/12's `/me/...`
+// precedent. The supervisory `/leave-requests` surface's reads are
+// scoped in-controller (AuthorizesLeaveRequestVisibility, mirroring
+// Phase 12's work-logs.view shape) rather than a bare `can:` middleware;
+// `store`/`cancel` require `leave-requests.manage`; `approve`/`reject`
+// carry no permission middleware at all — authority (Administrator, or
+// the requester's current direct Manager) is resolved entirely in
+// LeaveRequestController, the same row-level write-authority shape
+// Phase 11/12 established for Project Lead/Work Log authority.
+Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
+    Route::middleware('can:leave-types.view')->group(function (): void {
+        Route::get('leave-types', [LeaveTypeController::class, 'index'])->name('leave-types.index');
+        Route::get('leave-types/{leaveType:public_id}', [LeaveTypeController::class, 'show'])->name('leave-types.show');
+    });
+
+    Route::middleware('can:leave-types.manage')->group(function (): void {
+        Route::post('leave-types', [LeaveTypeController::class, 'store'])->name('leave-types.store');
+        Route::match(['put', 'patch'], 'leave-types/{leaveType:public_id}', [LeaveTypeController::class, 'update'])->name('leave-types.update');
+        Route::delete('leave-types/{leaveType:public_id}', [LeaveTypeController::class, 'destroy'])->name('leave-types.destroy');
+    });
+
+    Route::get('me/leave-requests', [MyLeaveRequestController::class, 'myIndex'])->name('me.leave-requests.index');
+    Route::post('me/leave-requests', [MyLeaveRequestController::class, 'myStore'])->name('me.leave-requests.store');
+    Route::get('me/leave-requests/{leaveRequest:public_id}', [MyLeaveRequestController::class, 'myShow'])->name('me.leave-requests.show');
+    Route::post('me/leave-requests/{leaveRequest:public_id}/cancel', [MyLeaveRequestController::class, 'myCancel'])->name('me.leave-requests.cancel');
+
+    Route::get('me/leave-balances', [LeaveBalanceController::class, 'myIndex'])->name('me.leave-balances.index');
+
+    Route::get('leave-requests', [LeaveRequestController::class, 'index'])->name('leave-requests.index');
+    Route::get('leave-requests/{leaveRequest:public_id}', [LeaveRequestController::class, 'show'])->name('leave-requests.show');
+    Route::post('leave-requests/{leaveRequest:public_id}/approve', [LeaveRequestController::class, 'approve'])->name('leave-requests.approve');
+    Route::post('leave-requests/{leaveRequest:public_id}/reject', [LeaveRequestController::class, 'reject'])->name('leave-requests.reject');
+
+    Route::middleware('can:leave-requests.manage')->group(function (): void {
+        Route::post('leave-requests', [LeaveRequestController::class, 'store'])->name('leave-requests.store');
+        Route::post('leave-requests/{leaveRequest:public_id}/cancel', [LeaveRequestController::class, 'cancel'])->name('leave-requests.cancel');
+    });
+
+    Route::get('staff/{staff:public_id}/leave-balances', [LeaveBalanceController::class, 'staffIndex'])->name('staff.leave-balances.index');
+
+    Route::middleware('can:leave-requests.manage')->group(function (): void {
+        Route::post('staff/{staff:public_id}/leave-balances', [LeaveBalanceController::class, 'staffStore'])->name('staff.leave-balances.store');
     });
 });

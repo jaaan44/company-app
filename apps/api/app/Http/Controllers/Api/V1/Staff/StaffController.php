@@ -101,15 +101,16 @@ class StaffController extends Controller
 
     /**
      * A staff member who still has direct reports, is still a member of
-     * any project, still has any task assigned to them, or still
-     * performed any work log, cannot be deleted — preventing an
-     * orphaned/invalid reporting structure, project roster, task
-     * assignment, or historical work record, the same relational-integrity
-     * philosophy as DepartmentController::destroy (and, for project
-     * memberships/tasks/work logs, docs/phases/V1_PHASE_10_DEFINITION.md /
-     * V1_PHASE_11_DEFINITION.md / V1_PHASE_12_DEFINITION.md). Task
-     * assignment and work logs are checked regardless of the task's
-     * status — both are business history, so this is never a cascade.
+     * any project, still has any task assigned to them, still performed
+     * any work log, or still has any leave request/balance, cannot be
+     * deleted — preventing an orphaned/invalid reporting structure,
+     * project roster, task assignment, or historical HR record, the same
+     * relational-integrity philosophy as DepartmentController::destroy
+     * (and, for project memberships/tasks/work logs/leave, docs/phases/
+     * V1_PHASE_10_DEFINITION.md / V1_PHASE_11_DEFINITION.md /
+     * V1_PHASE_12_DEFINITION.md / V1_PHASE_13_DEFINITION.md). Task
+     * assignment, work logs, and leave requests are checked regardless
+     * of status — all are business history, so this is never a cascade.
      */
     public function destroy(Staff $staff): JsonResponse
     {
@@ -134,6 +135,18 @@ class StaffController extends Controller
         if ($staff->workLogs()->exists()) {
             return response()->json([
                 'message' => 'This staff member still has work logs and cannot be deleted.',
+            ], 409);
+        }
+
+        if ($staff->leaveRequests()->exists()) {
+            return response()->json([
+                'message' => 'This staff member still has leave requests and cannot be deleted.',
+            ], 409);
+        }
+
+        if ($staff->leaveBalances()->exists()) {
+            return response()->json([
+                'message' => 'This staff member still has leave balances and cannot be deleted.',
             ], 409);
         }
 

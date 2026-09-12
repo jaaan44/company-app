@@ -193,6 +193,39 @@ class RolePermissionSeederTest extends TestCase
         $this->assertFalse($staff->permissions->contains('name', 'work-logs.manage'));
     }
 
+    public function test_it_creates_the_phase_13_leave_permissions(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+
+        $this->assertTrue(Permission::query()->where('name', 'leave-types.view')->exists());
+        $this->assertTrue(Permission::query()->where('name', 'leave-types.manage')->exists());
+        $this->assertTrue(Permission::query()->where('name', 'leave-requests.view')->exists());
+        $this->assertTrue(Permission::query()->where('name', 'leave-requests.manage')->exists());
+    }
+
+    public function test_manager_and_staff_are_granted_leave_types_view_but_only_manager_gets_leave_requests_view(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+
+        $manager = Role::query()->where('name', Role::MANAGER)->firstOrFail();
+        $staff = Role::query()->where('name', Role::STAFF)->firstOrFail();
+
+        // leave-types.view follows organization.view/staff.view's
+        // company-wide pattern (a Staff member must browse active types
+        // to submit a request). leave-requests.view mirrors
+        // work-logs.view (Phase 12) — Manager only, never Staff (see
+        // docs/phases/V1_PHASE_13_DEFINITION.md).
+        $this->assertTrue($manager->permissions->contains('name', 'leave-types.view'));
+        $this->assertTrue($staff->permissions->contains('name', 'leave-types.view'));
+        $this->assertFalse($manager->permissions->contains('name', 'leave-types.manage'));
+        $this->assertFalse($staff->permissions->contains('name', 'leave-types.manage'));
+
+        $this->assertTrue($manager->permissions->contains('name', 'leave-requests.view'));
+        $this->assertFalse($staff->permissions->contains('name', 'leave-requests.view'));
+        $this->assertFalse($manager->permissions->contains('name', 'leave-requests.manage'));
+        $this->assertFalse($staff->permissions->contains('name', 'leave-requests.manage'));
+    }
+
     public function test_running_it_twice_does_not_duplicate_rows(): void
     {
         $this->seed(RolePermissionSeeder::class);
@@ -201,7 +234,7 @@ class RolePermissionSeederTest extends TestCase
         $manager = Role::query()->where('name', Role::MANAGER)->firstOrFail();
 
         $this->assertSame(3, Role::query()->count());
-        $this->assertSame(18, Permission::query()->count());
+        $this->assertSame(22, Permission::query()->count());
         $this->assertSame(1, $manager->permissions()->where('name', 'organization.view')->count());
         $this->assertSame(1, $manager->permissions()->where('name', 'staff.view')->count());
         $this->assertSame(1, $manager->permissions()->where('name', 'clients.view')->count());
@@ -209,5 +242,7 @@ class RolePermissionSeederTest extends TestCase
         $this->assertSame(1, $manager->permissions()->where('name', 'location.view')->count());
         $this->assertSame(1, $manager->permissions()->where('name', 'projects.view')->count());
         $this->assertSame(1, $manager->permissions()->where('name', 'work-logs.view')->count());
+        $this->assertSame(1, $manager->permissions()->where('name', 'leave-types.view')->count());
+        $this->assertSame(1, $manager->permissions()->where('name', 'leave-requests.view')->count());
     }
 }

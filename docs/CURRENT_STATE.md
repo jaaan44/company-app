@@ -3,14 +3,14 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** Phase 12 — Work Logs
+**Current phase:** Phase 13 — Leave Management
 **Phase status:** COMPLETE (pending user review)
-**Last completed phase:** Phase 12 (Phases 1–11 are merged into `main`)
-**Next planned phase:** Phase 13 — Leave Management (see `ROADMAP.md`) — **not authorized yet**
+**Last completed phase:** Phase 13 (Phases 1–12 are merged into `main`)
+**Next planned phase:** Phase 14 — Announcements (see `ROADMAP.md`) — **not authorized yet**
 
 ## Current Objective
 
-Phase 12 is implemented, tested, and pushed for review. Awaiting authorization for Phase 13.
+Phase 13 is implemented, tested, and pushed for review. Awaiting authorization for Phase 14.
 
 ## Completed
 
@@ -111,9 +111,20 @@ Phase 12 is implemented, tested, and pushed for review. Awaiting authorization f
   - Recorded DEC-035.
   - No payroll, attendance, billing, timers, timesheet approval workflow, leave, or messaging/notifications was introduced; no Admin Backoffice CRUD UI or Flutter mobile screens (consistent with Phase 6–11's precedent).
 
+- **Phase 13:** Leave Management. See `docs/handoffs/V1_PHASE_13_HANDOFF.md` for full detail.
+  - `leave_types`/`leave_requests`/`leave_request_actions`/`leave_balances` tables; `App\Models\LeaveType`/`LeaveRequest`/`LeaveRequestAction`/`LeaveBalance`. `LeaveType`/`LeaveRequest` carry a ULID `public_id` (DEC-017); the history/allocation tables deliberately don't. `App\Enums\LeaveTypeStatus` (`active`/`inactive`), `App\Enums\LeaveRequestStatus` (`pending`/`approved`/`rejected`/`cancelled`, no `draft`), `App\Enums\LeaveRequestActionType` (`submitted`/`approved`/`rejected`/`cancelled`).
+  - No `submitted_at`/`approved_at`/`rejected_at`/`cancelled_at` columns on `leave_requests` — submission is `created_at`, every decision/cancellation timestamp lives only on the append-only `leave_request_actions` history table instead. Leave Balances (`allocated_days` per staff/leave-type/calendar-year) derive `used_days`/`pending_days`/`remaining_days` live from `leave_requests` — never a stored/cached column, so cancelling an approved request "restores" balance automatically.
+  - Single-stage approval: a `pending` request's **current** direct Manager (`Staff.manager_id`, evaluated at decision time) or Administrator may approve/reject it — never the requester themselves, never an unrelated Manager, no multi-level chain; a Staff member with no Manager can only be decided by Administrator. Cancellation: requester (own `pending` any time, own `approved` only before `start_date`) or Administrator (any `pending`/`approved`, any time). No edit endpoint exists at all — cancel and resubmit instead.
+  - Self-service creation eligibility (checked only at creation): active Staff status; sufficient paid-leave balance (checked once, at submission, inside a `lockForUpdate()` transaction — never re-checked at approval). Administrator-created requests (on a Staff member's behalf) skip both, mirroring Phase 12's Work Log precedent, but Leave Type activity, date-range validity (no cross-year span), and overlap (`pending`/`approved`, any Leave Type) are enforced identically for both paths.
+  - `StaffController::destroy` (Phase 7) extended to block deletion while any Leave Request/Balance references the staff member; new `LeaveTypeController::destroy` blocks deletion while any Leave Request/Balance references the type.
+  - Four new permissions: `leave-types.view` (Administrator/Manager/Staff, company-wide) / `leave-types.manage` (Administrator-only); `leave-requests.view` (**Manager only**, scoped to direct reports, mirroring `work-logs.view`, and also checked for approve/reject authority) / `leave-requests.manage` (Administrator-only — create-on-behalf, Administrator-cancel).
+  - New versioned REST endpoints: `/api/v1/leave-types` (full CRUD); self-service `/api/v1/me/leave-requests` (list/create/view/cancel) and `/api/v1/me/leave-balances`; supervisory `/api/v1/leave-requests` (scoped reads; `/approve`/`/reject`/`/cancel` action endpoints — no generic status `PATCH`); `/api/v1/staff/{public_id}/leave-balances` (scoped read; Administrator-only upsert).
+  - Recorded DEC-036.
+  - No payroll, attendance, time tracking, Work Log integration, shift scheduling, overtime, holiday pay, accrual/carry-forward/encashment engine, medical-document attachments, multi-level/delegated approval, calendar sync, notifications, or partial-day leave; no Admin Backoffice CRUD UI or Flutter mobile screens (consistent with Phase 6–12's precedent).
+
 ## Pending / Not Started
 
-- Leave Management (Phase 13) and everything after it on the roadmap.
+- Announcements (Phase 14) and everything after it on the roadmap.
 
 ## Known Blockers / Issues
 
@@ -124,18 +135,19 @@ Phase 12 is implemented, tested, and pushed for review. Awaiting authorization f
 - **Phase 10 session's environment:** same pattern again — no `vendor/` at session start, `composer install` needed the git-mirror-cache fallback for every third-party dependency, and `phpstan/phpstan`'s own `git clone --mirror` again exceeded the 300s process timeout. Recovered identically to Phase 9 (shallow-clone the exact locked commit, pre-seed the mirror cache, manually copy the four essential files into `vendor/phpstan/phpstan/`, hand-write `vendor/bin/phpstan`/`phpstan.phar`, patch `vendor/composer/installed.json`, `composer dump-autoload`) — see `docs/handoffs/V1_PHASE_10_HANDOFF.md` §14a. Once installed, this phase's own automated test suite caught one real application bug (unrelated to the environment): Laravel's automatic nested-route-binding scoping guessed a nonexistent `Project::staff()` relation for the two-parameter member routes, fixed via `->withoutScopedBindings()` — see the handoff's Deviations section.
 - **Phase 11 session's environment:** no `vendor/` at session start; `composer install` got through every package except `phpstan/phpstan` (whose own internal `git clone --mirror` again exceeded Composer's 300s process timeout), but this time the failure was fatal to the whole install (Composer aborted before writing `vendor/composer/installed.json`/`vendor/autoload.php` at all — a harder failure than Phase 9/10's, where installed.json already existed and only needed patching). Recovered by running the same `git clone --mirror` directly via a plain shell command (not through Composer) with a longer allowance — it completed in ~5m41s, just over Composer's internal 300s cap — which pre-seeded Composer's local VCS mirror cache with a *complete* (non-shallow) mirror; a full `composer install` retry then completed normally end-to-end, needing no manual `vendor/` file surgery this time. All quality gates then passed cleanly against real, complete code. This does not affect the correctness of what was committed (`vendor/` is never committed either way).
 - **Phase 12 session's environment:** no `vendor/` at session start; `composer install` again hit `phpstan/phpstan`'s own internal `git clone --mirror` exceeding Composer's 300s process timeout (the same recurring issue documented in Phases 9–11), fatal to the whole install this time (same as Phase 11's session). Recovered identically to Phase 11: ran the `git clone --mirror` directly via a plain shell command with a longer allowance, pre-seeding Composer's local VCS mirror cache with a complete (non-shallow) mirror, then retried `composer install` to completion. This does not affect the correctness of what was committed (`vendor/` is never committed either way) — see `docs/handoffs/V1_PHASE_12_HANDOFF.md` for the full account and quality-gate results.
+- **Phase 13 session's environment:** no `vendor/` at session start; the first `composer install` attempt failed harder than any prior session — nearly every third-party dependency's dist zipball download failed (`curl error 28`, proxy `CONNECT` timeout), not just `phpstan/phpstan`, and `phpstan/phpstan`'s own internal `git clone --mirror` again exceeded Composer's 300s process timeout, fatal to the whole install (same failure shape as Phases 11–12). Recovered with a simpler variant this time: re-ran `composer install` with `COMPOSER_PROCESS_TIMEOUT=1800` (Composer's own configurable process timeout, not a manual pre-seeded git mirror) so its internal `git clone --mirror` for `phpstan/phpstan` could run to completion without hitting the artificial 300s cap — no manual `vendor/` file surgery needed. This does not affect the correctness of what was committed (`vendor/` is never committed either way) — see `docs/handoffs/V1_PHASE_13_HANDOFF.md` for the full account and quality-gate results.
 - Open design questions: real-time transport, object storage provider — see `docs/02_ARCHITECTURE.md` §9. (Departments/Teams hierarchy shape was resolved by Phase 6 — see DEC-029. Staff↔User relationship and manager/reporting structure were resolved by Phase 7 — see DEC-030.)
 
 ## Repository / Branch Information
 
 - Repository: `jaaan44/company-app`
-- Default branch: `main` (contains the approved Phase 0–11 baseline)
-- Phase 12 branch: `claude/focused-johnson-189yg8` (branched from `main`, not merged)
+- Default branch: `main` (contains the approved Phase 0–12 baseline)
+- Phase 13 branch: `claude/vibrant-johnson-vk7bhr` (branched from `main`, not merged)
 
 ## Latest Relevant Handoff
 
-`docs/handoffs/V1_PHASE_12_HANDOFF.md`
+`docs/handoffs/V1_PHASE_13_HANDOFF.md`
 
 ## For the Next Session
 
-Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_12_HANDOFF.md` for Work Logs, `docs/handoffs/V1_PHASE_11_HANDOFF.md` for Tasks, `docs/handoffs/V1_PHASE_10_HANDOFF.md` for Projects & Project Membership, `docs/handoffs/V1_PHASE_09_HANDOFF.md` for Staff Status & Location Check-in, `docs/handoffs/V1_PHASE_08_HANDOFF.md` for Clients & Contacts, `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 13 (Leave Management) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.
+Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_13_HANDOFF.md` for Leave Management, `docs/handoffs/V1_PHASE_12_HANDOFF.md` for Work Logs, `docs/handoffs/V1_PHASE_11_HANDOFF.md` for Tasks, `docs/handoffs/V1_PHASE_10_HANDOFF.md` for Projects & Project Membership, `docs/handoffs/V1_PHASE_09_HANDOFF.md` for Staff Status & Location Check-in, `docs/handoffs/V1_PHASE_08_HANDOFF.md` for Clients & Contacts, `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 14 (Announcements) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.

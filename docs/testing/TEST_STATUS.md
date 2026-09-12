@@ -265,4 +265,21 @@ No automated tests apply to this phase — no application code exists yet.
 | GitHub Actions CI | — | NOT RUN (this session) | No PR opened and no push to `main` this session — the path-filtered trigger (DEC-015) never fired. All commands the workflow runs were executed directly and passed (rows above). |
 | UAT | — | NOT RUN | No UAT scenario recorded yet for Phase 11 — see `docs/testing/UAT_LOG.md` (`UAT-11-01`, `UAT-11-02`, `UAT-11-03`). This phase introduced no Admin Backoffice UI or Flutter mobile screens, so there is nothing yet for the product owner to click through visually. |
 
+## Phase 13 — Leave Management
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `composer validate --strict` (apps/api) | Automated, local | PASS | `./composer.json is valid` — unaffected, no new dependencies added |
+| `vendor/bin/pint --test` (apps/api) | Automated, local | PASS | `{"tool":"pint","result":"passed"}` — clean, includes all new Leave Management code and tests |
+| `vendor/bin/phpstan analyse` (apps/api) | Automated, local | PASS | `{"tool":"phpstan","result":"passed","errors":0}` at level 5 |
+| `php artisan test` (apps/api) | Automated, local | PASS | `{"tool":"phpunit","result":"passed","tests":463,"passed":463,"assertions":1262}` (96 new: 18 `LeaveTypeTest`, 31 `LeaveRequestTest`, 22 `LeaveRequestLifecycleTest`, 13 `LeaveBalanceTest`, 12 `LeaveAuthorizationTest`, 2 new in `RolePermissionSeederTest`; 367 pre-existing Phase 1–12 tests unaffected in behavior — full regression suite healthy). A real correctness bug was caught by the first full test run and fixed before this suite went green: a same-day-boundary overlap-detection defect caused by a plain string comparison against a `date`-cast column's SQLite storage format — see the handoff's Deviations section. |
+| Migrations (`migrate:fresh`) against SQLite | Automated, local | PASS | All 25 migrations (21 pre-existing + 4 new: `leave_types`, `leave_requests`, `leave_request_actions`, `leave_balances`) ran cleanly |
+| `RolePermissionSeeder` (extended) | Automated, local | PASS | New `leave-types.view`/`leave-types.manage`/`leave-requests.view`/`leave-requests.manage` permissions created (22 total); `leave-types.view` confirmed on Manager and Staff, `leave-requests.view` confirmed Manager-only |
+| Manual: `php artisan serve` + curl — full lifecycle smoke test | Manual | PASS | Administrator login → create Leave Type → set a Staff member's Leave Balance allocation → Staff submits a Leave Request → the Staff member's direct Manager approves it → Staff's `GET /api/v1/me/leave-balances` correctly reflects consumption (`used_days: 3`, `remaining_days: 7`) → Staff confirmed `403` on the top-level `/api/v1/leave-requests` → Staff/Leave-Type deletion both confirmed `409` while referenced → Staff cancels the approved (not-yet-started) request, which succeeds and appends a `cancelled` history entry alongside `submitted`/`approved` — all through a real HTTP server, not just PHPUnit's in-process client |
+| No payroll/attendance/time-tracking/Work-Log-integration/shift-scheduling/overtime/holiday-pay/accrual-engine/carry-forward/encashment/medical-attachments/multi-level-approval/calendar-sync/notifications/forecasting functionality introduced | Manual | PASS | Confirmed by reviewing the full staged diff before commit |
+| No Admin Backoffice CRUD UI or Flutter mobile screens | Manual | PASS | Confirmed — API/backend only, consistent with Phase 6–12's precedent |
+| Docker validation | — | NOT RUN (this session) | No Docker configuration changed this phase; consistent with prior sessions, Docker-based re-verification was not attempted. The last genuine Docker confirmation remains Phase 5's. |
+| GitHub Actions CI | — | NOT RUN (this session) | No PR opened and no push to `main` this session — the path-filtered trigger (DEC-015) never fired. All commands the workflow runs were executed directly and passed (rows above). |
+| UAT | — | NOT RUN | No UAT scenario recorded yet for Phase 13 — see `docs/testing/UAT_LOG.md` (`UAT-13-01`, `UAT-13-02`, `UAT-13-03`). This phase introduced no Admin Backoffice UI or Flutter mobile screens, so there is nothing yet for the product owner to click through visually. |
+
 *(Future phases append their own section above this line, oldest first.)*
