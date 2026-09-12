@@ -79,8 +79,8 @@ Company-wide/scoped announcements, recipients, acknowledgements. "Recipients" re
 **Phase 15 — Notifications** *(complete — see `docs/handoffs/V1_PHASE_15_HANDOFF.md`)*
 Generic in-app notification infrastructure, feeding from other modules' events. "Feeding from other modules' events" resolved narrowly to the one producer the roadmap itself names above — Announcement publish; Leave Management/Task event integration remain unimplemented, deferred until a future phase names them explicitly (see `docs/DECISIONS.md` DEC-038). No queue infrastructure was introduced — synchronous, transactional creation is sufficient at this company's scale.
 
-**Phase 16 — Messaging**
-Direct, group, and project conversations.
+**Phase 16 — Messaging** *(complete — see `docs/handoffs/V1_PHASE_16_HANDOFF.md`)*
+Direct, group, and project conversations. Preceded by a product-owner-reviewed planning audit (see DEC-039) that resolved participant identity (Staff, not User — a deliberate departure from Notifications' DEC-038), direct-conversation canonicalization, group ownership/membership rules, project-conversation lazy creation and Project Membership sync, message immutability, derived read/unread state, and the real-time-transport question (deferred — request/response only, no WebSockets/queue/broadcasting infrastructure). No new permission was introduced; authorization is membership/ownership-only, with no Administrator override.
 *Depends on: Phase 10 (project conversations), Phase 15 (notification of new messages)*
 
 ### Operations

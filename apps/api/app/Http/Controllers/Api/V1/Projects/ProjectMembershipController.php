@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1\Projects;
 
 use App\Enums\ProjectMembershipRole;
+use App\Http\Controllers\Api\V1\Messaging\Concerns\SyncsProjectConversationMembership;
 use App\Http\Controllers\Api\V1\Projects\Concerns\AuthorizesProjectVisibility;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Projects\StoreProjectMembershipRequest;
@@ -27,7 +28,7 @@ use Illuminate\Validation\Rules\Enum;
  */
 class ProjectMembershipController extends Controller
 {
-    use AuthorizesProjectVisibility;
+    use AuthorizesProjectVisibility, SyncsProjectConversationMembership;
 
     public function index(Request $request, Project $project): AnonymousResourceCollection
     {
@@ -48,10 +49,17 @@ class ProjectMembershipController extends Controller
 
     public function store(StoreProjectMembershipRequest $request, Project $project): JsonResponse
     {
+        $staffId = $this->resolveStaffId($request->validated('staff_id'));
+
         $membership = $project->memberships()->create([
-            'staff_id' => $this->resolveStaffId($request->validated('staff_id')),
+            'staff_id' => $staffId,
             'role' => $request->validated('role', ProjectMembershipRole::Member->value),
         ]);
+
+        // Phase 16: if this Project already has a conversation (lazily
+        // created on first use), keep its membership synchronized — a
+        // no-op when no conversation exists yet.
+        $this->addToProjectConversationIfExists($project, $staffId);
 
         return (new ProjectMembershipResource($membership->load('staff')))
             ->response()
@@ -70,6 +78,11 @@ class ProjectMembershipController extends Controller
     {
         $membership = $project->memberships()->where('staff_id', $staff->id)->firstOrFail();
         $membership->delete();
+
+        // Phase 16: a Staff member removed from the Project roster is
+        // also removed from its conversation (if one exists) — project
+        // conversation membership is never independently managed.
+        $this->removeFromProjectConversationIfExists($project, $staff->id);
 
         return response()->json(status: 204);
     }

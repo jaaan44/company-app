@@ -147,6 +147,12 @@ class ProjectController extends Controller
             ], 409);
         }
 
+        if ($project->conversation()->exists()) {
+            return response()->json([
+                'message' => 'This project still has a conversation and cannot be deleted.',
+            ], 409);
+        }
+
         $project->delete();
 
         return response()->json(status: 204);

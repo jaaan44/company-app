@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
@@ -111,5 +112,21 @@ class Project extends Model
     public function workLogs(): HasMany
     {
         return $this->hasMany(WorkLog::class);
+    }
+
+    /**
+     * This Project's single conversation (Phase 16), if one has been
+     * created — lazily created on first use of the project messaging
+     * surface, never eagerly for every Project. Membership is derived
+     * exclusively from memberships() (Project Membership), never an
+     * independently managed roster. restrictOnDelete on
+     * conversations.project_id backs the deletion guard in
+     * ProjectController::destroy.
+     *
+     * @return HasOne<Conversation, $this>
+     */
+    public function conversation(): HasOne
+    {
+        return $this->hasOne(Conversation::class);
     }
 }

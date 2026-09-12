@@ -157,6 +157,24 @@ class StaffController extends Controller
             ], 409);
         }
 
+        if ($staff->conversationMemberships()->exists()) {
+            return response()->json([
+                'message' => 'This staff member still has conversation memberships and cannot be deleted.',
+            ], 409);
+        }
+
+        if ($staff->ownedConversations()->exists()) {
+            return response()->json([
+                'message' => 'This staff member still owns a group conversation and cannot be deleted.',
+            ], 409);
+        }
+
+        if ($staff->sentMessages()->exists()) {
+            return response()->json([
+                'message' => 'This staff member still has messages and cannot be deleted.',
+            ], 409);
+        }
+
         $staff->delete();
 
         return response()->json(status: 204);

@@ -3,14 +3,14 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** Phase 15 — Notifications
+**Current phase:** Phase 16 — Messaging
 **Phase status:** COMPLETE (pending user review)
-**Last completed phase:** Phase 15 (Phases 1–14 are merged into `main`)
-**Next planned phase:** Phase 16 — Messaging (see `ROADMAP.md`) — **not authorized yet**
+**Last completed phase:** Phase 16 (Phases 1–15 are merged into `main`)
+**Next planned phase:** Phase 17 — Scheduler (see `ROADMAP.md`) — **not authorized yet**
 
 ## Current Objective
 
-Phase 15 is implemented, tested, and pushed for review. Awaiting authorization for Phase 16.
+Phase 16 is implemented, tested, and pushed for review. Awaiting authorization for Phase 17.
 
 ## Completed
 
@@ -145,9 +145,23 @@ Phase 15 is implemented, tested, and pushed for review. Awaiting authorization f
   - Recorded DEC-038.
   - No Flutter Notification screens, Admin Notification CRUD UI, manually authored/arbitrary notifications, direct messaging/chat/a social feed, notification preferences, any external delivery channel (FCM/APNs/Web Push/email/SMS/WhatsApp/Slack/Teams), digests, a reminder/escalation engine, per-device notification state, read receipts beyond `read_at`, an analytics/read-rate dashboard, automatic retention jobs, queues/broadcasting infrastructure, a generic polymorphic event bus, or Leave Management/Task event integration (not named by the governing roadmap line for this phase — a future roadmap note).
 
+- **Phase 16:** Messaging. See `docs/handoffs/V1_PHASE_16_HANDOFF.md` for full detail.
+  - `conversations`/`messages`/`conversation_members` tables; `App\Models\Conversation`/`Message`/`ConversationMember`. `Conversation`/`Message` carry a ULID `public_id` (DEC-017); the membership pivot deliberately doesn't. `App\Enums\ConversationType` (`direct`/`group`/`project`) — never client-supplied, since each type is created only through its own dedicated endpoint.
+  - Participant identity is **Staff, not User** (DEC-039) — a deliberate departure from Notifications' DEC-038 choice. A User with no linked Staff record cannot use Messaging at all (`403`); a Staff member with no linked User may still be a member (the Notification fan-out silently skips them, mirroring Announcement's identical precedent).
+  - Direct conversations are canonical per unique Staff pair — found-or-created, never duplicated, always exactly two fixed participants. Group conversations are ad hoc/named with a single permanent owner (the creator) — owner-only member add/remove, self-leave for any member, and an invariant preventing the owner from leaving/being removed while other members remain (permitted only once they are the sole remaining member). Project conversations are lazily created (one per Project, on first use by a current member) with membership derived exclusively from and kept synchronized with Project Membership (Phase 10) — never independently managed.
+  - Messages are plain text, ≤4,000 characters, and fully immutable after sending — no edit, no soft/hard delete, retained indefinitely.
+  - Read state is a single per-member `last_read_message_id` reference (no separate timestamp) — unread count is always derived live, never cached. No per-message read receipts.
+  - Second real Notification producer after Announcement publish: `App\Enums\NotificationType::MessageReceived`/`NotificationSourceType::Conversation` (extending Phase 15's closed enums by one case each) — every message notifies every other current member with a linked User, excluding the sender, with fixed generic content (never the message body, sender name, or conversation/group/project name) and no cross-message deduplication.
+  - Authorization is membership/ownership-only — **no `messages.view`/`messages.manage` permission was introduced**, and Administrator's centralized `Gate::before` override is never invoked for Messaging (the second such case after Notifications) — a non-member gets `404`, never `403`.
+  - `StaffController::destroy`/`ProjectController::destroy` (Phases 7/10) extended to reject deletion (`409`) while a Staff member has a current conversation membership, owns a group conversation, or has sent a message, or a Project still has a conversation, respectively.
+  - New versioned REST endpoints under `/api/v1`: `GET /conversations`, `GET /conversations/{public_id}`, `POST /conversations/direct`, `POST /conversations/group`, `POST /conversations/{public_id}/read`, `POST /conversations/{public_id}/members`, `DELETE /conversations/{public_id}/members/{staff_public_id}`, `GET`/`POST /conversations/{public_id}/messages`, `POST /projects/{public_id}/conversation` (lazy get-or-create).
+  - No real-time/WebSocket/queue/broadcasting infrastructure was introduced — request/response only, resolving `02_ARCHITECTURE.md` §5/§9's long-open "real-time transport" question via deliberate deferral. `02_ARCHITECTURE.md` §1's architecture diagram (previously depicting Redis/queue workers as though already built) is corrected to reflect what actually exists.
+  - Recorded DEC-039.
+  - No Flutter mobile screens, attachments/files, message editing/deletion, message/conversation search, archive/mute, reactions, mentions, typing indicators, presence, rich text/HTML, Team/Department-linked conversations, visible read receipts, Admin moderation/read-all capability, external push/email/SMS delivery, retention/cleanup jobs, or Messaging-specific audit logging (Audit Logging, DEC-009, remains an unbuilt, pre-existing, project-wide gap).
+
 ## Pending / Not Started
 
-- Messaging (Phase 16) and everything after it on the roadmap.
+- Scheduler (Phase 17) and everything after it on the roadmap.
 
 ## Known Blockers / Issues
 
@@ -161,18 +175,19 @@ Phase 15 is implemented, tested, and pushed for review. Awaiting authorization f
 - **Phase 13 session's environment:** no `vendor/` at session start; the first `composer install` attempt failed harder than any prior session — nearly every third-party dependency's dist zipball download failed (`curl error 28`, proxy `CONNECT` timeout), not just `phpstan/phpstan`, and `phpstan/phpstan`'s own internal `git clone --mirror` again exceeded Composer's 300s process timeout, fatal to the whole install (same failure shape as Phases 11–12). Recovered with a simpler variant this time: re-ran `composer install` with `COMPOSER_PROCESS_TIMEOUT=1800` (Composer's own configurable process timeout, not a manual pre-seeded git mirror) so its internal `git clone --mirror` for `phpstan/phpstan` could run to completion without hitting the artificial 300s cap — no manual `vendor/` file surgery needed. This does not affect the correctness of what was committed (`vendor/` is never committed either way) — see `docs/handoffs/V1_PHASE_13_HANDOFF.md` for the full account and quality-gate results.
 - **Phase 14 session's environment:** the container started with no `vendor/` at all. `composer install --no-interaction --prefer-dist --no-progress` under `COMPOSER_PROCESS_TIMEOUT=1800` (the same recovery this repeatedly-documented `phpstan/phpstan` `git clone --mirror`-timeout issue has needed since Phase 9) completed successfully as a background command in a few minutes — no manual `vendor/` file surgery needed this time. This does not affect the correctness of what was committed (`vendor/` is never committed either way) — see `docs/handoffs/V1_PHASE_14_HANDOFF.md` for the full account and quality-gate results.
 - **Phase 15 session's environment:** the container again started with no `vendor/`. This session hit Phase 13's failure shape rather than Phases 9–12/14's: nearly every dependency's dist zipball download failed (GitHub auth/proxy timeouts), falling back to a per-package VCS source clone one at a time — a slow but steady process, not a stall. Partway through, this was misdiagnosed as the different `phpstan/phpstan`-mirror-clone stall documented in Phases 9–12, and the `composer install` process was killed prematurely; simply re-running the identical command (`COMPOSER_PROCESS_TIMEOUT=1800`) from a clean `vendor/` let it run uninterrupted to a normal, complete finish (`EXIT_CODE=0`) — no manual `vendor/` file surgery needed. This does not affect the correctness of what was committed (`vendor/` is never committed either way) — see `docs/handoffs/V1_PHASE_15_HANDOFF.md` for the full account and quality-gate results.
-- Open design questions: real-time transport, object storage provider — see `docs/02_ARCHITECTURE.md` §9. (Departments/Teams hierarchy shape was resolved by Phase 6 — see DEC-029. Staff↔User relationship and manager/reporting structure were resolved by Phase 7 — see DEC-030.)
+- **Phase 16 session's environment:** the container started with no `vendor/` at all. `composer install --no-interaction --prefer-dist --no-progress` (`COMPOSER_PROCESS_TIMEOUT=1800`) ran as a background command and completed normally (`EXIT_CODE=0`) — every dependency resolved via Composer's own local VCS mirror cache, no manual `vendor/` file surgery needed, no repeat of the `phpstan/phpstan`-mirror-clone-timeout issue documented in Phases 9–15. This does not affect the correctness of what was committed (`vendor/` is never committed either way).
+- Open design questions: object storage provider — see `docs/02_ARCHITECTURE.md` §9. (Departments/Teams hierarchy shape was resolved by Phase 6 — see DEC-029. Staff↔User relationship and manager/reporting structure were resolved by Phase 7 — see DEC-030. Real-time transport was resolved by Phase 16 — deliberately deferred, request/response only — see DEC-039.)
 
 ## Repository / Branch Information
 
 - Repository: `jaaan44/company-app`
-- Default branch: `main` (contains the approved Phase 0–14 baseline)
-- Phase 15 branch: `claude/compassionate-hypatia-92za04` (branched from `main`, not merged)
+- Default branch: `main` (contains the approved Phase 0–15 baseline)
+- Phase 16 branch: `claude/affectionate-ritchie-291ode` (branched from `main`, not merged)
 
 ## Latest Relevant Handoff
 
-`docs/handoffs/V1_PHASE_15_HANDOFF.md`
+`docs/handoffs/V1_PHASE_16_HANDOFF.md`
 
 ## For the Next Session
 
-Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_15_HANDOFF.md` for Notifications, `docs/handoffs/V1_PHASE_14_HANDOFF.md` for Announcements, `docs/handoffs/V1_PHASE_13_HANDOFF.md` for Leave Management, `docs/handoffs/V1_PHASE_12_HANDOFF.md` for Work Logs, `docs/handoffs/V1_PHASE_11_HANDOFF.md` for Tasks, `docs/handoffs/V1_PHASE_10_HANDOFF.md` for Projects & Project Membership, `docs/handoffs/V1_PHASE_09_HANDOFF.md` for Staff Status & Location Check-in, `docs/handoffs/V1_PHASE_08_HANDOFF.md` for Clients & Contacts, `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 16 (Messaging) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.
+Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_16_HANDOFF.md` for Messaging, `docs/handoffs/V1_PHASE_15_HANDOFF.md` for Notifications, `docs/handoffs/V1_PHASE_14_HANDOFF.md` for Announcements, `docs/handoffs/V1_PHASE_13_HANDOFF.md` for Leave Management, `docs/handoffs/V1_PHASE_12_HANDOFF.md` for Work Logs, `docs/handoffs/V1_PHASE_11_HANDOFF.md` for Tasks, `docs/handoffs/V1_PHASE_10_HANDOFF.md` for Projects & Project Membership, `docs/handoffs/V1_PHASE_09_HANDOFF.md` for Staff Status & Location Check-in, `docs/handoffs/V1_PHASE_08_HANDOFF.md` for Clients & Contacts, `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 17 (Scheduler) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.
