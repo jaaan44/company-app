@@ -73,16 +73,23 @@ class TeamController extends Controller
     }
 
     /**
-     * A team that still has any (Phase 7) staff assigned to it cannot be
+     * A team that still has any (Phase 7) staff assigned to it, or (Phase
+     * 14) is still targeted by an announcement audience, cannot be
      * deleted — same relational-integrity protection as
-     * DepartmentController::destroy, backed by the `staff.team_id`
-     * `restrictOnDelete()` foreign key.
+     * DepartmentController::destroy, backed by the `staff.team_id`/
+     * `announcement_teams.team_id` `restrictOnDelete()` foreign keys.
      */
     public function destroy(Team $team): JsonResponse
     {
         if ($team->staff()->exists()) {
             return response()->json([
                 'message' => 'This team still has staff assigned to it and cannot be deleted.',
+            ], 409);
+        }
+
+        if ($team->announcements()->exists()) {
+            return response()->json([
+                'message' => 'This team is still targeted by an announcement audience and cannot be deleted.',
             ], 409);
         }
 

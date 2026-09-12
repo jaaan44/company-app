@@ -108,6 +108,15 @@ use Illuminate\Database\Seeder;
  * Staff member's behalf; Administrator-cancel). Self-service
  * (`/me/leave-requests`, `/me/leave-balances`) needs no permission,
  * mirroring Phase 9/12's domain-check pattern.
+ *
+ * Phase 14 (Announcements) adds a single permission, `announcements.manage`
+ * — Administrator-only, via the centralized Gate::before override. Unlike
+ * every prior module, there is no companion `announcements.view` for
+ * Manager/Staff: ordinary employee visibility is served entirely by
+ * `/me/announcements` (a domain check — a linked Staff record — mirroring
+ * Phase 9/12/13's self-service pattern), and a Manager holds no special
+ * Announcement authority in V1 — they read their own targeted feed exactly
+ * like any Staff member.
  */
 class RolePermissionSeeder extends Seeder
 {
@@ -236,6 +245,11 @@ class RolePermissionSeeder extends Seeder
         Permission::query()->firstOrCreate(
             ['name' => 'leave-requests.manage'],
             ['label' => 'Create a leave request on behalf of a staff member, cancel any request, and manage leave balances'],
+        );
+
+        Permission::query()->firstOrCreate(
+            ['name' => 'announcements.manage'],
+            ['label' => 'Create, edit, publish, archive, and delete announcements'],
         );
 
         $manager->permissions()->syncWithoutDetaching([

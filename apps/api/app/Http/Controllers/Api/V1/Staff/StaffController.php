@@ -111,6 +111,7 @@ class StaffController extends Controller
      * V1_PHASE_12_DEFINITION.md / V1_PHASE_13_DEFINITION.md). Task
      * assignment, work logs, and leave requests are checked regardless
      * of status — all are business history, so this is never a cascade.
+     * Announcement acknowledgements (Phase 14) are checked the same way.
      */
     public function destroy(Staff $staff): JsonResponse
     {
@@ -147,6 +148,12 @@ class StaffController extends Controller
         if ($staff->leaveBalances()->exists()) {
             return response()->json([
                 'message' => 'This staff member still has leave balances and cannot be deleted.',
+            ], 409);
+        }
+
+        if ($staff->announcementAcknowledgements()->exists()) {
+            return response()->json([
+                'message' => 'This staff member still has announcement acknowledgements and cannot be deleted.',
             ], 409);
         }
 
