@@ -84,17 +84,23 @@ class AnnouncementController extends Controller
     }
 
     /**
-     * An archived Announcement is immutable — a terminal historical
-     * record, matching the read-only treatment rejected/cancelled Leave
-     * Requests already receive. audience_type/department_ids/team_ids are
-     * only touched atomically, together (see
+     * Only a still-draft Announcement may be edited. Once published, an
+     * Announcement's title/body/audience become immutable content — an
+     * acknowledgement permanently corresponds to the exact configuration
+     * that existed at publication time, and nothing may silently rewrite
+     * it underneath an existing acknowledgement (see docs/phases/
+     * V1_PHASE_14_DEFINITION.md's Editing section). Correcting a mistake
+     * after publication means archive() + a new corrected draft, never an
+     * edit — no revision history, content-versioning, or acknowledgement
+     * migration/invalidation exists for this. audience_type/department_ids/
+     * team_ids are only touched atomically, together (see
      * ValidatesAnnouncementAudience) — a request omitting all three leaves
      * the existing audience untouched.
      */
     public function update(UpdateAnnouncementRequest $request, Announcement $announcement): AnnouncementResource
     {
-        if ($announcement->status === AnnouncementStatus::Archived) {
-            abort(409, 'An archived announcement cannot be edited.');
+        if ($announcement->status !== AnnouncementStatus::Draft) {
+            abort(409, 'Only a draft announcement may be edited. Archive this announcement and create a corrected draft instead.');
         }
 
         $data = $request->validated();

@@ -19,10 +19,12 @@ return new class extends Migration
         // need one).
         Schema::create('announcement_departments', function (Blueprint $table) {
             // cascadeOnDelete: child data with no independent meaning
-            // apart from its Announcement. In practice this only ever
-            // fires for a still-draft Announcement (the only hard-deletable
-            // state), and a draft can have no audience rows referenced by
-            // anyone yet.
+            // apart from its Announcement. A scoped draft absolutely can
+            // have rows here — this only means that when a draft (the
+            // only hard-deletable Announcement state) is deleted, its own
+            // audience rows are safely deleted alongside it, since nothing
+            // else ever references an announcement_departments row
+            // directly.
             $table->foreignId('announcement_id')->constrained('announcements')->cascadeOnDelete();
 
             // restrictOnDelete: a Department still targeted by any

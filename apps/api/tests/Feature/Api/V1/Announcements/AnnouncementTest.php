@@ -133,9 +133,9 @@ class AnnouncementTest extends TestCase
         ]);
     }
 
-    // --- Editing ------------------------------------------------------------
+    // --- Editing (draft-only — content is immutable once published) ---------
 
-    public function test_administrator_can_edit_a_draft_announcement(): void
+    public function test_administrator_can_edit_a_draft_announcements_title(): void
     {
         $this->actingAsAdministrator();
         $announcement = Announcement::factory()->create(['title' => 'Old']);
@@ -144,13 +144,69 @@ class AnnouncementTest extends TestCase
             ->assertOk()->assertJson(['data' => ['title' => 'New']]);
     }
 
-    public function test_administrator_can_edit_a_published_announcement(): void
+    public function test_administrator_can_edit_a_draft_announcements_body(): void
     {
         $this->actingAsAdministrator();
-        $announcement = Announcement::factory()->published()->create(['title' => 'Old']);
+        $announcement = Announcement::factory()->create(['body' => 'Old body']);
 
-        $this->putJson("/api/v1/announcements/{$announcement->public_id}", ['title' => 'New'])
-            ->assertOk()->assertJson(['data' => ['title' => 'New', 'status' => 'published']]);
+        $this->putJson("/api/v1/announcements/{$announcement->public_id}", ['body' => 'New body'])
+            ->assertOk()->assertJson(['data' => ['body' => 'New body']]);
+    }
+
+    public function test_administrator_can_edit_a_draft_announcements_audience(): void
+    {
+        $this->actingAsAdministrator();
+        $announcement = Announcement::factory()->create();
+        $department = Department::factory()->create();
+
+        $this->putJson("/api/v1/announcements/{$announcement->public_id}", [
+            'audience_type' => 'scoped',
+            'department_ids' => [$department->public_id],
+        ])->assertOk()->assertJson([
+            'data' => [
+                'audience_type' => 'scoped',
+                'departments' => [['public_id' => $department->public_id, 'name' => $department->name]],
+            ],
+        ]);
+    }
+
+    public function test_a_published_announcement_cannot_have_its_title_changed(): void
+    {
+        $this->actingAsAdministrator();
+        $announcement = Announcement::factory()->published()->create(['title' => 'Original Title']);
+
+        $this->putJson("/api/v1/announcements/{$announcement->public_id}", ['title' => 'Rewritten Title'])
+            ->assertStatus(409);
+
+        $this->assertDatabaseHas('announcements', ['id' => $announcement->id, 'title' => 'Original Title']);
+    }
+
+    public function test_a_published_announcement_cannot_have_its_body_changed(): void
+    {
+        $this->actingAsAdministrator();
+        $announcement = Announcement::factory()->published()->create(['body' => 'Original body']);
+
+        $this->putJson("/api/v1/announcements/{$announcement->public_id}", ['body' => 'Rewritten body'])
+            ->assertStatus(409);
+
+        $this->assertDatabaseHas('announcements', ['id' => $announcement->id, 'body' => 'Original body']);
+    }
+
+    public function test_a_published_announcements_audience_cannot_be_changed(): void
+    {
+        $this->actingAsAdministrator();
+        $originalDepartment = Department::factory()->create();
+        $newDepartment = Department::factory()->create();
+        $announcement = Announcement::factory()->published()->scoped()->create();
+        $announcement->departments()->attach($originalDepartment->id);
+
+        $this->putJson("/api/v1/announcements/{$announcement->public_id}", [
+            'audience_type' => 'scoped',
+            'department_ids' => [$newDepartment->public_id],
+        ])->assertStatus(409);
+
+        $this->assertDatabaseHas('announcement_departments', ['announcement_id' => $announcement->id, 'department_id' => $originalDepartment->id]);
+        $this->assertDatabaseMissing('announcement_departments', ['announcement_id' => $announcement->id, 'department_id' => $newDepartment->id]);
     }
 
     public function test_an_archived_announcement_cannot_be_edited(): void
@@ -160,6 +216,18 @@ class AnnouncementTest extends TestCase
 
         $this->putJson("/api/v1/announcements/{$announcement->public_id}", ['title' => 'New'])
             ->assertStatus(409);
+    }
+
+    public function test_an_acknowledged_published_announcement_cannot_be_edited(): void
+    {
+        $this->actingAsAdministrator();
+        $announcement = Announcement::factory()->published()->create(['title' => 'Original Title']);
+        $announcement->acknowledgements()->create(['staff_id' => Staff::factory()->create()->id]);
+
+        $this->putJson("/api/v1/announcements/{$announcement->public_id}", ['title' => 'Rewritten Title'])
+            ->assertStatus(409);
+
+        $this->assertDatabaseHas('announcements', ['id' => $announcement->id, 'title' => 'Original Title']);
     }
 
     public function test_updating_the_audience_requires_audience_type_even_if_only_department_ids_changes(): void
@@ -275,6 +343,54 @@ class AnnouncementTest extends TestCase
         $announcement = Announcement::factory()->archived()->create();
 
         $this->postJson("/api/v1/announcements/{$announcement->public_id}/publish")->assertStatus(409);
+    }
+
+    public function test_an_acknowledgement_survives_archive_unchanged(): void
+    {
+        $this->actingAsAdministrator();
+        $announcement = Announcement::factory()->published()->create();
+        $acknowledgement = $announcement->acknowledgements()->create(['staff_id' => Staff::factory()->create()->id]);
+
+        $this->postJson("/api/v1/announcements/{$announcement->public_id}/archive")->assertOk();
+
+        $this->assertDatabaseHas('announcement_acknowledgements', [
+            'id' => $acknowledgement->id,
+            'announcement_id' => $announcement->id,
+            'staff_id' => $acknowledgement->staff_id,
+            'created_at' => $acknowledgement->created_at,
+        ]);
+        $this->getJson("/api/v1/announcements/{$announcement->public_id}")
+            ->assertOk()->assertJson(['data' => ['status' => 'archived', 'acknowledgements_count' => 1]]);
+    }
+
+    public function test_full_lifecycle_draft_publish_acknowledge_archive_retains_the_acknowledgement(): void
+    {
+        $admin = $this->actingAsAdministrator();
+        $department = Department::factory()->create();
+        $eligibleUser = User::factory()->staff()->create();
+        $eligibleStaff = Staff::factory()->create(['user_id' => $eligibleUser->id, 'department_id' => $department->id]);
+
+        $create = $this->postJson('/api/v1/announcements', [
+            'title' => 'Quarterly Update', 'body' => 'Details for Engineering.',
+            'audience_type' => 'scoped', 'department_ids' => [$department->public_id],
+        ])->assertCreated();
+        $publicId = $create->json('data.public_id');
+
+        $this->postJson("/api/v1/announcements/{$publicId}/publish")->assertOk();
+
+        Sanctum::actingAs($eligibleUser);
+        $acknowledge = $this->postJson("/api/v1/me/announcements/{$publicId}/acknowledge")->assertOk();
+        $acknowledgedAt = $acknowledge->json('data.acknowledged_at');
+        $this->assertNotNull($acknowledgedAt);
+
+        Sanctum::actingAs($admin);
+        $this->postJson("/api/v1/announcements/{$publicId}/archive")->assertOk();
+
+        $this->assertDatabaseHas('announcements', ['public_id' => $publicId, 'status' => 'archived', 'title' => 'Quarterly Update']);
+        $this->assertDatabaseHas('announcement_acknowledgements', ['staff_id' => $eligibleStaff->id]);
+
+        $final = $this->getJson("/api/v1/announcements/{$publicId}")->assertOk();
+        $final->assertJson(['data' => ['status' => 'archived', 'title' => 'Quarterly Update', 'acknowledgements_count' => 1]]);
     }
 
     // --- Deletion vs archival -------------------------------------------------

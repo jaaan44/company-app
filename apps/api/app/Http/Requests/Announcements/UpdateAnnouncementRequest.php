@@ -10,11 +10,11 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 
 /**
- * Updating an Announcement (Phase 14). Lifecycle restrictions (archived is
- * immutable) are enforced in AnnouncementController::update(), not here —
- * this only validates field shape/coherence. The audience
- * (audience_type/department_ids/team_ids) is only ever touched atomically
- * — see ValidatesAnnouncementAudience.
+ * Updating an Announcement (Phase 14). Only a still-draft Announcement may
+ * be edited at all — that lifecycle restriction is enforced in
+ * AnnouncementController::update(), not here; this only validates field
+ * shape/coherence. The audience (audience_type/department_ids/team_ids) is
+ * only ever touched atomically — see ValidatesAnnouncementAudience.
  */
 class UpdateAnnouncementRequest extends FormRequest
 {
