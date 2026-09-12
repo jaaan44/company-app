@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
@@ -313,6 +314,35 @@ class Staff extends Model
     public function sentMessages(): HasMany
     {
         return $this->hasMany(Message::class, 'sender_staff_id');
+    }
+
+    /**
+     * Schedule Entries this staff member created (Phase 17) — a real,
+     * standing business-authority relationship (not mere accountability
+     * metadata), since the creator retains edit/delete authority over
+     * their own entry for its lifetime. restrictOnDelete on
+     * schedule_entries.creator_staff_id backs the deletion guard in
+     * StaffController::destroy.
+     *
+     * @return HasMany<ScheduleEntry, $this>
+     */
+    public function createdScheduleEntries(): HasMany
+    {
+        return $this->hasMany(ScheduleEntry::class, 'creator_staff_id');
+    }
+
+    /**
+     * Schedule Entries this staff member participates in, beyond any
+     * they created themselves (Phase 17) — participation carries no
+     * RSVP state, it means only "this appears on their schedule."
+     * restrictOnDelete on schedule_entry_participants.staff_id backs the
+     * deletion guard in StaffController::destroy.
+     *
+     * @return BelongsToMany<ScheduleEntry, $this>
+     */
+    public function scheduleEntryParticipations(): BelongsToMany
+    {
+        return $this->belongsToMany(ScheduleEntry::class, 'schedule_entry_participants');
     }
 
     /**

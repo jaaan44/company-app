@@ -3,14 +3,14 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** Phase 16 — Messaging
+**Current phase:** Phase 17 — Scheduler
 **Phase status:** COMPLETE (pending user review)
-**Last completed phase:** Phase 16 (Phases 1–15 are merged into `main`)
-**Next planned phase:** Phase 17 — Scheduler (see `ROADMAP.md`) — **not authorized yet**
+**Last completed phase:** Phase 17 (Phases 1–16 are merged into `main`)
+**Next planned phase:** Phase 18 — Service Reports (see `ROADMAP.md`) — **not authorized yet**
 
 ## Current Objective
 
-Phase 16 is implemented, tested, and pushed for review. Awaiting authorization for Phase 17.
+Phase 17 is implemented, tested, and pushed for review. Awaiting authorization for Phase 18.
 
 ## Completed
 
@@ -159,9 +159,21 @@ Phase 16 is implemented, tested, and pushed for review. Awaiting authorization f
   - Recorded DEC-039.
   - No Flutter mobile screens, attachments/files, message editing/deletion, message/conversation search, archive/mute, reactions, mentions, typing indicators, presence, rich text/HTML, Team/Department-linked conversations, visible read receipts, Admin moderation/read-all capability, external push/email/SMS delivery, retention/cleanup jobs, or Messaging-specific audit logging (Audit Logging, DEC-009, remains an unbuilt, pre-existing, project-wide gap).
 
+- **Phase 17:** Scheduler. See `docs/handoffs/V1_PHASE_17_HANDOFF.md` for full detail.
+  - Preceded by a product-owner-reviewed planning audit resolving the roadmap's terse "unified schedule/calendar" line into a concrete hybrid architecture (DEC-040): a unified, read-time aggregation API (`GET /api/v1/schedule`) over exactly four sources — manually created Schedule Entries, Task due dates, approved Leave Requests, Project Milestones — plus a lightweight, Scheduler-owned `schedule_entries` entity for activities with no other system-of-record module. No calendar rows are ever copied into a generic table for the three aggregated sources; each remains its own system of record, joined only at read time.
+  - `schedule_entries`/`schedule_entry_participants`/`project_milestones` tables; `App\Models\ScheduleEntry`/`ProjectMilestone`. `ScheduleEntry`/`ProjectMilestone` carry a ULID `public_id` (DEC-017); the participant pivot deliberately doesn't. `App\Enums\ScheduleEntryActivityType` (`meeting`/`client_visit`/`service_appointment`/`company_event`/`training`/`internal_activity`/`other`) — all values of one generic entity, never dedicated tables. `App\Enums\ProjectMilestoneStatus` (`pending`/`completed`/`cancelled`) — deliberately smaller than `TaskStatus`. `App\Enums\ScheduleSourceType` (`schedule_entry`/`task`/`leave`/`project_milestone`) is the closed discriminator for the unified projection — never confused with a Schedule Entry's own `activity_type`.
+  - **Project Milestones correct a real, previously-undetected roadmap error:** Phase 17's own roadmap line listed "Phase 10 (Milestones)" as a dependency, but Phase 10 explicitly deferred Milestones and they were never built — this phase builds the minimal concept (`project_id` required/`restrictOnDelete()`, `title`, `due_date`, `status`) and `docs/ROADMAP.md` is corrected to record the real history.
+  - The first genuine time-of-day scheduling in this codebase: `schedule_entries.starts_at`/`ends_at` are a single pair of UTC `datetime` columns used for both timed and all-day entries (no separate date-only column pair) — for an all-day entry these hold the start/end-of-day instants in one configurable company timezone (`config('scheduling.company_timezone')`, `App\Support\CompanyTimezone`, default UTC — no per-User/per-Staff timezone field). `App\Support\Scheduling\ScheduleEntryTiming` is the single shared implementation for this normalization, used by both validation and persistence.
+  - **No new permission was introduced anywhere in this phase.** Schedule Entry visibility/authority (`AuthorizesScheduleEntryAccess`) mirrors Tasks' `AuthorizesTaskAccess` (DEC-034): Administrator sees/manages everything; a Staff-linked requester sees an entry they created, participate in, or that's linked to a Project their *existing* Project visibility (`AuthorizesProjectVisibility`, reused as-is) already allows; manage authority is creator/Project-Lead/Administrator, with participants strictly read-only. **A Manager gains no automatic visibility into a direct report's private Schedule Entries** merely from the manager relationship — a deliberate departure from Work Logs'/Leave's Manager-of-direct-reports scoping. Project Milestone authorization reuses `AuthorizesProjectVisibility` for reads and the existing `projects.manage` permission plus a Project Lead carve-out for writes.
+  - The unified aggregation preserves each source's own existing visibility rule exactly — only `approved` Leave Requests ever appear (never pending/rejected/cancelled), and a Staff member always sees their own approved leave (mirroring their existing `/me/leave-requests` access, not a new grant).
+  - `StaffController::destroy`/`ProjectController::destroy` (Phases 7/10) extended to reject deletion (`409`) while a Staff member has created or participates in a Schedule Entry, or a Project still has Schedule Entries/Milestones referencing it.
+  - New versioned REST endpoints under `/api/v1`: `GET /schedule` (`from`/`to` required, `?source=`/`?activity_type=`/`?project=` filters — fed by an in-memory merge of each source's own authorized, date-range-scoped query rather than one SQL query, a documented deviation in *how* the standard Laravel pagination shape is populated, not a new convention); `GET/POST /schedule-entries`, `GET/PUT/PATCH/DELETE /schedule-entries/{public_id}` (flat, top-level, mirroring Tasks); `GET/POST /projects/{project}/milestones`, `GET/PUT/PATCH/DELETE /projects/{project}/milestones/{public_id}` (genuinely nested, mirroring Project Membership).
+  - Recorded DEC-040.
+  - No recurring events/recurrence rules, RSVP/attendance-response workflow, reminders or Notification integration for Schedule Entries, cron/queue/background-job infrastructure, conflict/overlap detection, Department/Team-linked entries, attachments, Google Calendar/Outlook/`.ics` integration, Flutter mobile Scheduler UI, Admin Backoffice Scheduler UI, Scheduler-specific audit logging (DEC-009 remains an unbuilt, project-wide gap), WebSockets/Reverb/Redis/broadcasting/rich text, per-user timezone fields, a new `schedule.*` permission, or Milestone percent-complete/dependencies/nesting/recurrence/workflow engine.
+
 ## Pending / Not Started
 
-- Scheduler (Phase 17) and everything after it on the roadmap.
+- Service Reports (Phase 18) and everything after it on the roadmap.
 
 ## Known Blockers / Issues
 
@@ -181,13 +193,13 @@ Phase 16 is implemented, tested, and pushed for review. Awaiting authorization f
 ## Repository / Branch Information
 
 - Repository: `jaaan44/company-app`
-- Default branch: `main` (contains the approved Phase 0–15 baseline)
-- Phase 16 branch: `claude/affectionate-ritchie-291ode` (branched from `main`, not merged)
+- Default branch: `main` (contains the approved Phase 0–16 baseline)
+- Phase 17 branch: `claude/phase-17-scheduler` (branched from `main`, not merged)
 
 ## Latest Relevant Handoff
 
-`docs/handoffs/V1_PHASE_16_HANDOFF.md`
+`docs/handoffs/V1_PHASE_17_HANDOFF.md`
 
 ## For the Next Session
 
-Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_16_HANDOFF.md` for Messaging, `docs/handoffs/V1_PHASE_15_HANDOFF.md` for Notifications, `docs/handoffs/V1_PHASE_14_HANDOFF.md` for Announcements, `docs/handoffs/V1_PHASE_13_HANDOFF.md` for Leave Management, `docs/handoffs/V1_PHASE_12_HANDOFF.md` for Work Logs, `docs/handoffs/V1_PHASE_11_HANDOFF.md` for Tasks, `docs/handoffs/V1_PHASE_10_HANDOFF.md` for Projects & Project Membership, `docs/handoffs/V1_PHASE_09_HANDOFF.md` for Staff Status & Location Check-in, `docs/handoffs/V1_PHASE_08_HANDOFF.md` for Clients & Contacts, `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 17 (Scheduler) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.
+Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_17_HANDOFF.md` for the Scheduler, `docs/handoffs/V1_PHASE_16_HANDOFF.md` for Messaging, `docs/handoffs/V1_PHASE_15_HANDOFF.md` for Notifications, `docs/handoffs/V1_PHASE_14_HANDOFF.md` for Announcements, `docs/handoffs/V1_PHASE_13_HANDOFF.md` for Leave Management, `docs/handoffs/V1_PHASE_12_HANDOFF.md` for Work Logs, `docs/handoffs/V1_PHASE_11_HANDOFF.md` for Tasks, `docs/handoffs/V1_PHASE_10_HANDOFF.md` for Projects & Project Membership, `docs/handoffs/V1_PHASE_09_HANDOFF.md` for Staff Status & Location Check-in, `docs/handoffs/V1_PHASE_08_HANDOFF.md` for Clients & Contacts, `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 18 (Service Reports) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.

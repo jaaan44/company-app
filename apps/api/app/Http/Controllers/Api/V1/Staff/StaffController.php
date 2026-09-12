@@ -112,6 +112,8 @@ class StaffController extends Controller
      * assignment, work logs, and leave requests are checked regardless
      * of status — all are business history, so this is never a cascade.
      * Announcement acknowledgements (Phase 14) are checked the same way.
+     * Conversation membership/ownership/messages (Phase 16) and created/
+     * participated Schedule Entries (Phase 17) extend the same pattern.
      */
     public function destroy(Staff $staff): JsonResponse
     {
@@ -172,6 +174,18 @@ class StaffController extends Controller
         if ($staff->sentMessages()->exists()) {
             return response()->json([
                 'message' => 'This staff member still has messages and cannot be deleted.',
+            ], 409);
+        }
+
+        if ($staff->createdScheduleEntries()->exists()) {
+            return response()->json([
+                'message' => 'This staff member still has created schedule entries and cannot be deleted.',
+            ], 409);
+        }
+
+        if ($staff->scheduleEntryParticipations()->exists()) {
+            return response()->json([
+                'message' => 'This staff member still participates in schedule entries and cannot be deleted.',
             ], 409);
         }
 
