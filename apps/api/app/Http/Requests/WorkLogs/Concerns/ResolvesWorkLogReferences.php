@@ -39,15 +39,24 @@ trait ResolvesWorkLogReferences
     }
 
     /**
-     * At least one of task_id/project_id is required — a Work Log never
-     * references neither (it would be a generic, un-anchored activity
-     * log, explicitly out of scope). A client-supplied project_id
-     * alongside a task_id is already rejected declaratively
-     * ('prohibited_with:task_id' in rules()); this only guards the "both
-     * absent" case the declarative rules can't express.
+     * A Work Log references a task, a project, or both consistently, but
+     * never neither (a generic, un-anchored activity log is out of
+     * scope) and never a client-supplied project_id alongside a task_id
+     * (the single source of truth — project_id is always server-derived
+     * from the task instead, see the controllers). This Laravel version
+     * has no declarative "prohibited if another field is present" rule
+     * ('prohibited_with' does not exist here — only prohibited_if/
+     * prohibited_unless, which compare against a specific value), so both
+     * checks are enforced here instead.
      */
     private function validateAtLeastOneReference(Validator $validator): void
     {
+        if ($this->filled('task_id') && $this->filled('project_id')) {
+            $validator->errors()->add('project_id', 'A work log may not specify both a task and a project — the project is derived from the task automatically.');
+
+            return;
+        }
+
         if (! $this->filled('task_id') && ! $this->filled('project_id')) {
             $validator->errors()->add('task_id', 'A work log must reference a task, a project, or both.');
         }

@@ -197,11 +197,16 @@ class WorkLogTest extends TestCase
     public function test_a_user_with_no_linked_staff_record_cannot_use_self_service(): void
     {
         $user = User::factory()->staff()->create();
+        $project = Project::factory()->create();
         Sanctum::actingAs($user);
 
         $this->getJson('/api/v1/me/work-logs')->assertForbidden();
-        $this->postJson('/api/v1/me/work-logs', ['work_date' => now()->toDateString(), 'duration_minutes' => 30, 'description' => 'X'])
-            ->assertForbidden();
+        $this->postJson('/api/v1/me/work-logs', [
+            'project_id' => $project->public_id,
+            'work_date' => now()->toDateString(),
+            'duration_minutes' => 30,
+            'description' => 'X',
+        ])->assertForbidden();
     }
 
     // --- Field validation ------------------------------------------------------
@@ -290,6 +295,7 @@ class WorkLogTest extends TestCase
 
         $publicId = $response->json('data.public_id');
 
+        $this->actingAsAdministrator();
         $this->deleteJson("/api/v1/projects/{$project->public_id}/members/{$staff->public_id}")->assertNoContent();
 
         $this->assertDatabaseHas('work_logs', ['public_id' => $publicId, 'staff_id' => $staff->id, 'project_id' => $project->id]);

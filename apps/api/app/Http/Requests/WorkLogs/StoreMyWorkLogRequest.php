@@ -36,7 +36,7 @@ class StoreMyWorkLogRequest extends FormRequest
     {
         return [
             'task_id' => ['nullable', 'string', Rule::exists('tasks', 'public_id')],
-            'project_id' => ['nullable', 'string', 'prohibited_with:task_id', Rule::exists('projects', 'public_id')],
+            'project_id' => ['nullable', 'string', Rule::exists('projects', 'public_id')],
             'work_date' => ['required', 'date', 'before_or_equal:today'],
             'duration_minutes' => ['required', 'integer', 'min:1', 'max:1440'],
             'description' => ['required', 'string', 'max:2000'],

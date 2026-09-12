@@ -36,7 +36,7 @@ class WorkLogResource extends JsonResource
                 'public_id' => $this->project->public_id,
                 'name' => $this->project->name,
             ]),
-            'work_date' => $this->work_date?->toDateString(),
+            'work_date' => $this->work_date->toDateString(),
             'duration_minutes' => $this->duration_minutes,
             'description' => $this->description,
             'created_by' => $this->whenLoaded('creator', function () {

@@ -1,6 +1,6 @@
 # Phase 12 — Work Logs — Specification
 
-**Status:** IN PROGRESS
+**Status:** COMPLETE
 **Depends on:** Phase 11 (Tasks), Phase 10 (Projects & Project Membership), Phase 7 (Staff)
 
 ## Objective
@@ -18,7 +18,7 @@ A Work Log is a historical record of work performed. It is never treated as atte
 - `work_logs.task_id` — nullable FK to `tasks`, `restrictOnDelete()`.
 - `work_logs.project_id` — nullable FK to `projects`, `restrictOnDelete()`.
 - **At least one of `task_id`/`project_id` must be present.** A Work Log with neither would be a generic, task/project-independent activity log — explicitly out of scope; Work Logs stay anchored to the Work Management domain (Staff/Projects/Tasks), never becoming a general activity/attendance log.
-- **Single source of truth, no client-supplied inconsistency:** when `task_id` is supplied, `project_id` is **server-derived** from the Task's own `project_id` (which may itself be `null` for an independent Task — no fake Project is ever forced) and any client-supplied `project_id` alongside a `task_id` is rejected (`prohibited_if`). This makes it structurally impossible to persist `Work Log.project = A` while `Work Log.task` belongs to Project B. `project_id` is still a real, queried/indexed column (not purely derived at read time) because a Work Log may also reference a Project directly with no specific Task (e.g. general project activity) — persisting it is not redundant in that case, and keeping one column for both cases (task-derived or project-only) keeps `(project_id, work_date)` filtering/indexing simple.
+- **Single source of truth, no client-supplied inconsistency:** when `task_id` is supplied, `project_id` is **server-derived** from the Task's own `project_id` (which may itself be `null` for an independent Task — no fake Project is ever forced) and any client-supplied `project_id` alongside a `task_id` is rejected (a custom `after()` validation check in `ResolvesWorkLogReferences::validateAtLeastOneReference()` — this Laravel version has no declarative "prohibited if another field is present" rule; `prohibited_with` does not exist here, only `prohibited_if`/`prohibited_unless`, which compare against a specific value rather than "is present"). This makes it structurally impossible to persist `Work Log.project = A` while `Work Log.task` belongs to Project B. `project_id` is still a real, queried/indexed column (not purely derived at read time) because a Work Log may also reference a Project directly with no specific Task (e.g. general project activity) — persisting it is not redundant in that case, and keeping one column for both cases (task-derived or project-only) keeps `(project_id, work_date)` filtering/indexing simple.
 - `project_id` is **immutable** after creation, same as `task_id` — moving a Work Log between Tasks/Projects post-creation is out of scope for V1 (mirrors Task's own `project_id` immutability, Phase 11/DEC-034); a wrongly-attributed Work Log is deleted and recreated instead of migrated.
 
 ## Staff / Performer vs Creator
