@@ -117,6 +117,13 @@ use Illuminate\Database\Seeder;
  * Phase 9/12/13's self-service pattern), and a Manager holds no special
  * Announcement authority in V1 — they read their own targeted feed exactly
  * like any Staff member.
+ *
+ * Phase 15 (Notifications) adds no permission at all — `notifications.view`/
+ * `.manage` were considered and rejected. `/me/notifications` needs only
+ * `auth:sanctum` + `account.active`; a specific Notification is gated by
+ * plain per-row ownership (recipient_user_id), not a permission or Staff
+ * link, checked entirely in NotificationController. Not even Administrator
+ * can read another User's notification through this API.
  */
 class RolePermissionSeeder extends Seeder
 {

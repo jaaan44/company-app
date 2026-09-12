@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\Leave\LeaveBalanceController;
 use App\Http\Controllers\Api\V1\Leave\LeaveRequestController;
 use App\Http\Controllers\Api\V1\Leave\LeaveTypeController;
 use App\Http\Controllers\Api\V1\Leave\MyLeaveRequestController;
+use App\Http\Controllers\Api\V1\Notifications\NotificationController;
 use App\Http\Controllers\Api\V1\Organization\DepartmentController;
 use App\Http\Controllers\Api\V1\Organization\PositionController;
 use App\Http\Controllers\Api\V1\Organization\TeamController;
@@ -344,4 +345,24 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
         Route::post('announcements/{announcement:public_id}/publish', [AnnouncementController::class, 'publish'])->name('announcements.publish');
         Route::post('announcements/{announcement:public_id}/archive', [AnnouncementController::class, 'archive'])->name('announcements.archive');
     });
+});
+
+// Notifications (Phase 15): in-app, user-scoped notification records fed
+// by other modules' events — currently only Announcement publish (see
+// AnnouncementController's NotifiesAnnouncementAudience). Recipient
+// identity is the User account itself (DEC-038), not Staff — unlike
+// every other /me/... surface in this API, no linked-Staff requirement is
+// imposed here, only auth:sanctum + account.active. No permission is
+// required or defined: a Notification is only ever readable by its own
+// recipient (404, not 403, for anyone else's), and there is no
+// create/update/delete API at all — Notifications are produced only by
+// internal application code, never a client request. Literal routes
+// (unread-count, read-all) are registered before the {public_id}-bound
+// routes so they aren't swallowed by route-model binding.
+Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
+    Route::get('me/notifications', [NotificationController::class, 'myIndex'])->name('me.notifications.index');
+    Route::get('me/notifications/unread-count', [NotificationController::class, 'myUnreadCount'])->name('me.notifications.unread-count');
+    Route::post('me/notifications/read-all', [NotificationController::class, 'myMarkAllRead'])->name('me.notifications.read-all');
+    Route::get('me/notifications/{notification:public_id}', [NotificationController::class, 'myShow'])->name('me.notifications.show');
+    Route::post('me/notifications/{notification:public_id}/read', [NotificationController::class, 'myMarkRead'])->name('me.notifications.read');
 });

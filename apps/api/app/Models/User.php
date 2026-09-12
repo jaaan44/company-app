@@ -9,9 +9,9 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
@@ -24,7 +24,7 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory;
 
     /**
      * Get the attributes that should be cast.
@@ -96,5 +96,18 @@ class User extends Authenticatable
     public function staff(): HasOne
     {
         return $this->hasOne(Staff::class);
+    }
+
+    /**
+     * This user's own Notification inbox (Phase 15) — recipient identity
+     * is the User account itself (DEC-038), never Staff directly.
+     * cascadeOnDelete on notifications.recipient_user_id backs this (in
+     * practice never fires — no User deletion endpoint exists).
+     *
+     * @return HasMany<Notification, $this>
+     */
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class, 'recipient_user_id');
     }
 }
