@@ -7,6 +7,7 @@ use App\Models\Client;
 use App\Models\Project;
 use App\Models\ProjectMembership;
 use App\Models\Staff;
+use App\Models\Task;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -134,6 +135,17 @@ class ProjectTest extends TestCase
         $this->actingAsAdministrator();
         $project = Project::factory()->create();
         ProjectMembership::factory()->for($project, 'project')->create();
+
+        $this->deleteJson("/api/v1/projects/{$project->public_id}")->assertStatus(409);
+
+        $this->assertDatabaseHas('projects', ['id' => $project->id]);
+    }
+
+    public function test_deleting_a_project_with_tasks_is_rejected(): void
+    {
+        $this->actingAsAdministrator();
+        $project = Project::factory()->create();
+        Task::factory()->create(['project_id' => $project->id]);
 
         $this->deleteJson("/api/v1/projects/{$project->public_id}")->assertStatus(409);
 

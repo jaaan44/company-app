@@ -56,8 +56,8 @@ Current status tracking (with history, DEC-010), explicit check-in flow (DEC-005
 **Phase 10 — Projects & Project Membership** *(complete — see `docs/handoffs/V1_PHASE_10_HANDOFF.md`)*
 Projects, project members. (Project milestones were not part of the governing Phase 10 instructions and remain unimplemented — see `03_DATABASE_MODEL.md`.)
 
-**Phase 11 — Tasks**
-Tasks (project-linked and independent, DEC-006), assignments, comments.
+**Phase 11 — Tasks** *(complete — see `docs/handoffs/V1_PHASE_11_HANDOFF.md`)*
+Tasks (project-linked and independent, DEC-006), single-assignee assignment, lifecycle/priority/due date. Task comments (originally mentioned above) were not part of the governing Phase 11 instructions and remain unimplemented — deferred to a future collaboration phase alongside Work Logs/task activity/notifications (see `docs/DECISIONS.md` DEC-034).
 *Depends on: Phase 10*
 
 **Phase 12 — Work Logs**

@@ -3,14 +3,14 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** Phase 10 — Projects & Project Membership
+**Current phase:** Phase 11 — Tasks
 **Phase status:** COMPLETE (pending user review)
-**Last completed phase:** Phase 10 (Phases 1–9 are merged into `main`)
-**Next planned phase:** Phase 11 — Tasks (see `ROADMAP.md`) — **not authorized yet**
+**Last completed phase:** Phase 11 (Phases 1–10 are merged into `main`)
+**Next planned phase:** Phase 12 — Work Logs (see `ROADMAP.md`) — **not authorized yet**
 
 ## Current Objective
 
-Phase 10 is implemented, tested, and pushed for review. Awaiting authorization for Phase 11.
+Phase 11 is implemented, tested, and pushed for review. Awaiting authorization for Phase 12.
 
 ## Completed
 
@@ -87,9 +87,21 @@ Phase 10 is implemented, tested, and pushed for review. Awaiting authorization f
   - Recorded DEC-033.
   - No tasks, task assignment, work logs, time tracking, billing, quotations, contracts, CRM opportunity pipelines, file/document management, messaging, notifications, calendars, Gantt charts, budgeting/financials, utilization metrics, or approval workflows; no Admin Backoffice CRUD UI (consistent with Phase 6/7/8/9's precedent).
 
+- **Phase 11:** Tasks. See `docs/handoffs/V1_PHASE_11_HANDOFF.md` for full detail.
+  - `tasks` table; `App\Models\Task`, with a ULID `public_id` (DEC-017). `App\Enums\TaskStatus` (`todo`/`in_progress`/`blocked`/`completed`/`cancelled`); `App\Enums\TaskPriority` (`low`/`normal`/`high`/`urgent`, default `normal`).
+  - Honors DEC-006 (Phase 0): `tasks.project_id` is **nullable** (`restrictOnDelete()`) — a Task may exist independently of a Project. A single nullable `assignee_staff_id` (`restrictOnDelete()`), not a `task_assignees` pivot — resolves `03_DATABASE_MODEL.md`'s open question in favor of the smallest V1 model. `created_by_user_id` (nullable, `nullOnDelete()`) is accountability metadata only.
+  - New-assignment eligibility mirrors Project Membership (Phase 10): only `active` Staff, and — for a Project-linked Task — a current member of that Project. Because assignment references `staff_id` directly (not through Membership), **removing a Project Membership never disturbs an existing Task assignment** — history is preserved, exactly as Phase 10's own handoff anticipated.
+  - `completed_at` is server-controlled only: set on transition to `completed`, cleared on reopening — deliberately different from Project's user-supplied, reopen-preserved `completed_date`.
+  - `ProjectController::destroy`/`StaffController::destroy` (Phases 10/7) extended to also block deletion while a Task references them; a Task's own `DELETE` is Administrator-only and permitted only while still `todo` — anything with real activity is retired via `status: cancelled` instead.
+  - New permissions `tasks.view` (**Manager only**, mirroring `projects.view`) and `tasks.manage` (Administrator-only). No new granular permissions for assignment/completion/deletion.
+  - `App\Http\Controllers\Api\V1\Tasks\Concerns\AuthorizesTaskAccess` extends Phase 10's row-level visibility pattern to **writes** for the first time: a Project Lead may create/update Tasks scoped to their own Project; a Task's assignee may update only its `status` field — neither via a new permission, both enforced in-controller.
+  - New versioned REST endpoint — `/api/v1/tasks`, a **flat** top-level resource (filterable by `?project=`/`?status=`/`?assignee=`/`?priority=`/`?q=`), not nested under `/projects/{project}/tasks` — full CRUD, route-model-bound by `public_id`.
+  - Recorded DEC-034. `docs/ROADMAP.md`'s Phase 11 description is narrowed: task comments were not part of the governing instructions and remain unimplemented, deferred to a future collaboration phase.
+  - No work logs, time tracking, timesheets, billing, payroll, task comments/attachments/reactions, messaging, notifications, mentions, Kanban boards, configurable workflows, subtasks, task dependencies, recurring tasks, calendars, reminders, milestones, task activity timeline, or approval workflows; no Admin Backoffice CRUD UI (consistent with Phase 6/7/8/9/10's precedent).
+
 ## Pending / Not Started
 
-- Tasks (Phase 11) and everything after it on the roadmap.
+- Work Logs (Phase 12) and everything after it on the roadmap.
 
 ## Known Blockers / Issues
 
@@ -98,18 +110,19 @@ Phase 10 is implemented, tested, and pushed for review. Awaiting authorization f
 - **Phase 7 session's environment:** `vendor/` from the Phase 6 session's manual recovery was already present and functional in this container, so no repeat of the Phase 6 `composer install` recovery was needed. Docker-based re-verification was again not attempted this session (no Docker configuration changed); see `docs/handoffs/V1_PHASE_07_HANDOFF.md`.
 - **Phase 9 session's environment:** this container started with no `vendor/` at all (unlike Phase 7/8's sessions, which inherited one). `composer install` reproduced the same `api.github.com` zipball-scoping issue documented in Phase 6/8 for every third-party dependency, recovered the same way (`--prefer-source` git-clone fallback). `phpstan/phpstan` again hit its dist-only/no-`source`-entry exception (Phase 8 §13) — its own `git clone --mirror` this time additionally exceeded Composer's 300s process timeout (a large monorepo history) before completing. Recovered by shallow-cloning (`--depth 1 --branch <tag>`) the exact locked commit directly (seconds, not the timeout), pre-seeding Composer's local VCS mirror cache from that shallow clone so Composer's own retry found it immediately, then — when Composer's final reference-clone step still failed because a mirror sourced from a shallow clone is itself shallow — copying the four files `phpstan`/`phpstan.phar`/`bootstrap.php`/`composer.json` directly into `vendor/phpstan/phpstan/` (the phar is fully self-contained; nothing else in the repository is needed to run the tool), hand-writing `vendor/bin/phpstan`/`phpstan.phar` proxy scripts (mirroring Composer's own generated pattern, as Phase 8 did), adding the package's metadata to `vendor/composer/installed.json`, and running `composer dump-autoload` to regenerate the rest normally. `vendor/bin/phpstan --version`/`vendor/bin/phpstan analyse` both ran cleanly against this phase's real code (0 errors) — see `docs/handoffs/V1_PHASE_09_HANDOFF.md` for the full account. `vendor/` is never committed either way, so none of this recovery is part of the diff.
 - **Phase 10 session's environment:** same pattern again — no `vendor/` at session start, `composer install` needed the git-mirror-cache fallback for every third-party dependency, and `phpstan/phpstan`'s own `git clone --mirror` again exceeded the 300s process timeout. Recovered identically to Phase 9 (shallow-clone the exact locked commit, pre-seed the mirror cache, manually copy the four essential files into `vendor/phpstan/phpstan/`, hand-write `vendor/bin/phpstan`/`phpstan.phar`, patch `vendor/composer/installed.json`, `composer dump-autoload`) — see `docs/handoffs/V1_PHASE_10_HANDOFF.md` §14a. Once installed, this phase's own automated test suite caught one real application bug (unrelated to the environment): Laravel's automatic nested-route-binding scoping guessed a nonexistent `Project::staff()` relation for the two-parameter member routes, fixed via `->withoutScopedBindings()` — see the handoff's Deviations section.
+- **Phase 11 session's environment:** no `vendor/` at session start; `composer install` got through every package except `phpstan/phpstan` (whose own internal `git clone --mirror` again exceeded Composer's 300s process timeout), but this time the failure was fatal to the whole install (Composer aborted before writing `vendor/composer/installed.json`/`vendor/autoload.php` at all — a harder failure than Phase 9/10's, where installed.json already existed and only needed patching). Recovered by running the same `git clone --mirror` directly via a plain shell command (not through Composer) with a longer allowance — it completed in ~5m41s, just over Composer's internal 300s cap — which pre-seeded Composer's local VCS mirror cache with a *complete* (non-shallow) mirror; a full `composer install` retry then completed normally end-to-end, needing no manual `vendor/` file surgery this time. All quality gates then passed cleanly against real, complete code. This does not affect the correctness of what was committed (`vendor/` is never committed either way).
 - Open design questions: real-time transport, object storage provider — see `docs/02_ARCHITECTURE.md` §9. (Departments/Teams hierarchy shape was resolved by Phase 6 — see DEC-029. Staff↔User relationship and manager/reporting structure were resolved by Phase 7 — see DEC-030.)
 
 ## Repository / Branch Information
 
 - Repository: `jaaan44/company-app`
-- Default branch: `main` (contains the approved Phase 0–9 baseline)
-- Phase 10 branch: `claude/eager-archimedes-8ze14i` (branched from `main`, not merged)
+- Default branch: `main` (contains the approved Phase 0–10 baseline)
+- Phase 11 branch: `claude/nice-fermi-c8irr2` (branched from `main`, not merged)
 
 ## Latest Relevant Handoff
 
-`docs/handoffs/V1_PHASE_10_HANDOFF.md`
+`docs/handoffs/V1_PHASE_11_HANDOFF.md`
 
 ## For the Next Session
 
-Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_10_HANDOFF.md` for Projects & Project Membership, `docs/handoffs/V1_PHASE_09_HANDOFF.md` for Staff Status & Location Check-in, `docs/handoffs/V1_PHASE_08_HANDOFF.md` for Clients & Contacts, `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 11 (Tasks) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.
+Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_11_HANDOFF.md` for Tasks, `docs/handoffs/V1_PHASE_10_HANDOFF.md` for Projects & Project Membership, `docs/handoffs/V1_PHASE_09_HANDOFF.md` for Staff Status & Location Check-in, `docs/handoffs/V1_PHASE_08_HANDOFF.md` for Clients & Contacts, `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 12 (Work Logs) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.

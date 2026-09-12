@@ -247,4 +247,22 @@ No automated tests apply to this phase — no application code exists yet.
 | GitHub Actions CI | — | NOT RUN (this session) | No PR opened and no push to `main` this session — the path-filtered trigger (DEC-015) never fired. All commands the workflow runs were executed directly and passed (rows above). |
 | UAT | — | NOT RUN | No UAT scenario recorded yet for Phase 10 — see `docs/testing/UAT_LOG.md` (`UAT-10-01`, `UAT-10-02`, `UAT-10-03`). This phase introduced no Admin Backoffice UI or Flutter mobile screens, so there is nothing yet for the product owner to click through visually. |
 
+## Phase 11 — Tasks
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `composer validate --strict` (apps/api) | Automated, local | PASS | `./composer.json is valid` — unaffected, no new dependencies added |
+| `vendor/bin/pint --test` (apps/api) | Automated, local | PASS | `{"tool":"pint","result":"passed"}` — clean on the first run, includes all new Tasks code and tests |
+| `vendor/bin/phpstan analyse` (apps/api) | Automated, local | PASS | `{"tool":"phpstan","result":"passed","errors":0}` at level 5 |
+| `php artisan test` (apps/api) | Automated, local | PASS | `{"tool":"phpunit","result":"passed","tests":319,"passed":319,"assertions":917}` (54 new: 34 `TaskTest`, 15 `TasksAuthorizationTest`, 2 new in `RolePermissionSeederTest`, 1 new in `ProjectTest`, 2 new in `StaffTest`; 265 pre-existing Phase 1–10 tests unaffected in behavior — full regression suite healthy). One expected regression fix: `RolePermissionSeederTest::test_running_it_twice_does_not_duplicate_rows`'s hardcoded permission count updated from 14 to 16 to reflect the two new `tasks.*` permissions. |
+| Migrations (`migrate:fresh --seed`) against SQLite | Automated, local | PASS | All 20 migrations (19 pre-existing + 1 new: `tasks`) ran cleanly; `RolePermissionSeeder` seeded successfully |
+| `RolePermissionSeeder` (extended) | Automated, local | PASS | New `tasks.view`/`tasks.manage` permissions created (16 total); `tasks.view` correctly attached to Manager only, confirmed absent from Staff |
+| Manual: `php artisan serve` + curl — independent-task CRUD + lifecycle smoke test | Manual | PASS | Administrator login → create an independent (no-Project) Task (`201`, `project: null`) → list (`200`) → view by `public_id` (`200`) → mark `completed` (`completed_at` auto-set) → attempt hard delete while `completed` (`409`) → reopen to `todo` (`completed_at` cleared to `null`) → hard delete now allowed (`204`) — all through a real HTTP server, not just PHPUnit's in-process client |
+| Manual: Project Lead scoped authority + assignee self-service smoke test | Manual | PASS | A Staff-linked Project Lead created a Task inside their own Project with an assignee who is a Project member (`201`, minimal Project/assignee/creator shapes confirmed in the response) → the same Lead's attempt to create an independent Task was rejected (`403`) → the assignee updated only `status` (`200`) → the same assignee's attempt to also change `title` in one request was rejected (`403`, no partial update applied) → the assignee's attempt to `DELETE` the Task was rejected (`403`) |
+| No work logs/time tracking/timesheets/billing/payroll/task comments/attachments/reactions/messaging/notifications/mentions/Kanban/configurable workflows/subtasks/dependencies/recurring tasks/calendars/reminders/milestones/activity timeline/audit stream/approval workflow functionality introduced | Manual | PASS | Confirmed by reviewing the full staged diff before commit |
+| No Admin Backoffice CRUD UI or Flutter mobile screens | Manual | PASS | Confirmed — API/backend only, consistent with Phase 6/7/8/9/10's precedent |
+| Docker validation | — | NOT RUN (this session) | No Docker configuration changed this phase; consistent with prior sessions, Docker-based re-verification was not attempted. The last genuine Docker confirmation remains Phase 5's. |
+| GitHub Actions CI | — | NOT RUN (this session) | No PR opened and no push to `main` this session — the path-filtered trigger (DEC-015) never fired. All commands the workflow runs were executed directly and passed (rows above). |
+| UAT | — | NOT RUN | No UAT scenario recorded yet for Phase 11 — see `docs/testing/UAT_LOG.md` (`UAT-11-01`, `UAT-11-02`, `UAT-11-03`). This phase introduced no Admin Backoffice UI or Flutter mobile screens, so there is nothing yet for the product owner to click through visually. |
+
 *(Future phases append their own section above this line, oldest first.)*
