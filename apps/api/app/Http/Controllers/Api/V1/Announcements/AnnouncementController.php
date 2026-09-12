@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\Announcements;
 
 use App\Enums\AnnouncementAudienceType;
 use App\Enums\AnnouncementStatus;
+use App\Http\Controllers\Api\V1\Announcements\Concerns\NotifiesAnnouncementAudience;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Announcements\StoreAnnouncementRequest;
 use App\Http\Requests\Announcements\UpdateAnnouncementRequest;
@@ -30,6 +31,8 @@ use Illuminate\Validation\Rules\Enum;
  */
 class AnnouncementController extends Controller
 {
+    use NotifiesAnnouncementAudience;
+
     private const WITH_RELATIONS = ['departments', 'teams', 'creator.staff', 'publisher.staff'];
 
     public function index(Request $request): AnonymousResourceCollection
@@ -137,6 +140,11 @@ class AnnouncementController extends Controller
     /**
      * Only valid from 'draft'. Sets published_at/published_by_user_id
      * server-side — never client-supplied, never re-set by a later edit.
+     * Also fans out a Notification to the resolved audience (Phase 15,
+     * DEC-038) — a publish-time snapshot, inside the same transaction as
+     * the status change itself, so the two either both succeed or both
+     * roll back. Because this action only ever succeeds once per
+     * Announcement (the guard below), the fan-out cannot double-fire.
      */
     public function publish(Request $request, Announcement $announcement): AnnouncementResource
     {
@@ -144,11 +152,15 @@ class AnnouncementController extends Controller
             abort(409, 'Only a draft announcement may be published.');
         }
 
-        $announcement->update([
-            'status' => AnnouncementStatus::Published,
-            'published_at' => now(),
-            'published_by_user_id' => $request->user()->id,
-        ]);
+        DB::transaction(function () use ($request, $announcement) {
+            $announcement->update([
+                'status' => AnnouncementStatus::Published,
+                'published_at' => now(),
+                'published_by_user_id' => $request->user()->id,
+            ]);
+
+            $this->notifyAudience($announcement);
+        });
 
         return new AnnouncementResource($announcement->load(self::WITH_RELATIONS)->loadCount('acknowledgements'));
     }

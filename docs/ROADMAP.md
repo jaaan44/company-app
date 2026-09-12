@@ -76,9 +76,8 @@ Leave types, requests, approvals (with history), balances.
 **Phase 14 — Announcements** *(complete — see `docs/handoffs/V1_PHASE_14_HANDOFF.md`)*
 Company-wide/scoped announcements, recipients, acknowledgements. "Recipients" resolved as Department/Team audience targeting (union semantics), not arbitrary individual-Staff targeting; "acknowledgements" is a lightweight, idempotent, self-initiated acknowledgement record — deliberately not read/unread tracking, a mandatory-acknowledgement compliance workflow, or engagement analytics (see DEC-037).
 
-**Phase 15 — Notifications**
-Generic in-app notification infrastructure, feeding from other modules' events.
-*Depends on: Phase 14 (first real notification producer), Phase 2 (queue infra)*
+**Phase 15 — Notifications** *(complete — see `docs/handoffs/V1_PHASE_15_HANDOFF.md`)*
+Generic in-app notification infrastructure, feeding from other modules' events. "Feeding from other modules' events" resolved narrowly to the one producer the roadmap itself names above — Announcement publish; Leave Management/Task event integration remain unimplemented, deferred until a future phase names them explicitly (see `docs/DECISIONS.md` DEC-038). No queue infrastructure was introduced — synchronous, transactional creation is sufficient at this company's scale.
 
 **Phase 16 — Messaging**
 Direct, group, and project conversations.

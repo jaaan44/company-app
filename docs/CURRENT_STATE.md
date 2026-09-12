@@ -3,14 +3,14 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** Phase 14 — Announcements
+**Current phase:** Phase 15 — Notifications
 **Phase status:** COMPLETE (pending user review)
-**Last completed phase:** Phase 14 (Phases 1–13 are merged into `main`)
-**Next planned phase:** Phase 15 — Notifications (see `ROADMAP.md`) — **not authorized yet**
+**Last completed phase:** Phase 15 (Phases 1–14 are merged into `main`)
+**Next planned phase:** Phase 16 — Messaging (see `ROADMAP.md`) — **not authorized yet**
 
 ## Current Objective
 
-Phase 14 is implemented, tested, and pushed for review. Awaiting authorization for Phase 15.
+Phase 15 is implemented, tested, and pushed for review. Awaiting authorization for Phase 16.
 
 ## Completed
 
@@ -133,9 +133,21 @@ Phase 14 is implemented, tested, and pushed for review. Awaiting authorization f
   - Recorded DEC-037.
   - No direct messaging, chat, comments/reactions/polls, a social feed, attachments/file uploads, a rich-text editor, push/email/SMS delivery, a notification queue, calendar/event data, tasks, project activity, mandatory-acknowledgement compliance, engagement analytics/read-rate dashboards, revision history, categories/tags, scheduled/future publication, or expiry; no Admin Backoffice CRUD UI or Flutter mobile screens (consistent with Phase 6–13's precedent).
 
+- **Phase 15:** Notifications. See `docs/handoffs/V1_PHASE_15_HANDOFF.md` for full detail.
+  - `notifications` table; `App\Models\Notification`, with a ULID `public_id` (DEC-017). `App\Enums\NotificationType` (one case: `announcement_published`), `App\Enums\NotificationSourceType` (one case: `announcement`).
+  - Recipient identity is the `User` account (DEC-038, `recipient_user_id`, `cascadeOnDelete()`), never `Staff` directly — a Notification can only ever be consumed through an authenticated login. Uniquely among every `/me/...` self-service surface (Phase 9/12/13/14's precedent), no linked Staff record is required — only `auth:sanctum` + `account.active`.
+  - `read_at` (nullable, server-controlled, set once); `POST /me/notifications/{public_id}/read` is idempotent and preserves the original first-read timestamp; `POST /me/notifications/read-all` scoped to the authenticated recipient's own unread rows, returning a bounded `updated_count`.
+  - Exactly one event integration — `AnnouncementController::publish()`'s audience fan-out (`NotifiesAnnouncementAudience`) — reusing Phase 14's own company-wide/scoped-Department/Team-union audience logic, but as a **publish-time snapshot**: persisted rows are never rewritten by a later org-structure change, deliberately unlike `/me/announcements`' dynamic feed. A Staff member with no linked User account is skipped; no re-notification on archive.
+  - Source/context reference is a typed, non-polymorphic pair (`source_type`/`source_public_id`), not a generic polymorphic relation — only one concrete source type exists in scope.
+  - No new permission (ownership alone gates a Notification, `404` for anyone else's — not even Administrator can read another User's via this API); no Admin management surface; no create/update/delete API beyond the read-state actions.
+  - New versioned REST endpoints under `/api/v1`: `GET /me/notifications` (`?unread=1`, `?type=`), `GET /me/notifications/{public_id}`, `GET /me/notifications/unread-count`, `POST /me/notifications/{public_id}/read`, `POST /me/notifications/read-all`.
+  - Removed the unused, incompatible default-scaffold `Illuminate\Notifications\Notifiable` trait from `App\Models\User` (discovered during this phase — never used anywhere in the codebase, and its polymorphic table shape conflicted with this phase's own `notifications` table).
+  - Recorded DEC-038.
+  - No Flutter Notification screens, Admin Notification CRUD UI, manually authored/arbitrary notifications, direct messaging/chat/a social feed, notification preferences, any external delivery channel (FCM/APNs/Web Push/email/SMS/WhatsApp/Slack/Teams), digests, a reminder/escalation engine, per-device notification state, read receipts beyond `read_at`, an analytics/read-rate dashboard, automatic retention jobs, queues/broadcasting infrastructure, a generic polymorphic event bus, or Leave Management/Task event integration (not named by the governing roadmap line for this phase — a future roadmap note).
+
 ## Pending / Not Started
 
-- Notifications (Phase 15) and everything after it on the roadmap.
+- Messaging (Phase 16) and everything after it on the roadmap.
 
 ## Known Blockers / Issues
 
@@ -153,13 +165,13 @@ Phase 14 is implemented, tested, and pushed for review. Awaiting authorization f
 ## Repository / Branch Information
 
 - Repository: `jaaan44/company-app`
-- Default branch: `main` (contains the approved Phase 0–13 baseline)
-- Phase 14 branch: `claude/company-app-v1-phase-14-dr23o2` (branched from `main`, not merged)
+- Default branch: `main` (contains the approved Phase 0–14 baseline)
+- Phase 15 branch: `claude/compassionate-hypatia-92za04` (branched from `main`, not merged)
 
 ## Latest Relevant Handoff
 
-`docs/handoffs/V1_PHASE_14_HANDOFF.md`
+`docs/handoffs/V1_PHASE_15_HANDOFF.md`
 
 ## For the Next Session
 
-Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_14_HANDOFF.md` for Announcements, `docs/handoffs/V1_PHASE_13_HANDOFF.md` for Leave Management, `docs/handoffs/V1_PHASE_12_HANDOFF.md` for Work Logs, `docs/handoffs/V1_PHASE_11_HANDOFF.md` for Tasks, `docs/handoffs/V1_PHASE_10_HANDOFF.md` for Projects & Project Membership, `docs/handoffs/V1_PHASE_09_HANDOFF.md` for Staff Status & Location Check-in, `docs/handoffs/V1_PHASE_08_HANDOFF.md` for Clients & Contacts, `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 15 (Notifications) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.
+Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_15_HANDOFF.md` for Notifications, `docs/handoffs/V1_PHASE_14_HANDOFF.md` for Announcements, `docs/handoffs/V1_PHASE_13_HANDOFF.md` for Leave Management, `docs/handoffs/V1_PHASE_12_HANDOFF.md` for Work Logs, `docs/handoffs/V1_PHASE_11_HANDOFF.md` for Tasks, `docs/handoffs/V1_PHASE_10_HANDOFF.md` for Projects & Project Membership, `docs/handoffs/V1_PHASE_09_HANDOFF.md` for Staff Status & Location Check-in, `docs/handoffs/V1_PHASE_08_HANDOFF.md` for Clients & Contacts, `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 16 (Messaging) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.
