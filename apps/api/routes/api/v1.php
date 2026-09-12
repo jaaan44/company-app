@@ -13,6 +13,8 @@ use App\Http\Controllers\Api\V1\Staff\StaffController;
 use App\Http\Controllers\Api\V1\StaffOperations\CheckInController;
 use App\Http\Controllers\Api\V1\StaffOperations\OperationalStatusController;
 use App\Http\Controllers\Api\V1\Tasks\TaskController;
+use App\Http\Controllers\Api\V1\WorkLogs\MyWorkLogController;
+use App\Http\Controllers\Api\V1\WorkLogs\WorkLogController;
 use Illuminate\Support\Facades\Route;
 
 // v1 API routes. A future breaking version adds routes/api/v2.php and a
@@ -220,5 +222,38 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
 
     Route::middleware('can:tasks.manage')->group(function (): void {
         Route::delete('tasks/{task:public_id}', [TaskController::class, 'destroy'])->name('tasks.destroy');
+    });
+});
+
+// Work Logs (Phase 12): historical records of work performed by Staff,
+// built on top of Staff/Projects/Project Membership/Tasks — not payroll,
+// attendance, billing, or a timesheet system (see
+// docs/phases/V1_PHASE_12_DEFINITION.md). Self-service ("me") routes
+// require only a linked Staff record (a domain check, mirroring
+// GET /api/v1/auth/me and Phase 9's /me/status, /me/check-ins) — the
+// performer identity is always server-derived, never a client-supplied
+// staff_id. The top-level /work-logs surface is the supervisory/
+// administrative one: GET/index/show are scoped in-controller
+// (AuthorizesWorkLogVisibility) — Administrator sees all, a Manager
+// holding `work-logs.view` sees only their own direct reports' logs
+// (mirroring Phase 9's location.view precedent, not Phase 10/11's
+// company-wide Manager grant), and a Project Lead sees (read-only) logs
+// within Projects they lead. All writes on /work-logs (create-for-
+// others, edit-any, delete-any) require `work-logs.manage`
+// (Administrator-only) — no Project Lead/Manager write authority exists
+// anywhere in this module, a deliberately stricter boundary than Tasks.
+Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
+    Route::get('me/work-logs', [MyWorkLogController::class, 'myIndex'])->name('me.work-logs.index');
+    Route::post('me/work-logs', [MyWorkLogController::class, 'myStore'])->name('me.work-logs.store');
+    Route::match(['put', 'patch'], 'me/work-logs/{workLog:public_id}', [MyWorkLogController::class, 'myUpdate'])->name('me.work-logs.update');
+    Route::delete('me/work-logs/{workLog:public_id}', [MyWorkLogController::class, 'myDestroy'])->name('me.work-logs.destroy');
+
+    Route::get('work-logs', [WorkLogController::class, 'index'])->name('work-logs.index');
+    Route::get('work-logs/{workLog:public_id}', [WorkLogController::class, 'show'])->name('work-logs.show');
+
+    Route::middleware('can:work-logs.manage')->group(function (): void {
+        Route::post('work-logs', [WorkLogController::class, 'store'])->name('work-logs.store');
+        Route::match(['put', 'patch'], 'work-logs/{workLog:public_id}', [WorkLogController::class, 'update'])->name('work-logs.update');
+        Route::delete('work-logs/{workLog:public_id}', [WorkLogController::class, 'destroy'])->name('work-logs.destroy');
     });
 });

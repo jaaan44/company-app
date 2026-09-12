@@ -60,8 +60,8 @@ Projects, project members. (Project milestones were not part of the governing Ph
 Tasks (project-linked and independent, DEC-006), single-assignee assignment, lifecycle/priority/due date. Task comments (originally mentioned above) were not part of the governing Phase 11 instructions and remain unimplemented — deferred to a future collaboration phase alongside Work Logs/task activity/notifications (see `docs/DECISIONS.md` DEC-034).
 *Depends on: Phase 10*
 
-**Phase 12 — Work Logs**
-Time/activity logging against tasks/projects.
+**Phase 12 — Work Logs** *(complete — see `docs/handoffs/V1_PHASE_12_HANDOFF.md`)*
+Historical time/activity logging against tasks and/or projects (never neither), performed by Staff. Not payroll, attendance, or billing.
 *Depends on: Phase 11*
 
 ### HR

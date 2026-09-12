@@ -78,6 +78,21 @@ use Illuminate\Database\Seeder;
  * (TaskController's AuthorizesTaskAccess), not via a permission — no
  * `tasks.assign`/`tasks.complete`/`tasks.delete` granular permissions
  * were introduced.
+ *
+ * Phase 12 (Work Logs) adds `work-logs.view` / `work-logs.manage`.
+ * Unlike `tasks.view`/`projects.view`, `work-logs.view` is attached to
+ * **Manager only** and is further scoped in WorkLogController to the
+ * Manager's own direct reports (Staff.manager_id) — mirroring
+ * `location.view`'s Phase 9 precedent, not a company-wide grant, since
+ * logged work duration/timing is treated as materially more sensitive
+ * than the Staff/Task/Project directories. `work-logs.manage`
+ * (Administrator-only) covers create-for-others/edit-any/delete-any; a
+ * Project Lead's read-only visibility into their led Projects' Work Logs
+ * is a row-level, in-controller check (AuthorizesWorkLogVisibility), not
+ * a permission — no Project Lead or Manager write authority exists in
+ * this module at all (deliberately stricter than Tasks). Self-service
+ * (`/me/work-logs`) needs no permission, mirroring Phase 9's domain-check
+ * pattern.
  */
 class RolePermissionSeeder extends Seeder
 {
@@ -178,8 +193,18 @@ class RolePermissionSeeder extends Seeder
             ['label' => 'Create, update, and delete any task'],
         );
 
+        $workLogsView = Permission::query()->firstOrCreate(
+            ['name' => 'work-logs.view'],
+            ['label' => "View direct reports' work logs"],
+        );
+
+        Permission::query()->firstOrCreate(
+            ['name' => 'work-logs.manage'],
+            ['label' => 'Create, correct, and delete any work log'],
+        );
+
         $manager->permissions()->syncWithoutDetaching([
-            $organizationView->id, $staffView->id, $clientsView->id, $staffStatusView->id, $locationView->id, $projectsView->id, $tasksView->id,
+            $organizationView->id, $staffView->id, $clientsView->id, $staffStatusView->id, $locationView->id, $projectsView->id, $tasksView->id, $workLogsView->id,
         ]);
         $staff->permissions()->syncWithoutDetaching([
             $organizationView->id, $staffView->id, $clientsView->id, $staffStatusView->id,

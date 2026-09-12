@@ -153,10 +153,20 @@ class TaskController extends Controller
      * Anything with real activity must be cancelled instead
      * (`PATCH .../{public_id}` with `status: cancelled`), preserving
      * business history rather than destroying it (docs/phases/
-     * V1_PHASE_11_DEFINITION.md).
+     * V1_PHASE_11_DEFINITION.md). A Task with any Work Log referencing it
+     * can never be deleted, regardless of status (docs/phases/
+     * V1_PHASE_12_DEFINITION.md) — checked first, since real work logged
+     * against it is an even stronger signal than status that history
+     * would be lost.
      */
     public function destroy(Task $task): JsonResponse
     {
+        if ($task->workLogs()->exists()) {
+            return response()->json([
+                'message' => 'This task has work logs and cannot be deleted.',
+            ], 409);
+        }
+
         if ($task->status !== TaskStatus::Todo) {
             return response()->json([
                 'message' => 'This task has moved beyond its initial creation and cannot be deleted; cancel it instead.',

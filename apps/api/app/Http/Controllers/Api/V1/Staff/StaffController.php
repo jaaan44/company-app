@@ -101,14 +101,15 @@ class StaffController extends Controller
 
     /**
      * A staff member who still has direct reports, is still a member of
-     * any project, or still has any task assigned to them, cannot be
-     * deleted — preventing an orphaned/invalid reporting structure,
-     * project roster, or task assignment, the same relational-integrity
+     * any project, still has any task assigned to them, or still
+     * performed any work log, cannot be deleted — preventing an
+     * orphaned/invalid reporting structure, project roster, task
+     * assignment, or historical work record, the same relational-integrity
      * philosophy as DepartmentController::destroy (and, for project
-     * memberships/tasks, docs/phases/V1_PHASE_10_DEFINITION.md /
-     * V1_PHASE_11_DEFINITION.md). Task assignment is checked regardless
-     * of the task's status — Tasks are business history, so this is
-     * never a cascade.
+     * memberships/tasks/work logs, docs/phases/V1_PHASE_10_DEFINITION.md /
+     * V1_PHASE_11_DEFINITION.md / V1_PHASE_12_DEFINITION.md). Task
+     * assignment and work logs are checked regardless of the task's
+     * status — both are business history, so this is never a cascade.
      */
     public function destroy(Staff $staff): JsonResponse
     {
@@ -127,6 +128,12 @@ class StaffController extends Controller
         if ($staff->assignedTasks()->exists()) {
             return response()->json([
                 'message' => 'This staff member still has tasks assigned to them and cannot be deleted.',
+            ], 409);
+        }
+
+        if ($staff->workLogs()->exists()) {
+            return response()->json([
+                'message' => 'This staff member still has work logs and cannot be deleted.',
             ], 409);
         }
 
