@@ -3,14 +3,14 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** Phase 11 — Tasks
+**Current phase:** Phase 12 — Work Logs
 **Phase status:** COMPLETE (pending user review)
-**Last completed phase:** Phase 11 (Phases 1–10 are merged into `main`)
-**Next planned phase:** Phase 12 — Work Logs (see `ROADMAP.md`) — **not authorized yet**
+**Last completed phase:** Phase 12 (Phases 1–11 are merged into `main`)
+**Next planned phase:** Phase 13 — Leave Management (see `ROADMAP.md`) — **not authorized yet**
 
 ## Current Objective
 
-Phase 11 is implemented, tested, and pushed for review. Awaiting authorization for Phase 12.
+Phase 12 is implemented, tested, and pushed for review. Awaiting authorization for Phase 13.
 
 ## Completed
 
@@ -99,9 +99,21 @@ Phase 11 is implemented, tested, and pushed for review. Awaiting authorization f
   - Recorded DEC-034. `docs/ROADMAP.md`'s Phase 11 description is narrowed: task comments were not part of the governing instructions and remain unimplemented, deferred to a future collaboration phase.
   - No work logs, time tracking, timesheets, billing, payroll, task comments/attachments/reactions, messaging, notifications, mentions, Kanban boards, configurable workflows, subtasks, task dependencies, recurring tasks, calendars, reminders, milestones, task activity timeline, or approval workflows; no Admin Backoffice CRUD UI (consistent with Phase 6/7/8/9/10's precedent).
 
+- **Phase 12:** Work Logs. See `docs/handoffs/V1_PHASE_12_HANDOFF.md` for full detail.
+  - `work_logs` table; `App\Models\WorkLog`, with a ULID `public_id` (DEC-017). Duration model — `work_date` (not future) + `duration_minutes` (positive integer, capped at 1440) — no start/end timestamps, no timer.
+  - A Work Log references a `task_id` and/or a `project_id`, never neither; when `task_id` is set, `project_id` is server-derived from that Task's own Project (single source of truth — Task↔Project inconsistency is structurally impossible, not merely validated).
+  - `staff_id` (required, `restrictOnDelete()`) is the performer, kept strictly distinct from `created_by_user_id` (nullable, `nullOnDelete()`, accountability only).
+  - Self-service creation eligibility (active Staff; current Project member for a Project-linked Task/direct Project reference; current assignee for an independent Task) is checked only at creation — historical preservation means a later Project Membership removal, Task reassignment, Staff status change, or Task status change never alters an existing Work Log. Administrator-entered Work Logs skip this eligibility check entirely.
+  - `TaskController`/`ProjectController`/`StaffController::destroy` (Phases 11/10/7) extended to also block deletion while a Work Log references them.
+  - Self-edit/self-delete of one's own Work Log (any time, no time-window restriction) plus Administrator correction/deletion of any Work Log — `staff_id`/`task_id`/`project_id` immutable for everyone after creation.
+  - New permissions `work-logs.view` (**Manager only**, scoped to direct reports — mirroring `location.view`, not a company-wide grant) and `work-logs.manage` (Administrator-only). A Project Lead gets read-only visibility into their led Projects' Work Logs and no write authority — deliberately stricter than Tasks.
+  - New versioned REST endpoints: self-service `/api/v1/me/work-logs` (list/create/edit/delete own) and supervisory `/api/v1/work-logs` (scoped reads; Administrator-only writes).
+  - Recorded DEC-035.
+  - No payroll, attendance, billing, timers, timesheet approval workflow, leave, or messaging/notifications was introduced; no Admin Backoffice CRUD UI or Flutter mobile screens (consistent with Phase 6–11's precedent).
+
 ## Pending / Not Started
 
-- Work Logs (Phase 12) and everything after it on the roadmap.
+- Leave Management (Phase 13) and everything after it on the roadmap.
 
 ## Known Blockers / Issues
 
@@ -111,18 +123,19 @@ Phase 11 is implemented, tested, and pushed for review. Awaiting authorization f
 - **Phase 9 session's environment:** this container started with no `vendor/` at all (unlike Phase 7/8's sessions, which inherited one). `composer install` reproduced the same `api.github.com` zipball-scoping issue documented in Phase 6/8 for every third-party dependency, recovered the same way (`--prefer-source` git-clone fallback). `phpstan/phpstan` again hit its dist-only/no-`source`-entry exception (Phase 8 §13) — its own `git clone --mirror` this time additionally exceeded Composer's 300s process timeout (a large monorepo history) before completing. Recovered by shallow-cloning (`--depth 1 --branch <tag>`) the exact locked commit directly (seconds, not the timeout), pre-seeding Composer's local VCS mirror cache from that shallow clone so Composer's own retry found it immediately, then — when Composer's final reference-clone step still failed because a mirror sourced from a shallow clone is itself shallow — copying the four files `phpstan`/`phpstan.phar`/`bootstrap.php`/`composer.json` directly into `vendor/phpstan/phpstan/` (the phar is fully self-contained; nothing else in the repository is needed to run the tool), hand-writing `vendor/bin/phpstan`/`phpstan.phar` proxy scripts (mirroring Composer's own generated pattern, as Phase 8 did), adding the package's metadata to `vendor/composer/installed.json`, and running `composer dump-autoload` to regenerate the rest normally. `vendor/bin/phpstan --version`/`vendor/bin/phpstan analyse` both ran cleanly against this phase's real code (0 errors) — see `docs/handoffs/V1_PHASE_09_HANDOFF.md` for the full account. `vendor/` is never committed either way, so none of this recovery is part of the diff.
 - **Phase 10 session's environment:** same pattern again — no `vendor/` at session start, `composer install` needed the git-mirror-cache fallback for every third-party dependency, and `phpstan/phpstan`'s own `git clone --mirror` again exceeded the 300s process timeout. Recovered identically to Phase 9 (shallow-clone the exact locked commit, pre-seed the mirror cache, manually copy the four essential files into `vendor/phpstan/phpstan/`, hand-write `vendor/bin/phpstan`/`phpstan.phar`, patch `vendor/composer/installed.json`, `composer dump-autoload`) — see `docs/handoffs/V1_PHASE_10_HANDOFF.md` §14a. Once installed, this phase's own automated test suite caught one real application bug (unrelated to the environment): Laravel's automatic nested-route-binding scoping guessed a nonexistent `Project::staff()` relation for the two-parameter member routes, fixed via `->withoutScopedBindings()` — see the handoff's Deviations section.
 - **Phase 11 session's environment:** no `vendor/` at session start; `composer install` got through every package except `phpstan/phpstan` (whose own internal `git clone --mirror` again exceeded Composer's 300s process timeout), but this time the failure was fatal to the whole install (Composer aborted before writing `vendor/composer/installed.json`/`vendor/autoload.php` at all — a harder failure than Phase 9/10's, where installed.json already existed and only needed patching). Recovered by running the same `git clone --mirror` directly via a plain shell command (not through Composer) with a longer allowance — it completed in ~5m41s, just over Composer's internal 300s cap — which pre-seeded Composer's local VCS mirror cache with a *complete* (non-shallow) mirror; a full `composer install` retry then completed normally end-to-end, needing no manual `vendor/` file surgery this time. All quality gates then passed cleanly against real, complete code. This does not affect the correctness of what was committed (`vendor/` is never committed either way).
+- **Phase 12 session's environment:** no `vendor/` at session start; `composer install` again hit `phpstan/phpstan`'s own internal `git clone --mirror` exceeding Composer's 300s process timeout (the same recurring issue documented in Phases 9–11), fatal to the whole install this time (same as Phase 11's session). Recovered identically to Phase 11: ran the `git clone --mirror` directly via a plain shell command with a longer allowance, pre-seeding Composer's local VCS mirror cache with a complete (non-shallow) mirror, then retried `composer install` to completion. This does not affect the correctness of what was committed (`vendor/` is never committed either way) — see `docs/handoffs/V1_PHASE_12_HANDOFF.md` for the full account and quality-gate results.
 - Open design questions: real-time transport, object storage provider — see `docs/02_ARCHITECTURE.md` §9. (Departments/Teams hierarchy shape was resolved by Phase 6 — see DEC-029. Staff↔User relationship and manager/reporting structure were resolved by Phase 7 — see DEC-030.)
 
 ## Repository / Branch Information
 
 - Repository: `jaaan44/company-app`
-- Default branch: `main` (contains the approved Phase 0–10 baseline)
-- Phase 11 branch: `claude/nice-fermi-c8irr2` (branched from `main`, not merged)
+- Default branch: `main` (contains the approved Phase 0–11 baseline)
+- Phase 12 branch: `claude/focused-johnson-189yg8` (branched from `main`, not merged)
 
 ## Latest Relevant Handoff
 
-`docs/handoffs/V1_PHASE_11_HANDOFF.md`
+`docs/handoffs/V1_PHASE_12_HANDOFF.md`
 
 ## For the Next Session
 
-Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_11_HANDOFF.md` for Tasks, `docs/handoffs/V1_PHASE_10_HANDOFF.md` for Projects & Project Membership, `docs/handoffs/V1_PHASE_09_HANDOFF.md` for Staff Status & Location Check-in, `docs/handoffs/V1_PHASE_08_HANDOFF.md` for Clients & Contacts, `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 12 (Work Logs) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.
+Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_12_HANDOFF.md` for Work Logs, `docs/handoffs/V1_PHASE_11_HANDOFF.md` for Tasks, `docs/handoffs/V1_PHASE_10_HANDOFF.md` for Projects & Project Membership, `docs/handoffs/V1_PHASE_09_HANDOFF.md` for Staff Status & Location Check-in, `docs/handoffs/V1_PHASE_08_HANDOFF.md` for Clients & Contacts, `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 13 (Leave Management) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.

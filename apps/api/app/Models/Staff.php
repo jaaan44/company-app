@@ -219,6 +219,21 @@ class Staff extends Model
     }
 
     /**
+     * Work Logs where this staff member is the performer (Phase 12) —
+     * historical records, preserved regardless of later Project
+     * Membership removal, Task reassignment, or this Staff member's own
+     * employment-status change (docs/phases/V1_PHASE_12_DEFINITION.md).
+     * restrictOnDelete on work_logs.staff_id backs the deletion guard in
+     * StaffController::destroy.
+     *
+     * @return HasMany<WorkLog, $this>
+     */
+    public function workLogs(): HasMany
+    {
+        return $this->hasMany(WorkLog::class);
+    }
+
+    /**
      * Whether assigning $proposedManagerId as this staff member's manager
      * would create a reporting cycle — i.e. $proposedManagerId's own
      * manager chain eventually loops back to this staff member. Walks a

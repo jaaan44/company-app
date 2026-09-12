@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
@@ -97,5 +98,18 @@ class Task extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by_user_id');
+    }
+
+    /**
+     * Work Logs referencing this Task (Phase 12). restrictOnDelete on
+     * work_logs.task_id backs the deletion guard in
+     * TaskController::destroy — a Task with any Work Log cannot be
+     * hard-deleted.
+     *
+     * @return HasMany<WorkLog, $this>
+     */
+    public function workLogs(): HasMany
+    {
+        return $this->hasMany(WorkLog::class);
     }
 }

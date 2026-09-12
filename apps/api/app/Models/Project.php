@@ -98,4 +98,18 @@ class Project extends Model
     {
         return $this->hasMany(Task::class);
     }
+
+    /**
+     * Work Logs referencing this Project directly (Phase 12) — general
+     * Project activity with no specific Task. Does NOT include Work Logs
+     * that reference one of this Project's Tasks (those are reached via
+     * tasks()->workLogs()); restrictOnDelete on work_logs.project_id backs
+     * the deletion guard in ProjectController::destroy.
+     *
+     * @return HasMany<WorkLog, $this>
+     */
+    public function workLogs(): HasMany
+    {
+        return $this->hasMany(WorkLog::class);
+    }
 }
