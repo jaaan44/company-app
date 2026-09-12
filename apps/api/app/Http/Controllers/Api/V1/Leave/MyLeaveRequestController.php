@@ -4,12 +4,12 @@ namespace App\Http\Controllers\Api\V1\Leave;
 
 use App\Enums\LeaveRequestActionType;
 use App\Enums\LeaveRequestStatus;
+use App\Http\Controllers\Api\V1\Leave\Concerns\ChecksLeaveBalanceAvailability;
 use App\Http\Controllers\Api\V1\StaffOperations\Concerns\RequiresLinkedStaff;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Leave\CancelLeaveRequestRequest;
 use App\Http\Requests\Leave\StoreMyLeaveRequestRequest;
 use App\Http\Resources\LeaveRequestResource;
-use App\Models\LeaveBalance;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
 use Illuminate\Http\JsonResponse;
@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\DB;
  */
 class MyLeaveRequestController extends Controller
 {
+    use ChecksLeaveBalanceAvailability;
     use RequiresLinkedStaff;
 
     private const WITH_RELATIONS = ['staff', 'leaveType', 'actions.actor.staff', 'creator.staff'];
@@ -72,25 +73,7 @@ class MyLeaveRequestController extends Controller
         $year = (int) $request->date('start_date')?->year;
 
         $leaveRequest = DB::transaction(function () use ($request, $staff, $leaveType, $startDate, $endDate, $totalDays, $year) {
-            if ($leaveType->is_paid) {
-                // Serialize concurrent submissions against the same
-                // balance row (docs/phases/V1_PHASE_13_DEFINITION.md's
-                // Negative Balances — atomic, transactional re-check).
-                LeaveBalance::query()
-                    ->where('staff_id', $staff->id)
-                    ->where('leave_type_id', $leaveType->id)
-                    ->where('year', $year)
-                    ->lockForUpdate()
-                    ->first();
-
-                $remaining = LeaveBalance::allocatedDaysFor($staff->id, $leaveType->id, $year)
-                    - LeaveBalance::usedDaysFor($staff->id, $leaveType->id, $year)
-                    - LeaveBalance::pendingDaysFor($staff->id, $leaveType->id, $year);
-
-                if ($totalDays > $remaining) {
-                    abort(409, "Insufficient leave balance: {$remaining} day(s) remaining for this leave type in {$year}.");
-                }
-            }
+            $this->assertSufficientBalance($leaveType, $staff->id, $year, $totalDays);
 
             // whereDate() — see the identical note in
             // ValidatesLeaveDateRangeAndOverlap on why a plain where()

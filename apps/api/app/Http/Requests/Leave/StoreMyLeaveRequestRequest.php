@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Leave;
 
 use App\Http\Requests\Leave\Concerns\ResolvesLeaveRequestReferences;
+use App\Http\Requests\Leave\Concerns\ValidatesLeaveBalanceAvailability;
 use App\Http\Requests\Leave\Concerns\ValidatesLeaveDateRangeAndOverlap;
 use App\Http\Requests\Leave\Concerns\ValidatesSelfServiceLeaveEligibility;
 use Illuminate\Contracts\Validation\Validator;
@@ -19,6 +20,7 @@ use Illuminate\Validation\Rule;
 class StoreMyLeaveRequestRequest extends FormRequest
 {
     use ResolvesLeaveRequestReferences;
+    use ValidatesLeaveBalanceAvailability;
     use ValidatesLeaveDateRangeAndOverlap;
     use ValidatesSelfServiceLeaveEligibility;
 
@@ -56,6 +58,7 @@ class StoreMyLeaveRequestRequest extends FormRequest
 
             $this->validateDateRangeAndOverlap($validator, $performer->id);
             $this->validateSelfServiceEligibility($validator, $performer);
+            $this->validateBalanceAvailability($validator, $performer->id);
         });
     }
 

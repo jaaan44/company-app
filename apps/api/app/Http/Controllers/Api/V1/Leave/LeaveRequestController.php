@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\Leave;
 use App\Enums\LeaveRequestActionType;
 use App\Enums\LeaveRequestStatus;
 use App\Http\Controllers\Api\V1\Leave\Concerns\AuthorizesLeaveRequestVisibility;
+use App\Http\Controllers\Api\V1\Leave\Concerns\ChecksLeaveBalanceAvailability;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Leave\ApproveLeaveRequestRequest;
 use App\Http\Requests\Leave\CancelLeaveRequestRequest;
@@ -34,6 +35,7 @@ use Illuminate\Support\Facades\DB;
 class LeaveRequestController extends Controller
 {
     use AuthorizesLeaveRequestVisibility;
+    use ChecksLeaveBalanceAvailability;
 
     private const WITH_RELATIONS = ['staff', 'leaveType', 'actions.actor.staff', 'creator.staff'];
 
@@ -81,6 +83,16 @@ class LeaveRequestController extends Controller
      * middleware. Always creates as 'pending' — an Administrator wanting
      * an already-approved historical record calls approve() separately,
      * keeping every approved request's history consistent.
+     *
+     * Administrator bypasses Staff active-employment-status eligibility
+     * only (StoreLeaveRequestRequest deliberately omits that check) —
+     * paid-leave balance sufficiency is re-checked here exactly like
+     * self-service (assertSufficientBalance(), the same
+     * lockForUpdate()-guarded helper MyLeaveRequestController uses).
+     * There is no Administrator override/negative-balance concept
+     * (DEC-036): an Administrator backfilling historical paid leave with
+     * no allocation on file must first set one via
+     * `POST /api/v1/staff/{public_id}/leave-balances`.
      */
     public function store(StoreLeaveRequestRequest $request): JsonResponse
     {
@@ -89,8 +101,12 @@ class LeaveRequestController extends Controller
 
         $startDate = $request->date('start_date')?->toDateString() ?? '';
         $endDate = $request->date('end_date')?->toDateString() ?? '';
+        $totalDays = $request->totalDaysResolved();
+        $year = (int) $request->date('start_date')?->year;
 
-        $leaveRequest = DB::transaction(function () use ($request, $staff, $leaveType, $startDate, $endDate) {
+        $leaveRequest = DB::transaction(function () use ($request, $staff, $leaveType, $startDate, $endDate, $totalDays, $year) {
+            $this->assertSufficientBalance($leaveType, $staff->id, $year, $totalDays);
+
             // whereDate() — see the identical note in
             // ValidatesLeaveDateRangeAndOverlap on why a plain where()
             // would be unsafe against a date-cast column's storage
@@ -112,7 +128,7 @@ class LeaveRequestController extends Controller
                 'leave_type_id' => $leaveType->id,
                 'start_date' => $startDate,
                 'end_date' => $endDate,
-                'total_days' => $request->totalDaysResolved(),
+                'total_days' => $totalDays,
                 'reason' => $request->validated('reason'),
                 'status' => LeaveRequestStatus::Pending,
                 'created_by_user_id' => $request->user()->id,
