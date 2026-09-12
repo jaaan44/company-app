@@ -1,6 +1,6 @@
 # 02 — Architecture (Initial)
 
-Status: **Mostly confirmed as of Phase 14** (repository layout, versions, database engine, identifier strategy, Admin Backoffice direction, API foundation, authentication, local Docker environment, authorization, organization structure, staff, clients & contacts, staff operational status & location check-in, projects & project membership, tasks, work logs, leave management, announcements — see §2, §3, §12, §13, §14, §15, §16, §17, §18, §19, §20, §21, §22, §23, §24). Remaining open items are listed in §9.
+Status: **Mostly confirmed as of Phase 16** (repository layout, versions, database engine, identifier strategy, Admin Backoffice direction, API foundation, authentication, local Docker environment, authorization, organization structure, staff, clients & contacts, staff operational status & location check-in, projects & project membership, tasks, work logs, leave management, announcements, notifications, messaging — see §2, §3, §12, §13, §14, §15, §16, §17, §18, §19, §20, §21, §22, §23, §24, §25, §26). Remaining open items are listed in §9.
 
 ## 0. Resource-Efficiency Direction
 
@@ -8,28 +8,24 @@ Company App serves approximately 100 employees. Favor a lean, resource-efficient
 
 ## 1. High-Level Components
 
+**Corrected as of Phase 16** — the diagram below previously depicted a Redis/queue-worker layer as though it had already been built. It never has been, through sixteen phases (Phase 4A's Docker Compose stack, DEC-027, explicitly excludes one; Notifications (Phase 15, DEC-038) and Messaging (Phase 16, DEC-039) — the two phases the original diagram anticipated would need it most — both shipped fully synchronous, queue-free). This is now documented as the actual, deliberate architecture, not a stale aspiration:
+
 ```
-┌────────────────────┐      ┌──────────────────────┐
-│  Flutter Mobile App │◄────►│                       │
-│  (staff)            │      │   Laravel API         │
-└────────────────────┘      │   (JSON, versioned)   │
-                              │                       │
-┌────────────────────┐      │   + Admin Backoffice  │◄──► Relational DB
-│  Admin Backoffice   │◄────►│     (server-rendered   │
-│  (web, staff mgmt)  │      │      or SPA-on-API)   │
-└────────────────────┘      └──────────┬────────────┘
-                                        │
-                              ┌─────────┴─────────┐
-                              │ Redis (cache/queue/│
-                              │ broadcast) + Queue │
-                              │ workers            │
-                              └────────────────────┘
+┌────────────────────┐      ┌───────────────────────┐
+│  Flutter Mobile App │◄────►│                        │
+│  (staff)            │      │   Laravel API          │
+└────────────────────┘      │   (JSON, versioned)    │
+                              │                        │
+┌────────────────────┐      │   + Admin Backoffice   │◄──► Relational DB
+│  Admin Backoffice   │◄────►│     (Blade + Livewire, │      (MySQL)
+│  (web, staff mgmt)  │      │      same app, DEC-019)│
+└────────────────────┘      └────────────────────────┘
 ```
 
 - **Laravel backend/API**: single source of business logic. The Flutter app consumes the versioned API; the Admin Backoffice (Blade + Livewire — DEC-019) reads models/business logic directly within the same Laravel application rather than round-tripping through its own API — Livewire components call into the same underlying Models/Policies/Actions the API controllers use, so business rules still live in one place.
 - **Flutter mobile app**: consumes the API only. No direct DB access, no duplicated business logic.
 - **Relational database**: system of record. **MySQL is the production direction (DEC-016)**; SQLite is used for local development and automated tests where behavior is database-neutral.
-- **Redis**: queueing (jobs like notification dispatch, report generation), caching, and — if adopted — broadcasting for real-time features (messaging, live status/notifications). Not adopted yet — see §6.
+- **No Redis, queue workers, or broadcasting infrastructure exists anywhere in this application** (confirmed as of Phase 16, DEC-039) — every write, including the two producers with the most plausible case for async/real-time treatment (Notification fan-out, Message send) is synchronous, inside the triggering request's own database transaction. This is a deliberate application of the resource-efficiency direction (§0), not an oversight: nothing built through Phase 16 has demonstrated a genuine need for it. See §5/§6 for what would justify revisiting this.
 
 ## 2. Repository Layout (confirmed, Phase 1 — DEC-011)
 
@@ -57,11 +53,11 @@ Monorepo, no orchestration tooling (Nx/Turborepo/Melos) — the two apps operate
 
 ## 5. Real-Time Capabilities
 
-Needed for: messaging, live notifications, possibly live staff status. Direction: Laravel broadcasting (e.g. via Redis + a WebSocket layer such as Laravel Reverb, or a managed alternative) fed by queued events. Exact transport is an **open question**, to be settled no earlier than the Messaging/Notifications phases — do not adopt a specific vendor prematurely.
+**Resolved, Phase 16 (DEC-039):** this document previously left the real-time transport for messaging/notifications as an open question, "to be settled no earlier than the Messaging/Notifications phases." Both of those phases have now shipped, and the decision made — deliberately, not by default — is **no real-time transport at all in V1**. Notifications (Phase 15) and Messaging (Phase 16) are both plain request/response: a client (the future Flutter UI) is expected to poll (e.g. `GET .../unread-count`, `GET .../messages`) rather than receive push updates. No Laravel Reverb, WebSocket layer, Redis, or managed vendor (Pusher/Ably) was adopted. This should be revisited only if a future phase demonstrates a genuine need (e.g. real usage data showing polling is inadequate) — not adopted speculatively ahead of that.
 
 ## 6. Background Processing
 
-Queues for: notification dispatch, scheduled reminder jobs (leave, deadlines, appointments), report generation, and any bulk/administrative operation that shouldn't block a request. Per the resource-efficiency direction (§0), the Phase 1 bootstrap uses Laravel's framework-default **database-backed** queue/cache/session drivers — no Redis service is required to run the application. Redis remains the likely upgrade path if/when a genuine load or real-time need demonstrates it (see §5), not a default to install speculatively.
+No queue infrastructure exists in this application (confirmed through Phase 16 — see §1). Every phase that could plausibly have used one — Notification fan-out (Phase 15) and Message send/Notification fan-out (Phase 16) — instead performs synchronous, direct Eloquent writes inside the triggering request's own database transaction, per the resource-efficiency direction (§0): at ~100 employees, the largest realistic fan-out (e.g. a company-wide Announcement) is on the order of 100 rows, well within a single request's budget. Laravel's framework-default **database-backed** queue/cache/session drivers remain configured but unused for any actual job dispatch. This is the likely upgrade path if a future phase's genuine load (e.g. report generation, bulk import) demonstrates a real need — not a default to install speculatively.
 
 ## 7. File Storage
 
@@ -75,10 +71,9 @@ Per DEC-009 and DEC-010: state-changing workflows (leave approvals, incident pro
 
 These require a decision at the appropriate future phase, not now:
 
-- Real-time transport for messaging/notifications
 - Object storage provider for production
 
-*(Resolved: monorepo vs polyrepo — §2, DEC-011. Database engine — §1, DEC-016. Admin Backoffice implementation style — §1/§2, DEC-019. Primary key/public ID strategy — §12, DEC-017. Departments/Teams hierarchy shape — §16, DEC-029.)*
+*(Resolved: monorepo vs polyrepo — §2, DEC-011. Database engine — §1, DEC-016. Admin Backoffice implementation style — §1/§2, DEC-019. Primary key/public ID strategy — §12, DEC-017. Departments/Teams hierarchy shape — §16, DEC-029. Real-time transport for messaging/notifications — §5, DEC-039 (resolved as: none in V1, deliberately deferred).)*
 
 ## 10. Non-Goals for V1
 
@@ -316,3 +311,23 @@ Because this runs through Laravel's real Gate resolution, every existing authori
 **API:** `GET /me/notifications` (`?unread=1`, `?type=`), `GET /me/notifications/{public_id}`, `GET /me/notifications/unread-count`, `POST /me/notifications/{public_id}/read` (idempotent — preserves the original first `read_at`), `POST /me/notifications/read-all` (returns a bounded `updated_count`, never the full affected list). No create/update/delete endpoint exists anywhere — Notifications are produced only by internal application code.
 
 **Not introduced:** Flutter Notification screens, an Admin Notification CRUD UI, manually authored/arbitrary notifications, direct messaging/chat/comments/reactions/a social feed, notification preferences, any external delivery channel (FCM/APNs/Web Push/email/SMS/WhatsApp/Slack/Teams), digests, a reminder/escalation engine, per-device notification state, read receipts beyond `read_at`, an analytics/read-rate dashboard, automatic retention/cleanup jobs, queues/broadcasting infrastructure, a generic polymorphic event bus, new permissions, or Leave Management/Task event integration (not named by the governing roadmap line for this phase — a future roadmap note, not built speculatively).
+
+## 26. Messaging (confirmed, Phase 16)
+
+**Schema (DEC-039):** `conversations` (`App\Models\Conversation`) — `public_id` (ULID, DEC-017), `type` (`App\Enums\ConversationType`: `direct`/`group`/`project` — never client-supplied; each type is created only through its own dedicated endpoint), `name` (nullable, group-only), `project_id` (nullable, **unique**, `restrictOnDelete()` against `projects` — at most one conversation per Project), `owner_staff_id` (nullable, `restrictOnDelete()` against `staff`, group-only — the single permanent owner, no co-owners). `messages` (`App\Models\Message`) — `public_id` (ULID), `conversation_id` (`cascadeOnDelete()`), `sender_staff_id` (`restrictOnDelete()`), `body` (plain text, ≤4,000 chars). `conversation_members` (`App\Models\ConversationMember`, no `public_id` — mirrors `project_memberships`) — `conversation_id` (`cascadeOnDelete()`), `staff_id` (`restrictOnDelete()`), `last_read_message_id` (nullable, `nullOnDelete()` against `messages` — the sole read-position representation; unread count is always derived live via `ConversationMember::unreadCount()`, never stored).
+
+**Participant identity is Staff, not User** — a deliberate departure from Notifications' DEC-038 choice (see §25): Messaging is person-to-person organizational communication, chosen from the Staff Directory, not a raw User list. A User with no linked Staff record cannot use any Messaging endpoint (`403`, mirroring the domain-check pattern first established in Phase 9). A Staff member with no linked User may still be a conversation member — the Notification fan-out below silently skips them, exactly mirroring `NotifiesAnnouncementAudience`'s precedent.
+
+**Direct/group/project behavior:** Direct conversations are canonical per unique Staff pair (found via two `whereHas` membership clauses rather than a synthetic pair key, correct because a direct conversation is exactly two members by construction) — found-or-created, never duplicated, membership fixed for the conversation's life. Group conversations are ad hoc/named with a single permanent owner (the creator) — owner-only member add/remove, self-leave for any member, and an invariant (enforced as a single guard clause in `ConversationMemberController::destroy()`) preventing the owner from leaving/being removed while other members remain; once the owner is the sole remaining member, leaving is permitted (the group becomes empty but is never deleted — no conversation hard-delete endpoint exists). Project conversations are **lazily created** — no row exists until `ProjectConversationController::storeOrShow()` is first called by a current Project member — with membership derived exclusively from Project Membership (Phase 10) at that moment and kept synchronized afterward by a no-op-when-absent sync (`SyncsProjectConversationMembership`) wired into `ProjectMembershipController::store()`/`destroy()`; direct management of a project conversation's roster is rejected (`409`).
+
+**Messages are fully immutable after sending** — no edit, no soft-delete/tombstone, no hard-delete endpoint exists anywhere in this API; history is retained indefinitely (no retention/cleanup job).
+
+**Notification integration** (the roadmap's own "notification of new messages" dependency on Phase 15): `App\Http\Controllers\Api\V1\Messaging\Concerns\NotifiesConversationMembers` mirrors `NotifiesAnnouncementAudience`'s synchronous, transactional, no-queue shape exactly — extends the closed `NotificationType` (`MessageReceived`) and `NotificationSourceType` (`Conversation`) enums by one case each. Every sent message fans out one Notification per other current member with a linked User account, excluding the sender; unlike Announcement publish's structurally single-fire guard, messages are sent repeatedly, so — per the governing Phase 16 instructions — notifications are deliberately **never** collapsed/deduplicated across messages. Content is fixed and generic regardless of conversation type — never the message body, sender name, or conversation/group/project name.
+
+**Authorization is membership/ownership-only — the second real case (after Notifications) where Administrator's centralized `Gate::before` override (DEC-028) is never invoked at all:** `App\Http\Controllers\Api\V1\Messaging\Concerns\AuthorizesConversationAccess` never calls `$user->can(...)`; a conversation/message outside the requester's current membership is `404`, never `403`, for anyone, Administrator included. No `messages.view`/`messages.manage` permission exists. `StaffController::destroy()`/`ProjectController::destroy()` (Phases 7/10) are extended with the established `409`-then-`restrictOnDelete()` pattern for current conversation membership, group ownership, sent-message authorship, and Project conversation existence, respectively.
+
+**API:** `GET /conversations`, `GET /conversations/{public_id}`, `POST /conversations/direct`, `POST /conversations/group`, `POST /conversations/{public_id}/read`, `POST /conversations/{public_id}/members`, `DELETE /conversations/{public_id}/members/{staff_public_id}`, `GET`/`POST /conversations/{public_id}/messages`, `POST /projects/{public_id}/conversation` (lazy get-or-create — 201 when newly created, 200 when it already existed, via Laravel's own `wasRecentlyCreated`-driven `JsonResource` status calculation, not an explicit status-code branch).
+
+**Real-time transport:** none — see §5's resolution. Request/response only; a future client is expected to poll.
+
+**Not introduced:** Flutter mobile screens, attachments/files, message editing/deletion (sender or Administrator), message/conversation search, archive/mute, reactions, mentions, typing indicators, online/presence state, rich text/HTML, Team- or Department-linked conversations, visible per-message read receipts/"seen by," any Admin moderation/read-all capability, external push/email/SMS delivery, WebSockets/Reverb/Redis/queue/broadcasting infrastructure, retention/cleanup jobs, a generic polymorphic event bus, new permissions, or Messaging-specific audit logging (Audit Logging, DEC-009, remains an unbuilt, pre-existing, project-wide gap — not addressed here).

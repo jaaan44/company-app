@@ -274,6 +274,48 @@ class Staff extends Model
     }
 
     /**
+     * This staff member's current Messaging conversation memberships
+     * (Phase 16) — direct, group, and project conversations they
+     * currently belong to. Current roster only, no historical-period
+     * tracking (mirrors projectMemberships()). restrictOnDelete on
+     * conversation_members.staff_id backs the deletion guard in
+     * StaffController::destroy.
+     *
+     * @return HasMany<ConversationMember, $this>
+     */
+    public function conversationMemberships(): HasMany
+    {
+        return $this->hasMany(ConversationMember::class);
+    }
+
+    /**
+     * Group conversations this staff member owns (Phase 16) — the single
+     * distinguished owner, never a co-owner. restrictOnDelete on
+     * conversations.owner_staff_id backs the deletion guard in
+     * StaffController::destroy — preserved even after a group has been
+     * abandoned/emptied, since ownership is historical fact.
+     *
+     * @return HasMany<Conversation, $this>
+     */
+    public function ownedConversations(): HasMany
+    {
+        return $this->hasMany(Conversation::class, 'owner_staff_id');
+    }
+
+    /**
+     * Messages sent by this staff member (Phase 16) — retained
+     * indefinitely regardless of later conversation membership changes.
+     * restrictOnDelete on messages.sender_staff_id backs the deletion
+     * guard in StaffController::destroy.
+     *
+     * @return HasMany<Message, $this>
+     */
+    public function sentMessages(): HasMany
+    {
+        return $this->hasMany(Message::class, 'sender_staff_id');
+    }
+
+    /**
      * Whether assigning $proposedManagerId as this staff member's manager
      * would create a reporting cycle — i.e. $proposedManagerId's own
      * manager chain eventually loops back to this staff member. Walks a

@@ -10,6 +10,10 @@ use App\Http\Controllers\Api\V1\Leave\LeaveBalanceController;
 use App\Http\Controllers\Api\V1\Leave\LeaveRequestController;
 use App\Http\Controllers\Api\V1\Leave\LeaveTypeController;
 use App\Http\Controllers\Api\V1\Leave\MyLeaveRequestController;
+use App\Http\Controllers\Api\V1\Messaging\ConversationController;
+use App\Http\Controllers\Api\V1\Messaging\ConversationMemberController;
+use App\Http\Controllers\Api\V1\Messaging\MessageController;
+use App\Http\Controllers\Api\V1\Messaging\ProjectConversationController;
 use App\Http\Controllers\Api\V1\Notifications\NotificationController;
 use App\Http\Controllers\Api\V1\Organization\DepartmentController;
 use App\Http\Controllers\Api\V1\Organization\PositionController;
@@ -365,4 +369,47 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
     Route::post('me/notifications/read-all', [NotificationController::class, 'myMarkAllRead'])->name('me.notifications.read-all');
     Route::get('me/notifications/{notification:public_id}', [NotificationController::class, 'myShow'])->name('me.notifications.show');
     Route::post('me/notifications/{notification:public_id}/read', [NotificationController::class, 'myMarkRead'])->name('me.notifications.read');
+});
+
+// Messaging (Phase 16): direct, group, and project conversations —
+// deliberately lightweight (DEC-007), not a chat-platform. Every action
+// requires the authenticated User to have a linked Staff record
+// (AuthorizesConversationAccess) — participants are identified by Staff,
+// not User. No permission gates any Messaging endpoint: visibility is
+// membership-only, enforced entirely in-controller, so Administrator's
+// usual Gate::before override never grants implicit read-all access (see
+// 05_SECURITY_MODEL.md's Messaging Privacy section). A conversation the
+// requester isn't currently a member of is 404, not 403. Literal routes
+// (direct, group) are registered before the {conversation}-bound routes
+// so they aren't swallowed by route-model binding, mirroring
+// Notifications' identical precedent.
+Route::middleware(['auth:sanctum', 'account.active'])->prefix('conversations')->name('conversations.')->group(function (): void {
+    Route::get('/', [ConversationController::class, 'index'])->name('index');
+    Route::post('direct', [ConversationController::class, 'storeDirect'])->name('store-direct');
+    Route::post('group', [ConversationController::class, 'storeGroup'])->name('store-group');
+
+    Route::get('{conversation:public_id}', [ConversationController::class, 'show'])->name('show');
+    Route::post('{conversation:public_id}/read', [ConversationController::class, 'markRead'])->name('read');
+
+    // Group conversation membership only — direct membership is fixed;
+    // project conversation membership is managed only through Project
+    // Membership (see ProjectMembershipController). withoutScopedBindings
+    // mirrors Phase 10's identical two-consecutive-Eloquent-parameter
+    // fix (Conversation has no staff() relation for Laravel to guess).
+    Route::post('{conversation:public_id}/members', [ConversationMemberController::class, 'store'])->name('members.store');
+    Route::delete('{conversation:public_id}/members/{staff:public_id}', [ConversationMemberController::class, 'destroy'])
+        ->name('members.destroy')->withoutScopedBindings();
+
+    Route::get('{conversation:public_id}/messages', [MessageController::class, 'index'])->name('messages.index');
+    Route::post('{conversation:public_id}/messages', [MessageController::class, 'store'])->name('messages.store');
+});
+
+// Project conversation lazy get-or-create entry point (Phase 16) — no
+// conversation row exists for a Project until this is called for the
+// first time by a current Project member; membership then derives
+// exclusively from Project Membership. Visibility requires current
+// Project membership, never merely `projects.view`.
+Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
+    Route::post('projects/{project:public_id}/conversation', [ProjectConversationController::class, 'storeOrShow'])
+        ->name('projects.conversation');
 });
