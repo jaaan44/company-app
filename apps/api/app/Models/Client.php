@@ -98,4 +98,17 @@ class Client extends Model
     {
         return $this->hasMany(ServiceReport::class);
     }
+
+    /**
+     * Incident Reports linked to this Client (Phase 19) — optional; an
+     * Incident Report may be entirely internal. restrictOnDelete on
+     * incident_reports.client_id backs the deletion guard in
+     * ClientController::destroy.
+     *
+     * @return HasMany<IncidentReport, $this>
+     */
+    public function incidentReports(): HasMany
+    {
+        return $this->hasMany(IncidentReport::class);
+    }
 }

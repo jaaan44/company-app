@@ -201,6 +201,24 @@ class StaffController extends Controller
             ], 409);
         }
 
+        if ($staff->reportedIncidentReports()->exists()) {
+            return response()->json([
+                'message' => 'This staff member still has reported incident reports and cannot be deleted.',
+            ], 409);
+        }
+
+        if ($staff->assignedIncidentReports()->exists()) {
+            return response()->json([
+                'message' => 'This staff member is still assigned to incident reports and cannot be deleted.',
+            ], 409);
+        }
+
+        if ($staff->incidentReportParticipations()->exists()) {
+            return response()->json([
+                'message' => 'This staff member still participates in incident reports and cannot be deleted.',
+            ], 409);
+        }
+
         $staff->delete();
 
         return response()->json(status: 204);

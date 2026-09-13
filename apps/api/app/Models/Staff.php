@@ -374,6 +374,47 @@ class Staff extends Model
     }
 
     /**
+     * Incident Reports this staff member reported (Phase 19) — a real,
+     * standing business-authority relationship, immutable after
+     * creation. restrictOnDelete on incident_reports.reporter_staff_id
+     * backs the deletion guard in StaffController::destroy.
+     *
+     * @return HasMany<IncidentReport, $this>
+     */
+    public function reportedIncidentReports(): HasMany
+    {
+        return $this->hasMany(IncidentReport::class, 'reporter_staff_id');
+    }
+
+    /**
+     * Incident Reports this staff member is currently assigned to
+     * investigate (Phase 19). restrictOnDelete on
+     * incident_reports.assigned_to_staff_id backs the deletion guard in
+     * StaffController::destroy.
+     *
+     * @return HasMany<IncidentReport, $this>
+     */
+    public function assignedIncidentReports(): HasMany
+    {
+        return $this->hasMany(IncidentReport::class, 'assigned_to_staff_id');
+    }
+
+    /**
+     * Incident Reports this staff member participates in, beyond any
+     * they reported or are assigned to themselves (Phase 19) —
+     * participation carries no role/status hierarchy or workflow-
+     * management authority. restrictOnDelete on
+     * incident_report_participants.staff_id backs the deletion guard in
+     * StaffController::destroy.
+     *
+     * @return BelongsToMany<IncidentReport, $this>
+     */
+    public function incidentReportParticipations(): BelongsToMany
+    {
+        return $this->belongsToMany(IncidentReport::class, 'incident_report_participants');
+    }
+
+    /**
      * Whether assigning $proposedManagerId as this staff member's manager
      * would create a reporting cycle — i.e. $proposedManagerId's own
      * manager chain eventually loops back to this staff member. Walks a

@@ -154,6 +154,21 @@ class Project extends Model
     }
 
     /**
+     * Incident Reports linked to this Project (Phase 19) — optional; an
+     * Incident Report may be Project-less. restrictOnDelete on
+     * incident_reports.project_id backs the deletion guard in
+     * ProjectController::destroy. Note: Project Lead gains no automatic
+     * Incident Report visibility/authority merely from this link
+     * (deliberately unlike Service Reports — see DEC-042).
+     *
+     * @return HasMany<IncidentReport, $this>
+     */
+    public function incidentReports(): HasMany
+    {
+        return $this->hasMany(IncidentReport::class);
+    }
+
+    /**
      * This Project's single conversation (Phase 16), if one has been
      * created — lazily created on first use of the project messaging
      * surface, never eagerly for every Project. Membership is derived
