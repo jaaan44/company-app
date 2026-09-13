@@ -62,8 +62,10 @@ class ServiceReportReportTest extends TestCase
         ServiceReport::factory()->count(5)->create();
 
         $this->getJson('/api/v1/reports/service-reports')->assertOk()->assertJsonCount(0, 'data');
-        $this->get('/api/v1/reports/service-reports/export')->assertOk()->assertSee('Public ID', false);
-        $this->assertSame(1, substr_count($this->get('/api/v1/reports/service-reports/export')->streamedContent(), "\n")); // header only
+
+        $csv = $this->get('/api/v1/reports/service-reports/export')->assertOk()->streamedContent();
+        $this->assertStringContainsString('Public ID', $csv);
+        $this->assertSame(1, substr_count($csv, "\n")); // header only
     }
 
     public function test_a_project_lead_sees_service_reports_linked_to_their_project(): void
@@ -131,7 +133,7 @@ class ServiceReportReportTest extends TestCase
     public function test_csv_export_neutralizes_formula_injection(): void
     {
         $this->actingAsAdministrator();
-        ServiceReport::factory()->create(['work_performed' => "=cmd"]);
+        ServiceReport::factory()->create(['work_performed' => '=cmd']);
 
         $csv = $this->get('/api/v1/reports/service-reports/export')->streamedContent();
 

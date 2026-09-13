@@ -3,7 +3,6 @@
 namespace Tests\Feature\Api\V1\Reports;
 
 use App\Models\Project;
-use App\Models\ProjectMembership;
 use App\Models\Staff;
 use App\Models\Task;
 use App\Models\User;
@@ -125,7 +124,7 @@ class TaskReportTest extends TestCase
     public function test_csv_export_neutralizes_formula_injection(): void
     {
         $this->actingAsAdministrator();
-        Task::factory()->create(['title' => "=HYPERLINK(\"http://evil\")"]);
+        Task::factory()->create(['title' => '=HYPERLINK("http://evil")']);
 
         $csv = $this->get('/api/v1/reports/tasks/export')->streamedContent();
 

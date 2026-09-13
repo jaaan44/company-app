@@ -279,9 +279,8 @@ class DashboardTest extends TestCase
         WorkLog::factory()->create(['work_date' => now()->toDateString(), 'duration_minutes' => 60]);
         WorkLog::factory()->create(['work_date' => now()->subMonths(2)->toDateString(), 'duration_minutes' => 999]); // outside period
 
-        $this->getJson('/api/v1/dashboard')
-            ->assertOk()
-            ->assertJsonPath('data.work_logs.total_hours', 3.0);
+        $response = $this->getJson('/api/v1/dashboard')->assertOk();
+        $this->assertEqualsWithDelta(3.0, $response->json('data.work_logs.total_hours'), 0.001);
     }
 
     public function test_an_ordinary_staff_member_sees_only_their_own_work_log_hours(): void
@@ -306,9 +305,8 @@ class DashboardTest extends TestCase
         WorkLog::factory()->create(['staff_id' => $report->id, 'work_date' => now()->toDateString(), 'duration_minutes' => 60]);
         WorkLog::factory()->create(['staff_id' => $stranger->id, 'work_date' => now()->toDateString(), 'duration_minutes' => 600]);
 
-        $this->getJson('/api/v1/dashboard')
-            ->assertOk()
-            ->assertJsonPath('data.work_logs.total_hours', 1.0);
+        $response = $this->getJson('/api/v1/dashboard')->assertOk();
+        $this->assertEqualsWithDelta(1.0, $response->json('data.work_logs.total_hours'), 0.001);
     }
 
     // --- Leave ------------------------------------------------------------
@@ -383,7 +381,12 @@ class DashboardTest extends TestCase
         IncidentReport::factory()->create(['occurred_at' => now(), 'severity' => 'high']); // reported -> open
         IncidentReport::factory()->underInvestigation()->create(['occurred_at' => now(), 'severity' => 'critical']); // open
         IncidentReport::factory()->resolved()->create(['occurred_at' => now(), 'severity' => 'low']); // NOT open
-        IncidentReport::factory()->create(['occurred_at' => now()->subMonths(2), 'severity' => 'high']); // outside period
+        // Outside the reporting period but still resolved (not open) — this
+        // isolates the assertion below to proving by_severity_in_period
+        // excludes it, without also perturbing open_count (which is
+        // point-in-time and would otherwise count it, since it happened
+        // outside the period but is still unresolved in a different test).
+        IncidentReport::factory()->resolved()->create(['occurred_at' => now()->subMonths(2), 'severity' => 'high']);
 
         $response = $this->getJson('/api/v1/dashboard')->assertOk();
 
@@ -391,6 +394,17 @@ class DashboardTest extends TestCase
         $response->assertJsonPath('data.incident_reports.by_severity_in_period.high', 1);
         $response->assertJsonPath('data.incident_reports.by_severity_in_period.critical', 1);
         $response->assertJsonPath('data.incident_reports.by_severity_in_period.low', 1);
+    }
+
+    public function test_incident_open_count_is_point_in_time_and_includes_open_incidents_outside_the_period(): void
+    {
+        $this->actingAsAdministrator();
+
+        IncidentReport::factory()->create(['occurred_at' => now()->subMonths(6)]); // reported, long ago -> still open
+
+        $this->getJson('/api/v1/dashboard?from=2020-01-01&to=2020-01-31')
+            ->assertOk()
+            ->assertJsonPath('data.incident_reports.open_count', 1);
     }
 
     public function test_a_project_lead_gains_no_incident_report_visibility_merely_from_the_linked_project(): void

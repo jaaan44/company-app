@@ -17,7 +17,9 @@ use Illuminate\Support\Facades\DB;
 final class EnumStatusCounts
 {
     /**
-     * @param  Builder<Model>  $query
+     * @template TModel of Model
+     *
+     * @param  Builder<TModel>  $query
      * @param  array<int, \BackedEnum>  $cases
      * @return array<string, int>
      */

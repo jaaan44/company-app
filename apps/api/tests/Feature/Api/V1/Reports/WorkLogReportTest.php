@@ -127,7 +127,9 @@ class WorkLogReportTest extends TestCase
 
         $csv = $this->get('/api/v1/reports/work-logs/export')->assertOk()->streamedContent();
 
-        $this->assertStringContainsString('Public ID,Staff Public ID', $csv);
+        $headerLine = strstr(ltrim($csv, "\xEF\xBB\xBF"), "\n", true);
+        $this->assertSame('Public ID', str_getcsv($headerLine)[0]);
+        $this->assertSame('Staff Public ID', str_getcsv($headerLine)[1]);
         $this->assertStringContainsString($mine->public_id, $csv);
         $this->assertStringContainsString('Grace', $csv);
         $this->assertSame(2, substr_count($csv, "\n")); // header + exactly one data row

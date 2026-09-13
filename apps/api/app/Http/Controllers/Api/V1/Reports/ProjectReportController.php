@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Reports;
 
+use App\Enums\ProjectStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ProjectResource;
 use App\Models\Client;
@@ -13,7 +14,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Validation\Rules\Enum;
-use App\Enums\ProjectStatus;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**

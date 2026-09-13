@@ -106,7 +106,11 @@ class StaffDirectoryReportTest extends TestCase
         $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
 
         $csv = $response->streamedContent();
-        $this->assertStringContainsString('Public ID,Employee Number,First Name,Last Name,Status', $csv);
+        $headerLine = strstr(ltrim($csv, "\xEF\xBB\xBF"), "\n", true);
+        $this->assertSame(
+            ['Public ID', 'Employee Number', 'First Name', 'Last Name', 'Status', 'Department', 'Team', 'Position', 'Manager', 'Hire Date'],
+            str_getcsv($headerLine),
+        );
         $this->assertStringContainsString($staff->public_id, $csv);
         $this->assertStringContainsString('Ada', $csv);
         $this->assertStringNotContainsString((string) $staff->id.',Ada', $csv);
@@ -127,7 +131,7 @@ class StaffDirectoryReportTest extends TestCase
 
         $csv = $this->get('/api/v1/reports/staff/export')->streamedContent();
 
-        $this->assertStringNotContainsString(",=cmd", $csv);
+        $this->assertStringNotContainsString(',=cmd', $csv);
         $this->assertStringContainsString("'=cmd", $csv);
     }
 }
