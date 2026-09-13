@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api\V1\Tasks;
 
 use App\Enums\TaskStatus;
+use App\Models\IncidentReport;
 use App\Models\Project;
 use App\Models\ProjectMembership;
 use App\Models\ServiceReport;
@@ -179,6 +180,17 @@ class TaskTest extends TestCase
         $this->actingAsAdministrator();
         $task = Task::factory()->create();
         ServiceReport::factory()->create(['task_id' => $task->id]);
+
+        $this->deleteJson("/api/v1/tasks/{$task->public_id}")->assertStatus(409);
+
+        $this->assertDatabaseHas('tasks', ['id' => $task->id]);
+    }
+
+    public function test_deleting_a_task_with_incident_reports_is_rejected(): void
+    {
+        $this->actingAsAdministrator();
+        $task = Task::factory()->create();
+        IncidentReport::factory()->create(['task_id' => $task->id]);
 
         $this->deleteJson("/api/v1/tasks/{$task->public_id}")->assertStatus(409);
 

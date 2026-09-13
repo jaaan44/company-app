@@ -11,23 +11,26 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
 /**
- * A single uploaded file's metadata (Phase 18 — Service Reports, DEC-041)
- * — the shared attachment infrastructure `03_DATABASE_MODEL.md` §1
- * deferred at Phase 0, now built because Service Reports requires it and
- * Phase 19 (Incident Reports) is the concrete next consumer. The actual
- * file bytes live on a Laravel filesystem disk (see
- * App\Support\Attachments\AttachmentDisk), never in this table — this
- * row is metadata plus a storage pointer only.
+ * A single uploaded file's metadata (Phase 18 — Service Reports, DEC-041;
+ * extended in Phase 19 — Incident Reports, DEC-042) — the shared
+ * attachment infrastructure `03_DATABASE_MODEL.md` §1 deferred at Phase
+ * 0, now used by two owner types. The actual file bytes live on a
+ * Laravel filesystem disk (see App\Support\Attachments\AttachmentDisk),
+ * never in this table — this row is metadata plus a storage pointer
+ * only.
  *
  * `owner_type` is a typed, non-polymorphic discriminator (never a raw
  * PHP class name / Laravel `attachable_type`), paired with a genuine
- * foreign key per owner type — `service_report_id` today. See
- * docs/phases/V1_PHASE_18_DEFINITION.md's Attachment Architecture.
+ * foreign key per owner type — `service_report_id` or
+ * `incident_report_id` — exactly one of which is populated per row. See
+ * docs/phases/V1_PHASE_18_DEFINITION.md's Attachment Architecture and
+ * DEC-042's extension of it.
  *
  * @property int $id
  * @property string $public_id
  * @property AttachmentOwnerType $owner_type
- * @property int $service_report_id
+ * @property int|null $service_report_id
+ * @property int|null $incident_report_id
  * @property string $original_filename
  * @property string $storage_disk
  * @property string $storage_path
@@ -36,8 +39,8 @@ use Illuminate\Support\Str;
  * @property int|null $uploaded_by_user_id
  */
 #[Fillable([
-    'owner_type', 'service_report_id', 'original_filename', 'storage_disk',
-    'storage_path', 'mime_type', 'size_bytes', 'uploaded_by_user_id',
+    'owner_type', 'service_report_id', 'incident_report_id', 'original_filename',
+    'storage_disk', 'storage_path', 'mime_type', 'size_bytes', 'uploaded_by_user_id',
 ])]
 class Attachment extends Model
 {
@@ -71,6 +74,14 @@ class Attachment extends Model
     public function serviceReport(): BelongsTo
     {
         return $this->belongsTo(ServiceReport::class);
+    }
+
+    /**
+     * @return BelongsTo<IncidentReport, $this>
+     */
+    public function incidentReport(): BelongsTo
+    {
+        return $this->belongsTo(IncidentReport::class);
     }
 
     /**

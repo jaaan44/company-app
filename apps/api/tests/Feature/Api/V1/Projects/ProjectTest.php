@@ -4,6 +4,7 @@ namespace Tests\Feature\Api\V1\Projects;
 
 use App\Enums\ProjectStatus;
 use App\Models\Client;
+use App\Models\IncidentReport;
 use App\Models\Project;
 use App\Models\ProjectMembership;
 use App\Models\ServiceReport;
@@ -158,6 +159,17 @@ class ProjectTest extends TestCase
         $this->actingAsAdministrator();
         $project = Project::factory()->create();
         ServiceReport::factory()->create(['project_id' => $project->id]);
+
+        $this->deleteJson("/api/v1/projects/{$project->public_id}")->assertStatus(409);
+
+        $this->assertDatabaseHas('projects', ['id' => $project->id]);
+    }
+
+    public function test_deleting_a_project_with_incident_reports_is_rejected(): void
+    {
+        $this->actingAsAdministrator();
+        $project = Project::factory()->create();
+        IncidentReport::factory()->create(['project_id' => $project->id]);
 
         $this->deleteJson("/api/v1/projects/{$project->public_id}")->assertStatus(409);
 

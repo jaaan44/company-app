@@ -171,6 +171,12 @@ class ProjectController extends Controller
             ], 409);
         }
 
+        if ($project->incidentReports()->exists()) {
+            return response()->json([
+                'message' => 'This project still has incident reports and cannot be deleted.',
+            ], 409);
+        }
+
         $project->delete();
 
         return response()->json(status: 204);

@@ -124,4 +124,16 @@ class Task extends Model
     {
         return $this->hasMany(ServiceReport::class);
     }
+
+    /**
+     * Incident Reports referencing this Task (Phase 19) — optional;
+     * restrictOnDelete on incident_reports.task_id backs the deletion
+     * guard in TaskController::destroy.
+     *
+     * @return HasMany<IncidentReport, $this>
+     */
+    public function incidentReports(): HasMany
+    {
+        return $this->hasMany(IncidentReport::class);
+    }
 }

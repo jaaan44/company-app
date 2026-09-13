@@ -19,12 +19,15 @@ use Illuminate\Support\Str;
 final class AttachmentStorage
 {
     /**
-     * Stores $file under a directory scoped to the owning Service
-     * Report's public_id and returns the relative path actually written
-     * — the caller persists this on the Attachment row, never the
-     * original filename.
+     * Stores $file under a directory scoped to the owning record's
+     * public_id and returns the relative path actually written — the
+     * caller persists this on the Attachment row, never the original
+     * filename. $ownerTypeSegment namespaces the owning module's own
+     * directory ('service-reports' by default, unchanged from Phase 18;
+     * Phase 19 passes 'incident-reports') — every existing Service
+     * Report attachment call site and stored path is unaffected.
      */
-    public function store(UploadedFile $file, string $ownerDirectory): string
+    public function store(UploadedFile $file, string $ownerDirectory, string $ownerTypeSegment = 'service-reports'): string
     {
         $filename = (string) Str::ulid();
 
@@ -32,7 +35,7 @@ final class AttachmentStorage
             $filename .= '.'.Str::lower($extension);
         }
 
-        $directory = "service-reports/{$ownerDirectory}";
+        $directory = "{$ownerTypeSegment}/{$ownerDirectory}";
 
         $path = $file->storeAs($directory, $filename, ['disk' => AttachmentDisk::name()]);
 

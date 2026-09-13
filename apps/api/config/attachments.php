@@ -8,8 +8,10 @@ return [
     |--------------------------------------------------------------------------
     |
     | Phase 18 (Service Reports, DEC-041) introduces the first file-upload
-    | capability in this application. Every attachment is stored through
-    | Laravel's filesystem abstraction on this single named disk — never
+    | capability in this application; Phase 19 (Incident Reports,
+    | DEC-042) is the second authorized consumer of the same
+    | infrastructure. Every attachment is stored through Laravel's
+    | filesystem abstraction on this single named disk — never
     | referenced directly as 'local'/'s3' elsewhere in application code
     | (see App\Support\Attachments\AttachmentDisk, the single point of
     | access, mirroring App\Support\CompanyTimezone's Phase 17 precedent).

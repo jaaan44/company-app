@@ -4,6 +4,7 @@ namespace Tests\Feature\Api\V1\Staff;
 
 use App\Enums\StaffStatus;
 use App\Models\Department;
+use App\Models\IncidentReport;
 use App\Models\Position;
 use App\Models\ProjectMembership;
 use App\Models\ServiceReport;
@@ -232,6 +233,40 @@ class StaffTest extends TestCase
         $this->actingAsAdministrator();
         $staff = Staff::factory()->create();
         $report = ServiceReport::factory()->create();
+        $report->participants()->attach($staff->id);
+
+        $this->deleteJson("/api/v1/staff/{$staff->public_id}")->assertStatus(409);
+
+        $this->assertDatabaseHas('staff', ['id' => $staff->id]);
+    }
+
+    public function test_deleting_a_staff_member_who_reported_an_incident_is_rejected(): void
+    {
+        $this->actingAsAdministrator();
+        $staff = Staff::factory()->create();
+        IncidentReport::factory()->create(['reporter_staff_id' => $staff->id]);
+
+        $this->deleteJson("/api/v1/staff/{$staff->public_id}")->assertStatus(409);
+
+        $this->assertDatabaseHas('staff', ['id' => $staff->id]);
+    }
+
+    public function test_deleting_a_staff_member_assigned_to_an_incident_is_rejected(): void
+    {
+        $this->actingAsAdministrator();
+        $staff = Staff::factory()->create();
+        IncidentReport::factory()->create(['assigned_to_staff_id' => $staff->id]);
+
+        $this->deleteJson("/api/v1/staff/{$staff->public_id}")->assertStatus(409);
+
+        $this->assertDatabaseHas('staff', ['id' => $staff->id]);
+    }
+
+    public function test_deleting_a_staff_member_who_participates_in_an_incident_report_is_rejected(): void
+    {
+        $this->actingAsAdministrator();
+        $staff = Staff::factory()->create();
+        $report = IncidentReport::factory()->create();
         $report->participants()->attach($staff->id);
 
         $this->deleteJson("/api/v1/staff/{$staff->public_id}")->assertStatus(409);

@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Clients\ClientController;
 use App\Http\Controllers\Api\V1\Clients\ContactController;
 use App\Http\Controllers\Api\V1\HealthController;
+use App\Http\Controllers\Api\V1\IncidentReports\IncidentReportAttachmentController;
+use App\Http\Controllers\Api\V1\IncidentReports\IncidentReportController;
 use App\Http\Controllers\Api\V1\Leave\LeaveBalanceController;
 use App\Http\Controllers\Api\V1\Leave\LeaveRequestController;
 use App\Http\Controllers\Api\V1\Leave\LeaveTypeController;
@@ -500,4 +502,45 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
         ->name('service-reports.attachments.download')->withoutScopedBindings();
     Route::delete('service-reports/{serviceReport:public_id}/attachments/{attachment:public_id}', [ServiceReportAttachmentController::class, 'destroy'])
         ->name('service-reports.attachments.destroy')->withoutScopedBindings();
+});
+
+// Incident Reports (Phase 19): a record of an operational incident,
+// deliberately narrower in visibility than Service Reports (DEC-042) —
+// Client/Project/Task are all optional (an Incident Report may be
+// entirely internal), and a linked Project's Project Lead gains no
+// automatic visibility/authority at all (unlike Service Reports). A
+// flat, top-level resource — no `can:<permission>` route middleware
+// anywhere; visibility (reporter, assigned investigator, participants,
+// the reporter's current Manager, Administrator) and every workflow/
+// assignment authority are resolved entirely in-controller
+// (App\Http\Controllers\Api\V1\IncidentReports\Concerns\
+// AuthorizesIncidentReportAccess), per the same "no new permission"
+// discipline Service Reports established (see docs/DECISIONS.md
+// DEC-042). The workflow (reported -> under_investigation -> resolved ->
+// closed, with an explicit reopen action) is entirely explicit action
+// endpoints, never a generic status PATCH; assignment/reassignment are
+// likewise dedicated endpoints (never the generic PATCH) so every change
+// is captured in incident_report_actions. Attachment routes are the
+// second authorized consumer of the shared attachment infrastructure
+// introduced for Service Reports (Phase 18, DEC-041).
+Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
+    Route::get('incident-reports', [IncidentReportController::class, 'index'])->name('incident-reports.index');
+    Route::post('incident-reports', [IncidentReportController::class, 'store'])->name('incident-reports.store');
+    Route::get('incident-reports/{incidentReport:public_id}', [IncidentReportController::class, 'show'])->name('incident-reports.show');
+    Route::match(['put', 'patch'], 'incident-reports/{incidentReport:public_id}', [IncidentReportController::class, 'update'])->name('incident-reports.update');
+    Route::delete('incident-reports/{incidentReport:public_id}', [IncidentReportController::class, 'destroy'])->name('incident-reports.destroy');
+
+    Route::post('incident-reports/{incidentReport:public_id}/assign', [IncidentReportController::class, 'assign'])->name('incident-reports.assign');
+    Route::post('incident-reports/{incidentReport:public_id}/reassign', [IncidentReportController::class, 'reassign'])->name('incident-reports.reassign');
+    Route::post('incident-reports/{incidentReport:public_id}/start-investigation', [IncidentReportController::class, 'startInvestigation'])->name('incident-reports.start-investigation');
+    Route::post('incident-reports/{incidentReport:public_id}/resolve', [IncidentReportController::class, 'resolve'])->name('incident-reports.resolve');
+    Route::post('incident-reports/{incidentReport:public_id}/close', [IncidentReportController::class, 'close'])->name('incident-reports.close');
+    Route::post('incident-reports/{incidentReport:public_id}/reopen', [IncidentReportController::class, 'reopen'])->name('incident-reports.reopen');
+
+    Route::post('incident-reports/{incidentReport:public_id}/attachments', [IncidentReportAttachmentController::class, 'store'])
+        ->name('incident-reports.attachments.store');
+    Route::get('incident-reports/{incidentReport:public_id}/attachments/{attachment:public_id}/download', [IncidentReportAttachmentController::class, 'download'])
+        ->name('incident-reports.attachments.download')->withoutScopedBindings();
+    Route::delete('incident-reports/{incidentReport:public_id}/attachments/{attachment:public_id}', [IncidentReportAttachmentController::class, 'destroy'])
+        ->name('incident-reports.attachments.destroy')->withoutScopedBindings();
 });
