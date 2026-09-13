@@ -413,6 +413,136 @@ class IncidentReportLifecycleTest extends TestCase
             ->assertStatus(409);
     }
 
+    public function test_the_reporters_manager_can_reassign_while_under_investigation(): void
+    {
+        [$managerUser, , $reporterStaff] = $this->managerWithReport();
+        $originalInvestigator = Staff::factory()->create();
+        $newInvestigator = Staff::factory()->create();
+        $report = IncidentReport::factory()->create([
+            'reporter_staff_id' => $reporterStaff->id,
+            'assigned_to_staff_id' => $originalInvestigator->id,
+            'status' => IncidentReportStatus::UnderInvestigation,
+        ]);
+
+        Sanctum::actingAs($managerUser);
+        $this->postJson("/api/v1/incident-reports/{$report->public_id}/reassign", ['assigned_to_staff_id' => $newInvestigator->public_id])
+            ->assertOk()->assertJson(['data' => ['assigned_to' => ['public_id' => $newInvestigator->public_id]]]);
+    }
+
+    public function test_administrator_can_reassign_while_under_investigation(): void
+    {
+        $this->actingAsAdministrator();
+        $newInvestigator = Staff::factory()->create();
+        $report = IncidentReport::factory()->underInvestigation()->create();
+
+        $this->postJson("/api/v1/incident-reports/{$report->public_id}/reassign", ['assigned_to_staff_id' => $newInvestigator->public_id])
+            ->assertOk();
+    }
+
+    // --- Assignment immutability once resolved/closed (final-state lock) ----
+    //
+    // assign()/reassign() are content-mutation operations exactly like the
+    // generic update endpoint: mutable only while `reported`/
+    // `under_investigation`, frozen once `resolved`/`closed` for every
+    // actor including Administrator, and restored only via the explicit
+    // `reopen` action (docs/phases/V1_PHASE_19_DEFINITION.md's Assignment
+    // and Editing Authority, DEC-042).
+
+    public function test_assign_is_rejected_with_409_when_resolved(): void
+    {
+        $this->actingAsAdministrator();
+        $report = IncidentReport::factory()->resolved()->create(['assigned_to_staff_id' => null]);
+        $investigator = Staff::factory()->create();
+
+        $this->postJson("/api/v1/incident-reports/{$report->public_id}/assign", ['assigned_to_staff_id' => $investigator->public_id])
+            ->assertStatus(409);
+
+        $this->assertDatabaseHas('incident_reports', ['id' => $report->id, 'assigned_to_staff_id' => null]);
+    }
+
+    public function test_assign_is_rejected_with_409_when_closed(): void
+    {
+        $this->actingAsAdministrator();
+        $report = IncidentReport::factory()->closed()->create(['assigned_to_staff_id' => null]);
+        $investigator = Staff::factory()->create();
+
+        $this->postJson("/api/v1/incident-reports/{$report->public_id}/assign", ['assigned_to_staff_id' => $investigator->public_id])
+            ->assertStatus(409);
+
+        $this->assertDatabaseHas('incident_reports', ['id' => $report->id, 'assigned_to_staff_id' => null]);
+    }
+
+    public function test_reassign_is_rejected_with_409_when_closed(): void
+    {
+        $this->actingAsAdministrator();
+        $report = IncidentReport::factory()->closed()->create();
+        $originalAssigneeId = $report->assigned_to_staff_id;
+        $newInvestigator = Staff::factory()->create();
+
+        $this->postJson("/api/v1/incident-reports/{$report->public_id}/reassign", ['assigned_to_staff_id' => $newInvestigator->public_id])
+            ->assertStatus(409);
+
+        $this->assertDatabaseHas('incident_reports', ['id' => $report->id, 'assigned_to_staff_id' => $originalAssigneeId]);
+    }
+
+    public function test_administrator_receives_the_same_409_reassigning_a_resolved_incident(): void
+    {
+        $this->actingAsAdministrator();
+        $report = IncidentReport::factory()->resolved()->create();
+        $newInvestigator = Staff::factory()->create();
+
+        $this->postJson("/api/v1/incident-reports/{$report->public_id}/reassign", ['assigned_to_staff_id' => $newInvestigator->public_id])
+            ->assertStatus(409);
+    }
+
+    public function test_administrator_receives_the_same_409_reassigning_a_closed_incident(): void
+    {
+        $this->actingAsAdministrator();
+        $report = IncidentReport::factory()->closed()->create();
+        $newInvestigator = Staff::factory()->create();
+
+        $this->postJson("/api/v1/incident-reports/{$report->public_id}/reassign", ['assigned_to_staff_id' => $newInvestigator->public_id])
+            ->assertStatus(409);
+    }
+
+    public function test_administrator_receives_the_same_409_assigning_a_closed_unassigned_incident(): void
+    {
+        $this->actingAsAdministrator();
+        $report = IncidentReport::factory()->closed()->create(['assigned_to_staff_id' => null]);
+        $investigator = Staff::factory()->create();
+
+        $this->postJson("/api/v1/incident-reports/{$report->public_id}/assign", ['assigned_to_staff_id' => $investigator->public_id])
+            ->assertStatus(409);
+    }
+
+    public function test_reassignment_succeeds_again_after_reopening_a_resolved_incident(): void
+    {
+        $this->actingAsAdministrator();
+        $report = IncidentReport::factory()->resolved()->create();
+        $newInvestigator = Staff::factory()->create();
+
+        $this->postJson("/api/v1/incident-reports/{$report->public_id}/reopen")->assertOk();
+
+        $this->postJson("/api/v1/incident-reports/{$report->public_id}/reassign", ['assigned_to_staff_id' => $newInvestigator->public_id])
+            ->assertOk()->assertJson(['data' => ['assigned_to' => ['public_id' => $newInvestigator->public_id]]]);
+
+        $this->assertDatabaseHas('incident_report_actions', ['incident_report_id' => $report->id, 'action' => 'reassigned']);
+    }
+
+    public function test_reassignment_succeeds_again_after_reopening_a_closed_incident(): void
+    {
+        $this->actingAsAdministrator();
+        $report = IncidentReport::factory()->closed()->create();
+        $newInvestigator = Staff::factory()->create();
+
+        $this->postJson("/api/v1/incident-reports/{$report->public_id}/reopen")->assertOk();
+
+        $this->postJson("/api/v1/incident-reports/{$report->public_id}/reassign", ['assigned_to_staff_id' => $newInvestigator->public_id])
+            ->assertOk()->assertJson(['data' => ['assigned_to' => ['public_id' => $newInvestigator->public_id]]]);
+
+        $this->assertDatabaseHas('incident_report_actions', ['incident_report_id' => $report->id, 'action' => 'reassigned']);
+    }
+
     // --- Start investigation --------------------------------------------
 
     public function test_starting_investigation_requires_an_assignee(): void

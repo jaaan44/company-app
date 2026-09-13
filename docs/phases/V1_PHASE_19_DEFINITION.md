@@ -139,6 +139,23 @@ reported unassigned). It is mutated only via:
   investigation-management authority (which the assigned investigator
   themselves also holds once assigned).
 
+**Assignment state gate — mutable/frozen/restored, exactly like content
+editing:** `assign`/`reassign` are themselves content-mutation
+operations, so both are additionally gated by
+`status->isContentMutable()` — permitted only while `reported`/
+`under_investigation`, and rejected `409` while `resolved`/`closed`,
+**for every actor including Administrator** (Administrator does not
+bypass this gate, the same "no exceptions" rule that governs generic
+content editing and attachment mutation). Assignment capability is
+restored only via the explicit `reopen` action (`resolved`|`closed` →
+`under_investigation`) — there is no direct way to change
+`assigned_to_staff_id` on a resolved or closed Incident Report; the
+required sequence is `resolved`/`closed` → `reopen` →
+`under_investigation` → `reassign`. This keeps `reopened` the sole
+explicit historical event that returns an incident to active,
+reassignable management — never an implicit side effect of an
+assignment call.
+
 Every assignment/reassignment is recorded as its own
 `incident_report_actions` entry (`assigned`/`reassigned`), never silently
 folded into a generic content update.

@@ -3,12 +3,14 @@
 ## 1. Phase Identification
 
 **Phase:** 19 — Incident Reports
-**Date:** 2026-09-14
+**Date:** 2026-09-13 (corrected — see note below; the original delivery mis-stated this as 2026-09-14, a generated-date slip, not a documented repository convention)
 **Branch:** `claude/phase-19-incident-reports-audit-5e4awt` (branched from `main` at `91578ad`, Phase 18 merged)
 
 ## 2. Objective
 
 Implement Incident Reports per the product-owner-approved decisions that superseded the preceding planning audit's preliminary recommendations, extending the shared attachment infrastructure Phase 18 built (`03_DATABASE_MODEL.md` §1/DEC-041) to its second authorized consumer.
+
+**Post-review clarification (2026-09-13):** an implementation review requested explicit confirmation that `assign`/`reassign` respect final-state (`resolved`/`closed`) immutability, including for Administrator, restored only via `reopen`. This was already correctly implemented in the original delivery (`assign()`/`reassign()` both call `status->isContentMutable()` unconditionally, with no Administrator bypass) but was not stated with full clarity in this handoff or in DEC-042/the phase definition, and lacked explicit closed-state and post-reopen-reassignment test coverage. This revision adds that test coverage (11 new tests — see §9/§12), makes the rule explicit in `docs/DECISIONS.md` (DEC-042) and `docs/phases/V1_PHASE_19_DEFINITION.md`, and corrects this handoff's date. No application behavior changed.
 
 ## 3. Scope Implemented
 
@@ -76,6 +78,13 @@ Everything in the product owner's 35-point instruction was implemented:
 - Tests: `tests/Feature/Api/V1/IncidentReports/{IncidentReportTest,IncidentReportLifecycleTest,IncidentReportAttachmentTest}.php`.
 - Documentation: `docs/phases/V1_PHASE_19_DEFINITION.md`, this handoff.
 
+**Modified (post-review clarification — assignment final-state immutability):**
+- `tests/Feature/Api/V1/IncidentReports/IncidentReportLifecycleTest.php` — 10 new tests added to the Assignment section (see §9/§12); no existing test removed or renamed.
+- `docs/DECISIONS.md` (DEC-042) — the Reporter and Assignment paragraph and the Workflow-meaning bullet list now explicitly state that `assign`/`reassign` are gated by the same `status->isContentMutable()` rule as content editing, with no Administrator bypass, restored only via `reopen`.
+- `docs/phases/V1_PHASE_19_DEFINITION.md` — new "Assignment state gate" paragraph under Assignment, stating the same rule and the required `resolved`/`closed` → `reopen` → `under_investigation` → `reassign` sequence.
+- `docs/CHANGELOG.md` — Phase 19 entry's Assignment bullet extended with the same clarification; heading date corrected.
+- This handoff — date corrected, this note added, §9/§11/§12 updated with the new test counts/results.
+
 **Modified (backend):**
 - `app/Enums/AttachmentOwnerType.php` — new `IncidentReport` case.
 - `app/Models/Attachment.php` — `incident_report_id` in `$fillable`/docblock, `incidentReport()` relation.
@@ -114,7 +123,8 @@ Filters on the index endpoint: `?client=`, `?project=`, `?task=`, `?reporter=`, 
 - `IncidentReportLifecycleTest.php` (57 tests) — visibility (reporter/assignee/participant/manager/unrelated-manager/Project-Lead-excluded/administrator), editing authority per status (`reported` vs. `under_investigation`, reporter/manager/investigator/participant combinations), immutability once resolved/closed, `reporter_staff_id`/`assigned_to_staff_id` never changeable via generic update, deletion rules (reporter/administrator, blocked once assigned/investigating/resolved/closed), assignment (assign/reassign authority and state guards, self-reassignment-by-investigator rejected), start-investigation (assignee-required validation, bundled-assignment authority split), resolve (resolution/corrective-or-immediate requirements, root_cause never required, effective-value reuse), close (investigator/manager authority, Project-Lead excluded), reopen (from resolved and from closed, restores editing, restores attachment mutation covered in the attachment test file), invalid-transition rejections, and full action-history ordering across the entire lifecycle including a reopen-then-reresolve cycle.
 - `IncidentReportAttachmentTest.php` (19 tests) — upload (reporter/investigator authorization, disallowed type/oversized rejection, participant/unrelated rejection, blocked once resolved/closed, restored after reopen), download (reporter/investigator/participant/unrelated/Project-Lead-excluded/wrong-report), removal (authorization, blocked once resolved), cleanup on report deletion, and cross-module compatibility (`test_a_service_report_attachment_is_unaffected_by_the_incident_report_extension`, `test_incident_report_and_service_report_attachments_coexist_independently`) proving the shared-table extension left Phase 18 behavior untouched.
 - New relational-integrity tests added to `ClientTest` (1), `ProjectTest` (1), `TaskTest` (1), `StaffTest` (3 — reporter/assignee/participant) for the extended `destroy()` guards.
-- Total new: 110 tests / 228 assertions specific to this phase's own test files, plus 6 relational-integrity tests added to existing files.
+- **Post-review addition — 10 new tests in `IncidentReportLifecycleTest.php`'s Assignment section:** `reassign` succeeding while `under_investigation` (Manager and, separately, Administrator); `assign`/`reassign` each rejected `409` when `resolved` and again when `closed` (four tests, explicit closed-state coverage that was previously untested); Administrator receiving the identical `409` in three of those final-state scenarios (no bypass); reassignment succeeding again after `reopen` from `resolved`, and again after `reopen` from `closed`, each asserting the resulting `reassigned` action-history row. All 10 passed on the first run against the existing (unmodified) controller code, confirming the rule was already correctly implemented — see §12.
+- Total new: 120 tests / 248 assertions specific to this phase's own test files (110/228 from the original delivery + 10/20 from this review round), plus 6 relational-integrity tests added to existing files.
 
 ## 10. Commands/Checks Executed
 
@@ -136,8 +146,17 @@ php artisan test   (full suite)
 - `vendor/bin/phpstan analyse` (first run): 1 error — `nullsafe.neverNull` on `IncidentReportResource::occurred_at` (see §12 for the fix); re-run: `{"tool":"phpstan","result":"passed","errors":0}` (level 5)
 - `php artisan migrate:fresh`: all 44 migrations ran cleanly (40 pre-existing + 4 new), including the `attachments.service_report_id` nullable-widening `->change()` against SQLite
 - `php artisan migrate:fresh --seed`: `RolePermissionSeeder` ran cleanly (no catalog change — no new permission this phase)
-- `php artisan test --filter=IncidentReport` (first run): 2 failures (see §12 for both); after fixes: `{"tool":"phpunit","result":"passed","tests":110,"passed":110,"assertions":228}`
-- `php artisan test` (full suite): `{"tool":"phpunit","result":"passed","tests":910,"passed":910,"assertions":2360}` — the full Phase 1–18 regression suite (794 tests, matching Phase 18's own recorded count) plus this phase's 110 new tests plus 6 new relational-integrity tests, all passing together
+- `php artisan test --filter=IncidentReport` (original delivery, first run): 2 failures (see §12 for both); after fixes: `{"tool":"phpunit","result":"passed","tests":110,"passed":110,"assertions":228}`
+- `php artisan test` (full suite, original delivery): `{"tool":"phpunit","result":"passed","tests":910,"passed":910,"assertions":2360}` — the full Phase 1–18 regression suite (794 tests, matching Phase 18's own recorded count) plus this phase's 110 new tests plus 6 new relational-integrity tests, all passing together
+
+**Post-review clarification round (assignment final-state immutability):**
+- `composer validate --strict`: `./composer.json is valid`
+- `vendor/bin/pint --test`: `{"tool":"pint","result":"passed"}`
+- `vendor/bin/phpstan analyse`: `{"tool":"phpstan","result":"passed","errors":0}` (level 5)
+- `php artisan migrate:fresh`: all 44 migrations ran cleanly (no schema change in this round)
+- `php artisan migrate:fresh --seed`: `RolePermissionSeeder` ran cleanly (no catalog change)
+- `php artisan test --filter=IncidentReport`: `{"tool":"phpunit","result":"passed","tests":120,"passed":120,"assertions":248}` — all 10 new tests passed on the first run against the unmodified controller (see §12)
+- `php artisan test` (full suite): `{"tool":"phpunit","result":"passed","tests":920,"passed":920,"assertions":2380}` — the full Phase 1–18 regression suite plus this phase's now-120 tests plus 6 relational-integrity tests, all passing together
 
 ## 12. Deviations from Specification
 
@@ -146,6 +165,9 @@ No deviation from the 35-point product-owner specification itself was made. Two 
 - **`occurred_at` timezone normalization (a real correctness bug, not a style issue):** the approved design requires `occurred_at` to be "stored in UTC" regardless of what timezone offset a client submits. Eloquent's `datetime` cast, by itself, only *reformats* a value for database storage — it does not convert timezones. A value submitted as `2026-09-10T08:30:00+02:00` was being stored as `2026-09-10 08:30:00` (the same wall-clock digits, silently relabeled as UTC on read-back) rather than the genuinely equivalent UTC instant `06:30:00`. This was caught by `test_occurred_at_is_returned_in_iso8601_utc`. Fixed by adding an explicit `Attribute`-based set-mutator on `IncidentReport::occurredAt()` (`Carbon::parse($value)->utc()`) that normalizes to a true UTC instant before the value ever reaches the `datetime` cast/database — the cast still governs read-side rehydration into a Carbon instance, unchanged.
 - **A factory/test-fixture bug, not a bug in application code:** `IncidentReportFactory`'s `immediate_action_taken` field uses `fake()->optional()->sentence()` (mirroring `ServiceReportFactory`'s deliberate realistic-variability style for its own optional narrative fields). One test asserting the "resolving requires `corrective_action` OR `immediate_action_taken`" rule needs both fields to start genuinely blank to exercise that branch reliably; left to the factory's random default, roughly half of test runs would have had `immediate_action_taken` already non-blank, masking the very requirement under test. Fixed by explicitly pinning both fields to `null` in that one test's fixture, rather than changing the factory's intentional randomness (which is fine, and arguably more realistic, everywhere else).
 - **PHPStan-driven type fix (level 5, no behavioral change):** `IncidentReportResource::occurred_at` used a nullsafe `?->toIso8601String()` call on a property PHPStan correctly identified as non-nullable (per `IncidentReport`'s own `@property Carbon $occurred_at` docblock) — corrected to a plain `->`, mirroring `ServiceReportResource::service_date`'s identical non-nullable precedent exactly.
+
+**Post-review clarification round.** An implementation review flagged that the handoff's own phrasing of `assign()`/`reassign()` ("requires currently unassigned"/"requires currently assigned") did not clearly state whether either was also blocked once `resolved`/`closed`, and asked for explicit confirmation, for Administrator included, restored only via `reopen`. On inspection, `IncidentReportController::assign()`/`reassign()` **already** call `$incidentReport->status->isContentMutable()` unconditionally (the same check gating the generic `update()` endpoint) — this abort runs before either method's unassigned/assigned state check, applies regardless of who the caller is (the `canManageAssignment()` authority check that runs first grants no bypass of it), and the only route back to a mutable state is the existing `reopen()` action. **No controller code changed in this round** — this was a documentation/test-coverage gap, not a logic defect: the original delivery's tests exercised this rule only implicitly (`test_assignment_is_blocked_once_resolved_or_closed` covered `assign`+`resolved`; `test_reassigning_a_resolved_incident_is_rejected` covered `reassign`+`resolved`, both already via `actingAsAdministrator()`) and never exercised the `closed` state or a post-`reopen` reassignment at all. Ten tests were added closing exactly those gaps (§9); all ten passed against the unmodified controller on the first run, confirming the rule holds. `docs/DECISIONS.md` (DEC-042) and `docs/phases/V1_PHASE_19_DEFINITION.md` were updated to state the rule explicitly rather than leaving it merely implied by the code.
+- **Handoff date correction.** This handoff originally reported `2026-09-14` as the phase date — a generated-date slip (this session's actual working date, and Phase 18's own recorded date, is `2026-09-13`; the repository has no documented convention of dating each phase a calendar day after its predecessor — that pattern in earlier phases reflects when each phase was actually worked, not a rule). Corrected to `2026-09-13` in this handoff's §1 and in DEC-042's own date field and the `CHANGELOG.md` heading. Migration filenames (`2026_09_14_19...`) were deliberately left unchanged — they are already-run, already-tested identifiers with no functional dependency on matching the handoff's narrative date, and renaming them post-hoc would be pure churn with no benefit.
 
 ## 13. Known Issues/Limitations
 
