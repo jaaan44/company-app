@@ -141,6 +141,19 @@ class Project extends Model
     }
 
     /**
+     * Service Reports linked to this Project (Phase 18) — optional; a
+     * Service Report may be Project-less. restrictOnDelete on
+     * service_reports.project_id backs the deletion guard in
+     * ProjectController::destroy.
+     *
+     * @return HasMany<ServiceReport, $this>
+     */
+    public function serviceReports(): HasMany
+    {
+        return $this->hasMany(ServiceReport::class);
+    }
+
+    /**
      * This Project's single conversation (Phase 16), if one has been
      * created — lazily created on first use of the project messaging
      * surface, never eagerly for every Project. Membership is derived

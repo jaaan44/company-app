@@ -3,14 +3,14 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** Phase 17 — Scheduler
+**Current phase:** Phase 18 — Service Reports
 **Phase status:** COMPLETE (pending user review)
-**Last completed phase:** Phase 17 (Phases 1–16 are merged into `main`)
-**Next planned phase:** Phase 18 — Service Reports (see `ROADMAP.md`) — **not authorized yet**
+**Last completed phase:** Phase 18 (Phases 1–17 are merged into `main`)
+**Next planned phase:** Phase 19 — Incident Reports (see `ROADMAP.md`) — **not authorized yet**
 
 ## Current Objective
 
-Phase 17 is implemented, tested, and pushed for review. Awaiting authorization for Phase 18.
+Phase 18 is implemented, tested, and pushed for review. Awaiting authorization for Phase 19.
 
 ## Completed
 
@@ -171,9 +171,22 @@ Phase 17 is implemented, tested, and pushed for review. Awaiting authorization f
   - Recorded DEC-040.
   - No recurring events/recurrence rules, RSVP/attendance-response workflow, reminders or Notification integration for Schedule Entries, cron/queue/background-job infrastructure, conflict/overlap detection, Department/Team-linked entries, attachments, Google Calendar/Outlook/`.ics` integration, Flutter mobile Scheduler UI, Admin Backoffice Scheduler UI, Scheduler-specific audit logging (DEC-009 remains an unbuilt, project-wide gap), WebSockets/Reverb/Redis/broadcasting/rich text, per-user timezone fields, a new `schedule.*` permission, or Milestone percent-complete/dependencies/nesting/recurrence/workflow engine.
 
+- **Phase 18:** Service Reports. See `docs/handoffs/V1_PHASE_18_HANDOFF.md` for full detail.
+  - Preceded by a product-owner-reviewed planning audit resolving the roadmap's terse "Service report creation, review, attachments" line into concrete architecture (DEC-041). Client is the required business anchor (`service_reports.client_id`, `restrictOnDelete()`) — never a generic internal activity record; `project_id`/`task_id` are both nullable, mirroring DEC-006's optional-Project precedent, with relational coherence enforced at the application layer (a Project must belong to the selected Client; a Task must not contradict the selected Client/Project, with `project_id` server-derived from `task_id` when omitted, extending Work Log's single-source-of-truth rule, DEC-035).
+  - `service_reports`/`service_report_participants`/`service_report_actions`/`attachments` tables; `App\Models\ServiceReport`/`ServiceReportAction`/`Attachment`. `ServiceReport`/`Attachment` carry a ULID `public_id` (DEC-017); the participant pivot and action-history table deliberately don't. `App\Enums\ServiceReportStatus` (`draft`/`submitted`/`reviewed`/`rejected` — `reviewed` is the single final successful state, no separate "approved"/"completed"). `App\Enums\ServiceReportActionType` (`submitted`/`rejected`/`returned_to_draft`/`resubmitted`/`reviewed`).
+  - `creator_staff_id` (required, `restrictOnDelete()`) is the primary performer — a real, standing business-authority column (mirrors `schedule_entries.creator_staff_id`), not accountability metadata. Additional Staff participants (`service_report_participants`, a plain pivot with no role/status hierarchy or RSVP, mirroring Schedule Entry Participants) gain visibility only, never workflow-management authority.
+  - Workflow via explicit action endpoints only (`/submit`, `/review`, `/reject`, `/return-to-draft`), never a generic status PATCH: `draft` → `submitted` → `reviewed`, or `submitted` → `rejected` → (`return-to-draft`) → `draft` → `submitted` (recorded as `resubmitted`, distinct from the original `submitted`). A `draft` is freely editable by its creator/Administrator, **including its Client/Project/Task** (re-validated for coherence on every update, per DEC-041's Correction) — only `creator_staff_id` is immutable at every status. `submitted`/`reviewed`/`rejected` are content-, relationship-, and attachment-immutable.
+  - **No new permission was introduced anywhere in this phase**, and visibility is deliberately **narrower** than Scheduler's model (DEC-040): a Service Report is visible to its creator, its participants, the creator's *current* direct Manager (a plain `Staff.manager_id` relationship check, never a `*.view` permission grant), the linked Project's Project Lead, and Administrator — a Manager holding `projects.view` does **not** automatically see every Project-linked report the way Schedule Entries' model allows, per the explicit product-owner rejection of a broad `service-reports.view` permission. Review authority (the creator's current Manager, Project Lead, or Administrator — never the creator) and draft-management authority (creator/Administrator only) are both resolved entirely in-controller (`AuthorizesServiceReportAccess`).
+  - Creation authority mirrors Work Log's Administrator-on-behalf precedent (DEC-035): any active User with a linked, active Staff record may create their own report (Project-linked requires current membership, independent-Task-linked requires being the assignee); Administrator may name another Staff member via `creator_staff_id`, skipping eligibility checks entirely.
+  - **The shared attachment infrastructure `03_DATABASE_MODEL.md` §1 deferred at Phase 0 is now built**, justified because Phase 19 (Incident Reports) is the concrete next consumer. `attachments` uses a typed, non-polymorphic ownership design (`App\Enums\AttachmentOwnerType` + a real, `NOT NULL`, `cascadeOnDelete()` `service_report_id` foreign key) — never a Laravel-style `attachable_type` raw-class-name column with no real FK. Storage goes through Laravel's filesystem abstraction via a single named `attachments` disk (`config('attachments.disk')`, `App\Support\Attachments\AttachmentDisk`); V1/local/test uses the framework's private `local` disk (never web-served). A conservative allowlist (JPEG/PNG/PDF, 10 MB max) is enforced via Laravel's content-sniffing `mimes` rule; no antivirus/malware scanning. Attachment downloads inherit the parent report's own visibility; upload/removal is creator/Administrator-only and draft-only. Deleting a draft's attachments (individually or via deleting the draft) removes the physical file before the database row — the accepted, documented consistency boundary (a crash mid-way can leave a dangling DB reference, never an orphaned file).
+  - `ClientController`/`ProjectController`/`TaskController`/`StaffController::destroy` (Phases 8/10/11/7) extended to reject deletion (`409`) while a Service Report references them (as client/project/task/creator or participant, respectively).
+  - New versioned REST endpoints under `/api/v1`: `GET/POST /service-reports`, `GET/PUT/PATCH/DELETE /service-reports/{public_id}` (flat, top-level, mirroring Tasks/Schedule Entries); `POST .../submit`/`review`/`reject`/`return-to-draft`; `POST .../attachments` (upload), `GET .../attachments/{public_id}/download`, `DELETE .../attachments/{public_id}`.
+  - Recorded DEC-041.
+  - No Flutter mobile UI, Admin Backoffice UI, offline data entry/sync, external/customer portal access or customer login (`00_PROJECT_CHARTER.md` rules out a public client portal — `site_representative_name` is plain text only, no signature capture), PDF generation, printable export, sequential report numbering, Scheduler integration of any kind (no `ScheduleSourceType` addition, no automatic Schedule Entry ↔ Service Report creation, `service_appointment`'s Phase 17 activity type remains unlinked), Notification/Messaging integration, parts/materials inventory, labor/time tracking, GPS capture, antivirus scanning, or multi-level approval.
+
 ## Pending / Not Started
 
-- Service Reports (Phase 18) and everything after it on the roadmap.
+- Incident Reports (Phase 19) and everything after it on the roadmap.
 
 ## Known Blockers / Issues
 
@@ -193,13 +206,13 @@ Phase 17 is implemented, tested, and pushed for review. Awaiting authorization f
 ## Repository / Branch Information
 
 - Repository: `jaaan44/company-app`
-- Default branch: `main` (contains the approved Phase 0–16 baseline)
-- Phase 17 branch: `claude/phase-17-scheduler` (branched from `main`, not merged)
+- Default branch: `main` (contains the approved Phase 0–17 baseline)
+- Phase 18 branch: `claude/phase-18-service-reports` (branched from `main`, not merged)
 
 ## Latest Relevant Handoff
 
-`docs/handoffs/V1_PHASE_17_HANDOFF.md`
+`docs/handoffs/V1_PHASE_18_HANDOFF.md`
 
 ## For the Next Session
 
-Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_17_HANDOFF.md` for the Scheduler, `docs/handoffs/V1_PHASE_16_HANDOFF.md` for Messaging, `docs/handoffs/V1_PHASE_15_HANDOFF.md` for Notifications, `docs/handoffs/V1_PHASE_14_HANDOFF.md` for Announcements, `docs/handoffs/V1_PHASE_13_HANDOFF.md` for Leave Management, `docs/handoffs/V1_PHASE_12_HANDOFF.md` for Work Logs, `docs/handoffs/V1_PHASE_11_HANDOFF.md` for Tasks, `docs/handoffs/V1_PHASE_10_HANDOFF.md` for Projects & Project Membership, `docs/handoffs/V1_PHASE_09_HANDOFF.md` for Staff Status & Location Check-in, `docs/handoffs/V1_PHASE_08_HANDOFF.md` for Clients & Contacts, `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 18 (Service Reports) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.
+Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_18_HANDOFF.md` for Service Reports, `docs/handoffs/V1_PHASE_17_HANDOFF.md` for the Scheduler, `docs/handoffs/V1_PHASE_16_HANDOFF.md` for Messaging, `docs/handoffs/V1_PHASE_15_HANDOFF.md` for Notifications, `docs/handoffs/V1_PHASE_14_HANDOFF.md` for Announcements, `docs/handoffs/V1_PHASE_13_HANDOFF.md` for Leave Management, `docs/handoffs/V1_PHASE_12_HANDOFF.md` for Work Logs, `docs/handoffs/V1_PHASE_11_HANDOFF.md` for Tasks, `docs/handoffs/V1_PHASE_10_HANDOFF.md` for Projects & Project Membership, `docs/handoffs/V1_PHASE_09_HANDOFF.md` for Staff Status & Location Check-in, `docs/handoffs/V1_PHASE_08_HANDOFF.md` for Clients & Contacts, `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 19 (Incident Reports) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone.

@@ -23,6 +23,8 @@ use App\Http\Controllers\Api\V1\Projects\ProjectMembershipController;
 use App\Http\Controllers\Api\V1\Projects\ProjectMilestoneController;
 use App\Http\Controllers\Api\V1\Scheduling\ScheduleController;
 use App\Http\Controllers\Api\V1\Scheduling\ScheduleEntryController;
+use App\Http\Controllers\Api\V1\ServiceReports\ServiceReportAttachmentController;
+use App\Http\Controllers\Api\V1\ServiceReports\ServiceReportController;
 use App\Http\Controllers\Api\V1\Staff\StaffController;
 use App\Http\Controllers\Api\V1\StaffOperations\CheckInController;
 use App\Http\Controllers\Api\V1\StaffOperations\OperationalStatusController;
@@ -460,4 +462,42 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
     Route::get('schedule-entries/{scheduleEntry:public_id}', [ScheduleEntryController::class, 'show'])->name('schedule-entries.show');
     Route::match(['put', 'patch'], 'schedule-entries/{scheduleEntry:public_id}', [ScheduleEntryController::class, 'update'])->name('schedule-entries.update');
     Route::delete('schedule-entries/{scheduleEntry:public_id}', [ScheduleEntryController::class, 'destroy'])->name('schedule-entries.destroy');
+});
+
+// Service Reports (Phase 18): a record of service/work performed for a
+// Client (required business anchor), optionally linked to a Project
+// and/or Task. A flat, top-level resource — no `can:<permission>` route
+// middleware anywhere. No new permission was introduced: visibility
+// (creator, participants, the creator's current Manager, the linked
+// Project's Project Lead, Administrator) and workflow authority are both
+// resolved entirely in-controller
+// (App\Http\Controllers\Api\V1\ServiceReports\Concerns\
+// AuthorizesServiceReportAccess), per the governing Phase 18
+// instructions' explicit rejection of a broad `service-reports.view`
+// permission that would grant every Manager company-wide visibility
+// (see docs/DECISIONS.md DEC-041). Workflow transitions
+// (draft -> submitted -> reviewed/rejected, rejected -> draft) are
+// explicit action endpoints, never a generic status PATCH — mirroring
+// Leave Management/Announcements' identical precedent. Attachment routes
+// (Phase 18 also introduces the previously deferred shared attachment
+// infrastructure) mirror Project Milestones' withoutScopedBindings() fix
+// for two consecutive Eloquent route parameters.
+Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
+    Route::get('service-reports', [ServiceReportController::class, 'index'])->name('service-reports.index');
+    Route::post('service-reports', [ServiceReportController::class, 'store'])->name('service-reports.store');
+    Route::get('service-reports/{serviceReport:public_id}', [ServiceReportController::class, 'show'])->name('service-reports.show');
+    Route::match(['put', 'patch'], 'service-reports/{serviceReport:public_id}', [ServiceReportController::class, 'update'])->name('service-reports.update');
+    Route::delete('service-reports/{serviceReport:public_id}', [ServiceReportController::class, 'destroy'])->name('service-reports.destroy');
+
+    Route::post('service-reports/{serviceReport:public_id}/submit', [ServiceReportController::class, 'submit'])->name('service-reports.submit');
+    Route::post('service-reports/{serviceReport:public_id}/review', [ServiceReportController::class, 'review'])->name('service-reports.review');
+    Route::post('service-reports/{serviceReport:public_id}/reject', [ServiceReportController::class, 'reject'])->name('service-reports.reject');
+    Route::post('service-reports/{serviceReport:public_id}/return-to-draft', [ServiceReportController::class, 'returnToDraft'])->name('service-reports.return-to-draft');
+
+    Route::post('service-reports/{serviceReport:public_id}/attachments', [ServiceReportAttachmentController::class, 'store'])
+        ->name('service-reports.attachments.store');
+    Route::get('service-reports/{serviceReport:public_id}/attachments/{attachment:public_id}/download', [ServiceReportAttachmentController::class, 'download'])
+        ->name('service-reports.attachments.download')->withoutScopedBindings();
+    Route::delete('service-reports/{serviceReport:public_id}/attachments/{attachment:public_id}', [ServiceReportAttachmentController::class, 'destroy'])
+        ->name('service-reports.attachments.destroy')->withoutScopedBindings();
 });

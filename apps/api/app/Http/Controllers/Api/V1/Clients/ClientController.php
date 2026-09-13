@@ -89,6 +89,12 @@ class ClientController extends Controller
             ], 409);
         }
 
+        if ($client->serviceReports()->exists()) {
+            return response()->json([
+                'message' => 'This client still has service reports and cannot be deleted.',
+            ], 409);
+        }
+
         $client->delete();
 
         return response()->json(status: 204);

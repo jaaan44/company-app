@@ -112,4 +112,16 @@ class Task extends Model
     {
         return $this->hasMany(WorkLog::class);
     }
+
+    /**
+     * Service Reports referencing this Task (Phase 18) — optional;
+     * restrictOnDelete on service_reports.task_id backs the deletion
+     * guard in TaskController::destroy.
+     *
+     * @return HasMany<ServiceReport, $this>
+     */
+    public function serviceReports(): HasMany
+    {
+        return $this->hasMany(ServiceReport::class);
+    }
 }

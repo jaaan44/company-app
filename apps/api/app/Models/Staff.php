@@ -346,6 +346,34 @@ class Staff extends Model
     }
 
     /**
+     * Service Reports this staff member created as the primary performer
+     * (Phase 18) — a real, standing business-authority relationship
+     * (mirrors createdScheduleEntries()), not mere accountability
+     * metadata. restrictOnDelete on service_reports.creator_staff_id
+     * backs the deletion guard in StaffController::destroy.
+     *
+     * @return HasMany<ServiceReport, $this>
+     */
+    public function createdServiceReports(): HasMany
+    {
+        return $this->hasMany(ServiceReport::class, 'creator_staff_id');
+    }
+
+    /**
+     * Service Reports this staff member participates in, beyond any they
+     * created themselves (Phase 18) — participation carries no
+     * role/status hierarchy or workflow-management authority.
+     * restrictOnDelete on service_report_participants.staff_id backs the
+     * deletion guard in StaffController::destroy.
+     *
+     * @return BelongsToMany<ServiceReport, $this>
+     */
+    public function serviceReportParticipations(): BelongsToMany
+    {
+        return $this->belongsToMany(ServiceReport::class, 'service_report_participants');
+    }
+
+    /**
      * Whether assigning $proposedManagerId as this staff member's manager
      * would create a reporting cycle — i.e. $proposedManagerId's own
      * manager chain eventually loops back to this staff member. Walks a

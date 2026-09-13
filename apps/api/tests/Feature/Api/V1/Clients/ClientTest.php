@@ -6,6 +6,7 @@ use App\Enums\ClientStatus;
 use App\Models\Client;
 use App\Models\Contact;
 use App\Models\Project;
+use App\Models\ServiceReport;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -177,6 +178,17 @@ class ClientTest extends TestCase
         $this->actingAsAdministrator();
         $client = Client::factory()->create();
         Project::factory()->create(['client_id' => $client->id]);
+
+        $this->deleteJson("/api/v1/clients/{$client->public_id}")->assertStatus(409);
+
+        $this->assertDatabaseHas('clients', ['id' => $client->id]);
+    }
+
+    public function test_deleting_a_client_with_service_reports_is_rejected(): void
+    {
+        $this->actingAsAdministrator();
+        $client = Client::factory()->create();
+        ServiceReport::factory()->create(['client_id' => $client->id]);
 
         $this->deleteJson("/api/v1/clients/{$client->public_id}")->assertStatus(409);
 

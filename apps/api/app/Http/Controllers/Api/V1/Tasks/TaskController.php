@@ -167,6 +167,12 @@ class TaskController extends Controller
             ], 409);
         }
 
+        if ($task->serviceReports()->exists()) {
+            return response()->json([
+                'message' => 'This task has service reports and cannot be deleted.',
+            ], 409);
+        }
+
         if ($task->status !== TaskStatus::Todo) {
             return response()->json([
                 'message' => 'This task has moved beyond its initial creation and cannot be deleted; cancel it instead.',
