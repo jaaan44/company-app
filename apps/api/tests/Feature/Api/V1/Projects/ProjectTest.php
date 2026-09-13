@@ -6,6 +6,7 @@ use App\Enums\ProjectStatus;
 use App\Models\Client;
 use App\Models\Project;
 use App\Models\ProjectMembership;
+use App\Models\ServiceReport;
 use App\Models\Staff;
 use App\Models\Task;
 use App\Models\User;
@@ -146,6 +147,17 @@ class ProjectTest extends TestCase
         $this->actingAsAdministrator();
         $project = Project::factory()->create();
         Task::factory()->create(['project_id' => $project->id]);
+
+        $this->deleteJson("/api/v1/projects/{$project->public_id}")->assertStatus(409);
+
+        $this->assertDatabaseHas('projects', ['id' => $project->id]);
+    }
+
+    public function test_deleting_a_project_with_service_reports_is_rejected(): void
+    {
+        $this->actingAsAdministrator();
+        $project = Project::factory()->create();
+        ServiceReport::factory()->create(['project_id' => $project->id]);
 
         $this->deleteJson("/api/v1/projects/{$project->public_id}")->assertStatus(409);
 

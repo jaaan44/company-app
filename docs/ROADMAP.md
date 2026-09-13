@@ -90,8 +90,9 @@ Direct, group, and project conversations. Preceded by a product-owner-reviewed p
 Unified schedule/calendar surfacing meetings, visits, appointments, milestones, deadlines, events, leave, training. Resolved as a hybrid: a read-time aggregation API over exactly four sources (manually created Schedule Entries, Task due dates, approved Leave Requests, Project Milestones) plus a lightweight Scheduler-owned `schedule_entries` entity for activities with no other system-of-record module. No calendar rows are copied into a generic table — each source remains its own system of record (DEC-040).
 *Depends on: Phase 13 (Leave), Phase 11 (Task deadlines), Phase 10 (Projects — Milestones deferred there, implemented here — see the note below)*
 
-**Phase 18 — Service Reports**
-Service report creation, review, attachments.
+**Phase 18 — Service Reports** *(complete — see `docs/handoffs/V1_PHASE_18_HANDOFF.md`)*
+Service report creation, review, attachments. Preceded by a product-owner-reviewed planning audit (see DEC-041) that resolved the roadmap's terse line into concrete architecture: Client is the required business anchor (Project/Task optional, mirroring DEC-006), a four-state workflow (`draft`/`submitted`/`reviewed`/`rejected` — `reviewed` is the single final state, no separate "approved"/"completed"), visibility/review authority resolved via row-level rules with no new permission (deliberately narrower than Scheduler's model — no broad Manager grant), and the project's previously deferred shared attachment infrastructure (`03_DATABASE_MODEL.md`'s Phase-0-era open question), built now because Phase 19 (Incident Reports) is the concrete next consumer.
+*Depends on: Phase 8 (Clients), Phase 10 (Projects), Phase 11 (Tasks), Phase 7 (Staff)*
 
 **Phase 19 — Incident Reports**
 Incident creation, assignment, action history, resolution.

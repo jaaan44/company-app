@@ -85,4 +85,17 @@ class Client extends Model
     {
         return $this->hasMany(Project::class);
     }
+
+    /**
+     * Service Reports documenting work performed for this Client (Phase
+     * 18) — Client is the required business anchor, so every Service
+     * Report appears here. restrictOnDelete on service_reports.client_id
+     * backs the deletion guard in ClientController::destroy.
+     *
+     * @return HasMany<ServiceReport, $this>
+     */
+    public function serviceReports(): HasMany
+    {
+        return $this->hasMany(ServiceReport::class);
+    }
 }

@@ -301,4 +301,20 @@ No automated tests apply to this phase — no application code exists yet.
 | GitHub Actions CI | — | NOT RUN (this session) | No PR opened and no push to `main` this session — the path-filtered trigger (DEC-015) never fired. All commands the workflow runs were executed directly and passed (rows above). |
 | UAT | — | NOT RUN | No UAT scenario recorded yet for Phase 14 — see `docs/testing/UAT_LOG.md` (`UAT-14-01`, `UAT-14-02`, `UAT-14-03`). This phase introduced no Admin Backoffice UI or Flutter mobile screens, so there is nothing yet for the product owner to click through visually. |
 
+## Phase 18 — Service Reports
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `composer validate --strict` (apps/api) | Automated, local | PASS | `./composer.json is valid` — unaffected, no new dependencies added |
+| `vendor/bin/pint --test` (apps/api) | Automated, local | PASS | `{"tool":"pint","result":"passed"}` — clean, includes all new Service Reports/Attachments code and tests |
+| `vendor/bin/phpstan analyse` (apps/api) | Automated, local | PASS | `{"tool":"phpstan","result":"passed","errors":0}` at level 5 (two real type issues found and fixed during this phase — see the Phase 18 handoff's Deviations section) |
+| `php artisan migrate:fresh` (apps/api) | Automated, local | PASS | All 40 migrations (36 pre-existing + 4 new: `service_reports`, `service_report_participants`, `service_report_actions`, `attachments`) ran cleanly against SQLite |
+| `php artisan migrate:fresh --seed` (apps/api) | Automated, local | PASS | `RolePermissionSeeder` ran cleanly — no new permission was introduced this phase, so the catalog is unchanged |
+| `php artisan test` (apps/api) — Service Reports only | Automated, local | PASS | `{"tool":"phpunit","result":"passed","tests":68,"passed":68,"assertions":142}` — `ServiceReportTest` (creation/coherence/eligibility/filters), `ServiceReportLifecycleTest` (workflow/visibility/review authority/history), `ServiceReportAttachmentTest` (upload/download/removal/cleanup), plus new relational-integrity tests added to `ClientTest`/`ProjectTest`/`TaskTest`/`StaffTest` |
+| `php artisan test` (apps/api) — full suite | Automated, local | PASS | `{"tool":"phpunit","result":"passed","tests":780,"passed":780,"assertions":2089}` — full Phase 1–17 regression suite unaffected, run together with this phase's new tests |
+| No Flutter mobile UI, Admin Backoffice UI, offline entry, external/customer portal, digital signatures, PDF generation, printable export, report numbering, Scheduler integration, Notification/Messaging integration, parts/materials inventory, labor/time tracking, GPS capture, antivirus scanning, or multi-level approval introduced | Manual | PASS | Confirmed by reviewing the full staged diff before commit |
+| Docker validation | — | NOT RUN (this session) | No Docker configuration changed this phase; consistent with recent sessions, Docker-based re-verification was not attempted. |
+| GitHub Actions CI | — | NOT RUN (this session) | No PR opened and no push to `main` this session — the path-filtered trigger (DEC-015) never fired. All commands the workflow runs were executed directly and passed (rows above). |
+| UAT | — | NOT RUN | No UAT scenario recorded yet for Phase 18 — see `docs/testing/UAT_LOG.md` (`UAT-18-01` through `UAT-18-04`). This phase introduced no Admin Backoffice UI or Flutter mobile screens, so there is nothing yet for the product owner to click through visually. |
+
 *(Future phases append their own section above this line, oldest first.)*

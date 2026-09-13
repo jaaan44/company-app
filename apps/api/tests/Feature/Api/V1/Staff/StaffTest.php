@@ -6,6 +6,7 @@ use App\Enums\StaffStatus;
 use App\Models\Department;
 use App\Models\Position;
 use App\Models\ProjectMembership;
+use App\Models\ServiceReport;
 use App\Models\Staff;
 use App\Models\Task;
 use App\Models\Team;
@@ -213,6 +214,29 @@ class StaffTest extends TestCase
         Task::factory()->completed()->create(['assignee_staff_id' => $staff->id]);
 
         $this->deleteJson("/api/v1/staff/{$staff->public_id}")->assertStatus(409);
+    }
+
+    public function test_deleting_a_staff_member_who_created_a_service_report_is_rejected(): void
+    {
+        $this->actingAsAdministrator();
+        $staff = Staff::factory()->create();
+        ServiceReport::factory()->create(['creator_staff_id' => $staff->id]);
+
+        $this->deleteJson("/api/v1/staff/{$staff->public_id}")->assertStatus(409);
+
+        $this->assertDatabaseHas('staff', ['id' => $staff->id]);
+    }
+
+    public function test_deleting_a_staff_member_who_participates_in_a_service_report_is_rejected(): void
+    {
+        $this->actingAsAdministrator();
+        $staff = Staff::factory()->create();
+        $report = ServiceReport::factory()->create();
+        $report->participants()->attach($staff->id);
+
+        $this->deleteJson("/api/v1/staff/{$staff->public_id}")->assertStatus(409);
+
+        $this->assertDatabaseHas('staff', ['id' => $staff->id]);
     }
 
     // --- Filters / search ----------------------------------------------
