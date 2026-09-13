@@ -3,14 +3,14 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** Phase 19 — Incident Reports
+**Current phase:** Phase 20 — Admin Dashboard & Reporting
 **Phase status:** COMPLETE (pending user review)
-**Last completed phase:** Phase 19 (Phases 1–18 are merged into `main`)
-**Next planned phase:** Phase 20 — Admin Dashboard & Reporting (see `ROADMAP.md`) — **not authorized yet**
+**Last completed phase:** Phase 20 (Phases 1–19 are merged into `main`)
+**Next planned phase:** Phase 21 — Integration Audit (see `ROADMAP.md`) — **not authorized yet**
 
 ## Current Objective
 
-Phase 19 is implemented, tested, and pushed for review on its own branch (not yet merged, no PR opened). Awaiting authorization for Phase 20.
+Phase 20 is implemented, tested, and pushed for review on its own branch (not yet merged, no PR opened). Awaiting authorization for Phase 21.
 
 ## Completed
 
@@ -198,9 +198,20 @@ Phase 19 is implemented, tested, and pushed for review on its own branch (not ye
   - Recorded DEC-042.
   - No Flutter mobile UI, Admin Backoffice UI, offline data entry/sync, external/customer incident submission or customer portal, structured named-witness records, multi-investigator assignment, a confidentiality flag or HR/harassment/whistleblower workflow, a medical/injury-records subsystem, workers'-compensation workflow, regulatory (OSHA/DOLE-style) reporting, digital signatures, PDF generation, printable export, sequential incident numbering, Notification/Messaging/Scheduler integration, automatic Service Report/Work Log creation, automatic Task mutation beyond the optional `task_id` FK, SLA/escalation timers, reminders, or any cron/queue/background-worker/Redis/WebSocket infrastructure.
 
+- **Phase 20:** Admin Dashboard & Reporting. See `docs/handoffs/V1_PHASE_20_HANDOFF.md` for full detail.
+  - Preceded by a product-owner-reviewed planning audit resolving the roadmap's terse "Cross-module dashboard and administrative reports" line into concrete architecture (DEC-043): two read-only API surfaces — a single cross-module aggregation endpoint (`GET /api/v1/dashboard`) and seven flat, paginated detail report resources (`GET /api/v1/reports/{staff,work-logs,leave-requests,projects,tasks,service-reports,incident-reports}`, each with a `.../export` CSV sibling) — both ordinary indexed Eloquent queries against the existing schema. **Zero migrations, zero new tables, zero new permissions.**
+  - **Governing rule:** Dashboard/Report aggregation must never widen the visibility a source module's own endpoint already grants — including aggregate counts with no drill-down. Every section/resource is scoped by a new `App\Services\Reporting\*Visibility` class per source (`StaffVisibility`/`ClientVisibility`/`ProjectVisibility`/`TaskVisibility`/`WorkLogVisibility`/`LeaveRequestVisibility`/`ServiceReportVisibility`/`IncidentReportVisibility`), each reusing (via `use`) its source module's own existing authorization trait's pure predicates and reproducing that trait's exact composed rule as a non-aborting query — mirroring `ScheduleController`'s Phase 17 precedent for exactly this kind of reuse. No existing Phase 7–19 controller/trait file was modified. Incident Reports' reused rule carries no Project-Lead carve-out (mirrors DEC-042 exactly); Work Logs/Leave Requests each add one documented own-records fallback for a plain Staff member (mirroring `/me/work-logs`/`/me/leave-requests`).
+  - Two canonical definitions, established once and reused everywhere: **overdue Task** (`App\Support\Reporting\OverdueTasks` — `due_date < today` in the configured company timezone, status not Completed/Cancelled) and **open Incident Report** (`App\Support\Reporting\OpenIncidents` — `status IN (reported, under_investigation)`).
+  - Dashboard sections: `people`/`clients`/`projects`/`tasks` (point-in-time), `work_logs`/`leave`/`service_reports`/`incident_reports` (period-based, defaulting to the current calendar month in the company timezone via `App\Support\Reporting\ReportPeriod`), and `schedule` (reuses `ScheduleController::index()` verbatim, fixed 7-day horizon, no second calendar aggregation model).
+  - Work Log reporting is operational activity reporting only — no rankings, productivity/utilization scores, or leaderboards (DEC-035's exclusion is not reversed).
+  - CSV export (`App\Support\Reporting\CsvExport`) is the only export format — streamed, UTF-8 with BOM, stable headers, no internal numeric ids, and formula-injection mitigation on every cell. No Excel/PDF/printable export.
+  - No schema change: reused every relevant existing composite index (`tasks(project_id,status)`, `(assignee_staff_id,status)`; `leave_requests(staff_id,status)`, `(staff_id,start_date,end_date)`; `service_reports(client_id,status)`, `(project_id,status)`, `(creator_staff_id,status)`, `(service_date)`; `incident_reports(client_id,status)`, `(project_id,status)`, `(reporter_staff_id,status)`, `(assigned_to_staff_id,status)`, `(occurred_at)`, `(severity)`, `(incident_type)`; `work_logs(staff_id,work_date)`, `(project_id,work_date)`, `(task_id,work_date)`) — no new index was added.
+  - Recorded DEC-043.
+  - No Flutter Dashboard/Reports UI, no Blade/Livewire Admin Dashboard/Reports pages, no Admin Backoffice UI of any kind (API-only, consistent with every phase since Phase 6); no Excel/PDF/printable export; no custom report builder, saved/scheduled/emailed reports, or CSV imports; no employee rankings/performance/productivity/utilization scoring; no attendance/timekeeping analytics of any kind; no Announcement engagement/read-rate reporting (DEC-037 not reversed); no Notification or Messaging reporting; no Audit Log reporting (DEC-009 remains an unbuilt, project-wide gap); no Master Data or Application Settings management.
+
 ## Pending / Not Started
 
-- Admin Dashboard & Reporting (Phase 20) and everything after it on the roadmap.
+- Integration Audit (Phase 21) and everything after it on the roadmap.
 
 ## Known Blockers / Issues
 

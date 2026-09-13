@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\Announcements\MyAnnouncementController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Clients\ClientController;
 use App\Http\Controllers\Api\V1\Clients\ContactController;
+use App\Http\Controllers\Api\V1\Dashboard\DashboardController;
 use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\IncidentReports\IncidentReportAttachmentController;
 use App\Http\Controllers\Api\V1\IncidentReports\IncidentReportController;
@@ -23,6 +24,13 @@ use App\Http\Controllers\Api\V1\Organization\TeamController;
 use App\Http\Controllers\Api\V1\Projects\ProjectController;
 use App\Http\Controllers\Api\V1\Projects\ProjectMembershipController;
 use App\Http\Controllers\Api\V1\Projects\ProjectMilestoneController;
+use App\Http\Controllers\Api\V1\Reports\IncidentReportReportController;
+use App\Http\Controllers\Api\V1\Reports\LeaveRequestReportController;
+use App\Http\Controllers\Api\V1\Reports\ProjectReportController;
+use App\Http\Controllers\Api\V1\Reports\ServiceReportReportController;
+use App\Http\Controllers\Api\V1\Reports\StaffDirectoryReportController;
+use App\Http\Controllers\Api\V1\Reports\TaskReportController;
+use App\Http\Controllers\Api\V1\Reports\WorkLogReportController;
 use App\Http\Controllers\Api\V1\Scheduling\ScheduleController;
 use App\Http\Controllers\Api\V1\Scheduling\ScheduleEntryController;
 use App\Http\Controllers\Api\V1\ServiceReports\ServiceReportAttachmentController;
@@ -543,4 +551,47 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
         ->name('incident-reports.attachments.download')->withoutScopedBindings();
     Route::delete('incident-reports/{incidentReport:public_id}/attachments/{attachment:public_id}', [IncidentReportAttachmentController::class, 'destroy'])
         ->name('incident-reports.attachments.destroy')->withoutScopedBindings();
+});
+
+// Admin Dashboard & Reporting (Phase 20, DEC-043): two read-only API
+// surfaces — a single cross-module aggregation endpoint (GET /dashboard)
+// and seven filterable, paginated detail report resources (plus CSV
+// export) under /reports. No new persisted entity, table, snapshot, or
+// permission was introduced anywhere in this phase — every section/
+// report is a live query, scoped by the exact same row-level visibility
+// rule its source module's own endpoint already enforces (composed via
+// the App\Services\Reporting\*Visibility classes), so a requester can
+// never learn more through Dashboard/Reports than they could already see
+// through GET /api/v1/{source} itself. Staff Directory reporting is the
+// sole exception carrying a `can:` route middleware (`staff.view`),
+// because that is exactly how the source Staff Directory itself is
+// gated (company-wide for any holder — no further row-level scoping
+// exists to reproduce). See docs/phases/V1_PHASE_20_DEFINITION.md.
+Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::prefix('reports')->name('reports.')->group(function (): void {
+        Route::middleware('can:staff.view')->group(function (): void {
+            Route::get('staff', [StaffDirectoryReportController::class, 'index'])->name('staff.index');
+            Route::get('staff/export', [StaffDirectoryReportController::class, 'export'])->name('staff.export');
+        });
+
+        Route::get('work-logs', [WorkLogReportController::class, 'index'])->name('work-logs.index');
+        Route::get('work-logs/export', [WorkLogReportController::class, 'export'])->name('work-logs.export');
+
+        Route::get('leave-requests', [LeaveRequestReportController::class, 'index'])->name('leave-requests.index');
+        Route::get('leave-requests/export', [LeaveRequestReportController::class, 'export'])->name('leave-requests.export');
+
+        Route::get('projects', [ProjectReportController::class, 'index'])->name('projects.index');
+        Route::get('projects/export', [ProjectReportController::class, 'export'])->name('projects.export');
+
+        Route::get('tasks', [TaskReportController::class, 'index'])->name('tasks.index');
+        Route::get('tasks/export', [TaskReportController::class, 'export'])->name('tasks.export');
+
+        Route::get('service-reports', [ServiceReportReportController::class, 'index'])->name('service-reports.index');
+        Route::get('service-reports/export', [ServiceReportReportController::class, 'export'])->name('service-reports.export');
+
+        Route::get('incident-reports', [IncidentReportReportController::class, 'index'])->name('incident-reports.index');
+        Route::get('incident-reports/export', [IncidentReportReportController::class, 'export'])->name('incident-reports.export');
+    });
 });

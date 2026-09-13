@@ -100,8 +100,8 @@ Incident creation, assignment, action history, resolution. Preceded by a product
 ### Management
 *Depends on: most prior modules existing to have data to report on*
 
-**Phase 20 — Admin Dashboard & Reporting**
-Cross-module dashboard and administrative reports.
+**Phase 20 — Admin Dashboard & Reporting** *(complete — see `docs/handoffs/V1_PHASE_20_HANDOFF.md`)*
+Cross-module dashboard and administrative reports. Preceded by a product-owner-reviewed planning audit that resolved the roadmap's terse line into concrete architecture: two read-only API surfaces (a single `GET /api/v1/dashboard` aggregation endpoint and seven flat, paginated `GET /api/v1/reports/{resource}` detail resources, each with CSV export), a governing rule that aggregation must never widen a source module's own existing row-level visibility (no new permission was introduced anywhere in this phase), canonical "overdue Task"/"open Incident Report" definitions, and live relational queries only — no snapshot tables, caching, queues, or reporting infrastructure (see `docs/DECISIONS.md` DEC-043).
 
 ### Release Preparation
 *Sequential, depends on all prior phases*
