@@ -115,6 +115,32 @@ class Project extends Model
     }
 
     /**
+     * This Project's target-date markers (Phase 17). restrictOnDelete on
+     * project_milestones.project_id backs the deletion guard in
+     * ProjectController::destroy.
+     *
+     * @return HasMany<ProjectMilestone, $this>
+     */
+    public function milestones(): HasMany
+    {
+        return $this->hasMany(ProjectMilestone::class);
+    }
+
+    /**
+     * Manually created Schedule Entries linked to this Project (Phase
+     * 17) — a Schedule Entry's Project link is optional (unlike
+     * Milestone's required one). restrictOnDelete on
+     * schedule_entries.project_id backs the deletion guard in
+     * ProjectController::destroy.
+     *
+     * @return HasMany<ScheduleEntry, $this>
+     */
+    public function scheduleEntries(): HasMany
+    {
+        return $this->hasMany(ScheduleEntry::class);
+    }
+
+    /**
      * This Project's single conversation (Phase 16), if one has been
      * created — lazily created on first use of the project messaging
      * surface, never eagerly for every Project. Membership is derived

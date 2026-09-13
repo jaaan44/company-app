@@ -153,6 +153,18 @@ class ProjectController extends Controller
             ], 409);
         }
 
+        if ($project->milestones()->exists()) {
+            return response()->json([
+                'message' => 'This project still has milestones and cannot be deleted.',
+            ], 409);
+        }
+
+        if ($project->scheduleEntries()->exists()) {
+            return response()->json([
+                'message' => 'This project still has schedule entries and cannot be deleted.',
+            ], 409);
+        }
+
         $project->delete();
 
         return response()->json(status: 204);

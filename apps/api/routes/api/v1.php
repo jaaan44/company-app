@@ -20,6 +20,9 @@ use App\Http\Controllers\Api\V1\Organization\PositionController;
 use App\Http\Controllers\Api\V1\Organization\TeamController;
 use App\Http\Controllers\Api\V1\Projects\ProjectController;
 use App\Http\Controllers\Api\V1\Projects\ProjectMembershipController;
+use App\Http\Controllers\Api\V1\Projects\ProjectMilestoneController;
+use App\Http\Controllers\Api\V1\Scheduling\ScheduleController;
+use App\Http\Controllers\Api\V1\Scheduling\ScheduleEntryController;
 use App\Http\Controllers\Api\V1\Staff\StaffController;
 use App\Http\Controllers\Api\V1\StaffOperations\CheckInController;
 use App\Http\Controllers\Api\V1\StaffOperations\OperationalStatusController;
@@ -206,6 +209,27 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
         Route::delete('projects/{project:public_id}/members/{staff:public_id}', [ProjectMembershipController::class, 'destroy'])
             ->name('projects.members.destroy')->withoutScopedBindings();
     });
+
+    // Project Milestones (Phase 17 — Scheduler): the minimal target-date
+    // marker concept the Phase 17 roadmap dependency incorrectly assumed
+    // this phase had already built (see docs/DECISIONS.md). Genuinely
+    // nested under its Project (mirroring Project Membership above) —
+    // reads require the same visibility as the Project itself
+    // (AuthorizesProjectVisibility, reused as-is); writes require
+    // Administrator (`projects.manage`) or the Project's own Project
+    // Lead (AuthorizesMilestoneAccess) — no new permission was
+    // introduced. withoutScopedBindings() mirrors this file's existing
+    // two-consecutive-Eloquent-parameter fix (Project has no singular
+    // `milestone()` relation for Laravel to guess) — ownership is
+    // verified explicitly in ProjectMilestoneController instead.
+    Route::get('projects/{project:public_id}/milestones', [ProjectMilestoneController::class, 'index'])->name('projects.milestones.index');
+    Route::post('projects/{project:public_id}/milestones', [ProjectMilestoneController::class, 'store'])->name('projects.milestones.store');
+    Route::get('projects/{project:public_id}/milestones/{milestone:public_id}', [ProjectMilestoneController::class, 'show'])
+        ->name('projects.milestones.show')->withoutScopedBindings();
+    Route::match(['put', 'patch'], 'projects/{project:public_id}/milestones/{milestone:public_id}', [ProjectMilestoneController::class, 'update'])
+        ->name('projects.milestones.update')->withoutScopedBindings();
+    Route::delete('projects/{project:public_id}/milestones/{milestone:public_id}', [ProjectMilestoneController::class, 'destroy'])
+        ->name('projects.milestones.destroy')->withoutScopedBindings();
 });
 
 // Tasks (Phase 11): built on top of Projects & Project Membership.
@@ -412,4 +436,28 @@ Route::middleware(['auth:sanctum', 'account.active'])->prefix('conversations')->
 Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
     Route::post('projects/{project:public_id}/conversation', [ProjectConversationController::class, 'storeOrShow'])
         ->name('projects.conversation');
+});
+
+// Scheduler (Phase 17): a hybrid of a read-time aggregation over
+// existing modules (manually created Schedule Entries, Task due dates,
+// approved Leave Requests, Project Milestones — GET /schedule) and a
+// lightweight Scheduler-owned entity, Schedule Entries, for activities
+// with no other system-of-record module. No calendar rows are ever
+// copied into a generic table for the three aggregated sources — each
+// remains its own system of record, joined only at read time (see
+// App\Http\Controllers\Api\V1\Scheduling\ScheduleController). No new
+// permission was introduced for Schedule Entries — visibility/authority
+// is resolved entirely in-controller
+// (AuthorizesScheduleEntryAccess), mirroring Tasks (DEC-034), per the
+// governing Phase 17 instructions' explicit direction to prefer
+// established row-level patterns over a blanket `schedule.view`
+// permission that would expose private entries.
+Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
+    Route::get('schedule', [ScheduleController::class, 'index'])->name('schedule.index');
+
+    Route::get('schedule-entries', [ScheduleEntryController::class, 'index'])->name('schedule-entries.index');
+    Route::post('schedule-entries', [ScheduleEntryController::class, 'store'])->name('schedule-entries.store');
+    Route::get('schedule-entries/{scheduleEntry:public_id}', [ScheduleEntryController::class, 'show'])->name('schedule-entries.show');
+    Route::match(['put', 'patch'], 'schedule-entries/{scheduleEntry:public_id}', [ScheduleEntryController::class, 'update'])->name('schedule-entries.update');
+    Route::delete('schedule-entries/{scheduleEntry:public_id}', [ScheduleEntryController::class, 'destroy'])->name('schedule-entries.destroy');
 });

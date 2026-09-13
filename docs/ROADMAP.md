@@ -54,7 +54,7 @@ Current status tracking (with history, DEC-010), explicit check-in flow (DEC-005
 *Depends on: Phase 7 (Staff); Phase 8 (Clients, for project↔client linkage)*
 
 **Phase 10 — Projects & Project Membership** *(complete — see `docs/handoffs/V1_PHASE_10_HANDOFF.md`)*
-Projects, project members. (Project milestones were not part of the governing Phase 10 instructions and remain unimplemented — see `03_DATABASE_MODEL.md`.)
+Projects, project members. (Project milestones were not part of the governing Phase 10 instructions and were deferred — later implemented in Phase 17, see `docs/handoffs/V1_PHASE_17_HANDOFF.md` and DEC-040. This roadmap originally listed Phase 17 as depending on "Phase 10 (Milestones)," incorrectly assuming they existed already — corrected below.)
 
 **Phase 11 — Tasks** *(complete — see `docs/handoffs/V1_PHASE_11_HANDOFF.md`)*
 Tasks (project-linked and independent, DEC-006), single-assignee assignment, lifecycle/priority/due date. Task comments (originally mentioned above) were not part of the governing Phase 11 instructions and remain unimplemented — deferred to a future collaboration phase alongside Work Logs/task activity/notifications (see `docs/DECISIONS.md` DEC-034).
@@ -86,9 +86,9 @@ Direct, group, and project conversations. Preceded by a product-owner-reviewed p
 ### Operations
 *Depends on: Phase 8 (Clients), Phase 9 (Check-in), Phase 10 (Projects)*
 
-**Phase 17 — Scheduler**
-Unified schedule/calendar surfacing meetings, visits, appointments, milestones, deadlines, events, leave, training.
-*Depends on: Phase 13 (Leave), Phase 11 (Task deadlines), Phase 10 (Milestones)*
+**Phase 17 — Scheduler** *(complete — see `docs/handoffs/V1_PHASE_17_HANDOFF.md`)*
+Unified schedule/calendar surfacing meetings, visits, appointments, milestones, deadlines, events, leave, training. Resolved as a hybrid: a read-time aggregation API over exactly four sources (manually created Schedule Entries, Task due dates, approved Leave Requests, Project Milestones) plus a lightweight Scheduler-owned `schedule_entries` entity for activities with no other system-of-record module. No calendar rows are copied into a generic table — each source remains its own system of record (DEC-040).
+*Depends on: Phase 13 (Leave), Phase 11 (Task deadlines), Phase 10 (Projects — Milestones deferred there, implemented here — see the note below)*
 
 **Phase 18 — Service Reports**
 Service report creation, review, attachments.
