@@ -22,10 +22,18 @@ generic internal activity record. Project and Task are both **optional**
 (mirroring DEC-006's "optional project" precedent). Relational coherence
 is enforced: a supplied Project must genuinely belong to the selected
 Client; a supplied Task must not contradict the selected Client/Project.
-The Client/Project/Task/creator anchor is immutable after creation
-(mirrors Work Log's identical `staff_id`/`task_id`/`project_id`
-immutability, DEC-035) — a wrongly-attributed draft is deleted and
-recreated, safe because only a draft can ever be deleted.
+`creator_staff_id` is immutable at every status. Client/Project/Task
+remain correctable through the normal update endpoint while the report
+is a `draft` — every such update re-runs the same relational-coherence
+validation against the *effective* combination, so a Client change can
+never silently leave an incompatible Project/Task in place. Once the
+report leaves `draft` (`submitted`/`reviewed`/`rejected`), Client/
+Project/Task become immutable together with the rest of the content — a
+`rejected` report must first return to `draft` before they may change
+again. This corrects an initial implementation that made the whole
+anchor immutable immediately after creation (mirroring Work Log's
+`staff_id`/`task_id`/`project_id` precedent, DEC-035) — stricter than
+approved; see DEC-041's Correction.
 
 ## In Scope
 
@@ -107,11 +115,17 @@ approval). A resubmission after `return-to-draft` is recorded as
 
 ## Editing and Immutability
 
-- `draft` — freely editable (content, participants, attachments) by the
-  creator or Administrator.
-- `submitted`/`reviewed`/`rejected` — content- and attachment-immutable.
-  A `rejected` report must first transition back to `draft`
-  (`return-to-draft`) before any content or attachment change.
+- `draft` — freely editable (content, Client/Project/Task, participants,
+  attachments) by the creator or Administrator; `creator_staff_id`
+  remains immutable even in `draft`. Every Client/Project/Task change is
+  re-validated against the same relational-coherence rule used at
+  creation, evaluated against the effective combination (a changed
+  field's new value, or the existing report's current value for any
+  field left untouched).
+- `submitted`/`reviewed`/`rejected` — content-, relationship-, and
+  attachment-immutable. A `rejected` report must first transition back
+  to `draft` (`return-to-draft`) before any content, Client/Project/
+  Task, or attachment change.
 
 ## Visibility (no new permission)
 
@@ -219,6 +233,15 @@ ResolvesServiceReportReferences`:
 This follows the actual existing schema (Client → Project → Task; Task
 has no direct `client_id` of its own) rather than assuming a
 relationship that isn't present.
+
+The same rule applies on update, while the report is still a `draft`
+(`validateClientProjectTaskCoherenceForUpdate()`), evaluated against the
+*effective* combination — a changed field's new value, or the existing
+report's current value for any field the update request leaves
+untouched — so changing the Client alone can never silently leave an
+incompatible Project/Task in place, and the single-source-of-truth
+Project-from-Task derivation is re-applied whenever the Task changes
+without an accompanying `project_id`.
 
 ## Relevant Documentation
 

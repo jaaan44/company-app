@@ -4,6 +4,7 @@ namespace App\Http\Requests\ServiceReports\Concerns;
 
 use App\Models\Client;
 use App\Models\Project;
+use App\Models\ServiceReport;
 use App\Models\Task;
 use Illuminate\Contracts\Validation\Validator;
 
@@ -106,6 +107,79 @@ trait ResolvesServiceReportReferences
             if ($derivedProjectClientId !== $clientId) {
                 $validator->errors()->add('task_id', 'The selected task\'s project does not belong to the selected client.');
             }
+        }
+    }
+
+    /**
+     * The update-time counterpart to validateClientProjectTaskCoherence().
+     * A draft's Client/Project/Task remain correctable up until submission
+     * (docs/phases/V1_PHASE_18_DEFINITION.md's Editing and Immutability —
+     * only `creator_staff_id` is immutable at every status). Each of
+     * `client_id`/`project_id`/`task_id` may be independently omitted from
+     * an update request, so this validates the *effective* combination —
+     * a changed field's new value, or the existing report's current value
+     * for any field left untouched — against the exact same rules
+     * validateClientProjectTaskCoherence() applies at creation, including
+     * the single-source-of-truth project-from-task derivation. It never
+     * permits a temporary or persisted inconsistent combination: changing
+     * the Client alone rejects an existing Project/Task that no longer
+     * belongs to it unless the same request also supplies a coherent
+     * replacement or explicit `null`.
+     */
+    private function validateClientProjectTaskCoherenceForUpdate(Validator $validator, ServiceReport $report): void
+    {
+        $clientId = $this->has('client_id') ? $this->resolveClientId() : $report->client_id;
+
+        if ($clientId === null) {
+            // The 'exists' rule on client_id already reports this.
+            return;
+        }
+
+        $projectSupplied = $this->has('project_id');
+        $explicitProjectId = $projectSupplied ? $this->resolveProjectId() : null;
+
+        $taskSupplied = $this->has('task_id');
+        $taskId = $taskSupplied ? $this->resolveTaskId() : $report->task_id;
+
+        // Effective project_id: the explicit value when supplied;
+        // otherwise re-derived from the effective task (mirroring
+        // creation's single-source-of-truth rule, so a Task change with
+        // no accompanying project_id always keeps the two consistent);
+        // otherwise the report's own untouched value.
+        if ($projectSupplied) {
+            $projectId = $explicitProjectId;
+        } elseif ($taskId !== null) {
+            $projectId = Task::query()->whereKey($taskId)->value('project_id');
+        } else {
+            $projectId = $report->project_id;
+        }
+
+        if ($projectId !== null) {
+            $projectClientId = Project::query()->whereKey($projectId)->value('client_id');
+
+            if ($projectClientId !== $clientId) {
+                $validator->errors()->add('project_id', 'The selected project does not belong to the selected client.');
+
+                return;
+            }
+        }
+
+        if ($taskId === null) {
+            return;
+        }
+
+        $taskProjectId = Task::query()->whereKey($taskId)->value('project_id');
+
+        if ($taskProjectId === null) {
+            if ($projectId !== null) {
+                $validator->errors()->add('task_id', 'The selected task is not linked to any project and cannot be combined with a project_id.');
+            }
+
+            return;
+        }
+
+        if ($projectSupplied && $explicitProjectId !== $taskProjectId) {
+            $validator->errors()->add('task_id', 'The selected task does not belong to the selected project.');
         }
     }
 

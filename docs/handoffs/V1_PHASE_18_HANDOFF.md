@@ -10,6 +10,8 @@
 
 Implement Service Reports per the product-owner-approved decisions that superseded the preceding planning audit's preliminary recommendations, and — because Service Reports genuinely requires it and Phase 19 (Incident Reports) is the concrete next consumer — introduce the project's previously deferred shared attachment/file infrastructure (`03_DATABASE_MODEL.md` §1's Phase-0-era open question).
 
+**Post-review correction (2026-09-13):** this handoff was updated after an implementation review found the original delivery made Client/Project/Task immutable immediately after creation — stricter than approved. The approved behavior is that a `draft` Service Report's Client/Project/Task remain correctable (creator/Administrator only, re-validated for coherence on every update) right up until submission; only `creator_staff_id` is immutable at every status. This section and §§4/5/9/10/11/12/15 below reflect the corrected, final state — see DEC-041's Correction for the full rationale.
+
 ## 3. Scope Implemented
 
 Everything in the product owner's 23-point instruction was implemented:
@@ -39,7 +41,7 @@ Everything in the product owner's 23-point instruction was implemented:
 
 **Workflow.** `App\Enums\ServiceReportStatus` (`draft`/`submitted`/`reviewed`/`rejected`) and `App\Enums\ServiceReportActionType` (`submitted`/`rejected`/`returned_to_draft`/`resubmitted`/`reviewed`). `ServiceReportController::submit()` inspects prior history to decide `submitted` vs. `resubmitted`. Every transition validates its own required starting status and aborts `409` otherwise.
 
-**Relational coherence.** `App\Http\Requests\ServiceReports\Concerns\ResolvesServiceReportReferences` validates: a supplied Project must belong to the selected Client; a supplied Task must not contradict the selected Client/Project (with `project_id` server-derived from `task_id` when omitted, extending Work Log's single-source-of-truth rule with an added Client-coherence layer). The controller re-derives the same values at persistence time (mirroring `WorkLogController`'s identical two-layer pattern).
+**Relational coherence.** `App\Http\Requests\ServiceReports\Concerns\ResolvesServiceReportReferences` validates: a supplied Project must belong to the selected Client; a supplied Task must not contradict the selected Client/Project (with `project_id` server-derived from `task_id` when omitted, extending Work Log's single-source-of-truth rule with an added Client-coherence layer). The controller re-derives the same values at persistence time (mirroring `WorkLogController`'s identical two-layer pattern). **Corrected post-review:** `creator_staff_id` alone is immutable after creation — Client/Project/Task remain editable through the normal update endpoint while the report is a `draft`. `validateClientProjectTaskCoherenceForUpdate()` re-runs the same coherence rule against the *effective* combination on every update (a changed field's new value, or the report's existing value for any field left untouched, with the derivation re-applied whenever the Task changes without an accompanying `project_id`), so a Client change can never silently leave an incompatible Project/Task in place. `ServiceReportController::update()` resolves the same public IDs and re-derives `project_id` identically to `store()`. Once the report leaves `draft`, Client/Project/Task are immutable together with the rest of the content, exactly like every other field (`isEditable()`/`409`).
 
 **Authorization.** `App\Http\Controllers\Api\V1\ServiceReports\Concerns\AuthorizesServiceReportAccess` resolves visibility (creator/participant/creator's-current-Manager/linked-Project's-Project-Lead/Administrator), review authority (Manager/Project-Lead/Administrator, never the creator), and draft-management authority (creator/Administrator only) entirely in-controller — no new permission. This is deliberately narrower than Schedule Entries' model: a Manager holding `projects.view` does not automatically see every Project-linked report.
 
@@ -65,6 +67,14 @@ Everything in the product owner's 23-point instruction was implemented:
 - `app/Http/Controllers/Api/V1/Clients/ClientController.php`, `Projects/ProjectController.php`, `Tasks/TaskController.php`, `Staff/StaffController.php` — `destroy()` extended with Service Report deletion guards.
 - `tests/Feature/Api/V1/{Clients/ClientTest,Projects/ProjectTest,Tasks/TaskTest,Staff/StaffTest}.php` — new relational-integrity tests.
 
+**Modified post-review correction (draft relationship editability):**
+- `app/Http/Requests/ServiceReports/UpdateServiceReportRequest.php` — accepts `client_id`/`project_id`/`task_id`, validates coherence via the trait.
+- `app/Http/Requests/ServiceReports/Concerns/ResolvesServiceReportReferences.php` — new `validateClientProjectTaskCoherenceForUpdate()` method.
+- `app/Http/Controllers/Api/V1/ServiceReports/ServiceReportController.php` — `update()` resolves public IDs and re-derives `project_id` for the three coherence-linked fields.
+- `app/Http/Controllers/Api/V1/ServiceReports/Concerns/AuthorizesServiceReportAccess.php` — unrelated privacy fix found during this same review pass (see §12).
+- `tests/Feature/Api/V1/ServiceReports/ServiceReportLifecycleTest.php` — 14 new tests; one existing test's expectation corrected (see §12).
+- `docs/phases/V1_PHASE_18_DEFINITION.md`, `docs/DECISIONS.md` (DEC-041 Correction), `docs/02_ARCHITECTURE.md`, `docs/CHANGELOG.md` — corrected text.
+
 **Documentation:** `docs/DECISIONS.md` (DEC-041), `docs/ROADMAP.md`, `docs/CURRENT_STATE.md`, `docs/CHANGELOG.md`, `docs/02_ARCHITECTURE.md` (§28 added, §7 updated), `docs/03_DATABASE_MODEL.md`, `docs/04_API_CONVENTIONS.md`, `docs/05_SECURITY_MODEL.md`, `docs/testing/TEST_STATUS.md`, `docs/testing/UAT_LOG.md`, `docs/phases/V1_PHASE_18_DEFINITION.md` (new), this handoff (new).
 
 ## 6. Database/Schema Changes
@@ -89,10 +99,10 @@ Filters on the index endpoint: `?client=`, `?project=`, `?task=`, `?staff=`, `?s
 ## 9. Tests Added or Changed
 
 - `ServiceReportTest.php` (24 tests) — creation, structural validation, relational coherence (Project/Client mismatch, Task/Project mismatch, Task-derived-Project/Client mismatch, independent-Task+Project rejection), self-service eligibility (Project membership, Task assignment), Administrator-on-behalf creation, filters, pagination, no internal IDs.
-- `ServiceReportLifecycleTest.php` (29 tests) — visibility (creator/participant/manager/project-lead/administrator/unrelated), editing/deletion immutability across all four statuses, every workflow transition (submit/review/reject/return-to-draft) including invalid-transition rejections, review-authority edge cases (self-review, unrelated manager, participant), full action-history ordering (`submitted`→`rejected`→`returned_to_draft`→`resubmitted`→`reviewed`), suspended-account behavior.
+- `ServiceReportLifecycleTest.php` (43 tests) — visibility (creator/participant/manager/project-lead/administrator/unrelated), editing/deletion immutability across all four statuses, every workflow transition (submit/review/reject/return-to-draft) including invalid-transition rejections, review-authority edge cases (self-review, unrelated manager, participant), full action-history ordering (`submitted`→`rejected`→`returned_to_draft`→`resubmitted`→`reviewed`), suspended-account behavior, **plus 14 new draft relationship-editability tests** (creator/Administrator changing Client/Project/Task on a draft; invalid Client↔Project, Client↔Task, and Project↔Task combinations rejected; Task-derived-Project re-derivation on update; Client/Project/Task immutable on `submitted`/`rejected`/`reviewed`; correctable again after `return-to-draft`; `creator_staff_id` never changeable).
 - `ServiceReportAttachmentTest.php` (15 tests) — upload (image/PDF acceptance, disallowed type/oversized rejection, draft-only, authorization), download (creator/participant/unrelated/wrong-report), removal (authorization, draft-only, physical file deletion), cleanup on report deletion.
 - New relational-integrity tests added to `ClientTest`, `ProjectTest`, `TaskTest`, `StaffTest` (2 tests) for the extended `destroy()` guards.
-- Total new: 68 tests / 142 assertions specific to this phase (plus the relational-integrity additions counted within existing files' totals).
+- Total new: 82 tests / 173 assertions specific to this phase (68 original + 14 from the post-review correction; plus the relational-integrity additions counted within existing files' totals).
 
 ## 10. Commands/Checks Executed
 
@@ -108,6 +118,7 @@ php artisan test   (full suite)
 
 ## 11. Results
 
+**Original delivery:**
 - `composer validate --strict`: `./composer.json is valid`
 - `vendor/bin/pint --test`: `{"tool":"pint","result":"passed"}`
 - `vendor/bin/phpstan analyse`: `{"tool":"phpstan","result":"passed","errors":0}` (level 5)
@@ -116,12 +127,22 @@ php artisan test   (full suite)
 - `php artisan test --filter=ServiceReport`: `{"tool":"phpunit","result":"passed","tests":68,"passed":68,"assertions":142}`
 - `php artisan test` (full suite): `{"tool":"phpunit","result":"passed","tests":780,"passed":780,"assertions":2089}`
 
+**Post-review correction (draft relationship editability):**
+- `vendor/bin/pint --test`: `{"tool":"pint","result":"passed"}`
+- `vendor/bin/phpstan analyse`: `{"tool":"phpstan","result":"passed","errors":0}` (level 5)
+- `composer validate --strict`: `./composer.json is valid`
+- `php artisan migrate:fresh`: all 40 migrations ran cleanly (no schema change was needed for this correction)
+- `php artisan migrate:fresh --seed`: `RolePermissionSeeder` ran cleanly (no catalog change)
+- `php artisan test --filter=ServiceReport`: `{"tool":"phpunit","result":"passed","tests":82,"passed":82,"assertions":173}`
+- `php artisan test` (full suite): `{"tool":"phpunit","result":"passed","tests":794,"passed":794,"assertions":2120}`
+
 ## 12. Deviations from Specification
 
 - **PHPStan-driven type fixes (level 5, no behavioral change):** `ServiceReportAttachmentController::store()` originally wrote `$file->getMimeType() ?? $file->getClientMimeType()` and `$file->getSize() ?? 0` — PHPStan correctly flagged both left-hand expressions as non-nullable in this Laravel/Symfony version, so both `??` fallbacks were dead code; simplified to `$file->getMimeType()`/`$file->getSize()` directly. `download()`'s return type was corrected from `Illuminate\Http\Response` to `Symfony\Component\HttpFoundation\StreamedResponse`, matching what `Storage::download()` actually returns. Neither change altered runtime behavior.
 - **A privacy fix found during self-review before running tests:** the initial `AuthorizesServiceReportAccess::authorizeReview()` did not call `authorizeView()` first, so a total stranger (no relationship to the report at all) attempting to review it would have received `403` instead of `404` — inconsistent with this codebase's established "existence is itself sensitive" convention (`AuthorizesScheduleEntryAccess::authorizeManage()`'s identical shape). Fixed to call `authorizeView()` first; the corresponding test (`test_an_unrelated_manager_cannot_review_a_report`) was updated to assert `404`.
 - **Test syntax fix:** three test files initially used `[, ] = $this->actingAsStaffMember();` to discard both returned values; Pint's formatter rewrote the whitespace to `[] = ...`, which PHP rejects as "Cannot use empty list." Replaced with a plain (non-destructuring) method call in each case — no test behavior changed.
 - No deviation from the 23-point product-owner specification itself was made.
+- **Post-review scope correction (2026-09-13):** the original delivery made Client/Project/Task immutable immediately after creation — stricter than the approved Phase 18 behavior, where a `draft` report's Client/Project/Task remain correctable until submission. Corrected by accepting these three fields in `UpdateServiceReportRequest` (still never `creator_staff_id`) and adding `validateClientProjectTaskCoherenceForUpdate()`, the update-time counterpart to the existing creation-time coherence check, applied against the effective (changed-or-existing) combination. See DEC-041's Correction for the full rationale and §9 above for the 14 new tests. Attachment/workflow/privacy behavior is unchanged by this correction, apart from the one unrelated privacy fix already listed above.
 
 ## 13. Known Issues/Limitations
 
@@ -140,8 +161,9 @@ Via `php artisan serve` (or the Dockerized backend) plus a Sanctum bearer token:
 4. As the Manager/Project Lead again, `POST .../review` — confirm `status: reviewed`, and that further edits/deletes/attachment changes are all rejected (`409`).
 5. Upload a JPEG/PNG/PDF via `POST .../attachments` (multipart) to a fresh draft report — confirm `201` and that a `.exe`/oversized file is rejected (`422`). Confirm an unrelated Staff member gets `404` on the report itself and on `GET .../attachments/{public_id}/download`.
 6. Attempt every documented invalid transition (e.g. `review` on a `draft`, `submit` on a `reviewed` report) — confirm `409` in each case.
+7. On a fresh draft, `PUT` a new `client_id` alone — confirm `200`. Create a draft with a Client+Project, then `PUT` a different `client_id` alone (the existing Project belongs to the old Client) — confirm `422` on `project_id`; resupply a coherent `project_id` in the same request — confirm `200`. Submit the report, then attempt the same `client_id` change — confirm `409`; `return-to-draft` it and confirm the change now succeeds again.
 
-See `docs/testing/UAT_LOG.md` (`UAT-18-01` through `UAT-18-04`) for the formal scenarios awaiting product-owner sign-off — none has been marked `PASS` here, per CLAUDE.md §7.
+See `docs/testing/UAT_LOG.md` (`UAT-18-01` through `UAT-18-05`) for the formal scenarios awaiting product-owner sign-off — none has been marked `PASS` here, per CLAUDE.md §7.
 
 ## 15. Documentation Updated
 

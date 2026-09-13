@@ -149,6 +149,21 @@ class ServiceReportController extends Controller
             ->setStatusCode(201);
     }
 
+    /**
+     * A draft's Client/Project/Task remain correctable up until
+     * submission (docs/phases/V1_PHASE_18_DEFINITION.md's Editing and
+     * Immutability) — only `creator_staff_id` is immutable at every
+     * status, never accepted by UpdateServiceReportRequest at all.
+     * UpdateServiceReportRequest has already validated the *effective*
+     * Client/Project/Task combination for coherence
+     * (validateClientProjectTaskCoherenceForUpdate()); this method
+     * resolves the same public IDs to internal ones and re-derives
+     * project_id from a changed task_id when project_id itself wasn't
+     * explicitly supplied — the identical single-source-of-truth
+     * persistence step store() already performs at creation, applied
+     * here only to the fields actually present in the request so an
+     * untouched relationship is never rewritten.
+     */
     public function update(UpdateServiceReportRequest $request, ServiceReport $serviceReport): ServiceReportResource
     {
         $this->authorizeManageDraft($request, $serviceReport);
@@ -158,6 +173,22 @@ class ServiceReportController extends Controller
         }
 
         $data = $request->validated();
+
+        if (array_key_exists('client_id', $data)) {
+            $data['client_id'] = $this->resolveId(Client::class, $data['client_id']);
+        }
+
+        $taskSupplied = array_key_exists('task_id', $data);
+
+        if ($taskSupplied) {
+            $data['task_id'] = $this->resolveId(Task::class, $data['task_id']);
+        }
+
+        if (array_key_exists('project_id', $data)) {
+            $data['project_id'] = $this->resolveId(Project::class, $data['project_id']);
+        } elseif ($taskSupplied && $data['task_id'] !== null) {
+            $data['project_id'] = Task::query()->whereKey($data['task_id'])->value('project_id');
+        }
 
         $participantIds = null;
 

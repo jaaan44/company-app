@@ -2,10 +2,12 @@
 
 namespace Tests\Feature\Api\V1\ServiceReports;
 
+use App\Models\Client;
 use App\Models\Project;
 use App\Models\ProjectMembership;
 use App\Models\ServiceReport;
 use App\Models\Staff;
+use App\Models\Task;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -166,6 +168,202 @@ class ServiceReportLifecycleTest extends TestCase
         $report = ServiceReport::factory()->rejected()->create();
 
         $this->putJson("/api/v1/service-reports/{$report->public_id}", ['work_performed' => 'New'])->assertStatus(409);
+    }
+
+    // --- Draft relationship editability (Client/Project/Task) -------------
+
+    public function test_the_draft_creator_can_change_the_client(): void
+    {
+        [, $staff] = $this->actingAsStaffMember();
+        $originalClient = Client::factory()->create();
+        $newClient = Client::factory()->create();
+        $report = ServiceReport::factory()->create(['creator_staff_id' => $staff->id, 'client_id' => $originalClient->id]);
+
+        $this->putJson("/api/v1/service-reports/{$report->public_id}", ['client_id' => $newClient->public_id])
+            ->assertOk()->assertJson(['data' => ['client' => ['public_id' => $newClient->public_id]]]);
+
+        $this->assertDatabaseHas('service_reports', ['id' => $report->id, 'client_id' => $newClient->id]);
+    }
+
+    public function test_the_draft_creator_can_change_the_project(): void
+    {
+        [, $staff] = $this->actingAsStaffMember();
+        $client = Client::factory()->create();
+        $originalProject = Project::factory()->create(['client_id' => $client->id]);
+        $newProject = Project::factory()->create(['client_id' => $client->id]);
+        $report = ServiceReport::factory()->create([
+            'creator_staff_id' => $staff->id, 'client_id' => $client->id, 'project_id' => $originalProject->id,
+        ]);
+
+        $this->putJson("/api/v1/service-reports/{$report->public_id}", ['project_id' => $newProject->public_id])
+            ->assertOk()->assertJson(['data' => ['project' => ['public_id' => $newProject->public_id]]]);
+    }
+
+    public function test_the_draft_creator_can_change_the_task(): void
+    {
+        [, $staff] = $this->actingAsStaffMember();
+        $client = Client::factory()->create();
+        $project = Project::factory()->create(['client_id' => $client->id]);
+        $originalTask = Task::factory()->create(['project_id' => $project->id]);
+        $newTask = Task::factory()->create(['project_id' => $project->id]);
+        $report = ServiceReport::factory()->create([
+            'creator_staff_id' => $staff->id, 'client_id' => $client->id, 'project_id' => $project->id, 'task_id' => $originalTask->id,
+        ]);
+
+        $this->putJson("/api/v1/service-reports/{$report->public_id}", ['task_id' => $newTask->public_id])
+            ->assertOk()->assertJson(['data' => ['task' => ['public_id' => $newTask->public_id]]]);
+    }
+
+    public function test_administrator_can_change_client_project_task_on_any_draft(): void
+    {
+        $this->actingAsAdministrator();
+        $originalClient = Client::factory()->create();
+        $newClient = Client::factory()->create();
+        $report = ServiceReport::factory()->create(['client_id' => $originalClient->id]);
+
+        $this->putJson("/api/v1/service-reports/{$report->public_id}", ['client_id' => $newClient->public_id])
+            ->assertOk()->assertJson(['data' => ['client' => ['public_id' => $newClient->public_id]]]);
+    }
+
+    public function test_changing_client_to_one_incompatible_with_the_existing_project_is_rejected(): void
+    {
+        $this->actingAsAdministrator();
+        $client = Client::factory()->create();
+        $otherClient = Client::factory()->create();
+        $project = Project::factory()->create(['client_id' => $client->id]);
+        $report = ServiceReport::factory()->create(['client_id' => $client->id, 'project_id' => $project->id]);
+
+        $this->putJson("/api/v1/service-reports/{$report->public_id}", ['client_id' => $otherClient->public_id])
+            ->assertUnprocessable()->assertJsonValidationErrors('project_id');
+
+        $this->assertDatabaseHas('service_reports', ['id' => $report->id, 'client_id' => $client->id]);
+    }
+
+    public function test_changing_client_together_with_a_coherent_replacement_project_is_accepted(): void
+    {
+        $this->actingAsAdministrator();
+        $client = Client::factory()->create();
+        $otherClient = Client::factory()->create();
+        $project = Project::factory()->create(['client_id' => $client->id]);
+        $replacementProject = Project::factory()->create(['client_id' => $otherClient->id]);
+        $report = ServiceReport::factory()->create(['client_id' => $client->id, 'project_id' => $project->id]);
+
+        $this->putJson("/api/v1/service-reports/{$report->public_id}", [
+            'client_id' => $otherClient->public_id,
+            'project_id' => $replacementProject->public_id,
+        ])->assertOk();
+    }
+
+    public function test_changing_the_task_to_one_whose_project_belongs_to_a_different_client_is_rejected(): void
+    {
+        $this->actingAsAdministrator();
+        $client = Client::factory()->create();
+        $otherClient = Client::factory()->create();
+        $incompatibleProject = Project::factory()->create(['client_id' => $otherClient->id]);
+        $incompatibleTask = Task::factory()->create(['project_id' => $incompatibleProject->id]);
+        $report = ServiceReport::factory()->create(['client_id' => $client->id, 'project_id' => null, 'task_id' => null]);
+
+        $this->putJson("/api/v1/service-reports/{$report->public_id}", ['task_id' => $incompatibleTask->public_id])
+            ->assertUnprocessable()->assertJsonValidationErrors('project_id');
+    }
+
+    public function test_changing_the_task_while_explicitly_keeping_the_old_project_is_rejected_when_incoherent(): void
+    {
+        $this->actingAsAdministrator();
+        $client = Client::factory()->create();
+        $project = Project::factory()->create(['client_id' => $client->id]);
+        $otherProject = Project::factory()->create(['client_id' => $client->id]);
+        $originalTask = Task::factory()->create(['project_id' => $project->id]);
+        $newTask = Task::factory()->create(['project_id' => $otherProject->id]);
+        $report = ServiceReport::factory()->create([
+            'client_id' => $client->id, 'project_id' => $project->id, 'task_id' => $originalTask->id,
+        ]);
+
+        // project_id is explicitly re-supplied (unchanged) alongside a
+        // task_id whose own project is a different one — a real
+        // contradiction, not an omission the single-source-of-truth
+        // derivation should silently resolve.
+        $this->putJson("/api/v1/service-reports/{$report->public_id}", [
+            'project_id' => $project->public_id,
+            'task_id' => $newTask->public_id,
+        ])->assertUnprocessable()->assertJsonValidationErrors('task_id');
+    }
+
+    public function test_changing_the_task_alone_re_derives_the_project_as_the_single_source_of_truth(): void
+    {
+        $this->actingAsAdministrator();
+        $client = Client::factory()->create();
+        $originalProject = Project::factory()->create(['client_id' => $client->id]);
+        $newProject = Project::factory()->create(['client_id' => $client->id]);
+        $originalTask = Task::factory()->create(['project_id' => $originalProject->id]);
+        $newTask = Task::factory()->create(['project_id' => $newProject->id]);
+        $report = ServiceReport::factory()->create([
+            'client_id' => $client->id, 'project_id' => $originalProject->id, 'task_id' => $originalTask->id,
+        ]);
+
+        // project_id is deliberately omitted — the new task's own project
+        // must be derived automatically, exactly as at creation.
+        $this->putJson("/api/v1/service-reports/{$report->public_id}", ['task_id' => $newTask->public_id])
+            ->assertOk()->assertJson(['data' => ['project' => ['public_id' => $newProject->public_id]]]);
+
+        $this->assertDatabaseHas('service_reports', ['id' => $report->id, 'project_id' => $newProject->id, 'task_id' => $newTask->id]);
+    }
+
+    public function test_a_submitted_report_cannot_change_client_project_or_task(): void
+    {
+        $this->actingAsAdministrator();
+        $client = Client::factory()->create();
+        $newClient = Client::factory()->create();
+        $report = ServiceReport::factory()->submitted()->create(['client_id' => $client->id]);
+
+        $this->putJson("/api/v1/service-reports/{$report->public_id}", ['client_id' => $newClient->public_id])->assertStatus(409);
+    }
+
+    public function test_a_rejected_report_cannot_change_client_project_or_task_before_returning_to_draft(): void
+    {
+        $this->actingAsAdministrator();
+        $client = Client::factory()->create();
+        $newClient = Client::factory()->create();
+        $report = ServiceReport::factory()->rejected()->create(['client_id' => $client->id]);
+
+        $this->putJson("/api/v1/service-reports/{$report->public_id}", ['client_id' => $newClient->public_id])->assertStatus(409);
+    }
+
+    public function test_a_reviewed_report_cannot_change_client_project_or_task(): void
+    {
+        $this->actingAsAdministrator();
+        $client = Client::factory()->create();
+        $newClient = Client::factory()->create();
+        $report = ServiceReport::factory()->reviewed()->create(['client_id' => $client->id]);
+
+        $this->putJson("/api/v1/service-reports/{$report->public_id}", ['client_id' => $newClient->public_id])->assertStatus(409);
+    }
+
+    public function test_a_returned_to_draft_report_can_have_client_project_task_corrected_again(): void
+    {
+        [, $staff] = $this->actingAsStaffMember();
+        $client = Client::factory()->create();
+        $newClient = Client::factory()->create();
+        $report = ServiceReport::factory()->rejected()->create(['creator_staff_id' => $staff->id, 'client_id' => $client->id]);
+
+        $this->postJson("/api/v1/service-reports/{$report->public_id}/return-to-draft")->assertOk();
+
+        $this->putJson("/api/v1/service-reports/{$report->public_id}", ['client_id' => $newClient->public_id])
+            ->assertOk()->assertJson(['data' => ['client' => ['public_id' => $newClient->public_id]]]);
+    }
+
+    public function test_creator_staff_id_cannot_be_changed_via_update(): void
+    {
+        [, $staff] = $this->actingAsStaffMember();
+        $otherStaff = Staff::factory()->create();
+        $report = ServiceReport::factory()->create(['creator_staff_id' => $staff->id]);
+
+        $this->putJson("/api/v1/service-reports/{$report->public_id}", [
+            'creator_staff_id' => $otherStaff->public_id,
+            'work_performed' => 'Updated narrative.',
+        ])->assertOk();
+
+        $this->assertDatabaseHas('service_reports', ['id' => $report->id, 'creator_staff_id' => $staff->id]);
     }
 
     // --- Deletion ---------------------------------------------------------
