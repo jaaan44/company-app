@@ -91,6 +91,10 @@ Once running, `GET /api/v1/health` returns `{"data": {"status": "ok", "timestamp
 
 > **Before any non-local deployment** (Phase 22, Security Audit, F-08): both `.env.example` and `.env.docker.example` set `APP_DEBUG=true` for local-dev convenience — a real staging/production `.env` must explicitly set `APP_DEBUG=false` (the application code already defaults to `false` if unset; this is a reminder against accidentally copying the dev example verbatim, not a code gap). See `docs/05_SECURITY_MODEL.md`.
 
+### Staging (Phase 24)
+
+`docker-compose.yml` above is local development only. A dedicated staging deployment — its own Compose file (`docker-compose.staging.yml`), staging-specific Dockerfiles (`docker/php/Dockerfile.staging`, `docker/nginx/Dockerfile.staging`) that bake application source into the image instead of bind-mounting it, and its own environment templates (`.env.staging.example`, `apps/api/.env.staging.example`) — was added in Phase 24. See `docs/DEPLOYMENT_STAGING.md` for the full server-side runbook and `docs/phases/V1_PHASE_24_STAGING_DEPLOYMENT_PLAN.md`/`docs/DECISIONS.md` DEC-047 for the architecture and rationale. As of this writing, server-side execution is still pending — no AI session has access to the real staging VPS.
+
 ### Mobile (`apps/mobile`)
 
 Flutter always runs directly on the host/emulator/device — never in Docker.

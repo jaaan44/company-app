@@ -1,0 +1,148 @@
+# Phase 24 — Staging Deployment. Deliberately a SEPARATE Compose file
+# from docker-compose.yml (Phase 4A, local development only —
+# bind-mounted source, dev-only MySQL credentials, no TLS) rather than
+# a modification of it — see docs/phases/V1_PHASE_24_STAGING_DEPLOYMENT_PLAN.md
+# and docs/DEPLOYMENT_STAGING.md for the full runbook and rationale.
+#
+# No real secret value is ever written into this file. Two small,
+# uncommitted files supply everything sensitive at deploy time:
+#   - apps/api/.env               — Laravel's full runtime config,
+#                                    bind-mounted read-only into `app`
+#                                    below (a configuration file, not
+#                                    source code — application source
+#                                    is baked into the image itself, see
+#                                    docker/php/Dockerfile.staging).
+#   - .env.staging (repo root)    — supplies DB_DATABASE/DB_USERNAME/
+#                                    DB_PASSWORD/DB_ROOT_PASSWORD for
+#                                    Compose's own ${...} substitution
+#                                    into the `mysql` service below.
+#                                    Its DB_* values MUST match the
+#                                    same-named values inside
+#                                    apps/api/.env (Laravel's copy) —
+#                                    see apps/api/.env.staging.example
+#                                    and .env.staging.example for the
+#                                    committed placeholder templates.
+#
+# Host-port policy for this shared, multi-project staging VPS (see the
+# Phase 24 planning document): Company App reserves 8012 (HTTP) and
+# 8442 (HTTPS, reserved — not mapped below, no TLS/domain decided yet)
+# and, only if explicitly re-enabled below, 127.0.0.1:3347 for MySQL.
+# No other project on this host may use these ports; this file must
+# never bind anything to 0.0.0.0 other than the nginx HTTP port.
+#
+# Invoke with an explicit project name so the named volumes below
+# resolve to the SAME Docker volumes the pre-existing ad-hoc
+# deployment already created (e.g. `company-app_mysql-data`) rather
+# than a fresh, differently-prefixed pair — see docs/DEPLOYMENT_STAGING.md
+# §"Migrating from the ad-hoc deployment":
+#
+#   docker compose -p company-app -f docker-compose.staging.yml <command>
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile.staging
+    image: company-app-api:staging
+    container_name: company-app-api
+    working_dir: /var/www/html
+    volumes:
+      # A single configuration FILE bind mount — not application
+      # source (which is baked into the image at build time) — so
+      # Laravel loads real staging config/secrets the same way it
+      # always loads .env, without embedding any of it in the image or
+      # in this committed file. Must exist on the host before `up`;
+      # the deployment runbook creates it from
+      # apps/api/.env.staging.example.
+      - ./apps/api/.env:/var/www/html/.env:ro
+      # Persists Service/Incident Report attachments
+      # (config/attachments.php, storage_path('app/private')) across
+      # image rebuilds/redeploys — the image bakes an EMPTY
+      # storage/app/private into every build (see
+      # docker/php/Dockerfile.staging), so without this volume,
+      # redeploying would silently discard previously uploaded
+      # attachments.
+      - app-storage:/var/www/html/storage/app/private
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - company-app-staging
+
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile.staging
+    image: company-app-nginx:staging
+    container_name: company-app-nginx
+    ports:
+      # Company App's reserved HTTP port on this shared VPS — see the
+      # host-port policy above. Never change this to a wider bind
+      # (e.g. removing the mapping's implicit 0.0.0.0 is fine; binding
+      # an *additional* interface is not needed here).
+      - "8012:80"
+      # 8442 (HTTPS) is reserved for Company App per the VPS host-port
+      # policy but deliberately NOT mapped here: no TLS certificate or
+      # staging domain has been decided yet (see the Phase 24 planning
+      # document's TLS/Domain section). Mapping it now with no TLS
+      # listener behind it would be a dead port, not a working HTTPS
+      # endpoint. Once a domain + certificate exist, add a
+      # `- "8442:443"` mapping and the corresponding TLS `server`
+      # block to docker/nginx/default.conf (or a staging-specific
+      # vhost) — not before.
+    depends_on:
+      - app
+    restart: unless-stopped
+    networks:
+      - company-app-staging
+
+  mysql:
+    image: mysql:8.4
+    container_name: company-app-mysql
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    # Deliberately no `ports:` mapping — MySQL is reachable only on the
+    # internal `company-app-staging` Docker network at
+    # DB_HOST=mysql/DB_PORT=3306 (matching apps/api/.env), exactly like
+    # the local-dev Compose file's own internal connection. This is
+    # the "preferably Docker-network-only" option the Phase 24
+    # authorization asked for. Uncomment the two lines below ONLY if a
+    # host tool (e.g. a MySQL client run directly on the VPS) genuinely
+    # needs access, and never bind beyond 127.0.0.1 — MySQL must never
+    # be reachable from 0.0.0.0/the public internet.
+    # ports:
+    #   - "127.0.0.1:3347:3306"
+    healthcheck:
+      # Uses the container's own MYSQL_ROOT_PASSWORD env var at
+      # runtime (the `$$` escapes Compose's own interpolation so the
+      # literal `$MYSQL_ROOT_PASSWORD` reaches the container's shell)
+      # — no secret is ever embedded in this committed file.
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - company-app-staging
+
+volumes:
+  mysql-data:
+    # No explicit `name:` override — the resulting Docker volume name
+    # is `<project>_mysql-data`. Invoking Compose with `-p company-app`
+    # (see the header comment above) makes this resolve to
+    # `company-app_mysql-data`, the SAME volume the pre-existing ad-hoc
+    # deployment already created and populated — reusing it, not
+    # replacing it. Verify with `docker volume ls | grep mysql-data`
+    # before and after first `up` (see docs/DEPLOYMENT_STAGING.md).
+  app-storage:
+
+networks:
+  company-app-staging:
+    driver: bridge
+    name: company-app-staging

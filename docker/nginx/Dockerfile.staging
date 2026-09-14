@@ -1,0 +1,33 @@
+# Minimal staging Nginx image (Phase 24 — Staging Deployment).
+#
+# Deliberately does NOT bundle a copy of the Laravel application's
+# public/ directory (no shared volume, no image chaining). This
+# application has no compiled front-end build to serve: `@vite` appears
+# only in the unused default Laravel scaffold
+# `apps/api/resources/views/welcome.blade.php` — neither the mobile API
+# nor the real Admin Backoffice Login/Home views reference it — so
+# 100% of this application's real traffic is routed to PHP-FPM via the
+# `try_files ... /index.php?$query_string;` fallback already in
+# docker/nginx/default.conf (reused as-is from local dev — same
+# document root path, same `fastcgi_pass app:9000`, both correct here).
+#
+# nginx only needs its `root` directory to exist on disk for its own
+# `try_files` path resolution; an empty directory is sufficient,
+# because `try_files` will therefore never match a static file and will
+# always fall through to `/index.php` — the desired behavior for this
+# API-first application either way. `SCRIPT_FILENAME` (built from that
+# same `root`) is resolved on the `app` container's own filesystem by
+# PHP-FPM, not by nginx, so nginx never needs `index.php` to physically
+# exist on its side. `favicon.ico`/`robots.txt` requests correctly
+# 404 (as they already do for this API application today) rather than
+# being served — a deliberate, harmless simplification, not an
+# omission.
+#
+# Build context is the repository root (matching docker/php/Dockerfile.
+# staging), so this Dockerfile can COPY the single, already-existing
+# vhost file both environments share.
+FROM nginx:1.27-alpine
+
+RUN mkdir -p /var/www/html/public
+
+COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf

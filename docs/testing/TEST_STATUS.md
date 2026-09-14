@@ -414,4 +414,22 @@ No automated tests apply to this phase — no application code exists yet.
 | GitHub Actions CI | — | NOT RUN (this session) | No `apps/api`/`apps/mobile` source changed — the path-filtered CI workflows (DEC-015) would not fire on a docs-only diff. |
 | UAT | — | NOT APPLICABLE | This phase changed no application behavior (documentation/decisions only) — there is nothing for the product owner to click through or observe differently in either the Flutter app or the Admin Backoffice. The audit findings and resolved decisions are reviewable directly in `docs/phases/V1_PHASE_23_MOBILE_UIUX_AUDIT.md` and `docs/DECISIONS.md` DEC-046. |
 
+## Phase 24 — Staging Deployment (repository implementation)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Discovery/planning session (repository inspection, no code changes) | Manual | PASS | `docs/phases/V1_PHASE_24_STAGING_DEPLOYMENT_PLAN.md` — confirmed every existing Docker/CI/env asset is local-development-only; no staging asset existed before this phase. |
+| `docker compose -p company-app -f docker-compose.staging.yml --env-file <temp, uncommitted> config` | Automated, local | PASS | Statically validated the staging Compose file — correct service/network/volume resolution; confirmed `mysql-data` resolves to `company-app_mysql-data`, matching the pre-existing ad-hoc deployment's own volume. Temporary placeholder env files deleted immediately after, never committed. |
+| `grep -rln "@vite" apps/api/resources/views` | Automated, local | PASS | Exactly one match (`welcome.blade.php`, unused) — confirms the staging Nginx image's empty `public/` directory is safe; no real route depends on a compiled asset nginx would otherwise need to serve. |
+| `git ls-files apps/api/storage apps/api/bootstrap/cache` | Automated, local | PASS | Confirmed writable-directory placeholders are tracked `.gitignore` files, not `.gitkeep` — informed the `.dockerignore` design (no wildcard exclusion risking an emptied-out directory). |
+| Docker image build (`docker/php/Dockerfile.staging`, `docker/nginx/Dockerfile.staging`) | — | **NOT RUN (this sandbox)** | `docker` CLI present, no daemon reachable (`/var/run/docker.sock` absent). Reviewed by hand for correctness (Composer layer ordering, autoloader-generation timing) — genuinely build-testing these is the VPS operator's first `docker compose ... build`, per `docs/DEPLOYMENT_STAGING.md`. |
+| `composer validate --strict` / `vendor/bin/pint --test` / `vendor/bin/phpstan analyse` / `php artisan test` (apps/api) | — | NOT RUN (not applicable) | No file under `apps/api/app|config|routes|database|tests`, and no `composer.json` change — nothing these gates cover was touched. |
+| No secret committed | Manual | PASS | Confirmed by reviewing the full staged diff before commit — `apps/api/.env`/`.env.staging` (the real files) never exist in the diff, only their placeholder-only `.example` templates; `.dockerignore` additionally keeps any stray real `.env*` out of a future image build. |
+| No source-code bind mount reintroduced for staging | Manual | PASS | `docker-compose.staging.yml` reviewed — the only `app` volumes are a single-file `.env` bind mount (configuration, not source) and the new `app-storage` named volume; application source is `COPY`'d into the image at build time. |
+| MySQL never bound to `0.0.0.0` | Manual | PASS | `docker-compose.staging.yml`'s `mysql` service publishes no host port by default; the commented-out alternative is explicitly `127.0.0.1`-only. |
+| Server-side deployment/migration/verification | — | **NOT DONE** | No AI session has access to the real staging VPS. `docs/DEPLOYMENT_STAGING.md` §8's checklist has not been executed against the real host — do not treat any line above as evidence the staging stack actually runs. |
+| Docker validation (local dev, `docker-compose.yml`) | — | NOT APPLICABLE | Phase 4A's local-development Compose file/image were not modified — this phase added a separate, dedicated staging file instead. |
+| GitHub Actions CI | — | NOT RUN (this session) | No `apps/api`/`apps/mobile` source changed — the path-filtered CI workflows (DEC-015) would not fire on this diff (Docker/docs/env-template files only). |
+| UAT | — | NOT RUN | See `docs/testing/UAT_LOG.md` (`UAT-24-01` through `UAT-24-04`) — every scenario requires the real staging VPS, which no AI session can exercise; all recorded `NOT RUN`, ready for the product owner once `docs/DEPLOYMENT_STAGING.md` has actually been executed. |
+
 *(Future phases append their own section above this line, oldest first.)*

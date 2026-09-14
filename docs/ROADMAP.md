@@ -109,7 +109,7 @@ Cross-module dashboard and administrative reports. Preceded by a product-owner-r
 **Phase 21 — Integration Audit** *(complete — see `docs/handoffs/V1_PHASE_21_HANDOFF.md`)* — two bounded deliverables per DEC-044: the DEC-009 general Audit Log backstop (built now, since Phase 3/5 never introduced it as originally anticipated below), and a bounded cross-module consistency review of Phases 1–20 against their own already-approved decisions.
 **Phase 22 — Security Audit** *(complete — see `docs/phases/V1_PHASE_22_SECURITY_AUDIT.md`, `docs/handoffs/V1_PHASE_22_HANDOFF.md`)* — review against `05_SECURITY_MODEL.md`. Delivered as two authorized steps: an evidence-based audit (no Critical/High findings) followed by a narrow, product-owner-approved remediation (one required login-disclosure fix, a bounded Sanctum token expiration, and inexpensive hardening — see DEC-045).
 **Phase 23 — Mobile UI/UX Audit** — review against `06_UI_UX_GUIDELINES.md`.
-**Phase 24 — Staging Deployment** — first real deployment.
+**Phase 24 — Staging Deployment** *(repository implementation complete, server-side execution pending — see `docs/phases/V1_PHASE_24_STAGING_DEPLOYMENT_PLAN.md`, `docs/handoffs/V1_PHASE_24_HANDOFF.md`, `docs/DEPLOYMENT_STAGING.md`)* — first real deployment.
 **Phase 25 — UAT** — product owner acceptance testing (see `docs/testing/UAT_LOG.md`).
 **Phase 26 — Release Readiness** — final go/no-go.
 
