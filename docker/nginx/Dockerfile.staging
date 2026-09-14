@@ -1,33 +1,74 @@
-# Minimal staging Nginx image (Phase 24 — Staging Deployment).
+# Staging Nginx image (Phase 24 — Staging Deployment). Reuses the
+# existing docker/nginx/default.conf vhost unchanged — reproduced
+# below (verified line-by-line, not assumed) is exactly why this vhost
+# works correctly split across two separate containers (`nginx` here,
+# `app`/PHP-FPM built by docker/php/Dockerfile.staging), and why this
+# image bakes in the application's small, genuinely static public/
+# directory rather than leaving it empty or bind-mounting it:
 #
-# Deliberately does NOT bundle a copy of the Laravel application's
-# public/ directory (no shared volume, no image chaining). This
-# application has no compiled front-end build to serve: `@vite` appears
-# only in the unused default Laravel scaffold
-# `apps/api/resources/views/welcome.blade.php` — neither the mobile API
-# nor the real Admin Backoffice Login/Home views reference it — so
-# 100% of this application's real traffic is routed to PHP-FPM via the
-# `try_files ... /index.php?$query_string;` fallback already in
-# docker/nginx/default.conf (reused as-is from local dev — same
-# document root path, same `fastcgi_pass app:9000`, both correct here).
+#   root /var/www/html/public;
+#   index index.php;
+#   location / { try_files $uri $uri/ /index.php?$query_string; }
+#   location = /favicon.ico { access_log off; log_not_found off; }
+#   location = /robots.txt  { access_log off; log_not_found off; }
+#   location ~ \.php$ {
+#       fastcgi_pass app:9000;
+#       fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+#       ...
+#   }
 #
-# nginx only needs its `root` directory to exist on disk for its own
-# `try_files` path resolution; an empty directory is sufficient,
-# because `try_files` will therefore never match a static file and will
-# always fall through to `/index.php` — the desired behavior for this
-# API-first application either way. `SCRIPT_FILENAME` (built from that
-# same `root`) is resolved on the `app` container's own filesystem by
-# PHP-FPM, not by nginx, so nginx never needs `index.php` to physically
-# exist on its side. `favicon.ico`/`robots.txt` requests correctly
-# 404 (as they already do for this API application today) rather than
-# being served — a deliberate, harmless simplification, not an
-# omission.
+# Two genuinely different code paths, verified separately:
 #
-# Build context is the repository root (matching docker/php/Dockerfile.
-# staging), so this Dockerfile can COPY the single, already-existing
-# vhost file both environments share.
+# 1. Every PHP-handled request (100% of this application's real
+#    traffic — the JSON API and the Admin Backoffice; the mobile app
+#    only ever talks to the API). `location / { try_files ...
+#    /index.php?$query_string; }` performs an nginx-internal redirect
+#    to the URI `/index.php` whenever no static file matches — which,
+#    for every real route this application serves, is always, since
+#    there is no compiled front-end build to match (`@vite` appears
+#    only in the unused default Laravel `welcome.blade.php`, verified
+#    via `grep -rln "@vite" apps/api/resources/views`). That redirected
+#    URI is then matched by `location ~ \.php$`, which does NOT consult
+#    `try_files`/the filesystem at all — it constructs
+#    `SCRIPT_FILENAME` as a plain string
+#    (`$document_root$fastcgi_script_name` = the literal text
+#    `/var/www/html/public` + `/index.php`, `$document_root` being an
+#    nginx variable derived straight from the `root` directive, not
+#    from a filesystem lookup) and hands that string to PHP-FPM over
+#    the `app:9000` FastCGI connection. **PHP-FPM resolves that path on
+#    the `app` container's OWN filesystem**, where the real
+#    `docker/php/Dockerfile.staging` image has the genuine
+#    `public/index.php` baked in. nginx itself never opens, reads, or
+#    needs `index.php` to exist on its own side for this to work — it
+#    only ever passes a string.
+#
+# 2. Two small, genuinely static requests nginx *does* serve directly
+#    from its OWN filesystem, never proxied to PHP-FPM at all:
+#    `location = /favicon.ico`/`= /robots.txt`. These bypass
+#    `try_files`/`location /` entirely and read straight from `root`.
+#    An empty `public/` on nginx's side (this image's original design)
+#    would make BOTH of these genuinely 404 — not because anything is
+#    broken, but because nginx would correctly find no file — a real,
+#    if minor, behavioral difference from local dev (where the whole
+#    apps/api tree, favicon/robots included, is bind-mounted into
+#    nginx). To close that gap and remove any doubt about `try_files`
+#    behavior against an empty document root, this image bakes in
+#    `apps/api/public/`'s actual (small — four files: `.htaccess`
+#    (Apache-only, harmless to nginx), `favicon.ico`, `index.php`,
+#    `robots.txt`) contents at build time. This is a plain, immutable
+#    `COPY` at image-build time — not a bind mount, not a shared
+#    volume, not source code in any functional sense: `index.php`
+#    itself does nothing on nginx's side (nginx never executes PHP; it
+#    only ever fastcgi_passes to `app:9000` as explained above) and the
+#    other three files are inert static assets. Copying them costs a
+#    few KB and removes the only remaining behavioral gap between this
+#    image and local dev's bind-mounted equivalent.
+#
+# Build context is the repository root (matching
+# docker/php/Dockerfile.staging), so this Dockerfile can COPY both the
+# small `public/` directory and the single vhost file both environments
+# share.
 FROM nginx:1.27-alpine
 
-RUN mkdir -p /var/www/html/public
-
+COPY apps/api/public/ /var/www/html/public/
 COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf

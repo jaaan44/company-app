@@ -71,14 +71,22 @@ chmod 600 .env.staging apps/api/.env   # readable only by the deploying user —
 
 ## 4. Generate `APP_KEY`
 
-**[Run on the VPS]** — `APP_KEY` cannot be generated before the image exists (it needs `php artisan`), so build the image first:
+**[Run on the VPS]** — `apps/api/.env` is bind-mounted **read-only** into the `app` container (`docker-compose.staging.yml`, `:ro`), by design (§0/§7 of the planning document — nothing running inside a container should be able to rewrite the host's real secrets file). This makes the ordinary `php artisan key:generate` **unsafe to run as-is here**: with no `--show`, it tries to open `.env` for writing and fails (`file_put_contents(): Failed to open stream: Read-only file system`) — a broken deploy step, not a working one. Always use `--show`, which prints the generated key and returns **before** attempting any file write, and place the value into the real file yourself, on the host side:
 
 ```sh
 docker compose -p company-app -f docker-compose.staging.yml build app
 docker compose -p company-app -f docker-compose.staging.yml run --rm app php artisan key:generate --show
 ```
 
-Copy the printed `base64:...` value into `apps/api/.env`'s `APP_KEY=` line (the `--show` flag prints it without writing to a `.env` inside the ephemeral `run --rm` container, since that container's `.env` is the same bind-mounted file — writing directly would also work, but `--show` avoids ambiguity about which process wins if you run this more than once).
+This prints a line like `base64:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX=`. Copy that exact value — never a value from this document, never a value used in any other environment — into `apps/api/.env` on the VPS host filesystem (not inside any container):
+
+```sh
+sed -i "s|^APP_KEY=.*|APP_KEY=base64:REPLACE_WITH_THE_VALUE_JUST_PRINTED|" apps/api/.env
+```
+
+(Edit the line by hand instead of `sed` if you prefer — either way, the edit happens directly on the host file, never through a write attempt inside the read-only-mounted container.) The application container picks up the new value the next time it's (re)started (§5/§9) — `key:generate --show` itself does not need, and does not perform, a container restart.
+
+**Never commit the generated value, print it in a commit message or PR description, or paste it into any file under version control** — it is a real secret from the moment it's generated.
 
 ---
 
@@ -96,6 +104,23 @@ docker compose -p company-app -f docker-compose.staging.yml ps
 All three services (`company-app-api`, `company-app-nginx`, `company-app-mysql`) should show `Up`/`healthy`. If `mysql` doesn't reach `healthy` within ~50 seconds (10 retries × 5s), check `docker compose -p company-app -f docker-compose.staging.yml logs mysql` before proceeding — do not run migrations against a database that isn't actually up yet.
 
 `-p company-app` is not optional — it's what makes the `mysql-data`/`app-storage` volumes resolve to the `company-app_*` names (see §10 if migrating from the ad-hoc deployment, and `docker-compose.staging.yml`'s own header comment).
+
+**Smoke-test the Nginx → PHP-FPM → Laravel path immediately** — this exact path could not be verified in the sandbox this repository's own Docker images were developed in (no outbound network access there for PHP dependency installation; see `docs/phases/V1_PHASE_24_STAGING_DEPLOYMENT_PLAN.md`'s Addendum 2), so this VPS is the first place it can actually be exercised end-to-end:
+
+```sh
+curl -i http://127.0.0.1:8012/api/v1/health
+```
+
+Expect `HTTP/1.1 200 OK` with `{"data":{"status":"ok","timestamp":"..."}}`. **If this fails** (connection refused, 502/504, or anything other than a clean 200):
+
+```sh
+docker compose -p company-app -f docker-compose.staging.yml ps                 # which container is actually unhealthy/exited?
+docker compose -p company-app -f docker-compose.staging.yml logs app           # PHP-FPM/Laravel-side errors (e.g. a missing APP_KEY, a DB connection failure)
+docker compose -p company-app -f docker-compose.staging.yml logs nginx         # e.g. "host not found in upstream" (app not yet up/on the network), permission errors
+docker compose -p company-app -f docker-compose.staging.yml logs mysql        # if app's own logs point at a DB connectivity failure
+```
+
+Do not proceed to §6 (migrations) until this smoke test passes — a database migration against a stack that isn't actually serving requests correctly yet risks masking the real problem.
 
 ---
 
