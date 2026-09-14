@@ -4,6 +4,7 @@
 .env.*
 !.env.example
 !.env.docker.example
+!.env.staging.example
 .phpactor.json
 .phpunit.result.cache
 /.codex

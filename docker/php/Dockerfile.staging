@@ -1,0 +1,73 @@
+# Staging/production-style application image (Phase 24 — Staging
+# Deployment). Deliberately separate from docker/php/Dockerfile, which
+# is explicitly local-development-only (bind-mounted source, no
+# COPY of application code — see its own header comment). This image
+# bakes application source and a --no-dev vendor/ install directly into
+# the image; nothing is bind-mounted here except the runtime .env file
+# and a persistent attachments volume (see docker-compose.staging.yml).
+#
+# Build context is the repository ROOT (not docker/php/), so this
+# Dockerfile can COPY apps/api/ — see the repository-root .dockerignore
+# for what's excluded from that copy (secrets, .git, vendor/,
+# node_modules/, dev-only caches).
+#
+# Same PHP extension set as the local-dev image — only what this
+# application actually uses (pdo_mysql, bcmath); every other extension
+# it needs (mbstring, dom, curl, libxml, pdo, ctype, fileinfo,
+# tokenizer, xml) already ships in the base php:8.4-fpm image. No gd,
+# imagick, redis, or other extension is added, since nothing in this
+# codebase uses one (02_ARCHITECTURE.md §0/§6 — no Redis/queue/image
+# processing anywhere).
+FROM php:8.4-fpm
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git \
+        unzip \
+    && docker-php-ext-install pdo_mysql bcmath \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/html
+
+# Install PHP dependencies from composer.json/composer.lock alone first,
+# so this (comparatively slow) layer is cached independently of
+# application source changes. Deliberately staging-appropriate:
+# --no-dev (no PHPUnit/Larastan/Pint/etc. in the image), --no-scripts
+# (composer.json's post-autoload-dump step calls `artisan
+# package:discover`, which needs application code that isn't copied in
+# yet — run explicitly below once it exists), --no-autoloader (the
+# optimized autoloader below needs app/ present to build a correct
+# classmap — building it now, before app/ exists, would bake in an
+# incomplete one).
+COPY apps/api/composer.json apps/api/composer.lock ./
+RUN composer install \
+        --no-dev \
+        --no-interaction \
+        --no-progress \
+        --prefer-dist \
+        --no-scripts \
+        --no-autoloader
+
+# Now copy application source. See the repository-root .dockerignore —
+# .env*, .git, vendor/, node_modules/, tests caches, and dev-only
+# storage contents never enter the image.
+COPY apps/api/ ./
+
+# Build the real (optimized) autoloader now that app/ exists, and run
+# the package-discovery step --no-scripts skipped above.
+RUN composer dump-autoload --no-dev --optimize \
+    && php artisan package:discover --ansi
+
+# Laravel's writable directories, owned by the same user PHP-FPM's
+# worker pool actually runs as (www-data — the base image's own
+# default pool user/group, php-fpm.d/www.conf). A deliberate, narrow
+# chown at build time — not the local-dev image's broad, runtime
+# `chmod a+rwX` (docker/php/entrypoint.sh), which exists only to cope
+# with bind-mounted host files of unknown ownership that this image,
+# with its code baked in at build time, never has.
+RUN chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R u+rwX,g+rwX storage bootstrap/cache
+
+CMD ["php-fpm"]

@@ -1,0 +1,54 @@
+# Applies to any image built with the repository root as its build
+# context (currently: docker/php/Dockerfile.staging,
+# docker/nginx/Dockerfile.staging — see docker-compose.staging.yml).
+# Keeps secrets, VCS metadata, and dev-only artifacts out of every
+# staging/production image; none of this is needed at runtime inside a
+# container that has its own dependencies installed and its own
+# generated caches.
+
+.git
+.gitattributes
+.github
+
+# Mobile app and repository docs are never needed inside a backend
+# image — excluding them keeps the build context small.
+apps/mobile
+docs
+
+# Local-development-only Docker assets (not needed inside the images
+# they describe how to build).
+docker-compose.yml
+docker/php/entrypoint.sh
+docker/php/conf.d
+
+# Secrets — never baked into an image. Runtime config is supplied via
+# docker-compose.staging.yml's bind mount / environment instead.
+apps/api/.env
+apps/api/.env.*
+!apps/api/.env.example
+!apps/api/.env.docker.example
+!apps/api/.env.staging.example
+
+# Dependencies reinstalled inside the image, never copied from host.
+apps/api/vendor
+apps/api/node_modules
+
+# Dev-only / generated / cache artifacts. Deliberately NOT excluding
+# storage/*'s contents wholesale here: a real build runs against a
+# fresh `git clone`/`git pull` checkout with no runtime-generated files
+# present anyway, and the storage/**/.gitkeep placeholders that keep
+# these directories present in git must survive into the image (an
+# aggressive wildcard exclusion risks Docker dropping an
+# emptied-out directory entirely, which would break Laravel's writable
+# directory assumptions at runtime) — see docker/php/Dockerfile.staging
+# for the explicit chown step that then makes them writable.
+apps/api/.git
+apps/api/.idea
+apps/api/.vscode
+apps/api/.phpunit.cache
+apps/api/.phpunit.result.cache
+apps/api/database/database.sqlite
+apps/api/public/hot
+apps/api/public/storage
+apps/api/public/build
+apps/api/_ide_helper.php
