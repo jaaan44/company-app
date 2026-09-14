@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\Announcements\AnnouncementController;
 use App\Http\Controllers\Api\V1\Announcements\MyAnnouncementController;
+use App\Http\Controllers\Api\V1\Audit\AuditLogController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Clients\ClientController;
 use App\Http\Controllers\Api\V1\Clients\ContactController;
@@ -594,4 +595,20 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
         Route::get('incident-reports', [IncidentReportReportController::class, 'index'])->name('incident-reports.index');
         Route::get('incident-reports/export', [IncidentReportReportController::class, 'export'])->name('incident-reports.export');
     });
+});
+
+// General Audit Log (Phase 21 — Integration Audit, DEC-009/DEC-044): the
+// project-wide auditability backstop the roadmap itself named for this
+// phase. Administrator-only, resolved entirely in-controller via a
+// direct hasRole() check (AuthorizesAuditLogAccess) — no new permission
+// was introduced, mirroring the same "no new permission" discipline
+// every module since Phase 15 has followed when an existing mechanism
+// already expresses the required authorization. Strictly read-only (no
+// create/update/delete route exists) and API-only — no Admin Backoffice
+// UI, consistent with every module since Phase 6. Literal `/export` is
+// registered before no {public_id}-bound route exists to conflict with —
+// there is no singular `GET /audit-logs/{id}` at all in V1.
+Route::middleware(['auth:sanctum', 'account.active'])->prefix('audit-logs')->name('audit-logs.')->group(function (): void {
+    Route::get('/', [AuditLogController::class, 'index'])->name('index');
+    Route::get('export', [AuditLogController::class, 'export'])->name('export');
 });

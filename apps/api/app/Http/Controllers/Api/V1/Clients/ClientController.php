@@ -8,18 +8,28 @@ use App\Http\Requests\Clients\StoreClientRequest;
 use App\Http\Requests\Clients\UpdateClientRequest;
 use App\Http\Resources\ClientResource;
 use App\Models\Client;
+use App\Services\Audit\AuditLogger;
+use App\Support\Audit\AuditActions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Enum;
 
 /**
  * Clients (Phase 8 — Clients & Contacts). Read endpoints require
  * `clients.view`; writes require `clients.manage` — enforced by route
- * middleware (routes/api/v1.php), not here.
+ * middleware (routes/api/v1.php), not here. Create/update/delete are
+ * audited (Phase 21, DEC-044) with curated status metadata only —
+ * business-contact details are not captured in before/after.
  */
 class ClientController extends Controller
 {
+    /** @var array<int, string> */
+    private const AUDITED_FIELDS = ['status'];
+
+    public function __construct(private readonly AuditLogger $auditLogger) {}
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $request->validate([
@@ -46,7 +56,19 @@ class ClientController extends Controller
 
     public function store(StoreClientRequest $request): JsonResponse
     {
-        $client = Client::create($request->validated());
+        $client = DB::transaction(function () use ($request) {
+            $client = Client::create($request->validated());
+
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::CLIENT_CREATED,
+                entityType: 'Client',
+                entityPublicId: $client->public_id,
+                after: $this->curatedSnapshot($client),
+            );
+
+            return $client;
+        });
 
         return (new ClientResource($client->loadCount('contacts')))
             ->response()
@@ -60,7 +82,29 @@ class ClientController extends Controller
 
     public function update(UpdateClientRequest $request, Client $client): ClientResource
     {
-        $client->update($request->validated());
+        $before = $this->curatedSnapshot($client);
+
+        DB::transaction(function () use ($request, $client, $before) {
+            $client->update($request->validated());
+
+            [$changedFields, $curatedBefore, $curatedAfter] = AuditLogger::diff(
+                $before,
+                $this->curatedSnapshot($client),
+                self::AUDITED_FIELDS,
+            );
+
+            if ($changedFields !== []) {
+                $this->auditLogger->recordForRequest(
+                    $request,
+                    AuditActions::CLIENT_UPDATED,
+                    entityType: 'Client',
+                    entityPublicId: $client->public_id,
+                    changedFields: $changedFields,
+                    before: $curatedBefore,
+                    after: $curatedAfter,
+                );
+            }
+        });
 
         return new ClientResource($client->loadCount('contacts'));
     }
@@ -75,7 +119,7 @@ class ClientController extends Controller
      * checks exist to return a clear 409 instead of a raw database
      * constraint error.
      */
-    public function destroy(Client $client): JsonResponse
+    public function destroy(Request $request, Client $client): JsonResponse
     {
         if ($client->contacts()->exists()) {
             return response()->json([
@@ -101,8 +145,31 @@ class ClientController extends Controller
             ], 409);
         }
 
-        $client->delete();
+        $publicId = $client->public_id;
+        $before = $this->curatedSnapshot($client);
+
+        DB::transaction(function () use ($request, $client, $publicId, $before) {
+            $client->delete();
+
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::CLIENT_DELETED,
+                entityType: 'Client',
+                entityPublicId: $publicId,
+                before: $before,
+            );
+        });
 
         return response()->json(status: 204);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function curatedSnapshot(Client $client): array
+    {
+        return [
+            'status' => $client->status->value,
+        ];
     }
 }

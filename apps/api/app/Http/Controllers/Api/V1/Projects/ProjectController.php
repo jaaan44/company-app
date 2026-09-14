@@ -11,9 +11,12 @@ use App\Http\Resources\ProjectResource;
 use App\Models\Client;
 use App\Models\Project;
 use App\Models\Staff;
+use App\Services\Audit\AuditLogger;
+use App\Support\Audit\AuditActions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Enum;
 
 /**
@@ -23,11 +26,17 @@ use Illuminate\Validation\Rules\Enum;
  * is scoped in-controller (AuthorizesProjectVisibility): an Administrator/
  * Manager (`projects.view`) sees every Project, an ordinary Staff member
  * sees only Projects they are a member of. See docs/phases/
- * V1_PHASE_10_DEFINITION.md.
+ * V1_PHASE_10_DEFINITION.md. Create/delete and significant updates
+ * (status/client) are audited (Phase 21, DEC-044).
  */
 class ProjectController extends Controller
 {
     use AuthorizesProjectVisibility;
+
+    /** @var array<int, string> */
+    private const AUDITED_FIELDS = ['status', 'client_id'];
+
+    public function __construct(private readonly AuditLogger $auditLogger) {}
 
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -86,9 +95,22 @@ class ProjectController extends Controller
             $data['client_id'] = $this->resolveId(Client::class, $data['client_id']);
         }
 
-        $project = Project::create($data);
+        $project = DB::transaction(function () use ($request, $data) {
+            $project = Project::create($data);
+            $project->load('client');
 
-        return (new ProjectResource($project->load('client')->loadCount('memberships')))
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::PROJECT_CREATED,
+                entityType: 'Project',
+                entityPublicId: $project->public_id,
+                after: $this->curatedSnapshot($project),
+            );
+
+            return $project;
+        });
+
+        return (new ProjectResource($project->loadCount('memberships')))
             ->response()
             ->setStatusCode(201);
     }
@@ -102,15 +124,39 @@ class ProjectController extends Controller
 
     public function update(UpdateProjectRequest $request, Project $project): ProjectResource
     {
+        $project->load('client');
+        $before = $this->curatedSnapshot($project);
+
         $data = $request->validated();
 
         if (array_key_exists('client_id', $data)) {
             $data['client_id'] = $this->resolveId(Client::class, $data['client_id']);
         }
 
-        $project->update($data);
+        DB::transaction(function () use ($request, $project, $data, $before) {
+            $project->update($data);
+            $project->load('client');
 
-        return new ProjectResource($project->load('client')->loadCount('memberships'));
+            [$changedFields, $curatedBefore, $curatedAfter] = AuditLogger::diff(
+                $before,
+                $this->curatedSnapshot($project),
+                self::AUDITED_FIELDS,
+            );
+
+            if ($changedFields !== []) {
+                $this->auditLogger->recordForRequest(
+                    $request,
+                    AuditActions::PROJECT_UPDATED,
+                    entityType: 'Project',
+                    entityPublicId: $project->public_id,
+                    changedFields: $changedFields,
+                    before: $curatedBefore,
+                    after: $curatedAfter,
+                );
+            }
+        });
+
+        return new ProjectResource($project->loadCount('memberships'));
     }
 
     /**
@@ -127,7 +173,7 @@ class ProjectController extends Controller
      * see TaskController::destroy), so only directly-linked Work Logs
      * need checking here.
      */
-    public function destroy(Project $project): JsonResponse
+    public function destroy(Request $request, Project $project): JsonResponse
     {
         if ($project->memberships()->exists()) {
             return response()->json([
@@ -177,7 +223,21 @@ class ProjectController extends Controller
             ], 409);
         }
 
-        $project->delete();
+        $project->load('client');
+        $publicId = $project->public_id;
+        $before = $this->curatedSnapshot($project);
+
+        DB::transaction(function () use ($request, $project, $publicId, $before) {
+            $project->delete();
+
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::PROJECT_DELETED,
+                entityType: 'Project',
+                entityPublicId: $publicId,
+                before: $before,
+            );
+        });
 
         return response()->json(status: 204);
     }
@@ -192,5 +252,16 @@ class ProjectController extends Controller
         }
 
         return $modelClass::query()->where('public_id', $publicId)->value('id');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function curatedSnapshot(Project $project): array
+    {
+        return [
+            'status' => $project->status->value,
+            'client_id' => $project->client?->public_id,
+        ];
     }
 }

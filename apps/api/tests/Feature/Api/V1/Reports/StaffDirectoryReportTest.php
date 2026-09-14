@@ -113,7 +113,16 @@ class StaffDirectoryReportTest extends TestCase
         );
         $this->assertStringContainsString($staff->public_id, $csv);
         $this->assertStringContainsString('Ada', $csv);
-        $this->assertStringNotContainsString((string) $staff->id.',Ada', $csv);
+
+        // No column of any row is ever the internal numeric id itself —
+        // a bare substring check like "<id>,Ada" is too fragile (Phase 21
+        // consistency-audit finding: a randomly generated employee_number
+        // can coincidentally end in the same digit as $staff->id,
+        // producing a false-positive match purely by chance).
+        $lines = array_filter(explode("\n", trim(ltrim($csv, "\xEF\xBB\xBF"))));
+        foreach ($lines as $line) {
+            $this->assertNotContains((string) $staff->id, str_getcsv($line));
+        }
     }
 
     public function test_csv_export_applies_the_same_filters_and_authorization_as_the_json_endpoint(): void

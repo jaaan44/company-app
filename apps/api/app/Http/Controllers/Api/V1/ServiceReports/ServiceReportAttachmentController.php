@@ -9,7 +9,9 @@ use App\Http\Resources\AttachmentResource;
 use App\Models\Attachment;
 use App\Models\ServiceReport;
 use App\Services\Attachments\AttachmentStorage;
+use App\Services\Audit\AuditLogger;
 use App\Support\Attachments\AttachmentDisk;
+use App\Support\Audit\AuditActions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -30,7 +32,10 @@ class ServiceReportAttachmentController extends Controller
 {
     use AuthorizesServiceReportAccess;
 
-    public function __construct(private readonly AttachmentStorage $attachmentStorage) {}
+    public function __construct(
+        private readonly AttachmentStorage $attachmentStorage,
+        private readonly AuditLogger $auditLogger,
+    ) {}
 
     public function store(StoreServiceReportAttachmentRequest $request, ServiceReport $serviceReport): JsonResponse
     {
@@ -41,14 +46,29 @@ class ServiceReportAttachmentController extends Controller
 
         $path = $this->attachmentStorage->store($file, $serviceReport->public_id);
 
-        $attachment = $serviceReport->attachments()->create([
-            'original_filename' => $file->getClientOriginalName(),
-            'storage_disk' => AttachmentDisk::name(),
-            'storage_path' => $path,
-            'mime_type' => $file->getMimeType(),
-            'size_bytes' => $file->getSize(),
-            'uploaded_by_user_id' => $request->user()->id,
-        ]);
+        $attachment = DB::transaction(function () use ($request, $serviceReport, $file, $path) {
+            $attachment = $serviceReport->attachments()->create([
+                'original_filename' => $file->getClientOriginalName(),
+                'storage_disk' => AttachmentDisk::name(),
+                'storage_path' => $path,
+                'mime_type' => $file->getMimeType(),
+                'size_bytes' => $file->getSize(),
+                'uploaded_by_user_id' => $request->user()->id,
+            ]);
+
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::ATTACHMENT_UPLOADED,
+                entityType: 'Attachment',
+                entityPublicId: $attachment->public_id,
+                after: [
+                    'owner_type' => 'service_report',
+                    'owner_public_id' => $serviceReport->public_id,
+                ],
+            );
+
+            return $attachment;
+        });
 
         return (new AttachmentResource($attachment->load('uploader.staff')))
             ->response()
@@ -76,7 +96,22 @@ class ServiceReportAttachmentController extends Controller
         // orphaned file with no remaining reference).
         $this->attachmentStorage->delete($attachment->storage_path);
 
-        DB::transaction(fn () => $attachment->delete());
+        $publicId = $attachment->public_id;
+
+        DB::transaction(function () use ($request, $serviceReport, $attachment, $publicId) {
+            $attachment->delete();
+
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::ATTACHMENT_DELETED,
+                entityType: 'Attachment',
+                entityPublicId: $publicId,
+                before: [
+                    'owner_type' => 'service_report',
+                    'owner_public_id' => $serviceReport->public_id,
+                ],
+            );
+        });
 
         return response()->json(status: 204);
     }

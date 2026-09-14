@@ -12,6 +12,8 @@ use App\Http\Resources\AnnouncementResource;
 use App\Models\Announcement;
 use App\Models\Department;
 use App\Models\Team;
+use App\Services\Audit\AuditLogger;
+use App\Support\Audit\AuditActions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -34,6 +36,8 @@ class AnnouncementController extends Controller
     use NotifiesAnnouncementAudience;
 
     private const WITH_RELATIONS = ['departments', 'teams', 'creator.staff', 'publisher.staff'];
+
+    public function __construct(private readonly AuditLogger $auditLogger) {}
 
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -160,6 +164,16 @@ class AnnouncementController extends Controller
             ]);
 
             $this->notifyAudience($announcement);
+
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::ANNOUNCEMENT_PUBLISHED,
+                entityType: 'Announcement',
+                entityPublicId: $announcement->public_id,
+                changedFields: ['status'],
+                before: ['status' => AnnouncementStatus::Draft->value],
+                after: ['status' => AnnouncementStatus::Published->value],
+            );
         });
 
         return new AnnouncementResource($announcement->load(self::WITH_RELATIONS)->loadCount('acknowledgements'));
@@ -170,13 +184,25 @@ class AnnouncementController extends Controller
      * endpoint exists; correcting a mistakenly-archived announcement means
      * creating a new one.
      */
-    public function archive(Announcement $announcement): AnnouncementResource
+    public function archive(Request $request, Announcement $announcement): AnnouncementResource
     {
         if ($announcement->status !== AnnouncementStatus::Published) {
             abort(409, 'Only a published announcement may be archived.');
         }
 
-        $announcement->update(['status' => AnnouncementStatus::Archived]);
+        DB::transaction(function () use ($request, $announcement) {
+            $announcement->update(['status' => AnnouncementStatus::Archived]);
+
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::ANNOUNCEMENT_ARCHIVED,
+                entityType: 'Announcement',
+                entityPublicId: $announcement->public_id,
+                changedFields: ['status'],
+                before: ['status' => AnnouncementStatus::Published->value],
+                after: ['status' => AnnouncementStatus::Archived->value],
+            );
+        });
 
         return new AnnouncementResource($announcement->load(self::WITH_RELATIONS)->loadCount('acknowledgements'));
     }

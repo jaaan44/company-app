@@ -12,9 +12,12 @@ use App\Http\Resources\TaskResource;
 use App\Models\Project;
 use App\Models\Staff;
 use App\Models\Task;
+use App\Services\Audit\AuditLogger;
+use App\Support\Audit\AuditActions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Enum;
 
 /**
@@ -35,6 +38,8 @@ class TaskController extends Controller
     use AuthorizesTaskAccess;
 
     private const WITH_RELATIONS = ['project', 'assignee', 'creator.staff'];
+
+    public function __construct(private readonly AuditLogger $auditLogger) {}
 
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -159,7 +164,7 @@ class TaskController extends Controller
      * against it is an even stronger signal than status that history
      * would be lost.
      */
-    public function destroy(Task $task): JsonResponse
+    public function destroy(Request $request, Task $task): JsonResponse
     {
         if ($task->workLogs()->exists()) {
             return response()->json([
@@ -185,7 +190,20 @@ class TaskController extends Controller
             ], 409);
         }
 
-        $task->delete();
+        $publicId = $task->public_id;
+        $before = ['status' => $task->status->value, 'project_id' => $task->project?->public_id];
+
+        DB::transaction(function () use ($request, $task, $publicId, $before) {
+            $task->delete();
+
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::TASK_DELETED,
+                entityType: 'Task',
+                entityPublicId: $publicId,
+                before: $before,
+            );
+        });
 
         return response()->json(status: 204);
     }

@@ -65,7 +65,7 @@ Attachments (service reports, incident reports, task comments, profile photos) n
 
 ## 8. Historical/Audit Data
 
-Per DEC-009 and DEC-010: state-changing workflows (leave approvals, incident progress, staff status changes) preserve history as append-style records rather than overwriting a single mutable field. Audit logging (who did what, when) is expected to be a cross-cutting concern (e.g. a shared `audit_logs` table plus a lightweight logging convention/trait), introduced early enough that later modules don't have to retrofit it. See `03_DATABASE_MODEL.md`.
+Per DEC-009 and DEC-010: state-changing workflows (leave approvals, incident progress, staff status changes) preserve history as append-style records rather than overwriting a single mutable field. **Audit logging (who did what, when) is implemented as of Phase 21** (DEC-044) — a shared `audit_logs` table plus a small, explicit `App\Services\Audit\AuditLogger` service, wired into a curated set of administrative/security-sensitive events across the modules built in Phases 4–20, rather than into every module as each was originally built. See `03_DATABASE_MODEL.md` and DEC-044 for the full event catalog, redaction discipline, and rationale for building this as its own bounded phase (the roadmap's own named backstop) rather than retrofitting it earlier.
 
 ## 9. Explicitly Open Questions
 

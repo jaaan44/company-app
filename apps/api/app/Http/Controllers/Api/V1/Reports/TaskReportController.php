@@ -9,7 +9,9 @@ use App\Http\Resources\TaskResource;
 use App\Models\Project;
 use App\Models\Staff;
 use App\Models\Task;
+use App\Services\Audit\AuditLogger;
 use App\Services\Reporting\TaskVisibility;
+use App\Support\Audit\AuditActions;
 use App\Support\Reporting\CsvExport;
 use App\Support\Reporting\OverdueTasks;
 use App\Support\Reporting\PublicIdResolver;
@@ -33,7 +35,10 @@ class TaskReportController extends Controller
 {
     private const WITH_RELATIONS = ['project', 'assignee', 'creator.staff'];
 
-    public function __construct(private readonly TaskVisibility $visibility) {}
+    public function __construct(
+        private readonly TaskVisibility $visibility,
+        private readonly AuditLogger $auditLogger,
+    ) {}
 
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -42,6 +47,14 @@ class TaskReportController extends Controller
 
     public function export(Request $request): StreamedResponse
     {
+        $this->auditLogger->recordForRequest(
+            $request,
+            AuditActions::REPORT_EXPORTED,
+            entityType: 'Report',
+            entityPublicId: null,
+            after: ['report' => 'tasks'],
+        );
+
         $rows = $this->filteredQuery($request)->cursor()->map(fn (Task $task) => [
             $task->public_id,
             $task->title,

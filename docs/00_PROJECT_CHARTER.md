@@ -10,8 +10,8 @@ Company App is an internal company operations and communication platform. It cen
 - **Laravel web-based Admin Backoffice** — internal administration and management UI
 - **Flutter mobile application** — the primary interface for staff (field and office)
 - **Relational database** — system of record
-- **Redis / queue infrastructure** — where appropriate (jobs, caching, broadcasting)
-- **Real-time capabilities** — where appropriate (messaging, notifications, live status)
+- ~~Redis / queue infrastructure — where appropriate (jobs, caching, broadcasting)~~ **Resolved (Phase 16, DEC-039; reaffirmed through Phase 21):** not needed in V1. Every phase that could plausibly have used a queue (Notifications' fan-out, Messaging's send/notify path, Audit Logging) instead performs synchronous, transactional writes at this application's ~100-employee scale — see `02_ARCHITECTURE.md` §6.
+- ~~Real-time capabilities — where appropriate (messaging, notifications, live status)~~ **Resolved (Phase 16, DEC-039):** no WebSocket/Reverb/broadcasting layer in V1 — Notifications and Messaging are both plain request/response; a client polls rather than receiving push updates. See `02_ARCHITECTURE.md` §5.
 
 ## Scope Areas (V1 Direction)
 

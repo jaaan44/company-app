@@ -10,7 +10,9 @@ use App\Models\Project;
 use App\Models\ServiceReport;
 use App\Models\Staff;
 use App\Models\Task;
+use App\Services\Audit\AuditLogger;
 use App\Services\Reporting\ServiceReportVisibility;
+use App\Support\Audit\AuditActions;
 use App\Support\Reporting\CsvExport;
 use App\Support\Reporting\PublicIdResolver;
 use Illuminate\Database\Eloquent\Builder;
@@ -32,7 +34,10 @@ class ServiceReportReportController extends Controller
 {
     private const WITH_RELATIONS = ['client', 'project', 'task', 'creator', 'participants'];
 
-    public function __construct(private readonly ServiceReportVisibility $visibility) {}
+    public function __construct(
+        private readonly ServiceReportVisibility $visibility,
+        private readonly AuditLogger $auditLogger,
+    ) {}
 
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -41,6 +46,14 @@ class ServiceReportReportController extends Controller
 
     public function export(Request $request): StreamedResponse
     {
+        $this->auditLogger->recordForRequest(
+            $request,
+            AuditActions::REPORT_EXPORTED,
+            entityType: 'Report',
+            entityPublicId: null,
+            after: ['report' => 'service-reports'],
+        );
+
         $rows = $this->filteredQuery($request)->cursor()->map(fn (ServiceReport $report) => [
             $report->public_id,
             $report->client?->name,

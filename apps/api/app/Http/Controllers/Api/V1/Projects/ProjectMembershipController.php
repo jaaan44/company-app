@@ -11,9 +11,12 @@ use App\Http\Requests\Projects\UpdateProjectMembershipRequest;
 use App\Http\Resources\ProjectMembershipResource;
 use App\Models\Project;
 use App\Models\Staff;
+use App\Services\Audit\AuditLogger;
+use App\Support\Audit\AuditActions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Enum;
 
 /**
@@ -24,11 +27,14 @@ use Illuminate\Validation\Rules\Enum;
  * separate `project-membership.*` permission pair and no project-lead
  * self-management carve-out (see docs/phases/V1_PHASE_10_DEFINITION.md).
  * Addressed by the member's Staff `public_id` within the nested
- * collection, not an independent membership `public_id`.
+ * collection, not an independent membership `public_id`. Add/remove/role
+ * change are all audited (Phase 21, DEC-044).
  */
 class ProjectMembershipController extends Controller
 {
     use AuthorizesProjectVisibility, SyncsProjectConversationMembership;
+
+    public function __construct(private readonly AuditLogger $auditLogger) {}
 
     public function index(Request $request, Project $project): AnonymousResourceCollection
     {
@@ -51,17 +57,37 @@ class ProjectMembershipController extends Controller
     {
         $staffId = $this->resolveStaffId($request->validated('staff_id'));
 
-        $membership = $project->memberships()->create([
-            'staff_id' => $staffId,
-            'role' => $request->validated('role', ProjectMembershipRole::Member->value),
-        ]);
+        // The business create (plus its Phase 16 conversation-membership
+        // sync) and its required audit entry commit or roll back together
+        // (Phase 21, DEC-044).
+        $membership = DB::transaction(function () use ($request, $project, $staffId) {
+            $membership = $project->memberships()->create([
+                'staff_id' => $staffId,
+                'role' => $request->validated('role', ProjectMembershipRole::Member->value),
+            ]);
+            $membership->load('staff');
 
-        // Phase 16: if this Project already has a conversation (lazily
-        // created on first use), keep its membership synchronized — a
-        // no-op when no conversation exists yet.
-        $this->addToProjectConversationIfExists($project, $staffId);
+            // Phase 16: if this Project already has a conversation
+            // (lazily created on first use), keep its membership
+            // synchronized — a no-op when no conversation exists yet.
+            $this->addToProjectConversationIfExists($project, $staffId);
 
-        return (new ProjectMembershipResource($membership->load('staff')))
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::PROJECT_MEMBERSHIP_ADDED,
+                entityType: 'ProjectMembership',
+                entityPublicId: null,
+                after: [
+                    'project_id' => $project->public_id,
+                    'staff_id' => $membership->staff?->public_id,
+                    'role' => $membership->role->value,
+                ],
+            );
+
+            return $membership;
+        });
+
+        return (new ProjectMembershipResource($membership))
             ->response()
             ->setStatusCode(201);
     }
@@ -69,20 +95,54 @@ class ProjectMembershipController extends Controller
     public function update(UpdateProjectMembershipRequest $request, Project $project, Staff $staff): ProjectMembershipResource
     {
         $membership = $project->memberships()->where('staff_id', $staff->id)->firstOrFail();
-        $membership->update($request->validated());
+        $beforeRole = $membership->role->value;
 
-        return new ProjectMembershipResource($membership->load('staff'));
+        DB::transaction(function () use ($request, $project, $staff, $membership, $beforeRole) {
+            $membership->update($request->validated());
+            $membership->load('staff');
+
+            if ($membership->role->value !== $beforeRole) {
+                $this->auditLogger->recordForRequest(
+                    $request,
+                    AuditActions::PROJECT_MEMBERSHIP_ROLE_CHANGED,
+                    entityType: 'ProjectMembership',
+                    entityPublicId: null,
+                    changedFields: ['role'],
+                    before: ['project_id' => $project->public_id, 'staff_id' => $staff->public_id, 'role' => $beforeRole],
+                    after: ['project_id' => $project->public_id, 'staff_id' => $staff->public_id, 'role' => $membership->role->value],
+                );
+            }
+        });
+
+        return new ProjectMembershipResource($membership);
     }
 
-    public function destroy(Project $project, Staff $staff): JsonResponse
+    public function destroy(Request $request, Project $project, Staff $staff): JsonResponse
     {
         $membership = $project->memberships()->where('staff_id', $staff->id)->firstOrFail();
-        $membership->delete();
+        $role = $membership->role->value;
 
-        // Phase 16: a Staff member removed from the Project roster is
-        // also removed from its conversation (if one exists) — project
-        // conversation membership is never independently managed.
-        $this->removeFromProjectConversationIfExists($project, $staff->id);
+        DB::transaction(function () use ($request, $project, $staff, $membership, $role) {
+            $membership->delete();
+
+            // Phase 16: a Staff member removed from the Project roster is
+            // also removed from its conversation (if one exists) —
+            // project conversation membership is never independently
+            // managed.
+            $this->removeFromProjectConversationIfExists($project, $staff->id);
+
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::PROJECT_MEMBERSHIP_REMOVED,
+                entityType: 'ProjectMembership',
+                entityPublicId: null,
+                before: [
+                    'project_id' => $project->public_id,
+                    'staff_id' => $staff->public_id,
+                    'role' => $role,
+                ],
+            );
+        });
 
         return response()->json(status: 204);
     }

@@ -7,7 +7,9 @@ use App\Http\Resources\LeaveRequestResource;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
 use App\Models\Staff;
+use App\Services\Audit\AuditLogger;
 use App\Services\Reporting\LeaveRequestVisibility;
+use App\Support\Audit\AuditActions;
 use App\Support\Reporting\CsvExport;
 use App\Support\Reporting\PublicIdResolver;
 use Illuminate\Database\Eloquent\Builder;
@@ -27,7 +29,10 @@ class LeaveRequestReportController extends Controller
 {
     private const WITH_RELATIONS = ['staff', 'leaveType', 'creator.staff'];
 
-    public function __construct(private readonly LeaveRequestVisibility $visibility) {}
+    public function __construct(
+        private readonly LeaveRequestVisibility $visibility,
+        private readonly AuditLogger $auditLogger,
+    ) {}
 
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -36,6 +41,14 @@ class LeaveRequestReportController extends Controller
 
     public function export(Request $request): StreamedResponse
     {
+        $this->auditLogger->recordForRequest(
+            $request,
+            AuditActions::REPORT_EXPORTED,
+            entityType: 'Report',
+            entityPublicId: null,
+            after: ['report' => 'leave-requests'],
+        );
+
         $rows = $this->filteredQuery($request)->cursor()->map(fn (LeaveRequest $leaveRequest) => [
             $leaveRequest->public_id,
             $leaveRequest->staff?->public_id,
