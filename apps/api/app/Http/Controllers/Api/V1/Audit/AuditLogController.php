@@ -98,8 +98,8 @@ class AuditLogController extends Controller
 
         return AuditLog::query()
             ->with('actor')
-            ->when($request->filled('from'), fn ($query) => $query->where('created_at', '>=', $request->date('from')))
-            ->when($request->filled('to'), fn ($query) => $query->where('created_at', '<=', $request->date('to')))
+            ->when($request->filled('from'), fn ($query) => $query->whereDate('created_at', '>=', $request->date('from')))
+            ->when($request->filled('to'), fn ($query) => $query->whereDate('created_at', '<=', $request->date('to')))
             ->when(
                 $request->filled('actor'),
                 fn ($query) => $query->where('actor_user_id', PublicIdResolver::resolve(User::class, $request->string('actor')->toString()) ?? -1)
