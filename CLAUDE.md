@@ -50,12 +50,15 @@ Established as of Phase 1 (Project Bootstrap), extended in Phase 2 (Development 
 ```sh
 composer install --no-interaction --prefer-dist --no-progress
 composer validate --strict
+composer audit --locked
 cp .env.example .env && php artisan key:generate   # first run / CI only — never commit .env
 vendor/bin/pint --test
 vendor/bin/phpstan analyse
 php artisan test
 ```
 Static analysis: Larastan (PHPStan for Laravel) v3, configured at `apps/api/phpstan.neon`, level 5 — see DEC-014 for rationale. Raise the level deliberately in a future phase as real business logic accumulates; don't lower it to make a failing check pass.
+
+`composer audit --locked` (Phase 22, Security Audit, F-10) checks `composer.lock` against the Packagist advisory database for known dependency vulnerabilities — a standing check, not a one-time audit-session action. A finding here blocks the same way a failing test would; do not silently ignore it.
 
 **Flutter (`apps/mobile`) — Flutter 3.47.2 stable, Dart 3.13.2:**
 ```sh

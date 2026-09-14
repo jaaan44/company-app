@@ -33,7 +33,15 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // Phase 22 (Security Audit, F-07): 'serve' registers a
+            // framework-level signed-URL route for this disk. This is the
+            // attachments disk (config/attachments.php) — every download
+            // already goes through an authenticated, authorized
+            // application route (Service/Incident Report attachment
+            // controllers), never Storage::url()/temporaryUrl(). No code
+            // anywhere calls either, so this dormant route is disabled
+            // outright rather than left registered but unused.
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],

@@ -25,23 +25,29 @@ class AuthController extends Controller
      * POST /api/v1/auth/login — issue a Sanctum personal access token.
      *
      * Credential failures always return the same generic message
-     * regardless of whether the email exists, so login behavior never
-     * discloses which emails are registered (05_SECURITY_MODEL.md).
-     * Every outcome is audited (Phase 21, DEC-044) — a failure never
-     * records the attempted password, only (when the email matches a
-     * real account) which account was targeted, plus IP/user agent.
+     * regardless of whether the email exists AND regardless of whether a
+     * matched account is suspended/inactive — a distinguishable message
+     * for "account exists but is deactivated" would itself disclose
+     * account existence/status to anyone holding a correct password for
+     * it (Phase 22, F-01). Login behavior never discloses which emails
+     * are registered, nor their account status (05_SECURITY_MODEL.md).
+     * Every outcome is still audited (Phase 21, DEC-044) — a failure
+     * never records the attempted password, only (when the email matches
+     * a real account) which account was targeted, the internal reason,
+     * plus IP/user agent; the external response never varies with it.
      */
     public function login(ApiLoginRequest $request): JsonResponse
     {
         $user = User::where('email', $request->string('email'))->first();
 
-        if (! $user || ! Hash::check($request->string('password'), $user->password)) {
+        if ($user === null || ! Hash::check($request->string('password'), $user->password)) {
             $this->auditLogger->recordForRequest(
                 $request,
                 AuditActions::AUTH_LOGIN_FAILED,
                 entityType: 'User',
                 entityPublicId: $user?->public_id,
                 actor: null,
+                after: ['reason' => 'invalid_credentials'],
             );
 
             throw ValidationException::withMessages([
@@ -49,6 +55,12 @@ class AuthController extends Controller
             ]);
         }
 
+        // Deliberately the same generic message as invalid credentials
+        // above (Phase 22, F-01) — a distinguishable "this account is
+        // deactivated" message would itself disclose account
+        // existence/status to anyone who has a correct password for it,
+        // contradicting 05_SECURITY_MODEL.md's no-enumeration guarantee.
+        // The specific reason is preserved only in the audit entry.
         if (! $user->isActive()) {
             $this->auditLogger->recordForRequest(
                 $request,
@@ -56,10 +68,11 @@ class AuthController extends Controller
                 entityType: 'User',
                 entityPublicId: $user->public_id,
                 actor: null,
+                after: ['reason' => 'inactive_account'],
             );
 
             throw ValidationException::withMessages([
-                'email' => ['This account is not currently active. Contact an administrator.'],
+                'email' => ['These credentials do not match our records.'],
             ]);
         }
 

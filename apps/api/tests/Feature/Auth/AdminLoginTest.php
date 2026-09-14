@@ -122,6 +122,79 @@ class AdminLoginTest extends TestCase
         $this->assertGuest();
     }
 
+    /**
+     * Phase 22, F-01: a suspended/inactive Admin account authenticated
+     * with the *correct* password must receive an error message
+     * byte-identical to a wrong-password attempt — otherwise the
+     * response itself discloses that the account exists and is
+     * deactivated, contradicting 05_SECURITY_MODEL.md's no-enumeration
+     * guarantee.
+     */
+    public function test_suspended_admin_account_gets_the_same_error_message_as_wrong_password(): void
+    {
+        $suspended = User::factory()->administrator()->suspended()->create([
+            'password' => Hash::make('correct-password'),
+        ]);
+        $active = User::factory()->administrator()->create([
+            'password' => Hash::make('correct-password'),
+        ]);
+
+        $suspendedAttempt = Livewire::test(LoginForm::class)
+            ->set('email', $suspended->email)
+            ->set('password', 'correct-password')
+            ->call('login');
+
+        $wrongPasswordAttempt = Livewire::test(LoginForm::class)
+            ->set('email', $active->email)
+            ->set('password', 'wrong-password')
+            ->call('login');
+
+        $suspendedMessage = $suspendedAttempt->errors()->first('email');
+        $wrongPasswordMessage = $wrongPasswordAttempt->errors()->first('email');
+
+        $this->assertNotNull($suspendedMessage);
+        $this->assertSame($wrongPasswordMessage, $suspendedMessage);
+        $this->assertSame('These credentials do not match our records.', $suspendedMessage);
+        $this->assertGuest();
+    }
+
+    public function test_inactive_admin_account_gets_the_same_error_message_as_wrong_password(): void
+    {
+        $inactive = User::factory()->administrator()->inactive()->create([
+            'password' => Hash::make('correct-password'),
+        ]);
+
+        $attempt = Livewire::test(LoginForm::class)
+            ->set('email', $inactive->email)
+            ->set('password', 'correct-password')
+            ->call('login');
+
+        $message = $attempt->errors()->first('email');
+
+        $this->assertSame('These credentials do not match our records.', $message);
+        $this->assertGuest();
+    }
+
+    /**
+     * Confirms the F-01 message unification never allows a
+     * suspended/inactive Admin account to actually authenticate — the
+     * fix changes only the disclosed message, never the enforcement.
+     */
+    public function test_suspended_admin_account_never_gains_a_session_regardless_of_message_unification(): void
+    {
+        $user = User::factory()->administrator()->suspended()->create([
+            'password' => Hash::make('correct-password'),
+        ]);
+
+        Livewire::test(LoginForm::class)
+            ->set('email', $user->email)
+            ->set('password', 'correct-password')
+            ->call('login');
+
+        $this->assertGuest();
+        $this->get('/home')->assertRedirect('/login');
+    }
+
     public function test_login_is_rate_limited_after_repeated_failures(): void
     {
         $user = User::factory()->administrator()->create([

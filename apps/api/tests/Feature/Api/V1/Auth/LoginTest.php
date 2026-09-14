@@ -96,6 +96,87 @@ class LoginTest extends TestCase
         $response->assertUnprocessable();
     }
 
+    /**
+     * Phase 22, F-01: a suspended/inactive account authenticated with the
+     * *correct* password must receive a response byte-identical to a
+     * wrong-password attempt against an active account — otherwise the
+     * response itself discloses that the account exists and is
+     * deactivated, contradicting 05_SECURITY_MODEL.md's no-enumeration
+     * guarantee.
+     */
+    public function test_suspended_account_with_correct_password_gets_the_same_response_as_wrong_password(): void
+    {
+        $suspended = User::factory()->suspended()->create([
+            'password' => Hash::make('correct-password'),
+        ]);
+        $active = User::factory()->create([
+            'password' => Hash::make('correct-password'),
+        ]);
+
+        $suspendedResponse = $this->postJson('/api/v1/auth/login', [
+            'email' => $suspended->email,
+            'password' => 'correct-password',
+        ]);
+
+        $wrongPasswordResponse = $this->postJson('/api/v1/auth/login', [
+            'email' => $active->email,
+            'password' => 'wrong-password',
+        ]);
+
+        $suspendedResponse->assertUnprocessable();
+        $wrongPasswordResponse->assertUnprocessable();
+
+        $this->assertSame(
+            $wrongPasswordResponse->json('errors.email.0'),
+            $suspendedResponse->json('errors.email.0'),
+        );
+        $this->assertSame(
+            'These credentials do not match our records.',
+            $suspendedResponse->json('errors.email.0'),
+        );
+        $this->assertGuest();
+    }
+
+    public function test_inactive_account_with_correct_password_gets_the_same_response_as_wrong_password(): void
+    {
+        $inactive = User::factory()->inactive()->create([
+            'password' => Hash::make('correct-password'),
+        ]);
+
+        $response = $this->postJson('/api/v1/auth/login', [
+            'email' => $inactive->email,
+            'password' => 'correct-password',
+        ]);
+
+        $response->assertUnprocessable();
+        $this->assertSame(
+            'These credentials do not match our records.',
+            $response->json('errors.email.0'),
+        );
+        $this->assertGuest();
+    }
+
+    /**
+     * Confirms the F-01 message unification never allows a
+     * suspended/inactive account to actually authenticate — the fix
+     * changes only the disclosed message, never the enforcement.
+     */
+    public function test_suspended_account_never_receives_a_token_regardless_of_message_unification(): void
+    {
+        $user = User::factory()->suspended()->create([
+            'password' => Hash::make('correct-password'),
+        ]);
+
+        $response = $this->postJson('/api/v1/auth/login', [
+            'email' => $user->email,
+            'password' => 'correct-password',
+        ]);
+
+        $response->assertUnprocessable()->assertJsonMissingPath('data.token');
+        $this->assertGuest();
+        $this->assertSame(0, $user->tokens()->count());
+    }
+
     public function test_email_and_password_are_required(): void
     {
         $this->postJson('/api/v1/auth/login', [])

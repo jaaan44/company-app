@@ -1,0 +1,28 @@
+# Phase 22 (Security Audit, F-11): conservative, version-update-only
+# Dependabot configuration. Weekly checks, a small open-PR cap per
+# ecosystem, and no auto-merge of any kind — every PR still requires a
+# human (or this repository's own CI + review process) to land it. This
+# is the continuous counterpart to `composer audit` (CLAUDE.md §5),
+# nothing more — no enterprise dependency-management infrastructure.
+version: 2
+updates:
+  # Laravel/PHP backend (apps/api)
+  - package-ecosystem: "composer"
+    directory: "/apps/api"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # Flutter/Dart mobile app (apps/mobile)
+  - package-ecosystem: "pub"
+    directory: "/apps/mobile"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # GitHub Actions workflow actions (.github/workflows)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
