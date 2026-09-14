@@ -3,14 +3,14 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** Phase 22 — Security Audit
-**Phase status:** COMPLETE (implementation pushed, pending user review/merge)
-**Last completed phase:** Phase 22 (Phases 1–21 are merged into `main`)
-**Next planned phase:** Phase 23 — Mobile UI/UX Audit (see `ROADMAP.md`) — **not authorized yet**
+**Current phase:** Phase 23 — Mobile UI/UX Audit & Foundation
+**Phase status:** COMPLETE (audit, design-system/accessibility/navigation decisions, and documentation only — no Flutter code changed; see `docs/phases/V1_PHASE_23_MOBILE_UIUX_AUDIT.md`)
+**Last completed phase:** Phase 23 (Phases 1–22 are merged into `main` — Phase 22 via PR #24)
+**Next planned phase:** Phase 24 — Staging Deployment (see `ROADMAP.md`) — **not authorized yet**. See also this phase's own Recommendations (`docs/phases/V1_PHASE_23_MOBILE_UIUX_AUDIT.md` §12) for smaller, optional follow-ups (two small existing-UI fixes; `go_router` + the bottom-navigation shell as the first mobile-module UI phase's opening work).
 
 ## Current Objective
 
-Phase 22 (Security Audit) was authorized in two steps: an audit/planning session (producing `docs/phases/V1_PHASE_22_SECURITY_AUDIT.md`, no code changes) followed by explicit product-owner authorization of a narrow remediation scope. That scope is now implemented, tested, and pushed on its own commits (not yet merged into `main`, no PR opened, per CLAUDE.md §8 Stop Discipline). Awaiting product-owner review and authorization for Phase 23.
+Phase 22 (Security Audit) was authorized in two steps: an audit/planning session (producing `docs/phases/V1_PHASE_22_SECURITY_AUDIT.md`, no code changes) followed by explicit product-owner authorization of a narrow remediation scope. That scope was implemented, tested, and merged into `main` via PR #24. Phase 23 (Mobile UI/UX Audit & Foundation) is now also complete: it audited the existing Flutter UI (two screens: Login, a neutral Home placeholder) against `docs/06_UI_UX_GUIDELINES.md`, and resolved that document's previously open visual-design-system, accessibility-target, and mobile-navigation-architecture questions (DEC-046) — see the phase document for the full audit and `docs/handoffs/V1_PHASE_23_HANDOFF.md` for the implementation account. No Flutter code was changed. Awaiting product-owner review and authorization for Phase 24 (or any of Phase 23's own optional follow-up recommendations).
 
 ## Completed
 
@@ -229,10 +229,18 @@ Phase 22 (Security Audit) was authorized in two steps: an audit/planning session
   - **Hardening implemented:** explicit `permissions: contents: read` on both GitHub Actions workflows; `composer audit --locked` added as a standing quality-gate command (CLAUDE.md §5); `apps/api/.gitignore`'s env-file pattern generalized to a wildcard; the `local` filesystem disk's dormant `serve` route disabled; a README reminder about `APP_DEBUG` in production; a new, conservative `.github/dependabot.yml` (weekly, no auto-merge).
   - **Explicitly deferred, not implemented:** the DEC-044 User suspend/reactivate/role-change mutation surface (new product behavior, not a security fix), `config/cors.php` (no browser client exists yet), Sanctum ability/token scoping beyond the time-bound expiration above, and any refresh-token architecture, new infrastructure, or enterprise-scale tooling.
   - 12 new regression tests added (`LoginTest`, `AdminLoginTest`, new `TokenExpirationTest`); full suite 1,080/1,080 passing (1,068 Phase 1–21 baseline + 12 new); `composer validate --strict`/`composer audit --locked`/`vendor/bin/pint --test`/`vendor/bin/phpstan analyse` all pass.
+  - **Merged into `main` via PR #24.**
+
+- **Phase 23:** Mobile UI/UX Audit & Foundation. See `docs/phases/V1_PHASE_23_MOBILE_UIUX_AUDIT.md` (audit + decisions) and `docs/handoffs/V1_PHASE_23_HANDOFF.md` for full detail.
+  - Audited the entire existing Flutter UI (every file in `apps/mobile/lib/` — two real screens, `LoginPage`/`HomePage`, plus the app shell/theme and `AuthGate`) against `docs/06_UI_UX_GUIDELINES.md`. Confirmed, not assumed: every one of the fifteen business modules built since Phase 6 has zero Flutter UI, by repeated, deliberate exclusion in each of those phases' own handoffs — not an oversight this phase needed to flag as a defect.
+  - Found two small, real, pre-existing inconsistencies — **documented only, neither fixed in this phase**, per explicit instruction: (G-01) `CompanyApp`'s `MaterialApp` defines no `darkTheme`/`themeMode`, so the app silently ignores the device's dark-mode setting; (G-02) `HomePage`'s placeholder text doesn't use the `TextTheme` styling convention `LoginPage` already established.
+  - Resolved the three questions `06_UI_UX_GUIDELINES.md` had explicitly left open, recorded as DEC-046: a Material 3 visual-design foundation (semantic color roles via a new `AppStatusColors` `ThemeExtension` for success/warning/info, a typography hierarchy mapped onto Flutter's stock `TextTheme`, a 4px-based spacing scale, and baseline component conventions — a foundation, not a component library); an accessibility baseline aligned to WCAG 2.2 AA principles plus native Flutter/platform practice (explicitly not a certification); and a navigation architecture decision (`go_router`, superseding DEC-021's routing-package deferral — DEC-021's state-management deferral, DEC-025's plain `ChangeNotifier`, is unaffected).
+  - `docs/06_UI_UX_GUIDELINES.md` substantially expanded with the resolved foundation (still at the principles/system level — no wireframes, no per-module layouts); `docs/02_ARCHITECTURE.md` §12 updated to point to the routing decision.
+  - **No Flutter code, dependency, or business-module screen was added.** No bottom-navigation shell, no `go_router` installation, no fix for G-01/G-02 — all explicitly deferred to a later, separately-authorized phase per this phase's own scope boundary.
 
 ## Pending / Not Started
 
-- Mobile UI/UX Audit (Phase 23) and everything after it on the roadmap.
+- Staging Deployment (Phase 24) and everything after it on the roadmap. Also pending (optional, smaller-scoped, not yet authorized): the two small existing-UI fixes Phase 23 documented (G-01/G-02) and the first mobile-module UI implementation phase (which would add `go_router` and the bottom-navigation shell together, per DEC-046).
 
 ## Known Blockers / Issues
 
@@ -255,13 +263,13 @@ Phase 22 (Security Audit) was authorized in two steps: an audit/planning session
 ## Repository / Branch Information
 
 - Repository: `jaaan44/company-app`
-- Default branch: `main` (contains the approved Phase 0–21 baseline)
-- Phase 22 branch: `claude/eloquent-dijkstra-r1a09v` (branched from `main` at Phase 21's merge commit `ada32a6`, pushed to `origin`, not merged, no PR opened)
+- Default branch: `main` (contains the approved Phase 0–22 baseline, Phase 22 merged via PR #24)
+- Phase 23 branch: `claude/compassionate-dijkstra-fyo5lt` (branched from `main` at Phase 22's merge commit `d97636d`) — documentation/decisions only, per this phase's own scope; pushed to `origin`, merge status per the product owner's review.
 
 ## Latest Relevant Handoff
 
-`docs/handoffs/V1_PHASE_22_HANDOFF.md`
+`docs/handoffs/V1_PHASE_23_HANDOFF.md`
 
 ## For the Next Session
 
-Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/phases/V1_PHASE_22_SECURITY_AUDIT.md` (the audit findings) and `docs/handoffs/V1_PHASE_22_HANDOFF.md` (what was actually remediated and why the rest was deferred) for Phase 22 — Security Audit, `docs/handoffs/V1_PHASE_21_HANDOFF.md` for the Integration Audit (general Audit Log + consistency-audit findings), `docs/handoffs/V1_PHASE_20_HANDOFF.md` for Admin Dashboard & Reporting, `docs/handoffs/V1_PHASE_19_HANDOFF.md` for Incident Reports, `docs/handoffs/V1_PHASE_18_HANDOFF.md` for Service Reports, `docs/handoffs/V1_PHASE_17_HANDOFF.md` for the Scheduler, `docs/handoffs/V1_PHASE_16_HANDOFF.md` for Messaging, `docs/handoffs/V1_PHASE_15_HANDOFF.md` for Notifications, `docs/handoffs/V1_PHASE_14_HANDOFF.md` for Announcements, `docs/handoffs/V1_PHASE_13_HANDOFF.md` for Leave Management, `docs/handoffs/V1_PHASE_12_HANDOFF.md` for Work Logs, `docs/handoffs/V1_PHASE_11_HANDOFF.md` for Tasks, `docs/handoffs/V1_PHASE_10_HANDOFF.md` for Projects & Project Membership, `docs/handoffs/V1_PHASE_09_HANDOFF.md` for Staff Status & Location Check-in, `docs/handoffs/V1_PHASE_08_HANDOFF.md` for Clients & Contacts, `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 23 (Mobile UI/UX Audit) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone. Phase 22 itself is implemented but not yet merged — its branch has no PR open, per CLAUDE.md §8 Stop Discipline, awaiting product-owner review.
+Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/phases/V1_PHASE_23_MOBILE_UIUX_AUDIT.md` (the audit and the resolved visual-design/accessibility/navigation decisions) and `docs/handoffs/V1_PHASE_23_HANDOFF.md` for Phase 23 — Mobile UI/UX Audit & Foundation, `docs/phases/V1_PHASE_22_SECURITY_AUDIT.md` (the audit findings) and `docs/handoffs/V1_PHASE_22_HANDOFF.md` (what was actually remediated and why the rest was deferred) for Phase 22 — Security Audit, `docs/handoffs/V1_PHASE_21_HANDOFF.md` for the Integration Audit (general Audit Log + consistency-audit findings), `docs/handoffs/V1_PHASE_20_HANDOFF.md` for Admin Dashboard & Reporting, `docs/handoffs/V1_PHASE_19_HANDOFF.md` for Incident Reports, `docs/handoffs/V1_PHASE_18_HANDOFF.md` for Service Reports, `docs/handoffs/V1_PHASE_17_HANDOFF.md` for the Scheduler, `docs/handoffs/V1_PHASE_16_HANDOFF.md` for Messaging, `docs/handoffs/V1_PHASE_15_HANDOFF.md` for Notifications, `docs/handoffs/V1_PHASE_14_HANDOFF.md` for Announcements, `docs/handoffs/V1_PHASE_13_HANDOFF.md` for Leave Management, `docs/handoffs/V1_PHASE_12_HANDOFF.md` for Work Logs, `docs/handoffs/V1_PHASE_11_HANDOFF.md` for Tasks, `docs/handoffs/V1_PHASE_10_HANDOFF.md` for Projects & Project Membership, `docs/handoffs/V1_PHASE_09_HANDOFF.md` for Staff Status & Location Check-in, `docs/handoffs/V1_PHASE_08_HANDOFF.md` for Clients & Contacts, `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 24 (Staging Deployment) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone. Also awaiting authorization: Phase 23's own optional recommendations (fixing G-01/G-02; the first mobile-module UI phase adding `go_router` + the bottom-navigation shell per DEC-046) — none of these were implemented in Phase 23 itself.
