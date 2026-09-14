@@ -8,6 +8,8 @@ use App\Http\Resources\StaffResource;
 use App\Models\Department;
 use App\Models\Staff;
 use App\Models\Team;
+use App\Services\Audit\AuditLogger;
+use App\Support\Audit\AuditActions;
 use App\Support\Reporting\CsvExport;
 use App\Support\Reporting\PublicIdResolver;
 use Illuminate\Database\Eloquent\Builder;
@@ -28,6 +30,8 @@ class StaffDirectoryReportController extends Controller
 {
     private const WITH_RELATIONS = ['department', 'team', 'position', 'manager', 'latestOperationalStatus', 'user'];
 
+    public function __construct(private readonly AuditLogger $auditLogger) {}
+
     public function index(Request $request): AnonymousResourceCollection
     {
         return StaffResource::collection($this->filteredQuery($request)->paginate($request->integer('per_page', 50)));
@@ -36,9 +40,20 @@ class StaffDirectoryReportController extends Controller
     /**
      * Streams every currently-filtered, visible Staff row as CSV — same
      * filters, same visibility (staff.view, route-gated) as index().
+     * Every export is audited (Phase 21, DEC-044) — the exported rows/
+     * filters themselves are never captured, only that this report was
+     * exported and by whom.
      */
     public function export(Request $request): StreamedResponse
     {
+        $this->auditLogger->recordForRequest(
+            $request,
+            AuditActions::REPORT_EXPORTED,
+            entityType: 'Report',
+            entityPublicId: null,
+            after: ['report' => 'staff'],
+        );
+
         $rows = $this->filteredQuery($request)->cursor()->map(fn (Staff $staff) => [
             $staff->public_id,
             $staff->employee_number,

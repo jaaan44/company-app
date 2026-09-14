@@ -106,7 +106,7 @@ Cross-module dashboard and administrative reports. Preceded by a product-owner-r
 ### Release Preparation
 *Sequential, depends on all prior phases*
 
-**Phase 21 — Integration Audit** — cross-module consistency review.
+**Phase 21 — Integration Audit** *(complete — see `docs/handoffs/V1_PHASE_21_HANDOFF.md`)* — two bounded deliverables per DEC-044: the DEC-009 general Audit Log backstop (built now, since Phase 3/5 never introduced it as originally anticipated below), and a bounded cross-module consistency review of Phases 1–20 against their own already-approved decisions.
 **Phase 22 — Security Audit** — review against `05_SECURITY_MODEL.md`.
 **Phase 23 — Mobile UI/UX Audit** — review against `06_UI_UX_GUIDELINES.md`.
 **Phase 24 — Staging Deployment** — first real deployment.
@@ -117,5 +117,5 @@ Cross-module dashboard and administrative reports. Preceded by a product-owner-r
 
 ## Notes
 
-- Audit logging (DEC-009) is not a standalone phase — it is expected to be introduced as shared infrastructure during Phase 3 (Core Architecture) or Phase 5 (Roles & Permissions), then used by every subsequent module. If that doesn't happen, Phase 21 (Integration Audit) is the backstop to catch the gap.
+- Audit logging (DEC-009) was not introduced during Phase 3 (Core Architecture) or Phase 5 (Roles & Permissions) as originally anticipated here — every phase from 6 through 20 re-flagged the same standing gap. Phase 21 (Integration Audit) was the named backstop for exactly this case, and built it — see DEC-044.
 - This roadmap is provisional beyond Phase 1. Boundaries may shift as real implementation surfaces better groupings — any shift should be noted in `CHANGELOG.md` and, if it reflects a real decision (not just a rename), in `DECISIONS.md`.

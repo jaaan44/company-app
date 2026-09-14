@@ -9,6 +9,8 @@ use App\Http\Requests\Clients\UpdateContactRequest;
 use App\Http\Resources\ContactResource;
 use App\Models\Client;
 use App\Models\Contact;
+use App\Services\Audit\AuditLogger;
+use App\Support\Audit\AuditActions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -20,10 +22,17 @@ use Illuminate\Validation\Rules\Enum;
  * `clients.view`; writes require `clients.manage` — enforced by route
  * middleware (routes/api/v1.php), not here. Contacts share Client's
  * permissions; there is no separate `contacts.*` permission pair (see
- * docs/phases/V1_PHASE_08_DEFINITION.md).
+ * docs/phases/V1_PHASE_08_DEFINITION.md). Create/update/delete are
+ * audited (Phase 21, DEC-044) with curated status/client/primary
+ * metadata only — personal contact details are not captured.
  */
 class ContactController extends Controller
 {
+    /** @var array<int, string> */
+    private const AUDITED_FIELDS = ['status', 'client_id', 'is_primary'];
+
+    public function __construct(private readonly AuditLogger $auditLogger) {}
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $request->validate([
@@ -70,7 +79,17 @@ class ContactController extends Controller
             })
             : Contact::create($data);
 
-        return (new ContactResource($contact->load('client')))
+        $contact->load('client');
+
+        $this->auditLogger->recordForRequest(
+            $request,
+            AuditActions::CONTACT_CREATED,
+            entityType: 'Contact',
+            entityPublicId: $contact->public_id,
+            after: $this->curatedSnapshot($contact),
+        );
+
+        return (new ContactResource($contact))
             ->response()
             ->setStatusCode(201);
     }
@@ -82,6 +101,9 @@ class ContactController extends Controller
 
     public function update(UpdateContactRequest $request, Contact $contact): ContactResource
     {
+        $contact->load('client');
+        $before = $this->curatedSnapshot($contact);
+
         $data = $request->validated();
 
         if (array_key_exists('client_id', $data)) {
@@ -97,12 +119,44 @@ class ContactController extends Controller
             $contact->update($data);
         }
 
-        return new ContactResource($contact->load('client'));
+        $contact->load('client');
+
+        [$changedFields, $curatedBefore, $curatedAfter] = AuditLogger::diff(
+            $before,
+            $this->curatedSnapshot($contact),
+            self::AUDITED_FIELDS,
+        );
+
+        if ($changedFields !== []) {
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::CONTACT_UPDATED,
+                entityType: 'Contact',
+                entityPublicId: $contact->public_id,
+                changedFields: $changedFields,
+                before: $curatedBefore,
+                after: $curatedAfter,
+            );
+        }
+
+        return new ContactResource($contact);
     }
 
-    public function destroy(Contact $contact): JsonResponse
+    public function destroy(Request $request, Contact $contact): JsonResponse
     {
+        $contact->load('client');
+        $publicId = $contact->public_id;
+        $before = $this->curatedSnapshot($contact);
+
         $contact->delete();
+
+        $this->auditLogger->recordForRequest(
+            $request,
+            AuditActions::CONTACT_DELETED,
+            entityType: 'Contact',
+            entityPublicId: $publicId,
+            before: $before,
+        );
 
         return response()->json(status: 204);
     }
@@ -137,5 +191,17 @@ class ContactController extends Controller
         }
 
         return Client::query()->where('public_id', $publicId)->value('id');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function curatedSnapshot(Contact $contact): array
+    {
+        return [
+            'status' => $contact->status->value,
+            'client_id' => $contact->client?->public_id,
+            'is_primary' => $contact->is_primary,
+        ];
     }
 }

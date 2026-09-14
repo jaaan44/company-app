@@ -8,7 +8,9 @@ use App\Models\Project;
 use App\Models\Staff;
 use App\Models\Task;
 use App\Models\WorkLog;
+use App\Services\Audit\AuditLogger;
 use App\Services\Reporting\WorkLogVisibility;
+use App\Support\Audit\AuditActions;
 use App\Support\Reporting\CsvExport;
 use App\Support\Reporting\PublicIdResolver;
 use Illuminate\Database\Eloquent\Builder;
@@ -30,7 +32,10 @@ class WorkLogReportController extends Controller
 {
     private const WITH_RELATIONS = ['staff', 'task', 'project', 'creator.staff'];
 
-    public function __construct(private readonly WorkLogVisibility $visibility) {}
+    public function __construct(
+        private readonly WorkLogVisibility $visibility,
+        private readonly AuditLogger $auditLogger,
+    ) {}
 
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -39,6 +44,14 @@ class WorkLogReportController extends Controller
 
     public function export(Request $request): StreamedResponse
     {
+        $this->auditLogger->recordForRequest(
+            $request,
+            AuditActions::REPORT_EXPORTED,
+            entityType: 'Report',
+            entityPublicId: null,
+            after: ['report' => 'work-logs'],
+        );
+
         $rows = $this->filteredQuery($request)->cursor()->map(fn (WorkLog $log) => [
             $log->public_id,
             $log->staff?->public_id,

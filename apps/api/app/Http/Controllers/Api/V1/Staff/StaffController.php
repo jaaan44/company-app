@@ -12,6 +12,8 @@ use App\Models\Position;
 use App\Models\Staff;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\Audit\AuditLogger;
+use App\Support\Audit\AuditActions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -21,11 +23,18 @@ use Illuminate\Validation\Rules\Enum;
  * Staff — the company personnel directory and employment-profile
  * foundation (Phase 7). Read endpoints require `staff.view`; writes
  * require `staff.manage` — enforced by route middleware
- * (routes/api/v1.php), not here.
+ * (routes/api/v1.php), not here. Create/significant structural changes
+ * (status/manager/department/team/position) are audited (Phase 21,
+ * DEC-044) — ordinary profile fields (name, contact info) are not.
  */
 class StaffController extends Controller
 {
     private const WITH_RELATIONS = ['department', 'team', 'position', 'manager', 'user', 'latestOperationalStatus'];
+
+    /** @var array<int, string> */
+    private const AUDITED_FIELDS = ['status', 'department_id', 'team_id', 'position_id', 'manager_id'];
+
+    public function __construct(private readonly AuditLogger $auditLogger) {}
 
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -79,8 +88,17 @@ class StaffController extends Controller
         $data = $this->resolveReferences($request->validated(), $request);
 
         $staffMember = Staff::create($data);
+        $staffMember->load(self::WITH_RELATIONS);
 
-        return (new StaffResource($staffMember->load(self::WITH_RELATIONS)))
+        $this->auditLogger->recordForRequest(
+            $request,
+            AuditActions::STAFF_CREATED,
+            entityType: 'Staff',
+            entityPublicId: $staffMember->public_id,
+            after: $this->curatedSnapshot($staffMember),
+        );
+
+        return (new StaffResource($staffMember))
             ->response()
             ->setStatusCode(201);
     }
@@ -90,13 +108,60 @@ class StaffController extends Controller
         return new StaffResource($staff->load(self::WITH_RELATIONS));
     }
 
+    /**
+     * Only status/manager/department/team/position changes are audited
+     * (Phase 21, DEC-044) — an ordinary profile edit (name, contact
+     * info) produces no audit entry at all. A transition to `separated`
+     * is recorded as the more specific `staff.separated` instead of a
+     * generic `staff.updated`, even when other allowlisted fields also
+     * changed in the same request — never both, so this update can never
+     * be double-logged.
+     */
     public function update(UpdateStaffRequest $request, Staff $staff): StaffResource
     {
+        $staff->load(self::WITH_RELATIONS);
+        $before = $this->curatedSnapshot($staff);
+        $wasSeparated = $staff->status === StaffStatus::Separated;
+
         $data = $this->resolveReferences($request->validated(), $request);
-
         $staff->update($data);
+        $staff->load(self::WITH_RELATIONS);
 
-        return new StaffResource($staff->load(self::WITH_RELATIONS));
+        [$changedFields, $curatedBefore, $curatedAfter] = AuditLogger::diff(
+            $before,
+            $this->curatedSnapshot($staff),
+            self::AUDITED_FIELDS,
+        );
+
+        if ($changedFields !== []) {
+            $this->auditLogger->recordForRequest(
+                $request,
+                (! $wasSeparated && $staff->status === StaffStatus::Separated)
+                    ? AuditActions::STAFF_SEPARATED
+                    : AuditActions::STAFF_UPDATED,
+                entityType: 'Staff',
+                entityPublicId: $staff->public_id,
+                changedFields: $changedFields,
+                before: $curatedBefore,
+                after: $curatedAfter,
+            );
+        }
+
+        return new StaffResource($staff);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function curatedSnapshot(Staff $staff): array
+    {
+        return [
+            'status' => $staff->status->value,
+            'department_id' => $staff->department?->public_id,
+            'team_id' => $staff->team?->public_id,
+            'position_id' => $staff->position?->public_id,
+            'manager_id' => $staff->manager?->public_id,
+        ];
     }
 
     /**

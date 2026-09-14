@@ -10,7 +10,9 @@ use App\Http\Resources\AttachmentResource;
 use App\Models\Attachment;
 use App\Models\IncidentReport;
 use App\Services\Attachments\AttachmentStorage;
+use App\Services\Audit\AuditLogger;
 use App\Support\Attachments\AttachmentDisk;
+use App\Support\Audit\AuditActions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -33,7 +35,10 @@ class IncidentReportAttachmentController extends Controller
 {
     use AuthorizesIncidentReportAccess;
 
-    public function __construct(private readonly AttachmentStorage $attachmentStorage) {}
+    public function __construct(
+        private readonly AttachmentStorage $attachmentStorage,
+        private readonly AuditLogger $auditLogger,
+    ) {}
 
     public function store(StoreIncidentReportAttachmentRequest $request, IncidentReport $incidentReport): JsonResponse
     {
@@ -44,15 +49,30 @@ class IncidentReportAttachmentController extends Controller
 
         $path = $this->attachmentStorage->store($file, $incidentReport->public_id, 'incident-reports');
 
-        $attachment = $incidentReport->attachments()->create([
-            'owner_type' => AttachmentOwnerType::IncidentReport,
-            'original_filename' => $file->getClientOriginalName(),
-            'storage_disk' => AttachmentDisk::name(),
-            'storage_path' => $path,
-            'mime_type' => $file->getMimeType(),
-            'size_bytes' => $file->getSize(),
-            'uploaded_by_user_id' => $request->user()->id,
-        ]);
+        $attachment = DB::transaction(function () use ($request, $incidentReport, $file, $path) {
+            $attachment = $incidentReport->attachments()->create([
+                'owner_type' => AttachmentOwnerType::IncidentReport,
+                'original_filename' => $file->getClientOriginalName(),
+                'storage_disk' => AttachmentDisk::name(),
+                'storage_path' => $path,
+                'mime_type' => $file->getMimeType(),
+                'size_bytes' => $file->getSize(),
+                'uploaded_by_user_id' => $request->user()->id,
+            ]);
+
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::ATTACHMENT_UPLOADED,
+                entityType: 'Attachment',
+                entityPublicId: $attachment->public_id,
+                after: [
+                    'owner_type' => 'incident_report',
+                    'owner_public_id' => $incidentReport->public_id,
+                ],
+            );
+
+            return $attachment;
+        });
 
         return (new AttachmentResource($attachment->load('uploader.staff')))
             ->response()
@@ -78,7 +98,22 @@ class IncidentReportAttachmentController extends Controller
         // identical consistency-boundary discipline (Phase 18).
         $this->attachmentStorage->delete($attachment->storage_path);
 
-        DB::transaction(fn () => $attachment->delete());
+        $publicId = $attachment->public_id;
+
+        DB::transaction(function () use ($request, $incidentReport, $attachment, $publicId) {
+            $attachment->delete();
+
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::ATTACHMENT_DELETED,
+                entityType: 'Attachment',
+                entityPublicId: $publicId,
+                before: [
+                    'owner_type' => 'incident_report',
+                    'owner_public_id' => $incidentReport->public_id,
+                ],
+            );
+        });
 
         return response()->json(status: 204);
     }

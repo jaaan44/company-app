@@ -3,14 +3,14 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** Phase 20 — Admin Dashboard & Reporting
+**Current phase:** Phase 21 — Integration Audit
 **Phase status:** COMPLETE (pending user review)
-**Last completed phase:** Phase 20 (Phases 1–19 are merged into `main`)
-**Next planned phase:** Phase 21 — Integration Audit (see `ROADMAP.md`) — **not authorized yet**
+**Last completed phase:** Phase 21 (Phases 1–20 are merged into `main`)
+**Next planned phase:** Phase 22 — Security Audit (see `ROADMAP.md`) — **not authorized yet**
 
 ## Current Objective
 
-Phase 20 is implemented, tested, and pushed for review on its own branch (not yet merged, no PR opened). Awaiting authorization for Phase 21.
+Phase 21 is implemented, tested, and pushed for review on its own branch (not yet merged, no PR opened). Awaiting authorization for Phase 22.
 
 ## Completed
 
@@ -207,11 +207,23 @@ Phase 20 is implemented, tested, and pushed for review on its own branch (not ye
   - CSV export (`App\Support\Reporting\CsvExport`) is the only export format — streamed, UTF-8 with BOM, stable headers, no internal numeric ids, and formula-injection mitigation on every cell. No Excel/PDF/printable export.
   - No schema change: reused every relevant existing composite index (`tasks(project_id,status)`, `(assignee_staff_id,status)`; `leave_requests(staff_id,status)`, `(staff_id,start_date,end_date)`; `service_reports(client_id,status)`, `(project_id,status)`, `(creator_staff_id,status)`, `(service_date)`; `incident_reports(client_id,status)`, `(project_id,status)`, `(reporter_staff_id,status)`, `(assigned_to_staff_id,status)`, `(occurred_at)`, `(severity)`, `(incident_type)`; `work_logs(staff_id,work_date)`, `(project_id,work_date)`, `(task_id,work_date)`) — no new index was added.
   - Recorded DEC-043.
-  - No Flutter Dashboard/Reports UI, no Blade/Livewire Admin Dashboard/Reports pages, no Admin Backoffice UI of any kind (API-only, consistent with every phase since Phase 6); no Excel/PDF/printable export; no custom report builder, saved/scheduled/emailed reports, or CSV imports; no employee rankings/performance/productivity/utilization scoring; no attendance/timekeeping analytics of any kind; no Announcement engagement/read-rate reporting (DEC-037 not reversed); no Notification or Messaging reporting; no Audit Log reporting (DEC-009 remains an unbuilt, project-wide gap); no Master Data or Application Settings management.
+  - No Flutter Dashboard/Reports UI, no Blade/Livewire Admin Dashboard/Reports pages, no Admin Backoffice UI of any kind (API-only, consistent with every phase since Phase 6); no Excel/PDF/printable export; no custom report builder, saved/scheduled/emailed reports, or CSV imports; no employee rankings/performance/productivity/utilization scoring; no attendance/timekeeping analytics of any kind; no Announcement engagement/read-rate reporting (DEC-037 not reversed); no Notification or Messaging reporting; no Audit Log reporting (DEC-009 remained an unbuilt, project-wide gap at the time this phase was written — resolved in Phase 21); no Master Data or Application Settings management.
+
+- **Phase 21:** Integration Audit. See `docs/handoffs/V1_PHASE_21_HANDOFF.md` for full detail.
+  - Two bounded deliverables per DEC-044, following a product-owner-reviewed planning audit (delivered as a chat message) that resolved the roadmap's terse "cross-module consistency review" line, together with `docs/ROADMAP.md`'s own Notes-section backstop clause, into concrete scope.
+  - **(A) General Audit Log — the DEC-009 backstop.** New `audit_logs` table (`App\Models\AuditLog`) — `actor_user_id` (nullable, `nullOnDelete()`), `action` (stable dot-notation string, `App\Support\Audit\AuditActions`), `entity_type`/`entity_public_id` (a generic, non-FK, non-polymorphic reference pair), `changed_fields`/`before`/`after` (curated JSON, never a wholesale snapshot), `ip_address`, `user_agent`, `source` (`App\Enums\AuditSource` — `api`/`admin`), `created_at` only (no `updated_at` — append-only). Indexes: `(entity_type, entity_public_id)`, `(actor_user_id, created_at)`, `(action, created_at)`.
+  - `App\Services\Audit\AuditLogger` — one small, explicit service (`record()`/`recordForRequest()`/the static `diff()` allowlist helper), called directly from a curated set of controllers — never a broadly-attached model observer, mutation middleware, event bus, or third-party package.
+  - Curated V1 event catalog: authentication (`auth.login_succeeded`/`_failed`/`auth.logout`, on both the mobile API and the Admin Backoffice session login, distinguished by `source`); Staff (`staff.created`/`.updated` — status/manager/department/team/position only — /`.separated`); Organization Structure (`organization.{department,team,position}.{created,updated,deleted}`); Clients & Contacts (`client.*`/`contact.*` CRUD, curated to status/client/is_primary); Projects (`project.{created,updated,deleted}`) and Project Membership (`project.membership_added`/`_removed`/`_role_changed`); Tasks (`task.deleted` only); Announcements (`announcement.published`/`.archived` only, never acknowledgement); Attachments (`attachment.uploaded`/`.deleted` for Service Report and Incident Report owners, never download); every Phase 20 report export (`report.exported`) and the Audit Log's own export (`audit_log.exported`).
+  - Explicitly excluded in V1: all reads, Work Log CRUD, ordinary Task create/update/status change, Schedule Entry CRUD, Message sends/reads, Staff check-ins, Announcement acknowledgement, attachment downloads, Notification reads, and the three workflow-transition families already captured by `leave_request_actions`/`service_report_actions`/`incident_report_actions` (a V1 event-selection decision, not a permanent exclusion).
+  - Strict redaction: `before`/`after` hold only explicit, per-site allowlisted structural values — never passwords/hashes/tokens, Leave reasons, Incident/Service Report narrative content, Message bodies, or attachment filenames/contents.
+  - `GET /api/v1/audit-logs` (paginated) and `GET /api/v1/audit-logs/export` (CSV, reusing Phase 20's `CsvExport` verbatim, `before`/`after` deliberately excluded from CSV columns) — Administrator-only via a direct `hasRole()` check (`AuthorizesAuditLogAccess`), **no new permission introduced**. No create/update/delete endpoint exists anywhere for an entry.
+  - Audited administrative mutations write their audit entry synchronously, inside the same DB transaction as the business mutation, so a failed audit write rolls back the mutation too; a failed-login audit write is unconditional (no mutation to roll back); logout ordering captures the actor before the token/session is invalidated on both surfaces.
+  - **(B) Bounded cross-module consistency audit** of Phases 1–20 against their own already-approved decisions — findings classified as Phase 21 correction / documentation correction / future consideration / no action, with only the first two applied in this phase. See `docs/handoffs/V1_PHASE_21_HANDOFF.md` for the full findings list.
+  - No Redis/queue/background worker/Kafka/Elasticsearch/external SIEM/audit microservice/materialized view; no retention/purge job (documented as a future operational consideration, mirroring `staff_checkins`' identical precedent); no Admin Backoffice or Flutter Audit Log UI (API-only, consistent with every phase since Phase 6); no new User account management (suspend/reactivate/role-change) mutation surface — a documented, pre-existing gap this phase's scope did not authorize building (see DEC-044's Known Limitation); no redesign of any working module — every code change beyond the audit-logging integration points themselves is a specific, named Phase 21 correction or documentation correction, listed in full in the handoff.
 
 ## Pending / Not Started
 
-- Integration Audit (Phase 21) and everything after it on the roadmap.
+- Security Audit (Phase 22) and everything after it on the roadmap.
 
 ## Known Blockers / Issues
 
@@ -233,13 +245,13 @@ Phase 20 is implemented, tested, and pushed for review on its own branch (not ye
 ## Repository / Branch Information
 
 - Repository: `jaaan44/company-app`
-- Default branch: `main` (contains the approved Phase 0–19 baseline)
-- Phase 20 branch: `claude/phase-20-admin-dashboard-reporting` (branched from `main`, pushed to `origin`, not merged, no PR opened)
+- Default branch: `main` (contains the approved Phase 0–20 baseline)
+- Phase 21 branch: `claude/phase-21-integration-audit` (branched from `main`, pushed to `origin`, not merged, no PR opened)
 
 ## Latest Relevant Handoff
 
-`docs/handoffs/V1_PHASE_20_HANDOFF.md`
+`docs/handoffs/V1_PHASE_21_HANDOFF.md`
 
 ## For the Next Session
 
-Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_20_HANDOFF.md` for Admin Dashboard & Reporting, `docs/handoffs/V1_PHASE_19_HANDOFF.md` for Incident Reports, `docs/handoffs/V1_PHASE_18_HANDOFF.md` for Service Reports, `docs/handoffs/V1_PHASE_17_HANDOFF.md` for the Scheduler, `docs/handoffs/V1_PHASE_16_HANDOFF.md` for Messaging, `docs/handoffs/V1_PHASE_15_HANDOFF.md` for Notifications, `docs/handoffs/V1_PHASE_14_HANDOFF.md` for Announcements, `docs/handoffs/V1_PHASE_13_HANDOFF.md` for Leave Management, `docs/handoffs/V1_PHASE_12_HANDOFF.md` for Work Logs, `docs/handoffs/V1_PHASE_11_HANDOFF.md` for Tasks, `docs/handoffs/V1_PHASE_10_HANDOFF.md` for Projects & Project Membership, `docs/handoffs/V1_PHASE_09_HANDOFF.md` for Staff Status & Location Check-in, `docs/handoffs/V1_PHASE_08_HANDOFF.md` for Clients & Contacts, `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 21 (Integration Audit) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone. Phase 20 itself is implemented but not yet merged — its branch has no PR open, per CLAUDE.md §8 Stop Discipline, awaiting product-owner review of the implementation handoff.
+Read `CLAUDE.md`, then this file, then `docs/ROADMAP.md`, then `docs/handoffs/V1_PHASE_21_HANDOFF.md` for the Integration Audit (general Audit Log + consistency-audit findings), `docs/handoffs/V1_PHASE_20_HANDOFF.md` for Admin Dashboard & Reporting, `docs/handoffs/V1_PHASE_19_HANDOFF.md` for Incident Reports, `docs/handoffs/V1_PHASE_18_HANDOFF.md` for Service Reports, `docs/handoffs/V1_PHASE_17_HANDOFF.md` for the Scheduler, `docs/handoffs/V1_PHASE_16_HANDOFF.md` for Messaging, `docs/handoffs/V1_PHASE_15_HANDOFF.md` for Notifications, `docs/handoffs/V1_PHASE_14_HANDOFF.md` for Announcements, `docs/handoffs/V1_PHASE_13_HANDOFF.md` for Leave Management, `docs/handoffs/V1_PHASE_12_HANDOFF.md` for Work Logs, `docs/handoffs/V1_PHASE_11_HANDOFF.md` for Tasks, `docs/handoffs/V1_PHASE_10_HANDOFF.md` for Projects & Project Membership, `docs/handoffs/V1_PHASE_09_HANDOFF.md` for Staff Status & Location Check-in, `docs/handoffs/V1_PHASE_08_HANDOFF.md` for Clients & Contacts, `docs/handoffs/V1_PHASE_07_HANDOFF.md` for Staff, `docs/handoffs/V1_PHASE_06_HANDOFF.md` for Organization Structure, `docs/handoffs/V1_PHASE_05_HANDOFF.md` for Roles & Permissions, and `docs/handoffs/V1_PHASE_04A_HANDOFF.md`/`V1_PHASE_04_HANDOFF.md` for the Docker environment and Authentication. Phase 22 (Security Audit) needs explicit user authorization before any implementation starts — do not begin it based on the roadmap alone. Phase 21 itself is implemented but not yet merged — its branch has no PR open, per CLAUDE.md §8 Stop Discipline, awaiting product-owner review of the implementation handoff.

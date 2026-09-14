@@ -7,7 +7,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ProjectResource;
 use App\Models\Client;
 use App\Models\Project;
+use App\Services\Audit\AuditLogger;
 use App\Services\Reporting\ProjectVisibility;
+use App\Support\Audit\AuditActions;
 use App\Support\Reporting\CsvExport;
 use App\Support\Reporting\PublicIdResolver;
 use Illuminate\Database\Eloquent\Builder;
@@ -26,7 +28,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class ProjectReportController extends Controller
 {
-    public function __construct(private readonly ProjectVisibility $visibility) {}
+    public function __construct(
+        private readonly ProjectVisibility $visibility,
+        private readonly AuditLogger $auditLogger,
+    ) {}
 
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -37,6 +42,14 @@ class ProjectReportController extends Controller
 
     public function export(Request $request): StreamedResponse
     {
+        $this->auditLogger->recordForRequest(
+            $request,
+            AuditActions::REPORT_EXPORTED,
+            entityType: 'Report',
+            entityPublicId: null,
+            after: ['report' => 'projects'],
+        );
+
         $rows = $this->filteredQuery($request)->cursor()->map(fn (Project $project) => [
             $project->public_id,
             $project->project_code,

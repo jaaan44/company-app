@@ -9,6 +9,8 @@ use App\Http\Requests\Organization\UpdatePositionRequest;
 use App\Http\Resources\PositionResource;
 use App\Models\Department;
 use App\Models\Position;
+use App\Services\Audit\AuditLogger;
+use App\Support\Audit\AuditActions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -19,10 +21,16 @@ use Illuminate\Validation\Rules\Enum;
  * master data — not yet associated with any staff record (Phase 7). Read
  * endpoints require `organization.view`; writes require
  * `organization.manage` — enforced by route middleware
- * (routes/api/v1.php), not here.
+ * (routes/api/v1.php), not here. Create/update/delete are audited (Phase
+ * 21, DEC-044) with curated title/status/department metadata only.
  */
 class PositionController extends Controller
 {
+    /** @var array<int, string> */
+    private const AUDITED_FIELDS = ['title', 'status', 'department_id'];
+
+    public function __construct(private readonly AuditLogger $auditLogger) {}
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $request->validate([
@@ -50,8 +58,17 @@ class PositionController extends Controller
         $data['department_id'] = $this->resolveDepartmentId($data['department_id'] ?? null);
 
         $position = Position::create($data);
+        $position->load('department');
 
-        return (new PositionResource($position->load('department')))
+        $this->auditLogger->recordForRequest(
+            $request,
+            AuditActions::POSITION_CREATED,
+            entityType: 'Position',
+            entityPublicId: $position->public_id,
+            after: $this->curatedSnapshot($position),
+        );
+
+        return (new PositionResource($position))
             ->response()
             ->setStatusCode(201);
     }
@@ -63,6 +80,9 @@ class PositionController extends Controller
 
     public function update(UpdatePositionRequest $request, Position $position): PositionResource
     {
+        $position->load('department');
+        $before = $this->curatedSnapshot($position);
+
         $data = $request->validated();
 
         if (array_key_exists('department_id', $data)) {
@@ -70,8 +90,27 @@ class PositionController extends Controller
         }
 
         $position->update($data);
+        $position->load('department');
 
-        return new PositionResource($position->load('department'));
+        [$changedFields, $curatedBefore, $curatedAfter] = AuditLogger::diff(
+            $before,
+            $this->curatedSnapshot($position),
+            self::AUDITED_FIELDS,
+        );
+
+        if ($changedFields !== []) {
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::POSITION_UPDATED,
+                entityType: 'Position',
+                entityPublicId: $position->public_id,
+                changedFields: $changedFields,
+                before: $curatedBefore,
+                after: $curatedAfter,
+            );
+        }
+
+        return new PositionResource($position);
     }
 
     /**
@@ -80,7 +119,7 @@ class PositionController extends Controller
      * DepartmentController::destroy, backed by the `staff.position_id`
      * `restrictOnDelete()` foreign key.
      */
-    public function destroy(Position $position): JsonResponse
+    public function destroy(Request $request, Position $position): JsonResponse
     {
         if ($position->staff()->exists()) {
             return response()->json([
@@ -88,7 +127,19 @@ class PositionController extends Controller
             ], 409);
         }
 
+        $position->load('department');
+        $publicId = $position->public_id;
+        $before = $this->curatedSnapshot($position);
+
         $position->delete();
+
+        $this->auditLogger->recordForRequest(
+            $request,
+            AuditActions::POSITION_DELETED,
+            entityType: 'Position',
+            entityPublicId: $publicId,
+            before: $before,
+        );
 
         return response()->json(status: 204);
     }
@@ -100,5 +151,17 @@ class PositionController extends Controller
         }
 
         return Department::query()->where('public_id', $publicId)->value('id');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function curatedSnapshot(Position $position): array
+    {
+        return [
+            'title' => $position->title,
+            'status' => $position->status->value,
+            'department_id' => $position->department?->public_id,
+        ];
     }
 }

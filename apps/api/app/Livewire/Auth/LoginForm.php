@@ -2,6 +2,10 @@
 
 namespace App\Livewire\Auth;
 
+use App\Enums\AuditSource;
+use App\Models\User;
+use App\Services\Audit\AuditLogger;
+use App\Support\Audit\AuditActions;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -28,10 +32,18 @@ class LoginForm extends Component
     #[Validate('required|string')]
     public string $password = '';
 
+    /**
+     * Every outcome is audited (Phase 21, DEC-044), mirroring the mobile
+     * API's identical AuthController::login() behavior — a failure never
+     * records the attempted password, only (when the email matches a
+     * real account) which account was targeted, plus IP/user agent.
+     * `source: Admin` distinguishes these entries from the API's own.
+     */
     public function login(): void
     {
         $this->validate();
 
+        $auditLogger = app(AuditLogger::class);
         $key = Str::lower($this->email).'|'.request()->ip();
 
         if (RateLimiter::tooManyAttempts($key, 5)) {
@@ -42,6 +54,8 @@ class LoginForm extends Component
 
         if (! Auth::attempt(['email' => $this->email, 'password' => $this->password])) {
             RateLimiter::hit($key, 60);
+
+            $this->auditLoginFailed($auditLogger, User::where('email', $this->email)->first());
 
             throw ValidationException::withMessages([
                 'email' => 'These credentials do not match our records.',
@@ -55,6 +69,8 @@ class LoginForm extends Component
         if (! $user->isActive()) {
             Auth::logout();
 
+            $this->auditLoginFailed($auditLogger, $user);
+
             throw ValidationException::withMessages([
                 'email' => 'This account is not currently active. Contact an administrator.',
             ]);
@@ -63,6 +79,8 @@ class LoginForm extends Component
         if ($user->cannot('admin.access')) {
             Auth::logout();
 
+            $this->auditLoginFailed($auditLogger, $user);
+
             throw ValidationException::withMessages([
                 'email' => 'This account does not have Admin Backoffice access.',
             ]);
@@ -70,7 +88,28 @@ class LoginForm extends Component
 
         session()->regenerate();
 
+        $auditLogger->recordForRequest(
+            request(),
+            AuditActions::AUTH_LOGIN_SUCCEEDED,
+            entityType: 'User',
+            entityPublicId: $user->public_id,
+            source: AuditSource::Admin,
+            actor: $user,
+        );
+
         $this->redirect(route('home'), navigate: false);
+    }
+
+    private function auditLoginFailed(AuditLogger $auditLogger, ?User $user): void
+    {
+        $auditLogger->recordForRequest(
+            request(),
+            AuditActions::AUTH_LOGIN_FAILED,
+            entityType: 'User',
+            entityPublicId: $user?->public_id,
+            source: AuditSource::Admin,
+            actor: null,
+        );
     }
 
     public function render()
