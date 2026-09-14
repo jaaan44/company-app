@@ -3,11 +3,15 @@
 namespace Tests\Feature\Api\V1\Audit;
 
 use App\Enums\AuditSource;
+use App\Models\Announcement;
+use App\Models\Attachment;
 use App\Models\AuditLog;
 use App\Models\Client;
+use App\Models\Contact;
 use App\Models\Department;
 use App\Models\IncidentReport;
 use App\Models\LeaveRequest;
+use App\Models\Position;
 use App\Models\Project;
 use App\Models\ScheduleEntry;
 use App\Models\ServiceReport;
@@ -152,7 +156,10 @@ class AuditLoggingCoverageTest extends TestCase
         $this->actingAsAdministrator();
         $staff = Staff::factory()->create();
 
-        $this->putJson("/api/v1/staff/{$staff->public_id}", ['status' => 'separated'])->assertOk();
+        $this->putJson("/api/v1/staff/{$staff->public_id}", [
+            'status' => 'separated',
+            'separation_date' => now()->toDateString(),
+        ])->assertOk();
 
         $this->assertDatabaseHas('audit_logs', [
             'action' => AuditActions::STAFF_SEPARATED,
@@ -205,7 +212,7 @@ class AuditLoggingCoverageTest extends TestCase
         $this->actingAsAdministrator();
 
         $this->postJson('/api/v1/positions', ['title' => 'Staff Engineer'])->assertCreated();
-        $position = \App\Models\Position::query()->where('title', 'Staff Engineer')->firstOrFail();
+        $position = Position::query()->where('title', 'Staff Engineer')->firstOrFail();
         $this->assertDatabaseHas('audit_logs', ['action' => AuditActions::POSITION_CREATED, 'entity_public_id' => $position->public_id]);
 
         $this->putJson("/api/v1/positions/{$position->public_id}", ['status' => 'inactive'])->assertOk();
@@ -240,7 +247,7 @@ class AuditLoggingCoverageTest extends TestCase
         $this->postJson('/api/v1/contacts', [
             'client_id' => $client->public_id, 'first_name' => 'Jane', 'last_name' => 'Doe',
         ])->assertCreated();
-        $contact = \App\Models\Contact::query()->where('first_name', 'Jane')->firstOrFail();
+        $contact = Contact::query()->where('first_name', 'Jane')->firstOrFail();
         $this->assertDatabaseHas('audit_logs', ['action' => AuditActions::CONTACT_CREATED, 'entity_public_id' => $contact->public_id]);
 
         $this->putJson("/api/v1/contacts/{$contact->public_id}", ['status' => 'inactive'])->assertOk();
@@ -314,7 +321,7 @@ class AuditLoggingCoverageTest extends TestCase
     public function test_announcement_publish_and_archive_are_audited(): void
     {
         $this->actingAsAdministrator();
-        $announcement = \App\Models\Announcement::factory()->create();
+        $announcement = Announcement::factory()->create();
 
         $this->postJson("/api/v1/announcements/{$announcement->public_id}/publish")->assertOk();
         $this->assertDatabaseHas('audit_logs', [
@@ -332,7 +339,7 @@ class AuditLoggingCoverageTest extends TestCase
         $user = User::factory()->create();
         $staff = Staff::factory()->create(['user_id' => $user->id]);
         Sanctum::actingAs($user);
-        $announcement = \App\Models\Announcement::factory()->published()->create();
+        $announcement = Announcement::factory()->published()->create();
 
         $this->postJson("/api/v1/me/announcements/{$announcement->public_id}/acknowledge")->assertOk();
 
@@ -350,7 +357,7 @@ class AuditLoggingCoverageTest extends TestCase
         $file = UploadedFile::fake()->image('photo.jpg', 10, 10)->size(100);
         $this->postJson("/api/v1/service-reports/{$report->public_id}/attachments", ['file' => $file])->assertCreated();
 
-        $attachment = \App\Models\Attachment::query()->where('service_report_id', $report->id)->firstOrFail();
+        $attachment = Attachment::query()->where('service_report_id', $report->id)->firstOrFail();
         $this->assertDatabaseHas('audit_logs', [
             'action' => AuditActions::ATTACHMENT_UPLOADED, 'entity_public_id' => $attachment->public_id,
         ]);
@@ -373,7 +380,7 @@ class AuditLoggingCoverageTest extends TestCase
         $file = UploadedFile::fake()->image('photo.jpg', 10, 10)->size(100);
         $this->postJson("/api/v1/incident-reports/{$report->public_id}/attachments", ['file' => $file])->assertCreated();
 
-        $attachment = \App\Models\Attachment::query()->where('incident_report_id', $report->id)->firstOrFail();
+        $attachment = Attachment::query()->where('incident_report_id', $report->id)->firstOrFail();
         $this->assertDatabaseHas('audit_logs', [
             'action' => AuditActions::ATTACHMENT_UPLOADED,
             'entity_public_id' => $attachment->public_id,
@@ -449,7 +456,7 @@ class AuditLoggingCoverageTest extends TestCase
         $staffB = Staff::factory()->create();
         Sanctum::actingAs($userA);
 
-        $response = $this->postJson('/api/v1/conversations/direct', ['staff_id' => $staffB->public_id])->assertOk();
+        $response = $this->postJson('/api/v1/conversations/direct', ['staff_id' => $staffB->public_id])->assertCreated();
         $conversationPublicId = $response->json('data.public_id');
 
         $this->postJson("/api/v1/conversations/{$conversationPublicId}/messages", ['body' => 'Hello there'])

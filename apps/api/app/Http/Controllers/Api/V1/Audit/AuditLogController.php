@@ -67,7 +67,7 @@ class AuditLogController extends Controller
         );
 
         $rows = $this->filteredQuery($request)->cursor()->map(fn (AuditLog $log) => [
-            $log->created_at?->toIso8601String(),
+            $log->created_at->toIso8601String(),
             $log->actor?->public_id,
             $log->action,
             $log->entity_type,

@@ -206,7 +206,14 @@ class AuditLogApiTest extends TestCase
             str_getcsv($headerLine),
         );
         $this->assertStringContainsString($staff->public_id, $csv);
-        $this->assertStringNotContainsString((string) $staff->id.',', $csv);
+
+        // No column of any row is ever the internal numeric id itself
+        // (a bare substring check like "1," is too weak — an IP address
+        // or ULID can coincidentally contain that sequence).
+        $lines = array_filter(explode("\n", trim(ltrim($csv, "\xEF\xBB\xBF"))));
+        foreach ($lines as $line) {
+            $this->assertNotContains((string) $staff->id, str_getcsv($line));
+        }
     }
 
     public function test_csv_export_applies_the_same_authorization_as_the_json_endpoint(): void

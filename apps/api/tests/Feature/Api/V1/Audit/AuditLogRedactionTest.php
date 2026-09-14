@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api\V1\Audit;
 
+use App\Models\Announcement;
 use App\Models\AuditLog;
 use App\Models\Client;
 use App\Models\Contact;
@@ -93,7 +94,7 @@ class AuditLogRedactionTest extends TestCase
     public function test_announcement_publish_never_captures_title_or_body_content(): void
     {
         $this->actingAsAdministrator();
-        $announcement = \App\Models\Announcement::factory()->create([
+        $announcement = Announcement::factory()->create([
             'title' => 'Confidential Reorg Announcement',
             'body' => 'Sensitive internal restructuring details go here.',
         ]);
