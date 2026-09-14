@@ -17,7 +17,8 @@ use Livewire\Component;
  * Admin Backoffice login (Phase 4). Session/cookie authentication via
  * Laravel's `web` guard — see DEC-022. Credential failures always return
  * the same generic message so login behavior never discloses which
- * emails are registered (05_SECURITY_MODEL.md).
+ * emails are registered, nor whether a matched account is
+ * suspended/inactive (Phase 22, F-01 — see 05_SECURITY_MODEL.md).
  *
  * Rate limiting is enforced here directly (rather than via route
  * middleware) because the actual login submission is an internal
@@ -55,7 +56,7 @@ class LoginForm extends Component
         if (! Auth::attempt(['email' => $this->email, 'password' => $this->password])) {
             RateLimiter::hit($key, 60);
 
-            $this->auditLoginFailed($auditLogger, User::where('email', $this->email)->first());
+            $this->auditLoginFailed($auditLogger, User::where('email', $this->email)->first(), 'invalid_credentials');
 
             throw ValidationException::withMessages([
                 'email' => 'These credentials do not match our records.',
@@ -66,13 +67,19 @@ class LoginForm extends Component
 
         $user = Auth::user();
 
+        // Deliberately the same generic message as invalid credentials
+        // above (Phase 22, F-01) — a distinguishable "this account is
+        // deactivated" message would itself disclose account
+        // existence/status to anyone who has a correct password for it,
+        // contradicting 05_SECURITY_MODEL.md's no-enumeration guarantee.
+        // The specific reason is preserved only in the audit entry.
         if (! $user->isActive()) {
             Auth::logout();
 
-            $this->auditLoginFailed($auditLogger, $user);
+            $this->auditLoginFailed($auditLogger, $user, 'inactive_account');
 
             throw ValidationException::withMessages([
-                'email' => 'This account is not currently active. Contact an administrator.',
+                'email' => 'These credentials do not match our records.',
             ]);
         }
 
@@ -100,7 +107,7 @@ class LoginForm extends Component
         $this->redirect(route('home'), navigate: false);
     }
 
-    private function auditLoginFailed(AuditLogger $auditLogger, ?User $user): void
+    private function auditLoginFailed(AuditLogger $auditLogger, ?User $user, ?string $reason = null): void
     {
         $auditLogger->recordForRequest(
             request(),
@@ -109,6 +116,7 @@ class LoginForm extends Component
             entityPublicId: $user?->public_id,
             source: AuditSource::Admin,
             actor: null,
+            after: $reason === null ? [] : ['reason' => $reason],
         );
     }
 

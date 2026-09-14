@@ -12,6 +12,12 @@ on:
       - 'apps/api/**'
       - '.github/workflows/backend-ci.yml'
 
+# Phase 22 (Security Audit, F-04): explicitly scope the default GITHUB_TOKEN
+# down to read-only rather than relying on the repository/organization
+# default — this workflow never needs to write anything.
+permissions:
+  contents: read
+
 defaults:
   run:
     working-directory: apps/api
@@ -44,6 +50,9 @@ jobs:
 
       - name: Validate composer.json
         run: composer validate --strict
+
+      - name: Composer audit (dependency vulnerability scan)
+        run: composer audit --locked
 
       - name: Prepare ephemeral test environment
         run: |

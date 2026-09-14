@@ -48,9 +48,17 @@ return [
     | considered expired. This will override any values set in the token's
     | "expires_at" attribute, but first-party sessions are not affected.
     |
+    | Phase 22 (Security Audit, F-02): 43,200 minutes (30 days) bounds the
+    | blast radius of a lost/stolen mobile device — a token issued at
+    | login is no longer a standing, never-expiring credential. This uses
+    | Sanctum's own built-in expiration check (enforced by the
+    | 'auth:sanctum' guard on every request), not a custom refresh-token
+    | scheme — a re-login is simply required after expiry, exactly like
+    | any other expired-token flow. See docs/05_SECURITY_MODEL.md.
+    |
     */
 
-    'expiration' => null,
+    'expiration' => (int) env('SANCTUM_EXPIRATION', 43200),
 
     /*
     |--------------------------------------------------------------------------

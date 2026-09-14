@@ -89,6 +89,8 @@ Checks (either path — prefix with `docker compose exec app` for Docker): `comp
 
 Once running, `GET /api/v1/health` returns `{"data": {"status": "ok", "timestamp": "..."}}` — the versioned API foundation, not a business endpoint. Authentication (Phase 4): visit `/login` for the Admin Backoffice, or use `POST /api/v1/auth/login` for the mobile API — see `docs/handoffs/V1_PHASE_04_HANDOFF.md` for full manual-verification steps.
 
+> **Before any non-local deployment** (Phase 22, Security Audit, F-08): both `.env.example` and `.env.docker.example` set `APP_DEBUG=true` for local-dev convenience — a real staging/production `.env` must explicitly set `APP_DEBUG=false` (the application code already defaults to `false` if unset; this is a reminder against accidentally copying the dev example verbatim, not a code gap). See `docs/05_SECURITY_MODEL.md`.
+
 ### Mobile (`apps/mobile`)
 
 Flutter always runs directly on the host/emulator/device — never in Docker.
