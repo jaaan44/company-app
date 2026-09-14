@@ -38,7 +38,7 @@ jobs:
           coverage: none
 
       - name: Cache Composer dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: apps/api/vendor
           key: composer-${{ hashFiles('apps/api/composer.lock') }}
