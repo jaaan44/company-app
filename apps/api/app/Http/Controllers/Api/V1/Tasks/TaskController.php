@@ -17,6 +17,7 @@ use App\Support\Audit\AuditActions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Enum;
 
 /**
@@ -192,15 +193,17 @@ class TaskController extends Controller
         $publicId = $task->public_id;
         $before = ['status' => $task->status->value, 'project_id' => $task->project?->public_id];
 
-        $task->delete();
+        DB::transaction(function () use ($request, $task, $publicId, $before) {
+            $task->delete();
 
-        $this->auditLogger->recordForRequest(
-            $request,
-            AuditActions::TASK_DELETED,
-            entityType: 'Task',
-            entityPublicId: $publicId,
-            before: $before,
-        );
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::TASK_DELETED,
+                entityType: 'Task',
+                entityPublicId: $publicId,
+                before: $before,
+            );
+        });
 
         return response()->json(status: 204);
     }

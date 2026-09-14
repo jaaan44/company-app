@@ -13,6 +13,7 @@ use App\Support\Audit\AuditActions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Enum;
 
 /**
@@ -55,15 +56,19 @@ class ClientController extends Controller
 
     public function store(StoreClientRequest $request): JsonResponse
     {
-        $client = Client::create($request->validated());
+        $client = DB::transaction(function () use ($request) {
+            $client = Client::create($request->validated());
 
-        $this->auditLogger->recordForRequest(
-            $request,
-            AuditActions::CLIENT_CREATED,
-            entityType: 'Client',
-            entityPublicId: $client->public_id,
-            after: $this->curatedSnapshot($client),
-        );
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::CLIENT_CREATED,
+                entityType: 'Client',
+                entityPublicId: $client->public_id,
+                after: $this->curatedSnapshot($client),
+            );
+
+            return $client;
+        });
 
         return (new ClientResource($client->loadCount('contacts')))
             ->response()
@@ -79,25 +84,27 @@ class ClientController extends Controller
     {
         $before = $this->curatedSnapshot($client);
 
-        $client->update($request->validated());
+        DB::transaction(function () use ($request, $client, $before) {
+            $client->update($request->validated());
 
-        [$changedFields, $curatedBefore, $curatedAfter] = AuditLogger::diff(
-            $before,
-            $this->curatedSnapshot($client),
-            self::AUDITED_FIELDS,
-        );
-
-        if ($changedFields !== []) {
-            $this->auditLogger->recordForRequest(
-                $request,
-                AuditActions::CLIENT_UPDATED,
-                entityType: 'Client',
-                entityPublicId: $client->public_id,
-                changedFields: $changedFields,
-                before: $curatedBefore,
-                after: $curatedAfter,
+            [$changedFields, $curatedBefore, $curatedAfter] = AuditLogger::diff(
+                $before,
+                $this->curatedSnapshot($client),
+                self::AUDITED_FIELDS,
             );
-        }
+
+            if ($changedFields !== []) {
+                $this->auditLogger->recordForRequest(
+                    $request,
+                    AuditActions::CLIENT_UPDATED,
+                    entityType: 'Client',
+                    entityPublicId: $client->public_id,
+                    changedFields: $changedFields,
+                    before: $curatedBefore,
+                    after: $curatedAfter,
+                );
+            }
+        });
 
         return new ClientResource($client->loadCount('contacts'));
     }
@@ -141,15 +148,17 @@ class ClientController extends Controller
         $publicId = $client->public_id;
         $before = $this->curatedSnapshot($client);
 
-        $client->delete();
+        DB::transaction(function () use ($request, $client, $publicId, $before) {
+            $client->delete();
 
-        $this->auditLogger->recordForRequest(
-            $request,
-            AuditActions::CLIENT_DELETED,
-            entityType: 'Client',
-            entityPublicId: $publicId,
-            before: $before,
-        );
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::CLIENT_DELETED,
+                entityType: 'Client',
+                entityPublicId: $publicId,
+                before: $before,
+            );
+        });
 
         return response()->json(status: 204);
     }

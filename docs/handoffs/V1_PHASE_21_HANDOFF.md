@@ -18,7 +18,7 @@ Implement Phase 21 per the product owner's explicit authorization following a pr
 - `App\Enums\AuditSource` — `api`/`admin`.
 - Audit integration wired into: `AuthController`/`LoginForm`/the web `logout` route (login success/failure/logout); `StaffController` (create/update/separate); `DepartmentController`/`TeamController`/`PositionController` (CRUD); `ClientController`/`ContactController` (CRUD); `ProjectController` (CRUD) and `ProjectMembershipController` (add/remove/role-change); `TaskController` (deletion only); `AnnouncementController` (publish/archive); `ServiceReportAttachmentController`/`IncidentReportAttachmentController` (upload/delete); all seven Phase 20 report controllers (export); and the Audit Log's own `export()`.
 - `GET /api/v1/audit-logs` + `GET /api/v1/audit-logs/export` (`AuditLogController`, `AuthorizesAuditLogAccess`) — Administrator-only, no new permission, strictly read-only.
-- Full automated test coverage (62 new tests) and a full Phase 1–20 regression run (1062 tests total, all passing).
+- Full automated test coverage (68 new tests, including 6 fail-closed transaction tests) and a full Phase 1–20 regression run (1068 tests total, all passing).
 - Bounded cross-module consistency audit — findings below, with only the applicable corrections applied.
 - Documentation: `docs/DECISIONS.md` (DEC-044), this handoff, `docs/phases/V1_PHASE_21_DEFINITION.md`, and updates to `docs/ROADMAP.md`, `docs/CURRENT_STATE.md`, `docs/CHANGELOG.md`, `docs/00_PROJECT_CHARTER.md`, `docs/02_ARCHITECTURE.md`, `docs/03_DATABASE_MODEL.md`, `docs/04_API_CONVENTIONS.md`, `docs/05_SECURITY_MODEL.md`, `docs/testing/TEST_STATUS.md`, `docs/testing/UAT_LOG.md`.
 
@@ -32,7 +32,7 @@ Not implemented, per the governing instructions' explicit exclusions: S3/object-
 
 **Redaction.** Every integration site builds its own small, explicit `curatedSnapshot()`/inline array — never a generic "serialize the model" helper. `AuditLogger::diff()` only ever compares the specific field names a caller passes in; it has no knowledge of any model's full attribute set. This structurally prevents the class of bug where a future edit to a model (e.g. adding a new sensitive column) could silently start leaking into the Audit Log — a new field only ever appears if a specific integration site is deliberately extended to include it.
 
-**Transactions.** Where an integration site's business mutation was already inside a `DB::transaction()` (Announcement `publish()`/`archive()`, both attachment controllers' upload/delete), the audit write was added inside that same closure. Where a business mutation was a single already-atomic Eloquent statement (Staff/Organization/Client/Project/Task/Membership create/update/delete), a `DB::transaction()` was not introduced around it purely for the audit write in most cases, since Eloquent's `update()`/`delete()`/`create()` are each already a single, atomic statement immediately followed by the audit write in the same PHP request — a failure in the audit write (e.g. a DB-level exception) propagates as an unhandled exception, which Laravel's exception handler turns into a `500` and — critically — since the preceding model mutation was already committed as its own statement, this is not perfectly atomic in the strictest two-phase sense for every non-transaction-wrapped site. This is a deliberate, documented trade-off: wrapping every single-statement CRUD write in a `DB::transaction()` purely to add an audit call would be a broad, mechanical change to add transactional overhead that MySQL doesn't otherwise need for a lone statement, and the realistic failure mode (the audit insert itself failing after a successful, already-durable business write) is exceptionally rare compared to the transaction-wrapped cases (multi-step business logic) where atomicity genuinely matters. The `attachment.uploaded`/`.deleted` and `announcement.published`/`.archived` events — the ones this phase's own governing instructions specifically called out as needing transactional coupling — are correctly wrapped.
+**Transactions.** Every audited relational administrative mutation — Staff create/update, Organization Structure (Department/Team/Position) create/update/delete, Client/Contact create/update/delete, Project create/update/delete, Project Membership add/remove/role-change, Task deletion, Announcement publish/archive, and both Service/Incident Report attachment upload/delete — now wraps its business mutation and its required `AuditLogger` write in one `DB::transaction()`. This was corrected during implementation review: the first pass left single-statement CRUD writes (Staff/Organization/Client/Project/Task/Membership) un-wrapped, reasoning that a lone Eloquent statement was "already atomic" — but the actual atomic *unit* the specification requires is the pair (business mutation, audit insert), not either write alone, and an un-wrapped pair can commit the business change while losing the audit write if the second statement fails. Every listed mutation is now genuinely coupled, proven by `AuditLogTransactionTest`'s forced-failure tests (see §9/§12). Authentication is the one legitimate exception: a failed login has no successful business mutation to roll back, so its audit write is simply synchronous and unconditional — this is not a gap, since there is nothing to couple it with. Report exports (Phase 20's seven resources, plus the Audit Log's own) have no separate business mutation either — the audit write is the export's only durable side effect — so it is written synchronously *before* any response streaming begins, with no transaction held open for the duration of the streamed response; a failed write raises before `CsvExport::stream()` is ever reached.
 
 **Authorization.** `AuthorizesAuditLogAccess::authorizeAdministrator()` — a direct `$request->user()?->hasRole(Role::ADMINISTRATOR)` check, aborting `403` otherwise. No permission was added to the catalog; Manager and Staff have no access at all.
 
@@ -53,6 +53,7 @@ Not implemented, per the governing instructions' explicit exclusions: S3/object-
 - `apps/api/tests/Feature/Api/V1/Audit/AuditLogApiTest.php`
 - `apps/api/tests/Feature/Api/V1/Audit/AuditLoggingCoverageTest.php`
 - `apps/api/tests/Feature/Api/V1/Audit/AuditLogRedactionTest.php`
+- `apps/api/tests/Feature/Api/V1/Audit/AuditLogTransactionTest.php`
 - `apps/api/tests/Unit/Services/Audit/AuditLoggerTest.php`
 - `docs/phases/V1_PHASE_21_DEFINITION.md`
 - `docs/handoffs/V1_PHASE_21_HANDOFF.md` (this file)
@@ -61,11 +62,11 @@ Not implemented, per the governing instructions' explicit exclusions: S3/object-
 - `apps/api/app/Http/Controllers/Api/V1/Auth/AuthController.php`
 - `apps/api/app/Livewire/Auth/LoginForm.php`
 - `apps/api/routes/web.php`
-- `apps/api/app/Http/Controllers/Api/V1/Staff/StaffController.php`
-- `apps/api/app/Http/Controllers/Api/V1/Organization/{DepartmentController,TeamController,PositionController}.php`
-- `apps/api/app/Http/Controllers/Api/V1/Clients/{ClientController,ContactController}.php`
-- `apps/api/app/Http/Controllers/Api/V1/Projects/{ProjectController,ProjectMembershipController}.php`
-- `apps/api/app/Http/Controllers/Api/V1/Tasks/TaskController.php`
+- `apps/api/app/Http/Controllers/Api/V1/Staff/StaffController.php` — `DB::transaction()`-wrapped create/update
+- `apps/api/app/Http/Controllers/Api/V1/Organization/{DepartmentController,TeamController,PositionController}.php` — `DB::transaction()`-wrapped create/update/delete
+- `apps/api/app/Http/Controllers/Api/V1/Clients/{ClientController,ContactController}.php` — `DB::transaction()`-wrapped create/update/delete
+- `apps/api/app/Http/Controllers/Api/V1/Projects/{ProjectController,ProjectMembershipController}.php` — `DB::transaction()`-wrapped create/update/delete and add/remove/role-change
+- `apps/api/app/Http/Controllers/Api/V1/Tasks/TaskController.php` — `DB::transaction()`-wrapped deletion
 - `apps/api/app/Http/Controllers/Api/V1/Announcements/AnnouncementController.php`
 - `apps/api/app/Http/Controllers/Api/V1/ServiceReports/ServiceReportAttachmentController.php`
 - `apps/api/app/Http/Controllers/Api/V1/IncidentReports/IncidentReportAttachmentController.php`
@@ -97,7 +98,8 @@ New: `GET /api/v1/audit-logs` (paginated JSON, filters `from`/`to`/`actor`/`acti
 
 ## 9. Tests Added or Changed
 
-- 62 new tests across 4 files (`AuditLogApiTest`, `AuditLoggingCoverageTest`, `AuditLogRedactionTest`, `AuditLoggerTest`) — see `docs/testing/TEST_STATUS.md`'s Phase 21 section for the full breakdown.
+- 68 new tests across 5 files (`AuditLogApiTest`, `AuditLoggingCoverageTest`, `AuditLogRedactionTest`, `AuditLogTransactionTest`, `AuditLoggerTest`) — see `docs/testing/TEST_STATUS.md`'s Phase 21 section for the full breakdown.
+- `AuditLogTransactionTest` (6 tests, added during implementation review) proves fail-closed rollback behavior with a **real, controlled DB-level failure** (dropping the `audit_logs` table so any insert into it throws a genuine `QueryException`), not a mock — `AuditLogger`, like every service class in this codebase, is declared `final`, which Mockery cannot mock without subclassing. Covers: Staff create (record does not persist), Staff update (previous state unchanged), Department delete (record still exists), Announcement publish (an existing multi-step transaction path — status/`published_at`/`published_by_user_id` all remain unchanged), and both a Phase 20 report export and the Audit Log's own export (neither returns a successful CSV response).
 - One pre-existing test corrected for a latent flakiness bug unrelated to this phase's own feature (`StaffDirectoryReportTest`) — see §12 below.
 
 ## 10. Commands/Checks Executed
@@ -119,12 +121,13 @@ php artisan test
 - `vendor/bin/phpstan analyse` — `{"tool":"phpstan","result":"passed","errors":0}` at level 5 (after fixing two `nullsafe.neverNull` findings in this phase's own new code — see §12).
 - `php artisan migrate:fresh` — all 45 migrations passed.
 - `php artisan migrate:fresh --seed` — `RolePermissionSeeder` ran cleanly, catalog unchanged.
-- `php artisan test --filter=Audit` — `{"tool":"phpunit","result":"passed","tests":62,"passed":62,"assertions":218}`.
-- `php artisan test` (full suite) — `{"tool":"phpunit","result":"passed","tests":1062,"passed":1062,"assertions":2877}` — full Phase 1–20 regression (1000 tests) unaffected.
+- `php artisan test --filter=Audit` — `{"tool":"phpunit","result":"passed","tests":68,"passed":68,"assertions":230}`.
+- `php artisan test` (full suite) — `{"tool":"phpunit","result":"passed","tests":1068,"passed":1068,"assertions":2889}` — full Phase 1–20 regression (1000 tests) unaffected.
+
+*(These are the final, post-correction numbers — see §18 for the transaction-boundary correction that raised the isolated count from 62→68 tests, 218→230 assertions.)*
 
 ## 12. Deviations from Specification
 
-- **Transaction wrapping is not universal** — see §4's Transactions discussion. The two event families the governing instructions explicitly named as needing same-transaction coupling (attachment upload/delete, Announcement publish/archive) are wrapped; single-statement CRUD writes elsewhere are not additionally wrapped in a new `DB::transaction()` purely for the audit call, since each business mutation is already a single atomic statement. This is a judgment call, not an oversight — flagged explicitly here per the instruction to record deviations rather than silently introduce them.
 - **Four real, pre-implementation test-writing bugs were found and fixed while first running the new suite** (not application bugs): (1) two new tests used a fragile digit-plus-comma substring check for "no internal id leaked into CSV," which a coincidental IP address/ULID could satisfy by chance — fixed by parsing each CSV line into fields and checking exact non-membership; (2) `test_staff_separation_is_audited_as_a_distinct_event` omitted the `separation_date` field `UpdateStaffRequest` requires for a transition to `separated` (pre-existing Phase 7 validation, unrelated to this phase) — fixed by supplying it; (3) `test_message_send_is_not_audited` expected `200` from a direct-conversation-creation endpoint that correctly returns `201` for a new resource per Phase 16's own documented convention — fixed to `assertCreated()`.
 - **One pre-existing Phase 20 test had the identical latent CSV-substring flakiness** (`StaffDirectoryReportTest::test_csv_export_succeeds_with_stable_headers_and_no_internal_ids`), surfaced for the first time during this session's full-suite run by an unrelated random employee-number collision. Fixed identically (exact-field-membership check via `str_getcsv()`), with no change to any application code — `App\Support\Reporting\CsvExport` itself was never wrong.
 - Two real PHPStan findings in this phase's own new code (`AuditLogController::export()`, `AuditLogResource::toArray()`) — both used `?->` on `created_at`, which PHPStan's PHPDoc-derived typing treats as never-null; both corrected to plain `->`.
@@ -135,7 +138,6 @@ php artisan test
 - **No mutation surface exists for User suspension/reactivation/role assignment** (see §4 and DEC-044's Known Limitation) — `auth.login_succeeded`/`_failed`/`auth.logout` are the only User-related events actually audited in V1; `user.suspended`/`user.reactivated`/`user.role_changed` are documented, reserved names with no current caller. Building the underlying endpoint is out of this phase's scope.
 - No standalone `created_at` index — acceptable at this table's expected V1 volume; revisit only if a real query plan demonstrates a need.
 - No retention/purge policy — documented as a future operational consideration, mirroring `staff_checkins`' identical precedent.
-- Transaction-wrapping is not universal (see Deviations above) — a documented, deliberate trade-off, not an oversight.
 
 ## 14. Cross-Module Consistency Audit — Findings
 
@@ -176,6 +178,43 @@ See `docs/testing/UAT_LOG.md` (`UAT-21-01` through `UAT-21-05`) — this phase b
 
 `docs/DECISIONS.md` (DEC-044), `docs/ROADMAP.md`, `docs/CURRENT_STATE.md`, `docs/CHANGELOG.md`, `docs/00_PROJECT_CHARTER.md`, `docs/02_ARCHITECTURE.md`, `docs/03_DATABASE_MODEL.md`, `docs/04_API_CONVENTIONS.md`, `docs/05_SECURITY_MODEL.md`, `docs/testing/TEST_STATUS.md`, `docs/testing/UAT_LOG.md`, `docs/phases/V1_PHASE_21_DEFINITION.md`, this handoff.
 
-## 17. Recommended Next Step
+## 17. Post-Review Correction: Universal Transaction Boundaries
+
+**What was wrong.** The implementation as originally handed off left single-statement CRUD mutations (Staff create/update, Organization Structure create/update/delete, Client/Contact create/update/delete, Project create/update/delete, Project Membership add/remove/role-change, Task deletion) with their `AuditLogger` call issued as a plain follow-on statement after the business mutation, not inside a shared `DB::transaction()`. The reasoning at the time — "each business mutation is already a single atomic statement" — was a real but incomplete analysis: it treated *the business write* as the atomic unit that mattered, when the specification's actual atomic unit is the *pair* (business mutation, audit insert). An un-wrapped pair can commit the first write and then fail on the second, leaving a business change with no audit trail — exactly the outcome DEC-044 exists to prevent.
+
+**What was fixed.** Every mutation path named above now wraps its business write and its required audit write in one `DB::transaction()` closure — a real code change, not a documentation correction. `ProjectMembershipController::store()`/`destroy()` additionally moved their existing Phase 16 conversation-membership sync calls (`addToProjectConversationIfExists()`/`removeFromProjectConversationIfExists()`) inside the same transaction, since those are also part of the business mutation the audit entry describes. `ContactController` (which already used its own inner `DB::transaction()` for primary-contact clearing) was restructured to a single outer transaction covering primary-clearing, the business write, and the audit write together, rather than two separate transactional scopes.
+
+**What was deliberately left as-is, and why:**
+- **Authentication** (`auth.login_succeeded`/`_failed`/`auth.logout`, both surfaces) has no separate business mutation for a failed login to roll back — issuing/revoking a Sanctum token on success is the closest analog, and a failure there would already prevent the response from completing normally. No `DB::transaction()` was added here; there is nothing to couple the audit write *to*.
+- **Report exports** (Phase 20's seven resources, and the Audit Log's own export) have no business mutation at all — the audit write is the sole durable effect of calling the endpoint. It is written synchronously before `CsvExport::stream()` is invoked, so a failure prevents the export from ever starting; no transaction is held open across the streamed response, per the explicit instruction against that.
+- **Announcement publish/archive and both attachment controllers' upload/delete** were already correctly wrapped in the original implementation and needed no change.
+
+**How this was proven, not just asserted.** `AuditLogTransactionTest` (new, 6 tests) forces a genuine DB-level audit-insert failure — dropping the `audit_logs` table, since `AuditLogger` is `final` and therefore not mockable by Mockery without violating this codebase's established "services are final" convention — and confirms: a Staff create does not persist; a Staff update leaves the prior state unchanged; a Department delete leaves the row in place; an Announcement publish leaves `status`/`published_at`/`published_by_user_id` untouched; neither a Phase 20 report export nor the Audit Log's own export returns a successful response. All six pass.
+
+**Documentation now agrees.** `docs/phases/V1_PHASE_21_DEFINITION.md` already described universal same-transaction coupling correctly and needed no change. This handoff, `docs/DECISIONS.md` (DEC-044), and `docs/testing/TEST_STATUS.md` have all been updated to state the actual, now-corrected implementation — the "transaction wrapping is not universal" deviation and known-limitation entries have been removed, since they no longer describe reality.
+
+### Authentication event verification matrix
+
+Verified directly against the current code (`AuthController.php`, `LoginForm.php`, `routes/web.php`), not documentation:
+
+| Surface/Event | Implemented? | Where |
+|---|---|---|
+| API login success | ✅ Yes | `AuthController::login()` — actor = the authenticated `User`, `entity_public_id` = their `public_id`, `source: api` |
+| API login failure | ✅ Yes | `AuthController::login()` — both the bad-credentials branch and the inactive-account branch; actor is always `null` |
+| API logout | ✅ Yes | `AuthController::logout()` — actor captured before `currentAccessToken()->delete()` |
+| Admin/session login success | ✅ Yes | `LoginForm::login()` — `source: AuditSource::Admin`, actor = the authenticated `User` |
+| Admin/session login failure | ✅ Yes | `LoginForm::login()` / `auditLoginFailed()` — covers bad credentials, inactive account, and the `admin.access`-denied branch; actor is always `null` |
+| Admin/session logout | ✅ Yes | `routes/web.php`'s `POST /logout` closure — actor captured via `Auth::guard('web')->user()` before `Auth::guard('web')->logout()` |
+
+**Redaction confirmed for all six**, by direct code review and by `AuditLogRedactionTest`'s passing assertions: no call site anywhere in these three files references a password, a password hash, a bearer token, an `Authorization` header, or cookie/session contents. The only values ever passed are the resolved `User`'s `public_id` (as `entity_public_id`, never as `actor` on a failure), the request's IP address, and its user agent — both derived by `AuditLogger::recordForRequest()` via `$request->ip()`/`$request->userAgent()`, never from raw header/cookie inspection.
+
+**Actor/IP/user-agent behavior:**
+- **Successful login (either surface):** `actor` = the now-authenticated `User`; `entity_public_id` = that same user's `public_id`; IP/user-agent = the request's own.
+- **Failed login (either surface, any reason — bad credentials, inactive account, or Admin-Backoffice-access-denied):** `actor` = `null` always, by design — credentials were never successfully proven, so no actor identity is asserted. `entity_public_id` = the matched account's `public_id` when the submitted email resolves to a real `User` (safe to record — it is not the credential itself), or `null` when the email matches no account at all. IP/user-agent = the request's own in every case.
+- **Logout (either surface):** `actor` = the `User` who was authenticated for that request, captured *before* the token/session is invalidated so the write never races the identity it's recording.
+
+No perfect transactional coupling is claimed for authentication events specifically, since — as stated above — there is no ordinary business mutation for a failed login to roll back; its audit write is simply synchronous and unconditional, which is the correct and complete description of its behavior, not a gap.
+
+## 18. Recommended Next Step
 
 Per `docs/ROADMAP.md`, **Phase 22 — Security Audit** (review against `05_SECURITY_MODEL.md`) is next. This is a recommendation only — per CLAUDE.md §8 Stop Discipline, Phase 22 must not begin without explicit product-owner authorization, and this session has not begun it.

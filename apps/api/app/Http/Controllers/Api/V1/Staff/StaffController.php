@@ -17,6 +17,7 @@ use App\Support\Audit\AuditActions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Enum;
 
 /**
@@ -87,16 +88,23 @@ class StaffController extends Controller
     {
         $data = $this->resolveReferences($request->validated(), $request);
 
-        $staffMember = Staff::create($data);
-        $staffMember->load(self::WITH_RELATIONS);
+        // The business create and its required audit entry commit or roll
+        // back together (Phase 21, DEC-044) — a failed audit write must
+        // never leave behind a silently un-audited Staff record.
+        $staffMember = DB::transaction(function () use ($request, $data) {
+            $staffMember = Staff::create($data);
+            $staffMember->load(self::WITH_RELATIONS);
 
-        $this->auditLogger->recordForRequest(
-            $request,
-            AuditActions::STAFF_CREATED,
-            entityType: 'Staff',
-            entityPublicId: $staffMember->public_id,
-            after: $this->curatedSnapshot($staffMember),
-        );
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::STAFF_CREATED,
+                entityType: 'Staff',
+                entityPublicId: $staffMember->public_id,
+                after: $this->curatedSnapshot($staffMember),
+            );
+
+            return $staffMember;
+        });
 
         return (new StaffResource($staffMember))
             ->response()
@@ -124,28 +132,35 @@ class StaffController extends Controller
         $wasSeparated = $staff->status === StaffStatus::Separated;
 
         $data = $this->resolveReferences($request->validated(), $request);
-        $staff->update($data);
-        $staff->load(self::WITH_RELATIONS);
 
-        [$changedFields, $curatedBefore, $curatedAfter] = AuditLogger::diff(
-            $before,
-            $this->curatedSnapshot($staff),
-            self::AUDITED_FIELDS,
-        );
+        // The business update and its required audit entry commit or roll
+        // back together (Phase 21, DEC-044) — a failed audit write for an
+        // audited change must undo the update, not silently succeed
+        // un-audited.
+        DB::transaction(function () use ($request, $staff, $data, $before, $wasSeparated) {
+            $staff->update($data);
+            $staff->load(self::WITH_RELATIONS);
 
-        if ($changedFields !== []) {
-            $this->auditLogger->recordForRequest(
-                $request,
-                (! $wasSeparated && $staff->status === StaffStatus::Separated)
-                    ? AuditActions::STAFF_SEPARATED
-                    : AuditActions::STAFF_UPDATED,
-                entityType: 'Staff',
-                entityPublicId: $staff->public_id,
-                changedFields: $changedFields,
-                before: $curatedBefore,
-                after: $curatedAfter,
+            [$changedFields, $curatedBefore, $curatedAfter] = AuditLogger::diff(
+                $before,
+                $this->curatedSnapshot($staff),
+                self::AUDITED_FIELDS,
             );
-        }
+
+            if ($changedFields !== []) {
+                $this->auditLogger->recordForRequest(
+                    $request,
+                    (! $wasSeparated && $staff->status === StaffStatus::Separated)
+                        ? AuditActions::STAFF_SEPARATED
+                        : AuditActions::STAFF_UPDATED,
+                    entityType: 'Staff',
+                    entityPublicId: $staff->public_id,
+                    changedFields: $changedFields,
+                    before: $curatedBefore,
+                    after: $curatedAfter,
+                );
+            }
+        });
 
         return new StaffResource($staff);
     }

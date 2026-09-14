@@ -16,6 +16,7 @@ use App\Support\Audit\AuditActions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Enum;
 
 /**
@@ -56,28 +57,35 @@ class ProjectMembershipController extends Controller
     {
         $staffId = $this->resolveStaffId($request->validated('staff_id'));
 
-        $membership = $project->memberships()->create([
-            'staff_id' => $staffId,
-            'role' => $request->validated('role', ProjectMembershipRole::Member->value),
-        ]);
-        $membership->load('staff');
+        // The business create (plus its Phase 16 conversation-membership
+        // sync) and its required audit entry commit or roll back together
+        // (Phase 21, DEC-044).
+        $membership = DB::transaction(function () use ($request, $project, $staffId) {
+            $membership = $project->memberships()->create([
+                'staff_id' => $staffId,
+                'role' => $request->validated('role', ProjectMembershipRole::Member->value),
+            ]);
+            $membership->load('staff');
 
-        // Phase 16: if this Project already has a conversation (lazily
-        // created on first use), keep its membership synchronized — a
-        // no-op when no conversation exists yet.
-        $this->addToProjectConversationIfExists($project, $staffId);
+            // Phase 16: if this Project already has a conversation
+            // (lazily created on first use), keep its membership
+            // synchronized — a no-op when no conversation exists yet.
+            $this->addToProjectConversationIfExists($project, $staffId);
 
-        $this->auditLogger->recordForRequest(
-            $request,
-            AuditActions::PROJECT_MEMBERSHIP_ADDED,
-            entityType: 'ProjectMembership',
-            entityPublicId: null,
-            after: [
-                'project_id' => $project->public_id,
-                'staff_id' => $membership->staff?->public_id,
-                'role' => $membership->role->value,
-            ],
-        );
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::PROJECT_MEMBERSHIP_ADDED,
+                entityType: 'ProjectMembership',
+                entityPublicId: null,
+                after: [
+                    'project_id' => $project->public_id,
+                    'staff_id' => $membership->staff?->public_id,
+                    'role' => $membership->role->value,
+                ],
+            );
+
+            return $membership;
+        });
 
         return (new ProjectMembershipResource($membership))
             ->response()
@@ -89,20 +97,22 @@ class ProjectMembershipController extends Controller
         $membership = $project->memberships()->where('staff_id', $staff->id)->firstOrFail();
         $beforeRole = $membership->role->value;
 
-        $membership->update($request->validated());
-        $membership->load('staff');
+        DB::transaction(function () use ($request, $project, $staff, $membership, $beforeRole) {
+            $membership->update($request->validated());
+            $membership->load('staff');
 
-        if ($membership->role->value !== $beforeRole) {
-            $this->auditLogger->recordForRequest(
-                $request,
-                AuditActions::PROJECT_MEMBERSHIP_ROLE_CHANGED,
-                entityType: 'ProjectMembership',
-                entityPublicId: null,
-                changedFields: ['role'],
-                before: ['project_id' => $project->public_id, 'staff_id' => $staff->public_id, 'role' => $beforeRole],
-                after: ['project_id' => $project->public_id, 'staff_id' => $staff->public_id, 'role' => $membership->role->value],
-            );
-        }
+            if ($membership->role->value !== $beforeRole) {
+                $this->auditLogger->recordForRequest(
+                    $request,
+                    AuditActions::PROJECT_MEMBERSHIP_ROLE_CHANGED,
+                    entityType: 'ProjectMembership',
+                    entityPublicId: null,
+                    changedFields: ['role'],
+                    before: ['project_id' => $project->public_id, 'staff_id' => $staff->public_id, 'role' => $beforeRole],
+                    after: ['project_id' => $project->public_id, 'staff_id' => $staff->public_id, 'role' => $membership->role->value],
+                );
+            }
+        });
 
         return new ProjectMembershipResource($membership);
     }
@@ -112,24 +122,27 @@ class ProjectMembershipController extends Controller
         $membership = $project->memberships()->where('staff_id', $staff->id)->firstOrFail();
         $role = $membership->role->value;
 
-        $membership->delete();
+        DB::transaction(function () use ($request, $project, $staff, $membership, $role) {
+            $membership->delete();
 
-        // Phase 16: a Staff member removed from the Project roster is
-        // also removed from its conversation (if one exists) — project
-        // conversation membership is never independently managed.
-        $this->removeFromProjectConversationIfExists($project, $staff->id);
+            // Phase 16: a Staff member removed from the Project roster is
+            // also removed from its conversation (if one exists) —
+            // project conversation membership is never independently
+            // managed.
+            $this->removeFromProjectConversationIfExists($project, $staff->id);
 
-        $this->auditLogger->recordForRequest(
-            $request,
-            AuditActions::PROJECT_MEMBERSHIP_REMOVED,
-            entityType: 'ProjectMembership',
-            entityPublicId: null,
-            before: [
-                'project_id' => $project->public_id,
-                'staff_id' => $staff->public_id,
-                'role' => $role,
-            ],
-        );
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::PROJECT_MEMBERSHIP_REMOVED,
+                entityType: 'ProjectMembership',
+                entityPublicId: null,
+                before: [
+                    'project_id' => $project->public_id,
+                    'staff_id' => $staff->public_id,
+                    'role' => $role,
+                ],
+            );
+        });
 
         return response()->json(status: 204);
     }

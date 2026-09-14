@@ -13,13 +13,16 @@ use App\Support\Audit\AuditActions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Enum;
 
 /**
  * Departments (Phase 6 — Organization Structure). Read endpoints require
  * `organization.view`; writes require `organization.manage` — enforced by
  * route middleware (routes/api/v1.php), not here. Create/update/delete
- * are audited (Phase 21, DEC-044) with curated name/status metadata only.
+ * are audited (Phase 21, DEC-044) with curated name/status metadata only —
+ * each business mutation and its required audit entry commit or roll back
+ * together inside one `DB::transaction()`.
  */
 class DepartmentController extends Controller
 {
@@ -46,15 +49,19 @@ class DepartmentController extends Controller
 
     public function store(StoreDepartmentRequest $request): JsonResponse
     {
-        $department = Department::create($request->validated());
+        $department = DB::transaction(function () use ($request) {
+            $department = Department::create($request->validated());
 
-        $this->auditLogger->recordForRequest(
-            $request,
-            AuditActions::DEPARTMENT_CREATED,
-            entityType: 'Department',
-            entityPublicId: $department->public_id,
-            after: $this->curatedSnapshot($department),
-        );
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::DEPARTMENT_CREATED,
+                entityType: 'Department',
+                entityPublicId: $department->public_id,
+                after: $this->curatedSnapshot($department),
+            );
+
+            return $department;
+        });
 
         return (new DepartmentResource($department))
             ->response()
@@ -70,25 +77,27 @@ class DepartmentController extends Controller
     {
         $before = $this->curatedSnapshot($department);
 
-        $department->update($request->validated());
+        DB::transaction(function () use ($request, $department, $before) {
+            $department->update($request->validated());
 
-        [$changedFields, $curatedBefore, $curatedAfter] = AuditLogger::diff(
-            $before,
-            $this->curatedSnapshot($department),
-            self::AUDITED_FIELDS,
-        );
-
-        if ($changedFields !== []) {
-            $this->auditLogger->recordForRequest(
-                $request,
-                AuditActions::DEPARTMENT_UPDATED,
-                entityType: 'Department',
-                entityPublicId: $department->public_id,
-                changedFields: $changedFields,
-                before: $curatedBefore,
-                after: $curatedAfter,
+            [$changedFields, $curatedBefore, $curatedAfter] = AuditLogger::diff(
+                $before,
+                $this->curatedSnapshot($department),
+                self::AUDITED_FIELDS,
             );
-        }
+
+            if ($changedFields !== []) {
+                $this->auditLogger->recordForRequest(
+                    $request,
+                    AuditActions::DEPARTMENT_UPDATED,
+                    entityType: 'Department',
+                    entityPublicId: $department->public_id,
+                    changedFields: $changedFields,
+                    before: $curatedBefore,
+                    after: $curatedAfter,
+                );
+            }
+        });
 
         return new DepartmentResource($department->loadCount(['teams', 'positions']));
     }
@@ -119,15 +128,17 @@ class DepartmentController extends Controller
         $publicId = $department->public_id;
         $before = $this->curatedSnapshot($department);
 
-        $department->delete();
+        DB::transaction(function () use ($request, $department, $publicId, $before) {
+            $department->delete();
 
-        $this->auditLogger->recordForRequest(
-            $request,
-            AuditActions::DEPARTMENT_DELETED,
-            entityType: 'Department',
-            entityPublicId: $publicId,
-            before: $before,
-        );
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::DEPARTMENT_DELETED,
+                entityType: 'Department',
+                entityPublicId: $publicId,
+                before: $before,
+            );
+        });
 
         return response()->json(status: 204);
     }

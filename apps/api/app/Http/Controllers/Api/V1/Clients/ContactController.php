@@ -71,23 +71,27 @@ class ContactController extends Controller
         $data = $request->validated();
         $data['client_id'] = $this->resolveClientId($data['client_id']);
 
-        $contact = $this->makesPrimary($data)
-            ? DB::transaction(function () use ($data): Contact {
+        // The business create (including any primary-contact clearing)
+        // and its required audit entry commit or roll back together
+        // (Phase 21, DEC-044).
+        $contact = DB::transaction(function () use ($request, $data): Contact {
+            if ($this->makesPrimary($data)) {
                 $this->clearOtherPrimaryContacts($data['client_id']);
+            }
 
-                return Contact::create($data);
-            })
-            : Contact::create($data);
+            $contact = Contact::create($data);
+            $contact->load('client');
 
-        $contact->load('client');
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::CONTACT_CREATED,
+                entityType: 'Contact',
+                entityPublicId: $contact->public_id,
+                after: $this->curatedSnapshot($contact),
+            );
 
-        $this->auditLogger->recordForRequest(
-            $request,
-            AuditActions::CONTACT_CREATED,
-            entityType: 'Contact',
-            entityPublicId: $contact->public_id,
-            after: $this->curatedSnapshot($contact),
-        );
+            return $contact;
+        });
 
         return (new ContactResource($contact))
             ->response()
@@ -110,34 +114,32 @@ class ContactController extends Controller
             $data['client_id'] = $this->resolveClientId($data['client_id']);
         }
 
-        if ($this->makesPrimary($data)) {
-            DB::transaction(function () use ($data, $contact): void {
+        DB::transaction(function () use ($request, $contact, $data, $before) {
+            if ($this->makesPrimary($data)) {
                 $this->clearOtherPrimaryContacts($data['client_id'] ?? $contact->client_id, $contact->id);
-                $contact->update($data);
-            });
-        } else {
+            }
+
             $contact->update($data);
-        }
+            $contact->load('client');
 
-        $contact->load('client');
-
-        [$changedFields, $curatedBefore, $curatedAfter] = AuditLogger::diff(
-            $before,
-            $this->curatedSnapshot($contact),
-            self::AUDITED_FIELDS,
-        );
-
-        if ($changedFields !== []) {
-            $this->auditLogger->recordForRequest(
-                $request,
-                AuditActions::CONTACT_UPDATED,
-                entityType: 'Contact',
-                entityPublicId: $contact->public_id,
-                changedFields: $changedFields,
-                before: $curatedBefore,
-                after: $curatedAfter,
+            [$changedFields, $curatedBefore, $curatedAfter] = AuditLogger::diff(
+                $before,
+                $this->curatedSnapshot($contact),
+                self::AUDITED_FIELDS,
             );
-        }
+
+            if ($changedFields !== []) {
+                $this->auditLogger->recordForRequest(
+                    $request,
+                    AuditActions::CONTACT_UPDATED,
+                    entityType: 'Contact',
+                    entityPublicId: $contact->public_id,
+                    changedFields: $changedFields,
+                    before: $curatedBefore,
+                    after: $curatedAfter,
+                );
+            }
+        });
 
         return new ContactResource($contact);
     }
@@ -148,15 +150,17 @@ class ContactController extends Controller
         $publicId = $contact->public_id;
         $before = $this->curatedSnapshot($contact);
 
-        $contact->delete();
+        DB::transaction(function () use ($request, $contact, $publicId, $before) {
+            $contact->delete();
 
-        $this->auditLogger->recordForRequest(
-            $request,
-            AuditActions::CONTACT_DELETED,
-            entityType: 'Contact',
-            entityPublicId: $publicId,
-            before: $before,
-        );
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::CONTACT_DELETED,
+                entityType: 'Contact',
+                entityPublicId: $publicId,
+                before: $before,
+            );
+        });
 
         return response()->json(status: 204);
     }

@@ -14,6 +14,7 @@ use App\Support\Audit\AuditActions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Enum;
 
 /**
@@ -57,16 +58,20 @@ class PositionController extends Controller
         $data = $request->validated();
         $data['department_id'] = $this->resolveDepartmentId($data['department_id'] ?? null);
 
-        $position = Position::create($data);
-        $position->load('department');
+        $position = DB::transaction(function () use ($request, $data) {
+            $position = Position::create($data);
+            $position->load('department');
 
-        $this->auditLogger->recordForRequest(
-            $request,
-            AuditActions::POSITION_CREATED,
-            entityType: 'Position',
-            entityPublicId: $position->public_id,
-            after: $this->curatedSnapshot($position),
-        );
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::POSITION_CREATED,
+                entityType: 'Position',
+                entityPublicId: $position->public_id,
+                after: $this->curatedSnapshot($position),
+            );
+
+            return $position;
+        });
 
         return (new PositionResource($position))
             ->response()
@@ -89,26 +94,28 @@ class PositionController extends Controller
             $data['department_id'] = $this->resolveDepartmentId($data['department_id']);
         }
 
-        $position->update($data);
-        $position->load('department');
+        DB::transaction(function () use ($request, $position, $data, $before) {
+            $position->update($data);
+            $position->load('department');
 
-        [$changedFields, $curatedBefore, $curatedAfter] = AuditLogger::diff(
-            $before,
-            $this->curatedSnapshot($position),
-            self::AUDITED_FIELDS,
-        );
-
-        if ($changedFields !== []) {
-            $this->auditLogger->recordForRequest(
-                $request,
-                AuditActions::POSITION_UPDATED,
-                entityType: 'Position',
-                entityPublicId: $position->public_id,
-                changedFields: $changedFields,
-                before: $curatedBefore,
-                after: $curatedAfter,
+            [$changedFields, $curatedBefore, $curatedAfter] = AuditLogger::diff(
+                $before,
+                $this->curatedSnapshot($position),
+                self::AUDITED_FIELDS,
             );
-        }
+
+            if ($changedFields !== []) {
+                $this->auditLogger->recordForRequest(
+                    $request,
+                    AuditActions::POSITION_UPDATED,
+                    entityType: 'Position',
+                    entityPublicId: $position->public_id,
+                    changedFields: $changedFields,
+                    before: $curatedBefore,
+                    after: $curatedAfter,
+                );
+            }
+        });
 
         return new PositionResource($position);
     }
@@ -131,15 +138,17 @@ class PositionController extends Controller
         $publicId = $position->public_id;
         $before = $this->curatedSnapshot($position);
 
-        $position->delete();
+        DB::transaction(function () use ($request, $position, $publicId, $before) {
+            $position->delete();
 
-        $this->auditLogger->recordForRequest(
-            $request,
-            AuditActions::POSITION_DELETED,
-            entityType: 'Position',
-            entityPublicId: $publicId,
-            before: $before,
-        );
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::POSITION_DELETED,
+                entityType: 'Position',
+                entityPublicId: $publicId,
+                before: $before,
+            );
+        });
 
         return response()->json(status: 204);
     }

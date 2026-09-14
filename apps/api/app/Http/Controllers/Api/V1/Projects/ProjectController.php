@@ -16,6 +16,7 @@ use App\Support\Audit\AuditActions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Enum;
 
 /**
@@ -94,16 +95,20 @@ class ProjectController extends Controller
             $data['client_id'] = $this->resolveId(Client::class, $data['client_id']);
         }
 
-        $project = Project::create($data);
-        $project->load('client');
+        $project = DB::transaction(function () use ($request, $data) {
+            $project = Project::create($data);
+            $project->load('client');
 
-        $this->auditLogger->recordForRequest(
-            $request,
-            AuditActions::PROJECT_CREATED,
-            entityType: 'Project',
-            entityPublicId: $project->public_id,
-            after: $this->curatedSnapshot($project),
-        );
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::PROJECT_CREATED,
+                entityType: 'Project',
+                entityPublicId: $project->public_id,
+                after: $this->curatedSnapshot($project),
+            );
+
+            return $project;
+        });
 
         return (new ProjectResource($project->loadCount('memberships')))
             ->response()
@@ -128,26 +133,28 @@ class ProjectController extends Controller
             $data['client_id'] = $this->resolveId(Client::class, $data['client_id']);
         }
 
-        $project->update($data);
-        $project->load('client');
+        DB::transaction(function () use ($request, $project, $data, $before) {
+            $project->update($data);
+            $project->load('client');
 
-        [$changedFields, $curatedBefore, $curatedAfter] = AuditLogger::diff(
-            $before,
-            $this->curatedSnapshot($project),
-            self::AUDITED_FIELDS,
-        );
-
-        if ($changedFields !== []) {
-            $this->auditLogger->recordForRequest(
-                $request,
-                AuditActions::PROJECT_UPDATED,
-                entityType: 'Project',
-                entityPublicId: $project->public_id,
-                changedFields: $changedFields,
-                before: $curatedBefore,
-                after: $curatedAfter,
+            [$changedFields, $curatedBefore, $curatedAfter] = AuditLogger::diff(
+                $before,
+                $this->curatedSnapshot($project),
+                self::AUDITED_FIELDS,
             );
-        }
+
+            if ($changedFields !== []) {
+                $this->auditLogger->recordForRequest(
+                    $request,
+                    AuditActions::PROJECT_UPDATED,
+                    entityType: 'Project',
+                    entityPublicId: $project->public_id,
+                    changedFields: $changedFields,
+                    before: $curatedBefore,
+                    after: $curatedAfter,
+                );
+            }
+        });
 
         return new ProjectResource($project->loadCount('memberships'));
     }
@@ -220,15 +227,17 @@ class ProjectController extends Controller
         $publicId = $project->public_id;
         $before = $this->curatedSnapshot($project);
 
-        $project->delete();
+        DB::transaction(function () use ($request, $project, $publicId, $before) {
+            $project->delete();
 
-        $this->auditLogger->recordForRequest(
-            $request,
-            AuditActions::PROJECT_DELETED,
-            entityType: 'Project',
-            entityPublicId: $publicId,
-            before: $before,
-        );
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::PROJECT_DELETED,
+                entityType: 'Project',
+                entityPublicId: $publicId,
+                before: $before,
+            );
+        });
 
         return response()->json(status: 204);
     }

@@ -14,6 +14,7 @@ use App\Support\Audit\AuditActions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Enum;
 
 /**
@@ -56,16 +57,20 @@ class TeamController extends Controller
         $data = $request->validated();
         $data['department_id'] = $this->resolveDepartmentId($data['department_id'] ?? null);
 
-        $team = Team::create($data);
-        $team->load('department');
+        $team = DB::transaction(function () use ($request, $data) {
+            $team = Team::create($data);
+            $team->load('department');
 
-        $this->auditLogger->recordForRequest(
-            $request,
-            AuditActions::TEAM_CREATED,
-            entityType: 'Team',
-            entityPublicId: $team->public_id,
-            after: $this->curatedSnapshot($team),
-        );
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::TEAM_CREATED,
+                entityType: 'Team',
+                entityPublicId: $team->public_id,
+                after: $this->curatedSnapshot($team),
+            );
+
+            return $team;
+        });
 
         return (new TeamResource($team))
             ->response()
@@ -88,26 +93,28 @@ class TeamController extends Controller
             $data['department_id'] = $this->resolveDepartmentId($data['department_id']);
         }
 
-        $team->update($data);
-        $team->load('department');
+        DB::transaction(function () use ($request, $team, $data, $before) {
+            $team->update($data);
+            $team->load('department');
 
-        [$changedFields, $curatedBefore, $curatedAfter] = AuditLogger::diff(
-            $before,
-            $this->curatedSnapshot($team),
-            self::AUDITED_FIELDS,
-        );
-
-        if ($changedFields !== []) {
-            $this->auditLogger->recordForRequest(
-                $request,
-                AuditActions::TEAM_UPDATED,
-                entityType: 'Team',
-                entityPublicId: $team->public_id,
-                changedFields: $changedFields,
-                before: $curatedBefore,
-                after: $curatedAfter,
+            [$changedFields, $curatedBefore, $curatedAfter] = AuditLogger::diff(
+                $before,
+                $this->curatedSnapshot($team),
+                self::AUDITED_FIELDS,
             );
-        }
+
+            if ($changedFields !== []) {
+                $this->auditLogger->recordForRequest(
+                    $request,
+                    AuditActions::TEAM_UPDATED,
+                    entityType: 'Team',
+                    entityPublicId: $team->public_id,
+                    changedFields: $changedFields,
+                    before: $curatedBefore,
+                    after: $curatedAfter,
+                );
+            }
+        });
 
         return new TeamResource($team);
     }
@@ -137,15 +144,17 @@ class TeamController extends Controller
         $publicId = $team->public_id;
         $before = $this->curatedSnapshot($team);
 
-        $team->delete();
+        DB::transaction(function () use ($request, $team, $publicId, $before) {
+            $team->delete();
 
-        $this->auditLogger->recordForRequest(
-            $request,
-            AuditActions::TEAM_DELETED,
-            entityType: 'Team',
-            entityPublicId: $publicId,
-            before: $before,
-        );
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::TEAM_DELETED,
+                entityType: 'Team',
+                entityPublicId: $publicId,
+                before: $before,
+            );
+        });
 
         return response()->json(status: 204);
     }
