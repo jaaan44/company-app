@@ -149,8 +149,8 @@ class AdminLoginTest extends TestCase
             ->set('password', 'wrong-password')
             ->call('login');
 
-        $suspendedMessage = $suspendedAttempt->errors('email')[0] ?? null;
-        $wrongPasswordMessage = $wrongPasswordAttempt->errors('email')[0] ?? null;
+        $suspendedMessage = $suspendedAttempt->errors()->first('email');
+        $wrongPasswordMessage = $wrongPasswordAttempt->errors()->first('email');
 
         $this->assertNotNull($suspendedMessage);
         $this->assertSame($wrongPasswordMessage, $suspendedMessage);
@@ -169,7 +169,7 @@ class AdminLoginTest extends TestCase
             ->set('password', 'correct-password')
             ->call('login');
 
-        $message = $attempt->errors('email')[0] ?? null;
+        $message = $attempt->errors()->first('email');
 
         $this->assertSame('These credentials do not match our records.', $message);
         $this->assertGuest();

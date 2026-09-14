@@ -1,11 +1,11 @@
 # Phase 22 — Security Audit — Audit & Planning Report
 
-**Status:** AUDIT COMPLETE — awaiting product-owner review and explicit authorization to implement.
-**This is not a phase specification.** No previous phase produced a file-based "planning audit" (Phases 17–21's planning audits were delivered as chat messages ahead of implementation); this document is the first one committed to the repository, per this session's explicit instructions. It follows the `docs/phases/V1_PHASE_<NN>_*.md` naming and location convention but is deliberately **not** named `V1_PHASE_22_DEFINITION.md` — that file, if Phase 22 is authorized, should be written from the scope this document proposes (see §7 "Phase 22 Required Implementation Scope") and will itself require the standard `docs/phases/PHASE_TEMPLATE.md` sections and product-owner sign-off.
+**Status:** AUDIT COMPLETE, REMEDIATION COMPLETE — see the Post-Implementation Remediation Status addendum at the end of this document for what was actually implemented, dropped, or deferred, and `docs/handoffs/V1_PHASE_22_HANDOFF.md` for the full implementation account. The remainder of this document is preserved exactly as originally written (per CLAUDE.md's "do not rewrite historical decisions unnecessarily") — it reflects the audit's own findings and recommendations at the time it was authored, before the product owner's remediation-scope decisions below.
+**This is not a phase specification.** No previous phase produced a file-based "planning audit" (Phases 17–21's planning audits were delivered as chat messages ahead of implementation); this document is the first one committed to the repository, per this session's explicit instructions. It follows the `docs/phases/V1_PHASE_<NN>_*.md` naming and location convention but is deliberately **not** named `V1_PHASE_22_DEFINITION.md`.
 
-**Date:** 2026-09-14
-**Session type:** Repository inspection, security audit, scope determination, and planning only. **No application code was changed.** No implementation branch/PR was created.
-**Repository state audited:** `main` at `ada32a6` (Phase 21 — Integration Audit — merged via PR #23). Working tree confirmed clean before and after this audit; no unrelated files modified.
+**Date:** 2026-09-14 (audit); implementation completed the same day following explicit product-owner authorization.
+**Session type (original):** Repository inspection, security audit, scope determination, and planning only. **No application code was changed** in the audit session itself. A separate, later session implemented the authorized remediation scope — see the addendum below and the Phase 22 handoff.
+**Repository state audited:** `main` at `ada32a6` (Phase 21 — Integration Audit — merged via PR #23). Working tree confirmed clean before and after the audit; no unrelated files modified.
 
 ---
 
@@ -260,3 +260,29 @@ Avoiding scope creep: no microservices, Kubernetes, external SIEM, Redis/queue i
 - [x] Security regression testing plan specified per proposed fix, plus existing test coverage inventoried.
 - [x] This document committed under `docs/phases/` for product-owner review.
 - [ ] **Not done, and explicitly out of this session's scope:** implementing any fix, creating `docs/phases/V1_PHASE_22_DEFINITION.md`, opening an implementation branch/PR, or updating `docs/CURRENT_STATE.md`/`docs/CHANGELOG.md`/`docs/ROADMAP.md`/`docs/05_SECURITY_MODEL.md` (those updates belong to the implementation phase itself, once authorized, per CLAUDE.md §6).
+
+---
+
+## 14. Post-Implementation Remediation Status (added after implementation)
+
+The product owner reviewed this audit and explicitly authorized a **narrow** remediation scope — not the full set of hardening items §8 enumerated. See `docs/DECISIONS.md` DEC-045 for the authorization record and `docs/handoffs/V1_PHASE_22_HANDOFF.md` for the complete implementation account (files changed, tests added, quality-gate results). Status per finding:
+
+| ID | Finding | Disposition | Notes |
+|---|---|---|---|
+| F-01 | Login discloses account existence/status for suspended/inactive accounts | **Fixed** | `AuthController::login`/`LoginForm::login` now return an identical generic message for invalid credentials and for a correct-password-but-inactive account, on both surfaces. Enforcement unchanged; regression tests added. |
+| F-02 | Sanctum tokens never expire, no ability scoping | **Implemented (expiration only)** | `config('sanctum.expiration')` set to `env('SANCTUM_EXPIRATION', 43200)` (30 days), using Sanctum's built-in mechanism — no refresh-token architecture. Ability scoping remains correctly deferred (still only one client type). |
+| F-03 | No in-controller defense-in-depth check on `WorkLogController` | **Investigated and dropped — confirmed not a gap** | `RolePermissionSeeder` never attaches `work-logs.manage` to Manager/Staff; the existing `can:work-logs.manage` route middleware (Administrator-only) already fully protects `store()`/`update()`/`destroy()`. No code change made, per explicit authorization against duplicating authorization for cosmetic redundancy. |
+| F-04 | CI workflows carry no explicit `permissions:` block | **Implemented** | `permissions: contents: read` added to both `.github/workflows/*.yml`. |
+| F-05 | `.gitignore` enumerates specific `.env.*` filenames | **Implemented** | `apps/api/.gitignore` now uses a `.env.*` wildcard with explicit negation for the two tracked example files. |
+| F-06 | No `config/cors.php` published | **Remains deferred** | No browser-based client exists yet to make CORS policy meaningful — unchanged from the original audit's own recommendation. |
+| F-07 | `local` disk's default `'serve' => true` registers a dormant route | **Implemented** | `config/filesystems.php`'s `local` disk now sets `'serve' => false`. |
+| F-08 | `APP_DEBUG=true` in example env files (code default is safe) | **Implemented (documentation)** | One-line reminder added to `README.md`; code default (`false`) was already correct and unchanged. |
+| F-09 | Docker Compose MySQL dev credentials | **No action needed** | Already self-documented as local-dev-only in the original audit; no change proposed or made. |
+| F-10 | `composer audit` did not run in one investigative pass (no `vendor/`) | **Implemented** | `composer audit --locked` added as a standing step in `backend-ci.yml` and as a documented command in `CLAUDE.md` §5. Run twice during remediation (audit pass and implementation pass) — clean both times. |
+| F-11 | No `CODEOWNERS`/`dependabot.yml`/`SECURITY.md` | **Implemented (dependabot.yml only)** | `.github/dependabot.yml` added (composer/pub/github-actions, weekly, no auto-merge). `CODEOWNERS`/`SECURITY.md` remain deferred as organizational/product-owner decisions, not application-security defects. |
+| F-12 | No User account-management (suspend/reactivate/role-change) mutation surface | **Remains deferred** | New product behavior, not a security fix — explicitly excluded from Phase 22 per the product owner's authorization and DEC-044's original Known Limitation. |
+| F-13 | ULID `public_id`s confirmed non-enumerable | **No action needed** | Verified-working-control finding, not a defect. |
+
+**Everything else in §9 (Deferred Items) remains deferred exactly as originally recommended** — no refresh-token architecture, no new infrastructure, no SIEM/monitoring platform, no unrelated dependency upgrades, no speculative enterprise hardening.
+
+**Quality gates (implementation session):** `composer validate --strict`, `composer audit --locked` (no vulnerabilities), `vendor/bin/pint --test`, `vendor/bin/phpstan analyse` (0 errors), and the full `php artisan test` suite (1,080/1,080 passing — 1,068 Phase 1–21 baseline + 12 new regression tests) all passed. See `docs/handoffs/V1_PHASE_22_HANDOFF.md` for full command output.
