@@ -1,19 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import 'package:mobile/app/auth_scope.dart';
+import 'package:mobile/app/router.dart';
 import 'package:mobile/features/auth/data/auth_api_client.dart';
 import 'package:mobile/features/auth/data/token_storage.dart';
-import 'package:mobile/features/auth/presentation/auth_gate.dart';
 import 'package:mobile/features/auth/state/auth_controller.dart';
 
 /// Root widget of the Company App staff mobile application.
 ///
-/// As of Phase 4 (Authentication), this owns the single [AuthController]
-/// instance for the app's lifetime and hands it to [AuthGate], which
-/// decides between the login screen and the authenticated placeholder
-/// shell. No routing package and no third-party state-management
-/// framework (Provider/Riverpod/Bloc) are introduced — a plain
-/// [ChangeNotifier] is sufficient for this phase's one piece of shared
-/// state; see DEC-024.
+/// As of Phase 25 (Mobile Application Foundation & Navigation Shell), this
+/// owns the single [AuthController] instance for the app's lifetime (as
+/// before) plus the single [GoRouter] instance built from it —
+/// `go_router`'s `StatefulShellRoute`-based bottom-navigation shell is now
+/// the app's sole navigation mechanism, replacing the former [AuthGate]
+/// widget-switch with declarative, route-level auth redirects (see
+/// lib/app/router.dart). [AuthScope] makes the same [AuthController]
+/// available to every route the router builds. No routing package was
+/// used before this phase (DEC-021's deferral, resolved by DEC-046), and
+/// no third-party state-management framework is introduced now either —
+/// a plain [ChangeNotifier] remains sufficient; see DEC-025.
 class CompanyApp extends StatefulWidget {
   /// [authController] is exposed for tests to inject a controller wired to
   /// a fake API client/token storage — production code always omits it and
@@ -35,20 +41,42 @@ class _CompanyAppState extends State<CompanyApp> {
         tokenStorage: SecureTokenStorage(),
       );
 
+  late final GoRouter _router = buildAppRouter(_authController);
+
+  @override
+  void initState() {
+    super.initState();
+    // Kicks off the stored-token check every app launch (formerly
+    // AuthGate.initState) — the router's redirect shows `/splash` until
+    // this resolves, avoiding a flash of the wrong screen.
+    _authController.bootstrap();
+  }
+
   @override
   void dispose() {
+    _router.dispose();
     _authController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Company App',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
+    return AuthScope(
+      controller: _authController,
+      child: MaterialApp.router(
+        title: 'Company App',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
+        ),
+        darkTheme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.indigo,
+            brightness: Brightness.dark,
+          ),
+        ),
+        themeMode: ThemeMode.system,
+        routerConfig: _router,
       ),
-      home: AuthGate(controller: _authController),
     );
   }
 }
