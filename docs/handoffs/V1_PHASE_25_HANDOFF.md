@@ -5,6 +5,7 @@
 - **Phase:** 25 — Mobile Application Foundation & Navigation Shell
 - **Date:** 2026-09-22
 - **Branch:** `claude/phase-25-mobile-foundation-uj4aqb`, from `main` at `f2bddba7647bf7deca12d2ab5b811e5a6f15b475` (verified: local `main` matched `origin/main`, HEAD matched exactly, working tree clean, no open pull requests — all confirmed before implementation began).
+- **Pull request:** [#37](https://github.com/jaaan44/company-app/pull/37), opened against `main`, not yet merged.
 
 ## 2. Objective
 
