@@ -108,14 +108,47 @@ Cross-module dashboard and administrative reports. Preceded by a product-owner-r
 
 **Phase 21 — Integration Audit** *(complete — see `docs/handoffs/V1_PHASE_21_HANDOFF.md`)* — two bounded deliverables per DEC-044: the DEC-009 general Audit Log backstop (built now, since Phase 3/5 never introduced it as originally anticipated below), and a bounded cross-module consistency review of Phases 1–20 against their own already-approved decisions.
 **Phase 22 — Security Audit** *(complete — see `docs/phases/V1_PHASE_22_SECURITY_AUDIT.md`, `docs/handoffs/V1_PHASE_22_HANDOFF.md`)* — review against `05_SECURITY_MODEL.md`. Delivered as two authorized steps: an evidence-based audit (no Critical/High findings) followed by a narrow, product-owner-approved remediation (one required login-disclosure fix, a bounded Sanctum token expiration, and inexpensive hardening — see DEC-045).
-**Phase 23 — Mobile UI/UX Audit** — review against `06_UI_UX_GUIDELINES.md`.
-**Phase 24 — Staging Deployment** *(repository implementation complete, server-side execution pending — see `docs/phases/V1_PHASE_24_STAGING_DEPLOYMENT_PLAN.md`, `docs/handoffs/V1_PHASE_24_HANDOFF.md`, `docs/DEPLOYMENT_STAGING.md`)* — first real deployment.
-**Phase 25 — UAT** — product owner acceptance testing (see `docs/testing/UAT_LOG.md`).
-**Phase 26 — Release Readiness** — final go/no-go.
+**Phase 23 — Mobile UI/UX Audit & Foundation** *(complete — see `docs/phases/V1_PHASE_23_MOBILE_UIUX_AUDIT.md`, `docs/handoffs/V1_PHASE_23_HANDOFF.md`)* — review against `06_UI_UX_GUIDELINES.md`; resolved the visual-design, accessibility, and navigation-architecture questions that document had left open (DEC-046). No Flutter code was changed.
+**Phase 24 — Staging Deployment** *(complete, including a verified real VPS deployment — see `docs/phases/V1_PHASE_24_STAGING_DEPLOYMENT_PLAN.md`, `docs/handoffs/V1_PHASE_24_HANDOFF.md`, `docs/DEPLOYMENT_STAGING.md`)* — first real deployment. TLS/domain, public (UFW) exposure, and mobile-client verification remain a separate, explicitly deferred follow-up — see Phase 26 below.
+
+---
+
+### Employee Mobile Application
+*Depends on: Phase 24 (Staging Deployment, for later connectivity validation); the completed backend API (Phases 5–21)*
+
+**Product-owner direction (2026-09-22, see DEC-048):** the employee-facing Flutter mobile application is built out before the Admin Backoffice is built out to completion. Phase 25 (originally specified as UAT) is redefined as the mobile foundation phase below; UAT and Release Readiness move later in this roadmap. This is a re-baseline, not a reversal of any Phase 1–24 decision — see DEC-048 for the full reasoning and `docs/phases/V1_PHASE_25_DEFINITION.md` for Phase 25's formal specification.
+
+**Phase 25 — Mobile Application Foundation & Navigation Shell** — see `docs/phases/V1_PHASE_25_DEFINITION.md`. Establishes the `go_router`-based navigation shell (the bottom-navigation tab structure `06_UI_UX_GUIDELINES.md`/DEC-046 already specified), session-aware auth redirects, the Material 3 light/dark theme (closing Phase 23's G-01/G-02 findings), and a mobile testing foundation — no business-module screen is implemented.
+**Phase 26 — Staging Mobile Connectivity & TLS Validation** — the staging TLS/domain decision, the corresponding UFW change, and real-device connectivity verification against the live staging API (using the existing Login screen) — deliberately placed immediately after Phase 25, before further mobile-module phases accumulate on an unvalidated foundation.
+**Phase 27 — Employee Home / Dashboard (Mobile)** — the Home tab's real content, likely a self-scoped view of Phase 20's dashboard aggregation.
+**Phase 28 — People: Staff Directory & Profile (Mobile)** — Staff Directory browsing and the staff member's own profile.
+**Phase 29 — Work: Clients, Projects, Tasks & Work Logs (Mobile)** — the Tasks tab, Projects/Client browsing, and Work Log entry; may be split into sub-phases at its own planning time if too large for one phase.
+**Phase 30 — Operations: Schedule & Check-in (Mobile)** — the Schedule tab and Location/Check-in.
+**Phase 31 — HR: Leave Management (Mobile)** — leave requests, balances, and (where permitted) approvals.
+**Phase 32 — Communication: Announcements, Notifications & Messages (Mobile)** — the Messages tab, the Announcements feed, and the Notifications inbox.
+**Phase 33 — Field Reporting: Service Reports, Incident Reports & Attachments (Mobile)** — grouped because both modules share the same Phase 18 attachment infrastructure; the mobile attachment upload/download UI is built once and reused for both.
+
+---
+
+### Admin Backoffice
+*Depends on: the completed backend API (Phases 5–21); does not block, and is not blocked by, the Employee Mobile Application phases above — the two tracks share only the already-stable API*
+
+**Phase 34 — Admin Backoffice Foundation** — the Blade/Livewire navigation shell (`06_UI_UX_GUIDELINES.md`'s existing `Dashboard / People | Clients | Work | HR | Operations | Communication | Reports | Administration` section layout) and the web visual-design-system decision `06_UI_UX_GUIDELINES.md` explicitly left open for "whichever phase first builds real Admin Backoffice screens."
+**Phase 35 — Admin Backoffice Business Management Screens** — CRUD/management UI for the business modules, grouped by the same section layout; may be split into sub-phases at its own planning time.
+
+---
+
+### Release Preparation (re-baselined)
+*Sequential, depends on the phases above*
+
+**Phase 36 — Mobile/Admin Integration & UX Hardening** — cross-cutting polish and real-device/cross-browser verification across both surfaces once real workflows exist on both; the natural point to revisit whether a shared loading/empty/error-state widget library (deferred at Phase 25 as premature) is now justified by real, repeated usage.
+**Phase 37 — UAT** — product owner acceptance testing (see `docs/testing/UAT_LOG.md`), now meaningful because real client workflows exist on both surfaces. Formerly numbered Phase 25 — see DEC-048.
+**Phase 38 — Release Readiness** — final go/no-go. Formerly numbered Phase 26 — see DEC-048.
 
 ---
 
 ## Notes
 
 - Audit logging (DEC-009) was not introduced during Phase 3 (Core Architecture) or Phase 5 (Roles & Permissions) as originally anticipated here — every phase from 6 through 20 re-flagged the same standing gap. Phase 21 (Integration Audit) was the named backstop for exactly this case, and built it — see DEC-044.
+- **Phase 25 onward was re-baselined on 2026-09-22 (DEC-048).** The original roadmap assumed Phase 25 = UAT and Phase 26 = Release Readiness, on the (reasonable, at the time) assumption that the backend API would be the long pole. A dedicated discovery/readiness assessment established that the backend is in fact substantially complete while both user-facing clients (Flutter mobile, Admin Backoffice) remain foundation-only — meaning UAT as originally sequenced would only have been able to exercise authentication. The product owner then directed that the employee mobile application be built out before the Admin Backoffice, without either blocking the other. See DEC-048 for the full reasoning and this file's Employee Mobile Application / Admin Backoffice / Release Preparation sections above for the resulting sequence.
 - This roadmap is provisional beyond Phase 1. Boundaries may shift as real implementation surfaces better groupings — any shift should be noted in `CHANGELOG.md` and, if it reflects a real decision (not just a rename), in `DECISIONS.md`.
