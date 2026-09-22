@@ -1,6 +1,6 @@
 # 06 — UI/UX Guidelines
 
-Status: **Principles and a resolved foundation, not screen designs.** Phase 4 built a functional (not visually refined) login screen for both the Admin Backoffice and the Flutter app, and a neutral authenticated placeholder, to make Authentication actually usable. Phase 23 (Mobile UI/UX Audit & Foundation) audited that existing UI and resolved the visual-design system, accessibility target, and mobile navigation architecture this document previously left open — see `docs/phases/V1_PHASE_23_MOBILE_UIUX_AUDIT.md` for the full audit and `docs/DECISIONS.md` DEC-046 for the decision record. These guidelines otherwise steer future design/implementation phases and are not a substitute for actual UX design work when a phase builds a specific business-module screen (wireframes/detailed layouts remain that phase's own responsibility, not this document's).
+Status: **Foundation resolved and now implemented at the shell level, not screen designs.** Phase 4 built a functional (not visually refined) login screen for both the Admin Backoffice and the Flutter app, and a neutral authenticated placeholder, to make Authentication actually usable. Phase 23 (Mobile UI/UX Audit & Foundation) audited that existing UI and resolved the visual-design system, accessibility target, and mobile navigation architecture this document previously left open — see `docs/phases/V1_PHASE_23_MOBILE_UIUX_AUDIT.md` for the full audit and `docs/DECISIONS.md` DEC-046 for the decision record. Phase 25 (Mobile Application Foundation & Navigation Shell) then implemented the navigation architecture (`go_router`, the bottom-navigation shell) and closed the dark-theme (G-01) and typography-consistency (G-02) findings Phase 23 had documented but not fixed — see `docs/phases/V1_PHASE_25_DEFINITION.md` and `docs/handoffs/V1_PHASE_25_HANDOFF.md`. These guidelines otherwise steer future design/implementation phases and are not a substitute for actual UX design work when a phase builds a specific business-module screen (wireframes/detailed layouts remain that phase's own responsibility, not this document's).
 
 ## Staff Mobile App (Flutter) — Navigation
 
@@ -22,15 +22,13 @@ Principles:
 - **Minimal navigation depth.** Prefer surfacing the next action (e.g. "check in," "log work," "approve leave" if permitted) over deep menu trees. Two taps to any primary action is a reasonable target.
 - **Clear status indicators.** Status (task state, leave request state, incident state, staff current status) should be visually unambiguous at a glance — consistent color/iconography per status value, reused across modules rather than invented per screen. See "Status Presentation" below for the concrete convention.
 
-### Navigation Architecture (resolved, DEC-046)
+### Navigation Architecture (implemented, Phase 25 — DEC-046)
 
-**Standardize on `go_router`** for the first mobile-module UI implementation phase onward — not yet added as a dependency (Phase 23 made this decision without implementing it). Flutter's built-in `Navigator` remains sufficient for the app as it exists today (a single linear stack: an auth gate deciding between a login screen and a placeholder home screen) but will not scale cleanly to the navigation graph above — a five-destination tab shell where each tab preserves its own stack, plus per-module list→detail (and sometimes detail→sub-detail) drill-down.
+**`go_router` is installed and is the app's sole navigation mechanism**, replacing the former `AuthGate` widget-switch/`MaterialApp.home`. `lib/app/router.dart` builds a `GoRouter` with `refreshListenable: authController` and a declarative `redirect` callback (`AuthStatus.unknown` → `/splash`, unauthenticated → `/login`, authenticated → the shell). A `StatefulShellRoute.indexedStack` (`lib/features/shell/presentation/app_shell.dart`) implements the bottom-navigation shell exactly as specified below — each of the five destinations preserves its own navigation stack across tab switches.
 
-Use `go_router`'s `StatefulShellRoute` for the bottom-navigation shell itself, once it's built. Two concrete needs specifically motivate a real router rather than hand-rolled `Navigator` calls:
-- **Auth-gated redirects at the route level**, not just one global widget swap — needed once there are dozens of routes rather than two screens.
-- **Deep linking**, especially from a Notification (already modeled server-side since Phase 15 via a typed source reference) into the specific Task/Incident/etc. it's about.
+Both needs that motivated the choice are realized: **auth-gated redirects at the route level** (the `redirect` callback above, evaluated on every `AuthController` change) and the **structural readiness for deep linking** (`go_router`'s path-based routes make it possible; actual deep-link *consumption* from a Notification is still unbuilt, deferred to whichever later phase first needs it).
 
-The dependency and the shell should be added together, by whichever phase first builds a second real destination (most likely Tasks or Schedule) — building the shell in isolation first, with nothing yet to navigate to, would be exactly the kind of speculative infrastructure `CLAUDE.md` §3 warns against.
+Four of the five destinations (`Tasks`/`Schedule`/`Messages`/`More`) are still honest placeholders — Phase 25 built the shell and routing only, per its own scope boundary; Phases 27–33 give them real content. See `docs/phases/V1_PHASE_25_DEFINITION.md` and `docs/handoffs/V1_PHASE_25_HANDOFF.md` for the full account.
 
 ## Admin Backoffice (Web) — Navigation
 
@@ -69,7 +67,7 @@ Material 3, extending — not replacing — the `ColorScheme.fromSeed(seedColor:
 
 Material 3 doesn't ship success/warning/info roles, so these three are added via a single `ThemeExtension<AppStatusColors>` (mirroring Material's own `color`/`onColor` pairing convention), registered once on `ThemeData.extensions` and looked up via `Theme.of(context).extension<AppStatusColors>()!` — this is the mechanism, so feature code never reaches for a raw `Color(0xFF...)` literal for a status meaning.
 
-**Light/dark:** both supported, following the device's system setting by default (`ThemeMode.system`), with the dark scheme generated from the same seed color (`ColorScheme.fromSeed(seedColor: Colors.indigo, brightness: Brightness.dark)`) rather than a separately hand-tuned dark palette. **Not yet implemented in code** — `CompanyApp`'s `MaterialApp` currently supplies only a light `theme:` with no `darkTheme`/`themeMode`, so the app silently renders light-only regardless of device setting today (see `docs/phases/V1_PHASE_23_MOBILE_UIUX_AUDIT.md` finding G-01 — documented, not yet fixed).
+**Light/dark:** both supported, following the device's system setting by default (`ThemeMode.system`), with the dark scheme generated from the same seed color (`ColorScheme.fromSeed(seedColor: Colors.indigo, brightness: Brightness.dark)`) rather than a separately hand-tuned dark palette. **Implemented (Phase 25) — G-01 closed:** `CompanyApp`'s `MaterialApp.router` now supplies both `theme`/`darkTheme` plus `themeMode: ThemeMode.system`, exactly as specified here.
 
 ### Typography — Flutter's stock Material 3 `TextTheme`, no custom font
 

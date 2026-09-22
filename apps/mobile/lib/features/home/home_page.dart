@@ -1,27 +1,29 @@
 import 'package:flutter/material.dart';
 
-/// Neutral placeholder home screen. Replaced by real navigation/screens
-/// once business modules are authorized (see docs/ROADMAP.md). As of
-/// Phase 4, this is also the authenticated destination [AuthGate] shows
-/// after login — still just a placeholder, not the employee dashboard.
-class HomePage extends StatelessWidget {
-  const HomePage({super.key, this.userName, this.onLogout});
+import 'package:mobile/app/auth_scope.dart';
 
-  final String? userName;
-  final VoidCallback? onLogout;
+/// Neutral placeholder home screen. Replaced with real dashboard content by
+/// Phase 27 (see docs/ROADMAP.md). As of Phase 25, this is the `/home`
+/// destination of the bottom-navigation shell and reads the shared
+/// [AuthScope] instead of taking `userName`/`onLogout` constructor
+/// parameters — its former caller, [AuthGate], no longer exists.
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final authController = AuthScope.of(context);
+    final userName = authController.user?.name;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Company App'),
         actions: [
-          if (onLogout != null)
-            IconButton(
-              icon: const Icon(Icons.logout),
-              tooltip: 'Log out',
-              onPressed: onLogout,
-            ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Log out',
+            onPressed: authController.logout,
+          ),
         ],
       ),
       body: Center(
@@ -29,6 +31,7 @@ class HomePage extends StatelessWidget {
           userName != null
               ? 'Signed in as $userName'
               : 'Company App — bootstrap shell',
+          style: Theme.of(context).textTheme.bodyMedium,
         ),
       ),
     );
