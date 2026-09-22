@@ -1,6 +1,6 @@
 # Phase 26 — Staging Mobile Connectivity & TLS — Discovery & Planning Report
 
-**Status:** PLANNING COMPLETE, NOT AUTHORIZED FOR IMPLEMENTATION. This document is the second of two discovery/planning deliverables for Phase 26 (mirroring the `V1_PHASE_24_STAGING_DEPLOYMENT_PLAN.md`/`V1_PHASE_22_SECURITY_AUDIT.md` precedent: a planning document precedes a scoped implementation authorization, it is not itself the authorization). **No application code, Docker configuration, server configuration, dependency, DNS record, firewall rule, or certificate was changed to produce this document.**
+**Status:** GATE 1 AUTHORIZED AND IMPLEMENTED (repository-side only) — see the Gate 1 Addendum at the end of this document. Gate 2 (VPS/DNS/TLS/real-device deployment) remains NOT AUTHORIZED. This document is the second of two discovery/planning deliverables for Phase 26 (mirroring the `V1_PHASE_24_STAGING_DEPLOYMENT_PLAN.md`/`V1_PHASE_22_SECURITY_AUDIT.md` precedent: a planning document precedes a scoped implementation authorization, it is not itself the authorization). Sections 1–18 below are preserved exactly as originally written (per `CLAUDE.md`'s "do not rewrite historical decisions unnecessarily") — they reflect this document's own planning and open questions at the time it was authored; the Gate 1 Addendum records what was actually authorized and implemented afterward.
 
 **Date:** 2026-09-22. **Session type:** repository inspection (git range analysis, Compose/runbook mechanism analysis, Laravel proxy-trust analysis) plus incorporation of the product owner's own live VPS inspection findings (reported to this session as text, not independently re-verified by this session — no VPS access exists here). **Depends on:** the prior Phase 26 discovery session's report (chat-only, not committed) and everything Phase 24/25 established.
 
@@ -338,3 +338,58 @@ Unchanged from the predecessor discovery report: no business-module mobile scree
 ## 18. Recommended Next Action
 
 Product owner reviews this document and either (a) authorizes Phase 26 implementation exactly as sequenced in §8, (b) authorizes it with named modifications, or (c) requests further discovery on any of §17's open items (most usefully, the Bicycle Workshop site file's actual content, readable in one more read-only VPS command: `cat /etc/nginx/sites-available/bikeworkshop.storm-ark.com` or wherever it actually lives). This document does not proceed to implementation on its own.
+
+---
+
+## Gate 1 Addendum (2026-09-22, same day): Authorization, Real Framework Evidence, and What Was Implemented
+
+The product owner reviewed this document and authorized **Gate 1 only** — repository-side changes required to prepare Gate 2, explicitly excluding any VPS/DNS/Nginx/Certbot/firewall/deployment/environment/real-device action. This addendum records what that authorization resolved and what was actually built; §1–18 above are left unchanged as the historical planning record.
+
+### §17 item 2 resolved: the real Bicycle Workshop vhost
+
+The product owner inspected `/etc/nginx/sites-available/bikeworkshop.storm-ark.com` directly and reported its relevant structure:
+
+```nginx
+server_name bikeworkshop.storm-ark.com;
+
+location / {
+    proxy_pass http://127.0.0.1:8013;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+with Certbot-managed `443 ssl` directives and a Certbot-managed port-80 redirect block. This matches §5's assumed template almost exactly, with one addition this document's original template omitted: **`proxy_http_version 1.1;`** — worth carrying into Gate 2's new vhost for the same reason the sibling site has it (HTTP/1.0 is `proxy_pass`'s default, which disables keep-alive to the upstream and can behave incorrectly with chunked responses; `1.1` is the correct, modern choice and costs nothing to match). No other deviation from §5's assumption. §17 item 2 is now closed — no further VPS inspection is needed for this question.
+
+### §9 (trusted-proxy analysis) superseded by real framework evidence, not merely inferred behavior
+
+§9's original analysis reasoned from nginx's documented FastCGI header-forwarding convention and Laravel's publicly documented `trustProxies` API, without direct access to either this sandbox's live nginx/PHP-FPM pair or the installed framework source. Gate 1 obtained the real evidence:
+
+- **Laravel 13.32.0's actual `Illuminate\Foundation\Configuration\Middleware::trustProxies()` signature** (fetched directly from the exact tagged source, `https://raw.githubusercontent.com/laravel/framework/v13.32.0/src/Illuminate/Foundation/Configuration/Middleware.php`, and cross-checked against `composer.lock`'s resolved version — `composer install` itself could not complete in this sandbox for unrelated dev-dependency network reasons, but the single file needed was fetched directly):
+  ```php
+  public function trustProxies(array|string|null $at = null, ?int $headers = null)
+  {
+      if (! is_null($at)) { TrustProxies::at($at); }
+      if (! is_null($headers)) { TrustProxies::withHeaders($headers); }
+      return $this;
+  }
+  ```
+- **`Illuminate\Http\Middleware\TrustProxies`'s own default `$headers` property** (same commit): `Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_HOST | Request::HEADER_X_FORWARDED_PORT | Request::HEADER_X_FORWARDED_PROTO | Request::HEADER_X_FORWARDED_PREFIX | Request::HEADER_X_FORWARDED_AWS_ELB`. Because `Middleware::trustProxies()` only calls `TrustProxies::withHeaders()` `if (! is_null($headers))`, **omitting `$headers` entirely leaves this comprehensive default in effect** — which already includes every header the planned host-Nginx vhost sends (`X-Forwarded-For`/`-Host`/`-Port`/`-Proto`).
+
+**Conclusion, superseding §9's original code sketch:** the smallest correct call is `$middleware->trustProxies(at: '*')` — **omitting** the `headers:` argument entirely, rather than this document's original suggestion of manually re-specifying a four-flag bitwise-OR. This is smaller (one named argument, not two), strictly equivalent in effect for this topology (the manually-specified four flags are a subset of the framework's own default six), and removes a place a future edit could accidentally narrow the trusted set incorrectly. §9's core safety argument (`at: '*'` is sound specifically because the loopback bind + UFW make the host Nginx the only possible request source) is unchanged and reaffirmed by this evidence, not revised.
+
+### What Gate 1 actually implemented
+
+Branch `claude/phase-26-staging-connectivity-tls`, from `main` at `4ce9f6ea9d9ac86ef57da5e6b067cde37ca09df9`:
+
+1. `docker-compose.staging.yml` — `nginx` service loopback-bound (`127.0.0.1:8012:80`); `8442` reservation retired in the committed comments.
+2. `apps/api/bootstrap/app.php` — `$middleware->trustProxies(at: '*')` added to the existing `->withMiddleware()` closure, per the resolved analysis above.
+3. `apps/api/.env.staging.example` — `APP_URL`/`SESSION_SECURE_COOKIE` comments updated with the approved hostname and exact Gate 2 sequencing.
+4. `docs/DEPLOYMENT_STAGING.md` §12/§13 rewritten; a `--env-file .env.staging` callout added.
+5. `docs/02_ARCHITECTURE.md` (new §31a), `docs/05_SECURITY_MODEL.md`, `docs/DECISIONS.md` (new DEC-050), `docs/CURRENT_STATE.md` (advanced to Phase 26 Gate 1; PR #37 stale-merge statement corrected), `docs/CHANGELOG.md`, `docs/testing/UAT_LOG.md` (four new `NOT RUN` Phase 26 rows) all updated.
+6. This document itself — this addendum.
+
+**Not implemented (Gate 2, separately authorized):** every item in §8's Steps 4–11 — DNS, the host-Nginx vhost, Certbot, any UFW change, deploying this branch's changes to the actual staging checkout, the `APP_URL`/`SESSION_SECURE_COOKIE` live flips, and all real-device validation. See the implementation session's own final report for exact test/CI results and the PR link.
