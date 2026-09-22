@@ -24,11 +24,25 @@
 #                                    committed placeholder templates.
 #
 # Host-port policy for this shared, multi-project staging VPS (see the
-# Phase 24 planning document): Company App reserves 8012 (HTTP) and
-# 8442 (HTTPS, reserved — not mapped below, no TLS/domain decided yet)
-# and, only if explicitly re-enabled below, 127.0.0.1:3347 for MySQL.
-# No other project on this host may use these ports; this file must
-# never bind anything to 0.0.0.0 other than the nginx HTTP port.
+# Phase 24 planning document, DEC-047): Company App reserves 8012 (HTTP)
+# and, only if explicitly re-enabled below, 127.0.0.1:3347 for MySQL. No
+# other project on this host may use these ports.
+#
+# Phase 26 Gate 1 (DEC-050, docs/phases/V1_PHASE_26_STAGING_MOBILE_CONNECTIVITY_TLS_PLAN.md):
+# TLS terminates at a host-level Nginx (outside this Compose stack,
+# extending the same VPS's already-proven Bicycle Workshop pattern),
+# which reverse-proxies over loopback to the `nginx` service below —
+# never inside this Docker stack. Company App's own `nginx` service is
+# therefore bound to 127.0.0.1 only (never 0.0.0.0) — the host Nginx is
+# the only process that can ever reach it, and UFW never opens 8012 to
+# the public internet. The former 8442 (HTTPS-inside-Docker) reservation
+# is RETIRED — superseded by the host-Nginx architecture, not merely
+# still pending — and must never be mapped or given a firewall rule.
+#
+# As of Gate 1, this host-Nginx layer is a repository plan only — it has
+# not been installed, and no DNS/certificate exists yet (Gate 2+). This
+# file's own reachability is unaffected either way: it was already
+# UFW-blocked from the public internet before this change.
 #
 # Invoke with an explicit project name so the named volumes below
 # resolve to the SAME Docker volumes the pre-existing ad-hoc
@@ -77,20 +91,17 @@ services:
     image: company-app-nginx:staging
     container_name: company-app-nginx
     ports:
-      # Company App's reserved HTTP port on this shared VPS — see the
-      # host-port policy above. Never change this to a wider bind
-      # (e.g. removing the mapping's implicit 0.0.0.0 is fine; binding
-      # an *additional* interface is not needed here).
-      - "8012:80"
-      # 8442 (HTTPS) is reserved for Company App per the VPS host-port
-      # policy but deliberately NOT mapped here: no TLS certificate or
-      # staging domain has been decided yet (see the Phase 24 planning
-      # document's TLS/Domain section). Mapping it now with no TLS
-      # listener behind it would be a dead port, not a working HTTPS
-      # endpoint. Once a domain + certificate exist, add a
-      # `- "8442:443"` mapping and the corresponding TLS `server`
-      # block to docker/nginx/default.conf (or a staging-specific
-      # vhost) — not before.
+      # Company App's reserved HTTP port on this shared VPS, loopback-only
+      # as of Phase 26 Gate 1 (DEC-050) — reachable only from processes
+      # running on the VPS itself (in practice, only the planned host
+      # Nginx, see the header comment above). UFW never opens this port
+      # to the public internet either way.
+      - "127.0.0.1:8012:80"
+      # 8442 is RETIRED (Phase 26 Gate 1, DEC-050) — TLS terminates at
+      # the host-level Nginx instead, not inside this Docker stack. Do
+      # not re-add an 8442 mapping or a TLS `server` block to
+      # docker/nginx/default.conf without a new decision superseding
+      # this one.
     depends_on:
       - app
     restart: unless-stopped

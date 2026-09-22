@@ -21,6 +21,8 @@ This document is a step-by-step runbook for deploying Company App to the staging
 
 None of the two real `.env`/`.env.staging` files exist in the repository — they are created by the VPS operator, from the two example files above, in §2 below.
 
+**Always include `--env-file .env.staging` on every `docker compose -p company-app -f docker-compose.staging.yml ...` invocation** — `build`, `up`, `restart`, and, for consistency, read-only commands like `ps`/`logs`/`config` too. Compose only auto-loads a file literally named `.env` in the invocation directory; `.env.staging` (deliberately differently named, to avoid any ambiguity with the unrelated `apps/api/.env`) is never loaded automatically. Running `ps` without the flag produces a harmless "variable not set" warning while resolving the `${DB_*}` placeholders it displays — it does not affect already-running containers, whose environment was fixed at creation time by an earlier `up --env-file .env.staging` — but the habit of always including it avoids ever running `build`/`up`/`restart` without it by mistake, which would attempt to (re)create `mysql` with empty credential values.
+
 ---
 
 ## 1. First deployment vs. redeploying an existing one
@@ -367,15 +369,29 @@ flutter run --dart-define=API_BASE_URL=http://<VPS-IP-or-domain>:8012/api/v1
 flutter build apk --dart-define=API_BASE_URL=http://<VPS-IP-or-domain>:8012/api/v1
 ```
 
-Once TLS/a real domain exist (§13), switch this to `https://<staging-domain>/api/v1` — still no code change, just a different `--dart-define` value.
+**Once Phase 26 Gate 2 has verified HTTPS working end-to-end** (§13 below), switch to the approved staging hostname — still no code change, just a different `--dart-define` value:
+
+```sh
+flutter run --dart-define=API_BASE_URL=https://company-staging.storm-ark.com/api/v1
+flutter build apk --dart-define=API_BASE_URL=https://company-staging.storm-ark.com/api/v1
+```
+
+Do not use this HTTPS value until Gate 2's own real-device validation step confirms it actually serves traffic — neither Android nor iOS's default network security policy permits a cleartext (`http://`) fallback on a real device, so this value only ever works once TLS is genuinely live.
 
 ---
 
-## 13. Unresolved: TLS / domain / firewall
+## 13. TLS / domain / firewall
 
-Deliberately **not** implemented in Phase 24's repository work — see `docs/phases/V1_PHASE_24_STAGING_DEPLOYMENT_PLAN.md` for why:
+**Status as of Phase 26 Gate 1: PLANNED / CONFIGURED IN REPOSITORY ONLY — NOT YET DEPLOYED, NOT YET REACHABLE.** The architecture and exact procedure below are approved (DEC-050) and documented in full, gated detail in `docs/phases/V1_PHASE_26_STAGING_MOBILE_CONNECTIVITY_TLS_PLAN.md` §5–§8. **No DNS record, host-Nginx vhost, certificate, or UFW rule exists yet** — this section is a preview of Gate 2's work, not a record of anything executed. Do not describe `company-staging.storm-ark.com` as reachable until Gate 2 is actually run and its own verification steps pass.
 
-- No staging domain/subdomain has been chosen, so no TLS certificate can be requested and `docker-compose.staging.yml`'s port `8442` is reserved but unmapped.
-- The VPS's UFW firewall currently permits only 22/80/443. Company App's reserved ports (8012, and 8442 once TLS exists) are **not yet reachable through the firewall** — this deployment is currently reachable only from `localhost`/within the VPS, or via SSH tunnel, until the operator explicitly opens 8012 (and later 8442). This document does not instruct changing UFW, per the Phase 24 authorization's explicit instruction not to until access to those ports is actually required.
+**Approved architecture:** TLS terminates at the VPS's existing host-level Nginx (already installed, already terminating TLS for another project on this shared host via Certbot) — not inside this repository's Docker stack. A new `server_name company-staging.storm-ark.com` vhost, proxying over loopback to `127.0.0.1:8012` (this stack's own `nginx` service, loopback-bound as of Gate 1 — §0 above), mirroring the existing sibling site's own `proxy_set_header Host`/`X-Real-IP`/`X-Forwarded-For`/`X-Forwarded-Proto` pattern exactly. Certbot's `--nginx` plugin (already installed on the VPS, already managing the sibling certificate) issues and renews the new certificate via the same, already-active `certbot.timer` — no new renewal mechanism.
 
-When a domain is chosen: point DNS at the VPS, obtain a certificate (e.g. Certbot), open the relevant port(s) in UFW, add a `- "8442:443"` mapping plus a TLS `server` block to the nginx configuration, and only then set `SESSION_SECURE_COOKIE=true` in `apps/api/.env` (§3's comment there explains why not before).
+**Company App's `docker-compose.staging.yml` change already made (Gate 1):** the `nginx` service now binds `127.0.0.1:8012:80` (was `8012:80`) — defense-in-depth; UFW already blocked public access to 8012 either way. **The former `8442` (HTTPS-inside-Docker) reservation is retired** — it will never be mapped, never receive a firewall rule, and is superseded by the host-Nginx architecture above, not merely still pending.
+
+**Sequenced env-value changes (Gate 2 only, never during Gate 1):**
+1. `APP_URL` → `https://company-staging.storm-ark.com`, only after HTTPS is independently verified reachable and valid from an external network.
+2. `SESSION_SECURE_COOKIE` → `true`, only after (1) *and* a live confirmation that Laravel correctly detects the original HTTPS scheme through the host-Nginx → loopback → Docker-nginx → PHP-FPM chain (`apps/api/bootstrap/app.php`'s `trustProxies(at: '*')`, added in Gate 1 — see the comment there for why `at: '*'` is safe in this specific, loopback-only topology). Enabling this before both are confirmed would silently break Admin Backoffice login.
+
+**Firewall (Gate 2, not yet done):** UFW opens 443 (and 80, for the ACME challenge/HTTP→HTTPS redirect) — already open on this host for the sibling project, so likely just a new host-Nginx `server_name` block, no new UFW rule. Company App's own port 8012 is never opened to the public internet under this architecture — the host Nginx is the only path in.
+
+The full, step-by-step gated implementation sequence (prerequisite/action/verification/rollback per step) lives in `docs/phases/V1_PHASE_26_STAGING_MOBILE_CONNECTIVITY_TLS_PLAN.md` §8 — this section is a summary, not a replacement for it.
