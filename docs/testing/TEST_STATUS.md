@@ -447,4 +447,22 @@ No automated tests apply to this phase — no application code exists yet.
 | GitHub Actions CI | — | PASS (on PR #28, see above) | Path-filtered workflows (DEC-015) triggered correctly for the diff's `apps/api/**` files; mobile workflow correctly did not trigger. |
 | UAT | — | See `docs/testing/UAT_LOG.md` | `UAT-24-01` through `UAT-24-03` now recorded `PASS` (reported directly by the product owner from the real VPS deployment); `UAT-24-04` (deliberate-404/attachment/mobile checks) remains `NOT RUN`. |
 
+## Phase 27 — Employee Home / Dashboard (Mobile) — Gate 1 (Backend Home API)
+
+In progress. Gate 1 = backend `GET /api/v1/me/home` only; Gate 2 (Flutter) not started.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Focused Phase 27 suite (`php artisan test tests/Feature/Api/V1/Home`) | Automated | PASS | 50 tests, 229 assertions: `MyHomeTest` (auth 401 variants incl. expired/revoked token; inactive account → 403 + token revoked; exact response shape; no internal ids/unapproved fields; request parameters ignored; profile/no-profile; employee, Administrator, Manager-with-direct-reports, Project Lead isolation), `MyHomeTodayTest` (creator/participant ownership; project-only entries, leave, milestones, terminal/other-day/others' tasks excluded; inclusive overlap boundaries; company-timezone day in a non-UTC zone; ordering and tie-breaks incl. byte-wise and numeric-looking titles; limit 5 + `total_count`; bounded fetch equals a full sort), `MyHomeCountsTest` (open/overdue/due-today definitions; `OverdueTasks` parity; unread-message parity with `ConversationMember::unreadCount()`; notification parity with `/me/notifications/unread-count`; announcement eligibility, limit 3, preview fields, tie-break, subset of `/me/announcements`; constant query count for 1 vs 20 of everything). |
+| Mutation check of the new tests | Manual | PASS | Nine deliberate controller mutations (announcement limit, unread-message null branch, DB and PHP all-day ordering, strict overlap, announcement tie-break, project-visibility leak, UTC instead of company date, numeric title compare) — each made at least one test fail. One (DB-side all-day ordering) initially survived, which led to adding `test_the_per_source_limit_keeps_an_all_day_entry_ahead_of_timed_entries_sharing_its_start`. The controller was restored byte-for-byte afterwards. |
+| `php artisan test` (full suite) | Automated | PASS | 1,130/1,130 (1,080 pre-existing + 50 new), 3,147 assertions. No existing test changed. |
+| `vendor/bin/pint --test` | Automated | PASS | |
+| `vendor/bin/phpstan analyse` (level 5) | Automated | PASS | 0 errors. |
+| `composer validate --strict` / `composer audit --locked` | Automated | PASS | No advisories. |
+| MySQL byte-wise title ordering (`CAST(title AS BINARY)`) | — | NOT RUN | Tests run on SQLite (`phpunit.xml`), whose default BINARY collation is already byte-wise; the MySQL branch is exercised only against a real MySQL database. |
+| Flutter checks | — | NOT APPLICABLE (Gate 1) | No Flutter change in Gate 1. |
+| UAT | — | NOT RUN | UAT-27-01…08 added to `docs/testing/UAT_LOG.md` as `NOT RUN`; not runnable until Gate 2. |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*

@@ -12,6 +12,10 @@ Work Logs and Leave Requests' Reporting services each add one documented, narrow
 
 CSV export inherits the identical scoping as its JSON counterpart — no export ever returns a row, or reveals a count, beyond what the same requester's `GET /api/v1/reports/{resource}` would already show. See `docs/phases/V1_PHASE_20_DEFINITION.md` and DEC-043 for the full Dashboard/Report specification.
 
+## Employee Home Isolation (Phase 27, DEC-052)
+
+**Implemented as of Phase 27 Gate 1:** `GET /api/v1/me/home` always describes the authenticated person only. Its subject comes solely from the Sanctum token; it reads no request parameter, so it cannot be pointed at another employee or another day. No role widens it — it has no `tasks.view`/Project Lead/Manager direct-report/Administrator (`Gate::before`) branch, and it introduces no permission. Every figure is a subset of what the employee's own self-service or membership surfaces already expose (own assigned tasks, own/participating schedule entries, own conversation memberships, own notifications, audience-eligible published announcements), and it returns preview fields only — no contact details, manager, employment or operational status, location, message or announcement bodies, or acknowledgement data. Feature tests assert that an ordinary employee, an Administrator, a Manager with direct reports, and a Project Lead each see only their own data. The mobile client's session rule (a 401 ends the session; a 403 alone never does and triggers one `GET /auth/me` check; account state is never inferred from message text) is specified for Phase 27's Flutter gate and is not yet implemented.
+
 ## Authentication
 
 - **Implemented (DEC-022):** the Admin Backoffice authenticates via Laravel's session/secure-cookie `web` guard (Blade + Livewire login). The Flutter mobile app authenticates via Laravel Sanctum personal access tokens (`Authorization: Bearer <token>`) — bearer-token only, no cookie-based SPA/stateful authentication. No OAuth server, JWT infrastructure, or Passport.

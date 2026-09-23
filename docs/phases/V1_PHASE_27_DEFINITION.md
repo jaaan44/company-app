@@ -1,6 +1,6 @@
 # Phase 27 — Employee Home / Dashboard (Mobile) — Specification
 
-**Status:** DRAFT, revision 2. It incorporates the product owner's specification-review decisions (R-1…R-4 and the required refinements). It is proposed for approval and **is not authorized for implementation**.
+**Status:** AUTHORIZED — IN PROGRESS. Approved (revision 2, merged via PR #43 at `b63599d4249d3aa621e29468378dea93d540abe4`); implementation authorized in gates. **Gate 1 (backend `GET /api/v1/me/home`) implemented**; Gate 2 (Flutter Home) not started. The specification text below is unchanged from the approved revision.
 
 **Depends on:**
 - Phase 25 (Mobile Application Foundation & Navigation Shell)

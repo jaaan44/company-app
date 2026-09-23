@@ -4,6 +4,14 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-09-23 — Phase 27 Gate 1: backend employee Home API (`GET /api/v1/me/home`)
+- Phase 27 — Employee Home / Dashboard (Mobile) is **in progress**. Specification approved and merged (PR #43, `b63599d`); `docs/phases/V1_PHASE_27_DEFINITION.md` status updated to authorized/in progress (text otherwise unchanged).
+- Added `GET /api/v1/me/home` (`App\Http\Controllers\Api\V1\Home\MyHomeController`, route `api.v1.me.home`, `auth:sanctum` + `account.active`): the authenticated person's own Home — profile (names, position, department, team), `company_day`, Today (own Schedule Entries + own open Tasks due today, at most 5 plus `total_count`), task counts (open/overdue/due today), unread messages, unread notifications, and the latest 3 audience-eligible announcements (preview fields only). Self-scoped by construction (no request parameters); role never widens it; no new permission; no linked Staff required. No leave, milestones, or operational status (spec R-3/R-4).
+- Reuses existing definitions only (`CompanyTimezone`, `OverdueTasks`, Schedule Entry creator/participant ownership, `ConversationMember::unreadCount()`'s predicate in one aggregate query, the notification unread-count query, `ScopesAnnouncementVisibility`). Constant query count; no migration, index, cache, or queue.
+- 50 new feature tests (`tests/Feature/Api/V1/Home/`); full suite 1,130/1,130; Pint, PHPStan (level 5), `composer validate --strict`, `composer audit --locked` clean.
+- Docs: **DEC-052**; `04_API_CONVENTIONS.md`; `05_SECURITY_MODEL.md` (Employee Home Isolation); `CURRENT_STATE.md`; `testing/TEST_STATUS.md`; `testing/UAT_LOG.md` (UAT-27-01…08, all `NOT RUN`).
+- Not changed: any Flutter code (Gate 2 not started), `/dashboard`, `/schedule` (its pre-existing UTC day-boundary discrepancy stays deferred), existing authorization traits, environment files, staging.
+
 ### 2026-09-23 — Phase 26 formally closed (documentation only)
 - Phase 26 — Staging Mobile Connectivity & TLS is formally closed as of 2026-09-23. Gate 2F real-device UAT is complete: UAT-25-01…04 and UAT-26-01…04 all `PASS` (evidence in the entry below and the Phase 26 handoff). No Phase 26 blocking defect remains.
 - `docs/CURRENT_STATE.md`: last completed phase is now Phase 26; next planned phase is Phase 27 — Employee Home / Dashboard (Mobile), **not started**. `docs/ROADMAP.md`: Phase 26 marked complete, with a short note that the planned UFW change was not needed (DEC-051).
