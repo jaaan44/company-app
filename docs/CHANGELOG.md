@@ -4,6 +4,11 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-09-23 — Phase 26 formally closed (documentation only)
+- Phase 26 — Staging Mobile Connectivity & TLS is formally closed as of 2026-09-23. Gate 2F real-device UAT is complete: UAT-25-01…04 and UAT-26-01…04 all `PASS` (evidence in the entry below and the Phase 26 handoff). No Phase 26 blocking defect remains.
+- `docs/CURRENT_STATE.md`: last completed phase is now Phase 26; next planned phase is Phase 27 — Employee Home / Dashboard (Mobile), **not started**. `docs/ROADMAP.md`: Phase 26 marked complete, with a short note that the planned UFW change was not needed (DEC-051).
+- Carried-forward, non-blocking items are unchanged: UAT-24-04 wording, the inert `8012` firewall rule, client-IP accuracy behind `trustProxies(at: '*')`, the Android app label, and Android release signing. No UAT result, source, configuration or infrastructure change.
+
 ### 2026-09-23 — Phase 26 Gate 2F: real-device staging validation and UAT complete (documentation only)
 - **D-1 post-fix verification:** on fix commit `2e58ba7`, the product owner's release build passed `pub get`/`format`/`analyze`/`test` (22/22), and `aapt2` confirmed `android.permission.INTERNET` in the final APK. Mobile CI #19 passed on `2e58ba7`; Mobile CI #20 passed on the merged `main` (`ee86c6e`, PR #40). D-1 was found and fixed before UAT began, so no UAT scenario failed because of it.
 - **Real-device validation:** staging release APK built from `ee86c6e` with `--dart-define=API_BASE_URL=https://company-staging.storm-ark.com/api/v1` (Flutter 3.47.2 / Dart 3.13.2; `com.companyapp.mobile` 1.0.0 (1); SHA-256 `15DF73B43A8AE095A7DC3BC2599A9C6F1D0516E6A874C0D2DFB6FB59835C3A5E`; `INTERNET` confirmed with `aapt2`). Installed with `adb` on a Samsung Galaxy Note10+ (SM-N975U, Android 10 / API 29), then tested over mobile data with Wi-Fi off. `flutter run` was not used.
