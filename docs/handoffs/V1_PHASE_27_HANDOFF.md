@@ -331,3 +331,14 @@ Phase 28 (People) must not begin until Phase 27 is closed and Phase 28 is explic
   - **Follow-up:** tightening these tests is a small change. It needs its own authorization, because the implementation is merged.
 - **UAT data:** the seeding recipe is in §14 above, and nothing has been seeded yet. UAT-27-02 additionally needs the timezone decision.
 - **UAT-27-01…08:** `NOT RUN`. **Phase 27 is not formally closed**, and Phase 28 has not started.
+
+## Addendum — Pre-UAT Remediation (2026-09-23)
+
+- **Company timezone decided:** `Asia/Manila` (product owner). It is applied through configuration only (`SCHEDULING_COMPANY_TIMEZONE`), never hardcoded in source. At the time of this update it is **not yet applied on staging**, which still runs the `UTC` default. Application needs the VPS; this AI session has no VPS access. UAT-27-02 remains blocked until the effective value is verified.
+- **Test-scroll gap corrected (test-only)** in `apps/mobile/test/features/home/home_page_test.dart`:
+  - the 200%-text/phone overflow tests walk every lower section with `scrollUntilVisible` on Home's own scrollable and assert each is reached;
+  - pull-to-refresh gestures target that scrollable;
+  - hit-test warnings are fatal in the file.
+- **Proof:** an injected Announcements overflow failed all 4 corrected phone variants, while the original test missed it in both 200%-text variants. Results: `flutter test` 129/129, Home 64/64, `dart format`/`flutter analyze` clean, no hit-test warnings. No production or dependency change.
+- **Final UAT APK:** to be built only after this correction merges into `main`, so its source provenance is exact.
+- **Status:** UAT-27-01…08 remain `NOT RUN`. Phase 27 is not formally closed.

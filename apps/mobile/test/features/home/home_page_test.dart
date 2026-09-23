@@ -59,6 +59,18 @@ void main() {
   Finder inSection(String key, Finder matching) =>
       find.descendant(of: find.byKey(Key(key)), matching: matching);
 
+  /// Home's own scrollable (the ListView inside the RefreshIndicator) —
+  /// the reliable target for scroll and pull gestures, unlike a child
+  /// section whose centre may be off-screen or covered.
+  Finder homeScrollable() => find
+      .descendant(of: find.byType(HomePage), matching: find.byType(Scrollable))
+      .first;
+
+  // A gesture that misses its target must fail the test, not just warn —
+  // otherwise a skipped scroll can pass silently (seen at 200% text).
+  setUpAll(() => WidgetController.hitTestWarningShouldBeFatal = true);
+  tearDownAll(() => WidgetController.hitTestWarningShouldBeFatal = false);
+
   group('populated Home', () {
     testWidgets('shows the sections in the approved order', (tester) async {
       await pumpHome(tester);
@@ -488,7 +500,7 @@ void main() {
       messages = 8;
 
       await tester.fling(
-        find.byKey(const Key('home-greeting')),
+        homeScrollable(),
         // RefreshIndicator arms at 25% of the (tall, 2400px) viewport.
         const Offset(0, 1000),
         1000,
@@ -513,7 +525,7 @@ void main() {
       fail = true;
 
       await tester.fling(
-        find.byKey(const Key('home-greeting')),
+        homeScrollable(),
         // RefreshIndicator arms at 25% of the (tall, 2400px) viewport.
         const Offset(0, 1000),
         1000,
@@ -666,12 +678,34 @@ void main() {
         final context = tester.element(find.byType(HomePage));
         expect(Theme.of(context).brightness, brightness);
         expect(find.textContaining('Hello, Maximiliana'), findsOneWidget);
-        // Scroll through everything to lay out every section.
-        await tester.drag(
-          find.byKey(const Key('home-greeting')),
-          const Offset(0, -3000),
+        // Walk down the page section by section. scrollUntilVisible fails
+        // the test if a section is never reached, so each lower section is
+        // proven to be built, laid out and on screen at this size/scale.
+        for (final key in [
+          'home-today',
+          'home-tile-tasks',
+          'home-tile-messages',
+          'home-tile-notifications',
+          'home-announcements',
+        ]) {
+          await tester.scrollUntilVisible(
+            find.byKey(Key(key)),
+            200,
+            scrollable: homeScrollable(),
+          );
+          await tester.pumpAndSettle();
+          expect(
+            find.byKey(Key(key)).hitTestable(),
+            findsWidgets,
+            reason: '$key reached',
+          );
+          expect(tester.takeException(), isNull, reason: 'after $key');
+        }
+        // The last announcement row itself is on screen too.
+        expect(
+          find.textContaining('Important: new company-wide').hitTestable(),
+          findsOneWidget,
         );
-        await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
       });
     }

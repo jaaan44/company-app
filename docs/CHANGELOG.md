@@ -4,6 +4,16 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-09-23 — Phase 27 pre-UAT: company timezone decided; test-scroll gap corrected
+- **Company timezone:** the product owner decided `Asia/Manila`. It is not yet applied on staging (still the `UTC` default) — to be set as `SCHEDULING_COMPANY_TIMEZONE=Asia/Manila` in `apps/api/.env` with an in-place edit, recreating only `app`, then `config:cache` (`DEPLOYMENT_STAGING.md` §7a), and verified. UAT-27-02 remains blocked until then. No application source hardcodes the zone.
+- **Test-only correction** (`apps/mobile/test/features/home/home_page_test.dart`):
+  - the 200%-text/phone overflow tests now scroll Home's own scrollable section by section (`scrollUntilVisible`) and assert every lower section is reached;
+  - pull-to-refresh gestures target that scrollable;
+  - `WidgetController.hitTestWarningShouldBeFatal` is on for the file, so a missed gesture fails.
+
+  Checked with an injected Announcements overflow: the corrected tests fail in all 4 phone variants, while the original missed it in the two 200%-text variants. `flutter test` 129/129, Home 64/64, `dart format`/`flutter analyze` clean, no hit-test warnings. No production or dependency change.
+- UAT-27-01…08 remain `NOT RUN`; Phase 27 is not closed.
+
 ### 2026-09-23 — Phase 27: merged (PR #44) and deployed to staging (documentation only)
 - PR #44 merged into `main` as `be43663f1e3527867c04adb73071eb3bace01ba5`, the authoritative Phase 27 merged implementation baseline.
 - Staging deployment (run by the operator; this session has no VPS access): pre-deploy checkout `4cf55c0`, clean apart from the then-untracked `.env.staging` (ignored after the update); pre-deploy backup `company-app-20260923-092600.sql` (88,356 bytes); fast-forwarded to exactly `be43663`; `app` and `nginx` images rebuilt, `app` recreated, `nginx` and `mysql` left running; `migrate:status` all 45 migrations Ran (none pending); config/route/view caches rebuilt; `app.env` staging, `app.debug` false, `app.url` `https://company-staging.storm-ark.com`, `session.secure` true.
