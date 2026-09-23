@@ -480,4 +480,19 @@ In progress. Gate 1 = backend `GET /api/v1/me/home` only; Gate 2 (Flutter) not s
 
 ---
 
+## Phase 27 — Gate 3 (Flutter employee Home screen)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `flutter pub get` | Automated | PASS | `pubspec.yaml`/`pubspec.lock` unchanged. |
+| `dart format --output=none --set-exit-if-changed .` | Automated | PASS | |
+| `flutter analyze` | Automated | PASS | No issues. |
+| `flutter test` (full) | Automated | PASS | 129/129 (65 before Gate 3 + 64 new). |
+| Focused Home suites (`flutter test test/features/home`) | Automated | PASS | 64: `home_summary_test.dart` (populated, nullable, no-profile, schedule and task items, company_day and offsets, counts, announcements, 7 malformed-payload cases; company-time formatting incl. multi-day from/until and labels); `home_controller_test.dart` (loading, loaded, no-profile, network/server/shape/ordinary-403 errors, retry, refresh success/failure, one request in flight, 401 via Gate 2, late response after dispose); `home_page_test.dart` through the real `CompanyApp` (section order, greeting/profile, Today items/order/company time/"+N more"/empty, counts and zero wording, announcements and empty, no-profile, no interactive widgets or chevrons in content, taps navigate nowhere, shell tabs still work, spinner, error + Try again, generic server message, pull-to-refresh success/failure, no re-fetch on rebuild/theme/tab switch, `/me/home` 401 → Login + notice, ordinary 403 → Try again with session kept, logout, light/dark/200% text with long content at 360×740 and 1024×768, semantics labels and tap-target/label guidelines). |
+| Mutation check | Manual | PASS | 10 valid mutations (tappable tile, chevron on a row, null messages shown as 0, client re-sorting Today, load removed from `initState`, fetch on every build, device timezone instead of `utc_offset`, expiry shown as a Home error, refresh failure dropping data, time-of-day greeting) each failed at least one test. The fetch-on-build mutation initially survived, which led to forcing real page rebuilds in the no-re-fetch test. Sources restored byte-for-byte. |
+| Device/emulator verification | Manual | NOT RUN | No device or emulator in this sandbox. |
+| UAT | — | NOT RUN | UAT-27-01…08 remain `NOT RUN`. |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*

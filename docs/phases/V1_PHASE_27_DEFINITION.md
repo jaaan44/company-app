@@ -1,6 +1,6 @@
 # Phase 27 — Employee Home / Dashboard (Mobile) — Specification
 
-**Status:** AUTHORIZED — IN PROGRESS. Approved (revision 2, merged via PR #43 at `b63599d4249d3aa621e29468378dea93d540abe4`); implementation authorized in gates. **Gate 1 (backend `GET /api/v1/me/home`) implemented and MySQL-verified (Gate 1A)**; **Gate 2 (Flutter authenticated API client and session lifecycle) implemented**; Gate 3 (Flutter Home screen) not started. The specification text below is unchanged from the approved revision.
+**Status:** AUTHORIZED — IN PROGRESS. Approved (revision 2, merged via PR #43 at `b63599d4249d3aa621e29468378dea93d540abe4`); implementation authorized in gates. **Gate 1 (backend `GET /api/v1/me/home`) implemented and MySQL-verified (Gate 1A)**; **Gate 2 (Flutter authenticated API client and session lifecycle) implemented**; **Gate 3 (Flutter employee Home screen) implemented**. Final integration review, PR/CI, handoff and UAT are still pending. The specification text below is unchanged from the approved revision.
 
 **Depends on:**
 - Phase 25 (Mobile Application Foundation & Navigation Shell)
