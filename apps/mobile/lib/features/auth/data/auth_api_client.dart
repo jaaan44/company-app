@@ -9,9 +9,14 @@ import 'package:mobile/features/auth/domain/auth_user.dart';
 /// user directly (already sanitized by the API — see
 /// docs/05_SECURITY_MODEL.md's "no unnecessary security details" rule).
 class AuthApiException implements Exception {
-  AuthApiException(this.message);
+  AuthApiException(this.message, {this.statusCode});
 
   final String message;
+
+  /// The HTTP status of an unsuccessful response, or null when no response
+  /// arrived at all (a network failure). Lets `AuthController` tell a 401
+  /// (token no longer valid) apart from an inconclusive failure.
+  final int? statusCode;
 
   @override
   String toString() => message;
@@ -101,7 +106,10 @@ class AuthApiClient {
       return response;
     }
 
-    throw AuthApiException(_extractMessage(response));
+    throw AuthApiException(
+      _extractMessage(response),
+      statusCode: response.statusCode,
+    );
   }
 
   Map<String, dynamic> _dataOf(http.Response response) {

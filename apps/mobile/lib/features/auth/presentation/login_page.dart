@@ -22,6 +22,11 @@ class _LoginPageState extends State<LoginPage> {
   bool _submitting = false;
   String? _error;
 
+  /// "Your session has ended…" when this screen was reached because an
+  /// authenticated session expired (Phase 27); null on a fresh launch or
+  /// after manual logout. Hidden once the next sign-in is submitted.
+  late String? _notice = widget.controller.sessionEndedMessage;
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -37,6 +42,7 @@ class _LoginPageState extends State<LoginPage> {
     setState(() {
       _submitting = true;
       _error = null;
+      _notice = null;
     });
 
     final success = await widget.controller.login(
@@ -74,6 +80,16 @@ class _LoginPageState extends State<LoginPage> {
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 24),
+                  if (_notice != null) ...[
+                    Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        _notice!,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                   if (_error != null) ...[
                     Text(
                       _error!,
