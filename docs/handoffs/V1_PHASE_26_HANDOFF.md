@@ -165,3 +165,55 @@ Status per `CLAUDE.md` §7: the above is **manually verified by the operator on 
 **UAT:** no scenario was executed. UAT-25-01…04 and UAT-26-01…04 remain **`NOT RUN`**.
 
 **Recommended next step:** after the D-1 fix merges, build the staging release APK from the new `main` with `flutter build apk --release --dart-define=API_BASE_URL=https://company-staging.storm-ark.com/api/v1`, then run the Gate 2F real-device UAT.
+
+## Addendum — Gate 2F results: real-device staging validation and UAT, 2026-09-23
+
+This completes the Gate 2F record started in the addendum above. It keeps three different kinds of evidence apart:
+
+**1. Infrastructure validation (Gates 2A–2E, operator, before Gate 2F).** Staging ingress, TLS and secure-session configuration were verified by the operator on the VPS (see the Gates 2A–2E addendum). That was infrastructure verification, not UAT.
+
+**2. Defect D-1 — found and fixed before any UAT.**
+- Found during Gate 2F *pre-UAT* validation: the release APK built from the previous baseline `b3c80bc` lacked `android.permission.INTERNET`. Real-device UAT was deliberately not started at that point.
+- Fix: the permission was added to the main Android manifest in commit `2e58ba728b697e2007cd2c87bc1d556188d00cc1`, merged by PR #40 as `ee86c6e47bb223dac47f524d2bbd28e7bece0d99`.
+- Post-fix verification (product owner, Windows, on `2e58ba7`, Flutter 3.47.2 / Dart 3.13.2): `pub get`, `dart format` (18 files, 0 changed), `flutter analyze` (no issues) and `flutter test` (22/22) passed; `flutter build apk --release` succeeded; the merged release manifests and the final APK (`aapt2 dump permissions`) both contain `android.permission.INTERNET`. Recorded on PR #40.
+- Mobile CI run #19 passed on `2e58ba7`; Mobile CI run #20 passed on the merged `main` commit `ee86c6e`.
+- No UAT scenario failed because of D-1: it was detected and corrected before UAT began.
+
+**3. Real-device UAT (product owner, 2026-09-23).**
+
+| Item | Evidence |
+|---|---|
+| Tested baseline | `ee86c6e47bb223dac47f524d2bbd28e7bece0d99` (clean working tree before and after the build) |
+| Toolchain | Flutter 3.47.2, Dart 3.13.2 (matches CI) |
+| Pre-build checks | `flutter pub get`, `dart format --output=none --set-exit-if-changed .` (18 files, 0 changed), `flutter analyze` (no issues), `flutter test` (22/22) — all passed |
+| Build command | `flutter build apk --release --dart-define=API_BASE_URL=https://company-staging.storm-ark.com/api/v1` — the API base is supplied at build time and is not hardcoded in source |
+| Release APK | `com.companyapp.mobile` 1.0.0 (1); 50,762,791 bytes; SHA-256 `15DF73B43A8AE095A7DC3BC2599A9C6F1D0516E6A874C0D2DFB6FB59835C3A5E` |
+| Permission check | `aapt2 dump permissions` on this APK lists `android.permission.INTERNET` |
+| Device | Samsung Galaxy Note10+, model SM-N975U, Android 10 (API 29), device ID `RF8N41HE19H` |
+| Installation | App not previously installed (no stored session); `adb install` of the release APK succeeded. `flutter run` was not used for UAT |
+| Network | Mobile data, Wi-Fi disabled, for every scenario |
+
+Results, all performed and reported by the product owner (recorded in `docs/testing/UAT_LOG.md`):
+
+| Scenario | Result |
+|---|---|
+| UAT-25-01 — first launch lands on Login with no flash; sign-in opens the shell on Home | PASS |
+| UAT-25-02 — stored session restores after a full close/relaunch with no Login flash; logout returns to Login | PASS |
+| UAT-25-03 — all five tabs render, active tab indicated, switching immediate with no reload/flicker | PASS |
+| UAT-25-04 — app follows system dark/light mode while open; screens readable in both | PASS |
+| UAT-26-01 — phone browser on mobile data: HTTPS health loads with no certificate warning; HTTP moves to HTTPS | PASS |
+| UAT-26-02 — phone browser: Administrator HTTPS sign-in; `/home` session persists across reload and leave/return; logout to `/login` | PASS |
+| UAT-26-03 — release APK, staging API, mobile data: login, session restore after relaunch, logout | PASS |
+| UAT-26-04 — same device/session: five tabs and system dark mode on/off | PASS |
+
+- New defects found during UAT: **none**.
+- Source changes during UAT: **none**. The only source change in Gate 2F is the D-1 fix, made and merged before UAT.
+
+**Status:** Phase 26's staging mobile connectivity/TLS validation is complete. Formal Phase 26 closure is for the product owner to confirm. Phase 27 has not started.
+
+**Known issues/limitations (carried forward, not acted on):**
+- `UAT-24-04` (`NOT RUN`) still carries its historical `http://…:8012` wording; deliberately left unchanged here.
+- The earlier limitations listed in the Gates 2A–2E addendum (the inert DigitalOcean firewall rule referencing `8012`; client-IP accuracy behind `trustProxies(at: '*')`) are unchanged.
+- The Android app label is still the template default `mobile`, and the release build is signed with the debug key (template default). Neither affected this validation; both belong to a future release-preparation phase, not Phase 26.
+
+**Recommended next step:** the product owner reviews this record and decides on formal Phase 26 closure. No Phase 27 work begins without explicit authorization.

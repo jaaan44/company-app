@@ -4,6 +4,13 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-09-23 — Phase 26 Gate 2F: real-device staging validation and UAT complete (documentation only)
+- **D-1 post-fix verification:** on fix commit `2e58ba7`, the product owner's release build passed `pub get`/`format`/`analyze`/`test` (22/22), and `aapt2` confirmed `android.permission.INTERNET` in the final APK. Mobile CI #19 passed on `2e58ba7`; Mobile CI #20 passed on the merged `main` (`ee86c6e`, PR #40). D-1 was found and fixed before UAT began, so no UAT scenario failed because of it.
+- **Real-device validation:** staging release APK built from `ee86c6e` with `--dart-define=API_BASE_URL=https://company-staging.storm-ark.com/api/v1` (Flutter 3.47.2 / Dart 3.13.2; `com.companyapp.mobile` 1.0.0 (1); SHA-256 `15DF73B43A8AE095A7DC3BC2599A9C6F1D0516E6A874C0D2DFB6FB59835C3A5E`; `INTERNET` confirmed with `aapt2`). Installed with `adb` on a Samsung Galaxy Note10+ (SM-N975U, Android 10 / API 29), then tested over mobile data with Wi-Fi off. `flutter run` was not used.
+- **UAT:** UAT-25-01…04 and UAT-26-01…04 recorded as **PASS** in `docs/testing/UAT_LOG.md`, as reported by the product owner. Scenario text unchanged. No new defects.
+- **Phase 26:** staging mobile connectivity/TLS validation is complete; formal closure awaits product-owner confirmation. Phase 27 has not started.
+- Also updated: the Phase 26 handoff (Gate 2F results addendum) and `docs/CURRENT_STATE.md`. No application source, dependency, configuration, environment, CI or infrastructure change. `UAT-24-04` is unchanged.
+
 ### 2026-09-23 — Phase 26 Gate 2F: D-1 fix — Android release builds lacked the INTERNET permission
 - **Defect D-1 (discovered during Gate 2F pre-UAT validation, before any UAT scenario was run):** `apps/mobile/android/app/src/main/AndroidManifest.xml` did not declare `android.permission.INTERNET`; only `src/debug/` and `src/profile/` did (the Flutter template default since Phase 1). Release builds merge only `main` plus library manifests, so every Android release build had no network access and every API call (login, session restore, logout) would fail with "Could not reach the server". Debug builds (`flutter run`) masked the defect.
 - **Evidence (product owner's Windows machine, baseline `b3c80bc`, Flutter 3.47.2):** `flutter build apk --release` succeeded; `aapt2 dump permissions app-release.apk` listed only `com.companyapp.mobile.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` (an AndroidX-internal signature permission); all three merged release manifests showed the same single `uses-permission`. No library contributes `INTERNET` through manifest merging.
