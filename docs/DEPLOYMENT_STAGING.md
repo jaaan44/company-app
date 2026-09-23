@@ -63,7 +63,7 @@ cp apps/api/.env.staging.example apps/api/.env
 Now edit both files:
 
 - **`.env.staging`** (repo root): replace `DB_PASSWORD`/`DB_ROOT_PASSWORD` with two different, high-entropy generated values (e.g. `openssl rand -base64 32` each). Leave `DB_DATABASE`/`DB_USERNAME` as-is or choose your own — just make sure step 4 below uses the *same* values in both files.
-- **`apps/api/.env`**: set `DB_PASSWORD` to the **exact same value** you just put in `.env.staging`'s `DB_PASSWORD` (not the root password — the application connects as the application user, not root). Replace `APP_URL` with the real reachable URL (`http://<VPS-IP-or-domain>:8012` until TLS exists — see §12). Leave `APP_KEY` blank; §4 generates it. Review every other `REPLACE_WITH_*` placeholder.
+- **`apps/api/.env`**: set `DB_PASSWORD` to the **exact same value** you just put in `.env.staging`'s `DB_PASSWORD` (not the root password — the application connects as the application user, not root). Set `APP_URL` to the public staging URL, `https://company-staging.storm-ark.com` (DEC-051; before Phase 26 this was a temporary `http://…:8012` value — superseded, 8012 is loopback-only). Leave `APP_KEY` blank; §4 generates it. Review every other `REPLACE_WITH_*` placeholder.
 
 ```sh
 chmod 600 .env.staging apps/api/.env   # readable only by the deploying user — these are real secrets now
@@ -218,13 +218,18 @@ Then verify the non-secret values you intended to change (e.g. `php artisan conf
 
 ## 8. Verification
 
-**[Run on the VPS, or from any machine that can reach the VPS on port 8012]**
+**Access model (Phase 26 Gate 2, DEC-051).** Docker `nginx` publishes **only** `127.0.0.1:8012`; port 8012 is deliberately not reachable from outside the VPS and must not be reopened. Use exactly two forms:
+
+- **Internal VPS health/diagnostic access** — run *on the VPS itself*, deliberately testing the Docker-side ingress (Docker nginx → PHP-FPM → Laravel) without Cloudflare or host Nginx in the path: `http://127.0.0.1:8012/...`
+- **Supported external staging access** — from any client, through Cloudflare → host Nginx: `https://company-staging.storm-ark.com/...`; API base `https://company-staging.storm-ark.com/api/v1`.
+
+**Internal (run on the VPS):**
 
 ```sh
-curl -i http://<VPS-IP-or-domain>:8012/api/v1/health
+curl -i http://127.0.0.1:8012/api/v1/health
 # Expect: HTTP/1.1 200 OK, {"data":{"status":"ok","timestamp":"..."}}
 
-curl -i http://<VPS-IP-or-domain>:8012/up
+curl -i http://127.0.0.1:8012/up
 # Expect: HTTP/1.1 200 OK (Laravel's own framework-level health route)
 
 docker compose -p company-app -f docker-compose.staging.yml exec app php artisan migrate:status
@@ -234,23 +239,35 @@ docker compose -p company-app -f docker-compose.staging.yml exec app composer au
 # Expect: no vulnerabilities found (Phase 22/F-10's standing check, re-run against the exact deployed lockfile)
 ```
 
-**Admin Backoffice:** visit `http://<VPS-IP-or-domain>:8012/login`, sign in with the account created in §6, confirm redirect to `/home`.
+**External (from outside the VPS):**
+
+```sh
+curl -i https://company-staging.storm-ark.com/api/v1/health
+# Expect: 200 OK over a certificate that validates with no warnings
+
+curl -i http://company-staging.storm-ark.com/api/v1/health
+# Expect: a redirect to https:// — never the application served over plain HTTP
+```
+
+**Admin Backoffice:** visit `https://company-staging.storm-ark.com/login`, sign in with the account created in §6, confirm redirect to `/home`.
 
 **API (mobile-equivalent) login:**
 
 ```sh
-curl -i -X POST http://<VPS-IP-or-domain>:8012/api/v1/auth/login \
+curl -i -X POST https://company-staging.storm-ark.com/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"REPLACE_WITH_STAGING_ADMIN_EMAIL","password":"REPLACE_WITH_STAGING_ADMIN_PASSWORD"}'
-# Expect: 200 with a Sanctum token; use it as `Authorization: Bearer <token>` against e.g. GET /api/v1/staff
+# Expect: 200 with a Sanctum token; use it as `Authorization: Bearer <token>` against e.g. GET https://company-staging.storm-ark.com/api/v1/staff
 ```
 
 **Confirm `APP_DEBUG=false` is actually in effect** (do this once, deliberately):
 
 ```sh
-curl -i http://<VPS-IP-or-domain>:8012/api/v1/this-route-does-not-exist
+curl -i https://company-staging.storm-ark.com/api/v1/this-route-does-not-exist
 # Expect: a plain 404 JSON error, NOT a Laravel debug/stack-trace page
 ```
+
+*(Before Phase 26 this section used `http://<VPS-IP-or-domain>:8012/...`; that form is superseded — 8012 is loopback-only.)*
 
 **Logs:**
 
@@ -399,21 +416,16 @@ cat /home/deploy/backups/<the-relevant-backup>.sql | \
 
 **[Run on a developer machine — not the VPS]** — no Flutter code change is needed (`apps/mobile/lib/core/config/app_config.dart` already reads `API_BASE_URL` via `--dart-define`, DEC-021):
 
+The supported staging API base is `https://company-staging.storm-ark.com/api/v1` (infrastructure verified in Phase 26 Gates 2A–2E, §13):
+
 ```sh
 cd apps/mobile
-flutter run --dart-define=API_BASE_URL=http://<VPS-IP-or-domain>:8012/api/v1
-# or, for a build artifact:
-flutter build apk --dart-define=API_BASE_URL=http://<VPS-IP-or-domain>:8012/api/v1
-```
-
-**Once Phase 26 Gate 2 has verified HTTPS working end-to-end** (§13 below), switch to the approved staging hostname — still no code change, just a different `--dart-define` value:
-
-```sh
 flutter run --dart-define=API_BASE_URL=https://company-staging.storm-ark.com/api/v1
+# or, for a build artifact:
 flutter build apk --dart-define=API_BASE_URL=https://company-staging.storm-ark.com/api/v1
 ```
 
-Do not use this HTTPS value until Gate 2's own real-device validation step confirms it actually serves traffic — neither Android nor iOS's default network security policy permits a cleartext (`http://`) fallback on a real device, so this value only ever works once TLS is genuinely live.
+Do not point a device at `http://<VPS-IP>:8012` — 8012 is loopback-only on the VPS and is not a supported access path (and neither Android nor iOS's default network security policy permits cleartext `http://` on a real device anyway). Real-device validation against this HTTPS base (UAT-26-03/04) is Gate 2F's work and has not yet been executed.
 
 ---
 
@@ -440,7 +452,7 @@ Internet → Cloudflare (proxied, SSL/TLS "Full (strict)")
 
 **Gate results (operator-run on the real host):** 2A read-only preflight passed · 2B checkout deployed at `4cf55c09fb050db4df570bb5182fde4397503b0b`, 8012 loopback-only, health passed · 2C DNS + HTTP host-Nginx vhost created; external direct-origin HTTP was blocked by the shared DigitalOcean Cloud Firewall, which led to discovering the Cloudflare/shared-infrastructure architecture · 2D Cloudflare proxy and Full (strict) confirmed, Let's Encrypt certificate issued, HTTPS health and HTTP → HTTPS redirect passed · 2E `APP_URL`/`SESSION_SECURE_COOKIE` switched (activated via §7a's app-only recreation), trusted-proxy HTTPS recognition, Admin login/session/logout, `Secure` cookie attributes, and API authentication over HTTPS all passed.
 
-The §8 verification commands above still use the pre-TLS `http://<VPS-IP-or-domain>:8012` form; on the current staging host run them against `https://company-staging.storm-ark.com` from outside, or `http://127.0.0.1:8012` from the VPS itself (8012 is not externally reachable).
+§8 distinguishes internal VPS diagnostics (`http://127.0.0.1:8012/...`, run on the VPS) from the supported external path (`https://company-staging.storm-ark.com/...`); 8012 is never externally reachable.
 
 *The remainder of this section is the Gate 1 text, preserved as written for history. Where it mentions UFW as the public firewall control, read DEC-051: the control that actually gates public 80/443 is the shared DigitalOcean Cloud Firewall, and no firewall change was made.*
 

@@ -137,13 +137,14 @@ Status per `CLAUDE.md` §7: the above is **manually verified by the operator on 
 - `.gitignore` — explicit `/.env.staging` rule (root-anchored, exact; `.env.staging.example` and `apps/api/.env.staging.example` stay tracked). `.env.staging` was confirmed never tracked in any commit.
 - `docs/DEPLOYMENT_STAGING.md` — new §7a (bind-mount/inode gotcha and app-only recreation procedure), pointers from §4/§7/§9, §13 status updated to deployed-and-verified with ownership table and gate results (Gate 1 text preserved).
 - `docs/02_ARCHITECTURE.md` (new §31b), `docs/05_SECURITY_MODEL.md`, `docs/phases/V1_PHASE_26_STAGING_MOBILE_CONNECTIVITY_TLS_PLAN.md` (dated Gate 2 addendum + status-line note), `docs/CURRENT_STATE.md`, `docs/CHANGELOG.md`, this addendum.
-- No application code, test, dependency, migration, or Compose file changed. `docs/testing/UAT_LOG.md` intentionally unchanged.
+- No application code, test, dependency, migration, or Compose file changed. `docs/testing/UAT_LOG.md`: UAT-26-01…04 notes updated (text only) to say infrastructure is ready but UAT not executed; every status unchanged.
 
 **UAT:** UAT-25-01…04 and UAT-26-01…04 remain **`NOT RUN`**.
 
 **Known issues/limitations (recorded, not acted on):**
 - A pre-existing DigitalOcean Cloud Firewall rule referencing port `8012` was not cleaned up (explicitly out of scope). It is inert for Company App because Docker publishes 8012 on loopback only.
 - `trustProxies(at: '*')` behind Cloudflare means `X-Forwarded-For`-derived client IPs are only as accurate as the host-Nginx forwarding config; no feature currently depends on real client IPs. Revisit if one does (e.g. rate limiting or audit-log IPs).
-- `docs/DEPLOYMENT_STAGING.md` §8's verification commands still use the pre-TLS `http://<host>:8012` form; §13 explains how to apply them on the current host.
+- *(Resolved in a pre-merge follow-up on the same PR:)* `docs/DEPLOYMENT_STAGING.md` §3/§8/§12 now separate internal VPS diagnostics (`http://127.0.0.1:8012`) from the supported external path (`https://company-staging.storm-ark.com`); the UAT-26-01…04 notes in `docs/testing/UAT_LOG.md` were updated (text only, still `NOT RUN`) to say infrastructure is ready but UAT is not executed.
+- `UAT-24-04` (`NOT RUN`, Phase 24) still describes its mobile check with an `http://<staging-host>:8012` URL and says UFW blocks 8012; left unchanged here (outside this correction's scope) — its scenario should be re-worded or superseded by UAT-26-03 when UAT is next reviewed.
 
 **Recommended next step:** Phase 26 Gate 2F — Flutter staging build with `--dart-define=API_BASE_URL=https://company-staging.storm-ark.com/api/v1` and product-owner real-device validation (UAT-26-03/04, which also exercise UAT-25-01…04), with UAT-26-01/02 recorded by the operator. Not begun by this session.
