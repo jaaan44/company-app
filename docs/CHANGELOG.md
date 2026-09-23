@@ -4,6 +4,14 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-09-23 — Phase 27: merged (PR #44) and deployed to staging (documentation only)
+- PR #44 merged into `main` as `be43663f1e3527867c04adb73071eb3bace01ba5`, the authoritative Phase 27 merged implementation baseline.
+- Staging deployment (run by the operator; this session has no VPS access): pre-deploy checkout `4cf55c0`, clean apart from the then-untracked `.env.staging` (ignored after the update); pre-deploy backup `company-app-20260923-092600.sql` (88,356 bytes); fast-forwarded to exactly `be43663`; `app` and `nginx` images rebuilt, `app` recreated, `nginx` and `mysql` left running; `migrate:status` all 45 migrations Ran (none pending); config/route/view caches rebuilt; `app.env` staging, `app.debug` false, `app.url` `https://company-staging.storm-ark.com`, `session.secure` true.
+- Public smoke tests: `/up` 200, `/login` 200, `http://…/up` 301 → `https://…/up`, `GET /api/v1/me/home` unauthenticated 401 (route deployed and protected); `127.0.0.1:8012` only, no `8442` listener; `mysql` healthy.
+- **Company timezone:** effective `scheduling.company_timezone` = `UTC`; `SCHEDULING_COMPANY_TIMEZONE` is not set in `apps/api/.env` (default). Not changed. A product-owner decision is required before UAT-27-02.
+- Release APK built on the operator's Windows machine from `main`: `flutter build apk --release --dart-define=API_BASE_URL=https://company-staging.storm-ark.com/api/v1`, 51,582,167 bytes, SHA-256 `4C95BA4D5D58B50B4AA9388B9C5F52AA4AB1A669FE25D16DAADAB94A757EBC1C`, `com.companyapp.mobile` 1.0.0 (versionCode 1), compileSdk 36, `android.permission.INTERNET` present; debug-signed (deferred to Phase 38). The pre-build `flutter test` run passed 129/129.
+- UAT-27-01…08 remain `NOT RUN`; Phase 27 is not closed.
+
 ### 2026-09-23 — Phase 27 Gate 4: final integration review, handoff and implementation PR
 - Final review of the full Phase 27 diff (36 files against `b63599d`): backend, mobile and docs only — no migration, dependency, environment, infrastructure or CI change. Implementation matches the approved specification. The Laravel `/me/home` output and the Flutter parser agree field by field.
 - Final checks: backend 1,130/1,130 (Home 50/50), Pint, PHPStan level 5, `composer validate --strict`, `composer audit --locked`; Flutter 129/129 (Home 64/64, Gate 2 suites 46/46), `dart format`, `flutter analyze`; `pubspec.yaml`/`pubspec.lock` unchanged.

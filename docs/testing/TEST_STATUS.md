@@ -514,4 +514,26 @@ In progress. Gate 1 = backend `GET /api/v1/me/home` only; Gate 2 (Flutter) not s
 
 ---
 
+## Phase 27 — Staging deployment & pre-UAT readiness (2026-09-23)
+
+Run by the operator on the staging VPS and a Windows build machine (this AI session has no VPS or Android SDK access); results as reported.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Staging checkout fast-forwarded to `be43663` | Manual, real VPS | PASS | From `4cf55c0`; `git rev-parse HEAD` = `be43663f1e3527867c04adb73071eb3bace01ba5`. |
+| Pre-deploy DB backup | Manual, real VPS | PASS | `company-app-20260923-092600.sql`, 88,356 bytes. |
+| `migrate:status` | Manual, real VPS | PASS | All 45 migrations Ran; none pending (Phase 27 adds none). |
+| Staging config (`app.env`/`app.debug`/`app.url`/`session.secure`) | Manual, real VPS | PASS | staging / false / `https://company-staging.storm-ark.com` / true. |
+| Company timezone | Manual, real VPS | **Decision needed** | Effective `UTC`; `SCHEDULING_COMPANY_TIMEZONE` not set (default). Blocks UAT-27-02 until decided. |
+| Public `/up`, `/login`, HTTP→HTTPS | Manual, real VPS | PASS | 200, 200, 301 → `https://…/up`. |
+| `GET /api/v1/me/home` unauthenticated | Manual, real VPS | PASS | 401 (deployed and authentication-protected). An authenticated response was not tested. |
+| Ports / containers | Manual, real VPS | PASS | Only `127.0.0.1:8012`; no `8442`; `app` recreated and up; `mysql` healthy; `nginx` not recreated — its inputs are unchanged in Phase 27. |
+| Other hosted projects | Manual | NOT RUN | Not checked in this gate. |
+| Flutter gates on the build machine | Automated | PASS | `dart format`, `flutter analyze` clean; `flutter test` 129/129. Hit-test warnings from `home_page_test.dart`'s `fling`/`drag` calls: see the note below. |
+| Release APK | Automated | PASS | 51,582,167 bytes; SHA-256 `4C95BA4D5D58B50B4AA9388B9C5F52AA4AB1A669FE25D16DAADAB94A757EBC1C`; `com.companyapp.mobile` 1.0.0 (1); INTERNET permission present; debug-signed. The build machine's checkout SHA and Flutter/Dart versions were not captured in the output. |
+| Test-quality note | Manual | Recorded | The 200%-text/phone overflow tests' final `drag` (and the refresh `fling`s) miss their hit-test target, so the scroll to the lower sections is skipped. A scratch re-run with `scrollUntilVisible` reached every section with no overflow in all five variants, so the product is unaffected. Tightening the test is a small follow-up. |
+| UAT | — | NOT RUN | UAT-27-01…08 `NOT RUN`. |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*
