@@ -148,3 +148,20 @@ Status per `CLAUDE.md` §7: the above is **manually verified by the operator on 
 - `UAT-24-04` (`NOT RUN`, Phase 24) still describes its mobile check with an `http://<staging-host>:8012` URL and says UFW blocks 8012; left unchanged here (outside this correction's scope) — its scenario should be re-worded or superseded by UAT-26-03 when UAT is next reviewed.
 
 **Recommended next step:** Phase 26 Gate 2F — Flutter staging build with `--dart-define=API_BASE_URL=https://company-staging.storm-ark.com/api/v1` and product-owner real-device validation (UAT-26-03/04, which also exercise UAT-25-01…04), with UAT-26-01/02 recorded by the operator. Not begun by this session.
+
+## Addendum — Gate 2F pre-UAT validation and defect D-1, 2026-09-23
+
+**Environment (product owner's Windows 11 machine):** Android SDK 36.0.0 (build-tools 36.0.0), JDK Temurin 17.0.15; physical device detected: Samsung SM N975U, Android 10 (API 29), USB debugging authorized. The local Flutter SDK was initially 3.47.0 / Dart 3.13.0, which cannot resolve `pubspec.yaml`'s `sdk: ^3.13.2`; the product owner pinned it to 3.47.2, the version CI uses (`.github/workflows/mobile-ci.yml`). No project dependency or SDK requirement was changed.
+
+**Baseline checks on `b3c80bc` (manually run by the product owner):** `flutter pub get` succeeded; `dart format` changed no files; `flutter analyze` found no issues; `flutter test` 22/22 passed; `flutter build apk --release` succeeded; `git status` clean afterwards.
+
+**Defect D-1 — Android release builds had no `INTERNET` permission.**
+- *Cause:* `android/app/src/main/AndroidManifest.xml` never declared `android.permission.INTERNET`; only the `debug` and `profile` manifests did (Flutter template default, present since Phase 1). Release builds never merge those two manifests.
+- *Evidence:* `aapt2 dump permissions` on the baseline `app-release.apk` listed only `com.companyapp.mobile.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`; the three merged release manifests (`processReleaseMainManifest`, `processReleaseManifest`, `outputReleaseAppLinkSettings`) agreed. No library supplies `INTERNET` through the merge.
+- *Impact:* any Android release build would fail every API call ("Could not reach the server…"). Debug builds (`flutter run`) masked it. Earlier mobile UAT (UAT-04-03) ran on Windows desktop, which has no Android manifest, so its result is unaffected.
+- *Fix (authorized by the product owner):* `<uses-permission android:name="android.permission.INTERNET" />` added at manifest scope, before `<application>`, in the main manifest only. Nothing else changed: no cleartext/network-security config, TLS, API URL, authentication, dependency, or `debug`/`profile` manifest change.
+- *Post-fix verification:* release APK rebuild plus `aapt2 dump permissions` on the fix commit, run by the product owner and reported on the fix PR.
+
+**UAT:** no scenario was executed. UAT-25-01…04 and UAT-26-01…04 remain **`NOT RUN`**.
+
+**Recommended next step:** after the D-1 fix merges, build the staging release APK from the new `main` with `flutter build apk --release --dart-define=API_BASE_URL=https://company-staging.storm-ark.com/api/v1`, then run the Gate 2F real-device UAT.
