@@ -465,4 +465,19 @@ In progress. Gate 1 = backend `GET /api/v1/me/home` only; Gate 2 (Flutter) not s
 
 ---
 
+## Phase 27 — Gate 2 (Flutter authenticated API client & session lifecycle)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `flutter pub get` | Automated | PASS | Flutter 3.47.2 stable. `pubspec.yaml`/`pubspec.lock` unchanged. |
+| `dart format --output=none --set-exit-if-changed .` | Automated | PASS | |
+| `flutter analyze` | Automated | PASS | No issues. |
+| `flutter test` (full) | Automated | PASS | 65/65 — the 22 pre-existing Phase 4/25 tests unchanged, plus 43 new. |
+| Focused Gate 2 suites | Automated | PASS | `api_client_test.dart` (bearer token, configured and default base URL, success decode, non-JSON body, 4xx/5xx/network propagation with session kept, no request without a token, token never in error text); `session_lifecycle_test.dart` (401 → local expiry with notice, no `/auth/logout`, no re-check; two simultaneous 401s and a 401 during deletion → one deletion, one transition; 403 + `/auth/me` 200/401/403/500/503/network with exactly one re-check each; 401 racing manual logout in both orders; stale token-A 401 and stale token-A 403→401 after token-B login leave B signed in; repeated expiry no-op; login clears the notice; token-deletion failure still signs out); `session_expiry_test.dart` (the real `CompanyApp`: 401 and 403→401 return to Login with the notice and dispose the shell; 403→200 and 403→5xx keep the shell; network/server errors never show the notice; manual logout and fresh launch show no notice; re-login after expiry; stale 401 after re-login keeps the shell); `login_page_test.dart` (notice shown in a live region, cleared on submit, absent after manual logout). |
+| Mutation check | Manual | PASS | Eight deliberate mutations (no stale-token check, no single-flight, 403 always expires, inconclusive re-check treated as invalid, 401 not expiring, no notice on expiry, storage failure rethrown, notice on manual logout) — each failed at least one test; sources restored byte-for-byte. |
+| Device/emulator verification | Manual | NOT RUN | No device or emulator in this sandbox. |
+| UAT | — | NOT RUN | UAT-27-01…08 unchanged (`NOT RUN`); Home UI (Gate 3) not built. |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*
