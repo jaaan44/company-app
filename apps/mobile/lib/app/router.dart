@@ -3,7 +3,8 @@ import 'package:go_router/go_router.dart';
 
 import 'package:mobile/features/auth/presentation/login_page.dart';
 import 'package:mobile/features/auth/state/auth_controller.dart';
-import 'package:mobile/features/home/home_page.dart';
+import 'package:mobile/features/home/data/home_api_client.dart';
+import 'package:mobile/features/home/presentation/home_page.dart';
 import 'package:mobile/features/shell/presentation/app_shell.dart';
 import 'package:mobile/features/shell/presentation/placeholder_page.dart';
 
@@ -12,7 +13,10 @@ import 'package:mobile/features/shell/presentation/placeholder_page.dart';
 /// declarative, route-level auth redirects. [authController] is also
 /// wired in as `refreshListenable` so every status change (bootstrap
 /// resolving, login, logout) re-evaluates [_redirect] automatically.
-GoRouter buildAppRouter(AuthController authController) {
+GoRouter buildAppRouter(
+  AuthController authController, {
+  required HomeApiClient homeApiClient,
+}) {
   return GoRouter(
     initialLocation: '/splash',
     refreshListenable: authController,
@@ -34,7 +38,8 @@ GoRouter buildAppRouter(AuthController authController) {
             routes: [
               GoRoute(
                 path: '/home',
-                builder: (context, state) => const HomePage(),
+                builder: (context, state) =>
+                    HomePage(homeApiClient: homeApiClient),
               ),
             ],
           ),

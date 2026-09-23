@@ -6,7 +6,7 @@ import 'package:mobile/core/network/api_client.dart';
 import 'package:mobile/core/network/api_exception.dart';
 import 'package:mobile/features/auth/presentation/login_page.dart';
 import 'package:mobile/features/auth/state/auth_controller.dart';
-import 'package:mobile/features/home/home_page.dart';
+import 'package:mobile/features/home/presentation/home_page.dart';
 
 import '../support/fake_backend.dart';
 

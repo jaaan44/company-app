@@ -11,7 +11,7 @@ import 'package:mobile/app/app.dart';
 import 'package:mobile/features/auth/data/auth_api_client.dart';
 import 'package:mobile/features/auth/presentation/login_page.dart';
 import 'package:mobile/features/auth/state/auth_controller.dart';
-import 'package:mobile/features/home/home_page.dart';
+import 'package:mobile/features/home/presentation/home_page.dart';
 import 'package:mobile/features/shell/presentation/placeholder_page.dart';
 
 import '../features/auth/fake_token_storage.dart';
@@ -84,7 +84,8 @@ void main() {
 
       expect(find.byType(LoginPage), findsNothing);
       expect(find.byType(HomePage), findsOneWidget);
-      expect(find.text('Signed in as Ada Lovelace'), findsOneWidget);
+      // Phase 27 replaced the placeholder text with the employee Home.
+      expect(find.widgetWithText(AppBar, 'Home'), findsOneWidget);
     },
   );
 
