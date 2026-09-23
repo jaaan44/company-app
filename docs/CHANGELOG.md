@@ -4,6 +4,12 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-09-23 — Phase 26 Gate 2F: D-1 fix — Android release builds lacked the INTERNET permission
+- **Defect D-1 (discovered during Gate 2F pre-UAT validation, before any UAT scenario was run):** `apps/mobile/android/app/src/main/AndroidManifest.xml` did not declare `android.permission.INTERNET`; only `src/debug/` and `src/profile/` did (the Flutter template default since Phase 1). Release builds merge only `main` plus library manifests, so every Android release build had no network access and every API call (login, session restore, logout) would fail with "Could not reach the server". Debug builds (`flutter run`) masked the defect.
+- **Evidence (product owner's Windows machine, baseline `b3c80bc`, Flutter 3.47.2):** `flutter build apk --release` succeeded; `aapt2 dump permissions app-release.apk` listed only `com.companyapp.mobile.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` (an AndroidX-internal signature permission); all three merged release manifests showed the same single `uses-permission`. No library contributes `INTERNET` through manifest merging.
+- **Fix:** one line, `<uses-permission android:name="android.permission.INTERNET" />`, at manifest scope before `<application>` in the main manifest, so all build variants inherit it. No `usesCleartextTraffic`, network-security config, TLS/certificate change, API-URL change, authentication change, dependency change, or `debug`/`profile` manifest change. Android 9+ still blocks cleartext HTTP by default.
+- **UAT:** unchanged — UAT-25-01…04 and UAT-26-01…04 remain `NOT RUN`. The staging release APK build and real-device UAT follow after this fix merges.
+
 ### 2026-09-23 — Phase 26 Gate 2E.1: repository reconciliation after staging TLS deployment (documentation/`.gitignore` only)
 - **Context:** Phase 26 Gates 2A–2E were executed on the real staging VPS by the operator. Staging is now served at `https://company-staging.storm-ark.com` via Cloudflare (proxied, Full (strict)) → shared DigitalOcean Cloud Firewall (inbound 80/443 Cloudflare-scoped) → shared host Nginx (TLS, Let's Encrypt) → `127.0.0.1:8012` → Company App Docker nginx → Laravel. The Cloudflare/shared-firewall layers were discovered during Gate 2C, not known at planning time.
 - **`docs/DECISIONS.md`:** new **DEC-051** recording the verified ingress/TLS architecture and separating shared VPS infrastructure from Company-App-owned configuration; refines DEC-050 (left as written).
