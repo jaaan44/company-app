@@ -1,6 +1,6 @@
 # Phase 27 — Employee Home / Dashboard (Mobile) — Handoff
 
-**Status: implementation complete — pending PR review/CI, staging deployment and product-owner UAT. Phase 27 is NOT formally closed.**
+**Status: implementation merged (PR #44, `be43663`) and deployed to staging — pending the company-timezone decision and product-owner UAT. Phase 27 is NOT formally closed.** (See the Staging Deployment Addendum at the end.)
 
 ## 1. Phase Identification
 
@@ -296,3 +296,49 @@ Phase 28 (People) must not begin until Phase 27 is closed and Phase 28 is explic
 - **Awaiting UAT:** yes (UAT-27-01…08 `NOT RUN`).
 - **Deployed:** no.
 - **Formally closed:** no.
+
+---
+
+## Addendum — Merge and Staging Deployment (2026-09-23)
+
+- **Merge:** PR #44 merged into `main` with a standard merge commit, **`be43663f1e3527867c04adb73071eb3bace01ba5`**. Its parents are `b63599d` and `c252601`, and its tree is identical to the PR head. This is the authoritative Phase 27 merged implementation baseline. CI passed on `c252601` (Backend quality gates (PHP 8.4); Mobile quality gates (Flutter 3.47.2)).
+- **Deployment:** run by the operator on the staging VPS; this AI session has no VPS access, and its network policy blocks the staging hostname and `dl.google.com`. Following `DEPLOYMENT_STAGING.md` §9, using the required `-p company-app -f docker-compose.staging.yml --env-file .env.staging` invocation:
+  - **Pre-deploy checkout:** `4cf55c0`. `.env.staging` showed as untracked because the older checkout predated its `.gitignore` rule; it is ignored after the update.
+  - **Backup:** `company-app-20260923-092600.sql`, 88,356 bytes.
+  - **Update:** fast-forwarded to exactly `be43663`.
+  - **Rebuild:** `build app nginx`, then `up -d --no-deps app nginx`. `app` was recreated. `nginx` kept running, because its inputs (`apps/api/public`, `docker/nginx`, the staging Compose file) are unchanged between `4cf55c0` and `be43663`. `mysql` was untouched.
+  - **Migrations:** `migrate:status` shows all 45 migrations Ran.
+  - **Caches:** config, route and view caches rebuilt.
+  - **Config:** `app.env` staging, `app.debug` false, `app.url` `https://company-staging.storm-ark.com`, `session.secure` true.
+- **Smoke tests (public HTTPS):**
+  - `/up` 200 and `/login` 200.
+  - HTTP `/up` returns 301 to HTTPS.
+  - Unauthenticated `GET /api/v1/me/home` returns 401.
+  - Only `127.0.0.1:8012` is listening, with no `8442`.
+  - `mysql` is healthy.
+  - Not tested: an authenticated `/me/home` call, and a read-only check of the other hosted projects.
+- **Company timezone:** effective `scheduling.company_timezone` = **`UTC`**, and `SCHEDULING_COMPANY_TIMEZONE` is **not set** in `apps/api/.env`, so this is the default. It was not changed. **A product-owner decision on the company's timezone is required before UAT-27-02.** The deployment itself went ahead after this finding. That did not change the timezone, but the UAT prerequisite remains unmet. Setting a value is an `.env` edit; follow `DEPLOYMENT_STAGING.md` §7a, because `apps/api/.env` is a single-file bind mount, then `config:cache`.
+- **Release APK:** built on the operator's Windows machine with `flutter build apk --release --dart-define=API_BASE_URL=https://company-staging.storm-ark.com/api/v1`.
+  - Output: `build/app/outputs/flutter-apk/app-release.apk`, 51,582,167 bytes.
+  - SHA-256: `4C95BA4D5D58B50B4AA9388B9C5F52AA4AB1A669FE25D16DAADAB94A757EBC1C`.
+  - Package `com.companyapp.mobile`, versionName 1.0.0, versionCode 1, compileSdk 36; `android.permission.INTERNET` is present.
+  - Debug-signed, deferred to Phase 38.
+  - Before building, `flutter test` passed 129/129 and `dart format`/`flutter analyze` were clean.
+  - Not captured in the output: the build machine's checkout SHA, and its Flutter/Dart versions.
+- **Test-quality note (non-blocking):** the build machine's `flutter test` output showed hit-test warnings.
+  - **What happens:** in `home_page_test.dart`, the refresh `fling`s and the 200%-text/phone overflow tests' final `drag` target the greeting's centre, which isn't hit-testable. The `drag` is therefore skipped, and those tests never scroll to the lower sections.
+  - **Impact:** a scratch re-run using `scrollUntilVisible` reached every section with no overflow in all five variants, so the product is unaffected. The refresh tests still pass on their own assertions.
+  - **Follow-up:** tightening these tests is a small change. It needs its own authorization, because the implementation is merged.
+- **UAT data:** the seeding recipe is in §14 above, and nothing has been seeded yet. UAT-27-02 additionally needs the timezone decision.
+- **UAT-27-01…08:** `NOT RUN`. **Phase 27 is not formally closed**, and Phase 28 has not started.
+
+## Addendum — Pre-UAT Remediation (2026-09-23)
+
+- **Company timezone decided:** `Asia/Manila` (product owner). It is applied through configuration only (`SCHEDULING_COMPANY_TIMEZONE`), never hardcoded in source. The operator applied it on staging by appending in place, so the inode, ownership and mode were unchanged. They then recreated only `app` (MySQL and nginx untouched) and ran `config:cache`. It is verified on staging 2026-09-23: `config:show scheduling.company_timezone` → `Asia/Manila`; company now `2026-09-23T21:29:06+08:00`. App config and smoke checks are unchanged (staging, debug false, secure sessions; 200/200/401; 8012 loopback only). UAT-27-02 is unblocked.
+- **Test-scroll gap corrected (test-only)** in `apps/mobile/test/features/home/home_page_test.dart`:
+  - the 200%-text/phone overflow tests walk every lower section with `scrollUntilVisible` on Home's own scrollable and assert each is reached;
+  - pull-to-refresh gestures target that scrollable;
+  - hit-test warnings are fatal in the file.
+- **Proof:** an injected Announcements overflow failed all 4 corrected phone variants, while the original test missed it in both 200%-text variants. Results: `flutter test` 129/129, Home 64/64, `dart format`/`flutter analyze` clean, no hit-test warnings. No production or dependency change.
+- **Final UAT APK:** to be built only after this correction merges into `main`, so its source provenance is exact.
+- **Status:** UAT-27-01…08 remain `NOT RUN`. Phase 27 is not formally closed.

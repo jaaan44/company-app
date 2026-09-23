@@ -514,4 +514,41 @@ In progress. Gate 1 = backend `GET /api/v1/me/home` only; Gate 2 (Flutter) not s
 
 ---
 
+## Phase 27 — Staging deployment & pre-UAT readiness (2026-09-23)
+
+Run by the operator on the staging VPS and a Windows build machine (this AI session has no VPS or Android SDK access); results as reported.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Staging checkout fast-forwarded to `be43663` | Manual, real VPS | PASS | From `4cf55c0`; `git rev-parse HEAD` = `be43663f1e3527867c04adb73071eb3bace01ba5`. |
+| Pre-deploy DB backup | Manual, real VPS | PASS | `company-app-20260923-092600.sql`, 88,356 bytes. |
+| `migrate:status` | Manual, real VPS | PASS | All 45 migrations Ran; none pending (Phase 27 adds none). |
+| Staging config (`app.env`/`app.debug`/`app.url`/`session.secure`) | Manual, real VPS | PASS | staging / false / `https://company-staging.storm-ark.com` / true. |
+| Company timezone | Manual, real VPS | **Resolved** | Was the effective `UTC` default; the product owner decided `Asia/Manila`, now applied and verified (see the pre-UAT section). |
+| Public `/up`, `/login`, HTTP→HTTPS | Manual, real VPS | PASS | 200, 200, 301 → `https://…/up`. |
+| `GET /api/v1/me/home` unauthenticated | Manual, real VPS | PASS | 401 (deployed and authentication-protected). An authenticated response was not tested. |
+| Ports / containers | Manual, real VPS | PASS | Only `127.0.0.1:8012`; no `8442`; `app` recreated and up; `mysql` healthy; `nginx` not recreated — its inputs are unchanged in Phase 27. |
+| Other hosted projects | Manual | NOT RUN | Not checked in this gate. |
+| Flutter gates on the build machine | Automated | PASS | `dart format`, `flutter analyze` clean; `flutter test` 129/129. Hit-test warnings from `home_page_test.dart`'s `fling`/`drag` calls: see the note below. |
+| Release APK | Automated | PASS | 51,582,167 bytes; SHA-256 `4C95BA4D5D58B50B4AA9388B9C5F52AA4AB1A669FE25D16DAADAB94A757EBC1C`; `com.companyapp.mobile` 1.0.0 (1); INTERNET permission present; debug-signed. The build machine's checkout SHA and Flutter/Dart versions were not captured in the output. |
+| Test-quality note | Manual | **Corrected** | Found at the staging gate: the 200%-text/phone overflow tests' final `drag` (and the refresh `fling`s) missed their hit-test target, so the lower sections were never scrolled to. Corrected in the pre-UAT gate (below).
+| UAT | — | NOT RUN | UAT-27-01…08 `NOT RUN`. |
+
+---
+
+## Phase 27 — Pre-UAT remediation (test-only correction)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| 200%-text/phone traversal | Automated | PASS | The overflow tests now `scrollUntilVisible` Home's scrollable to `home-today`, each tile and `home-announcements`, and assert each is hit-testable and exception-free, plus the last announcement row. All 5 variants pass (light/dark phone at 100% and 200%, light tablet at 200%). |
+| Pull-to-refresh gestures | Automated | PASS | `fling` now targets Home's scrollable; both refresh tests pass with no hit-test warning. |
+| Missed-gesture guard | Automated | In place | `WidgetController.hitTestWarningShouldBeFatal = true` for `home_page_test.dart`. |
+| Proof that the fix catches real overflows | Manual (scratch, reverted) | PASS | An overflow injected into the Announcements section failed all 4 corrected phone variants; the original test missed it in both 200%-text phone variants. The production file was restored. |
+| `flutter test` / `test/features/home` | Automated | PASS | 129/129 / 64/64; no hit-test warnings. |
+| `dart format --set-exit-if-changed`, `flutter analyze`, `flutter pub get` | Automated | PASS | No production, `pubspec.yaml` or `pubspec.lock` change. |
+| Staging timezone `Asia/Manila` applied and verified | Manual, real VPS (operator) | PASS | Appended in place (inode `1128804`, `deploy:deploy`, `664` unchanged); only `app` recreated; `config:cache`. `config:show scheduling.company_timezone` → `Asia/Manila`; company now `2026-09-23T21:29:06+08:00`. `app.env` staging, `app.debug` false, `app.url` correct, `session.secure` true; `/up` 200, `/login` 200, `/me/home` 401; 8012 loopback only; MySQL untouched (up 9 days, healthy). |
+| UAT | — | NOT RUN | UAT-27-01…08 `NOT RUN`. |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*
