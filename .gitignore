@@ -7,3 +7,9 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# Real staging Compose credential file (Phase 26 Gate 2E.1, DEC-051).
+# Created on the VPS from the tracked `.env.staging.example`; holds real
+# secrets and must never be staged. Anchored to the repository root and
+# matched exactly, so `.env.staging.example` stays tracked.
+/.env.staging

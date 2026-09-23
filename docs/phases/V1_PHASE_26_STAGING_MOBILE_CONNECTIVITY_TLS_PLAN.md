@@ -1,6 +1,6 @@
 # Phase 26 — Staging Mobile Connectivity & TLS — Discovery & Planning Report
 
-**Status:** GATE 1 AUTHORIZED AND IMPLEMENTED (repository-side only) — see the Gate 1 Addendum at the end of this document. Gate 2 (VPS/DNS/TLS/real-device deployment) remains NOT AUTHORIZED. This document is the second of two discovery/planning deliverables for Phase 26 (mirroring the `V1_PHASE_24_STAGING_DEPLOYMENT_PLAN.md`/`V1_PHASE_22_SECURITY_AUDIT.md` precedent: a planning document precedes a scoped implementation authorization, it is not itself the authorization). Sections 1–18 below are preserved exactly as originally written (per `CLAUDE.md`'s "do not rewrite historical decisions unnecessarily") — they reflect this document's own planning and open questions at the time it was authored; the Gate 1 Addendum records what was actually authorized and implemented afterward.
+**Status:** GATE 1 AUTHORIZED AND IMPLEMENTED (repository-side only) — see the Gate 1 Addendum at the end of this document. *(Updated 2026-09-23:)* Gate 2 infrastructure steps 2A–2E have since been executed and verified on staging — see the Gate 2 Implementation/Discovery Addendum at the very end, which records how live deployment refined this plan's ingress model (DEC-051). Real-device validation (§8 Step 10) and UAT remain outstanding. This document is the second of two discovery/planning deliverables for Phase 26 (mirroring the `V1_PHASE_24_STAGING_DEPLOYMENT_PLAN.md`/`V1_PHASE_22_SECURITY_AUDIT.md` precedent: a planning document precedes a scoped implementation authorization, it is not itself the authorization). Sections 1–18 below are preserved exactly as originally written (per `CLAUDE.md`'s "do not rewrite historical decisions unnecessarily") — they reflect this document's own planning and open questions at the time it was authored; the Gate 1 Addendum records what was actually authorized and implemented afterward.
 
 **Date:** 2026-09-22. **Session type:** repository inspection (git range analysis, Compose/runbook mechanism analysis, Laravel proxy-trust analysis) plus incorporation of the product owner's own live VPS inspection findings (reported to this session as text, not independently re-verified by this session — no VPS access exists here). **Depends on:** the prior Phase 26 discovery session's report (chat-only, not committed) and everything Phase 24/25 established.
 
@@ -393,3 +393,38 @@ Branch `claude/phase-26-staging-connectivity-tls`, from `main` at `4ce9f6ea9d9ac
 6. This document itself — this addendum.
 
 **Not implemented (Gate 2, separately authorized):** every item in §8's Steps 4–11 — DNS, the host-Nginx vhost, Certbot, any UFW change, deploying this branch's changes to the actual staging checkout, the `APP_URL`/`SESSION_SECURE_COOKIE` live flips, and all real-device validation. See the implementation session's own final report for exact test/CI results and the PR link.
+
+---
+
+## Gate 2 Implementation/Discovery Addendum (2026-09-23): Live Deployment Refined the Ingress Model
+
+*Added by the Gate 2E.1 repository-reconciliation session (repository-only; no VPS access). Sections 1–18 and the Gate 1 Addendum above are preserved exactly as written — they reflect what was known and planned at the time. This addendum records what live deployment (operator-run Gates 2A–2E) actually found and did. Authoritative decision: DEC-051.*
+
+### What the plan assumed vs. what was discovered
+
+The plan (§5–§8, and DEC-050) assumed host Nginx was the VPS's public edge, with UFW as the relevant firewall and 80/443 "already open" for the sibling project. During Gate 2C, **external direct-to-origin HTTP to the new vhost was blocked**. The cause was a **DigitalOcean Cloud Firewall** — shared infrastructure for the whole VPS, not Company App's — whose inbound 80/443 rules admit only **Cloudflare IP ranges**; public web traffic to this host arrives through **Cloudflare**'s proxy. The ingress model is therefore:
+
+```
+Internet → Cloudflare (proxied, Full (strict)) → DigitalOcean Cloud Firewall (Cloudflare-scoped 80/443)
+         → host Nginx (TLS) → 127.0.0.1:8012 → Company App Docker nginx → Laravel
+```
+
+No firewall change was made or needed: the correct response was to keep `company-staging.storm-ark.com` proxied through Cloudflare, not to open the shared firewall. §8 Step 4's DNS record is therefore a **proxied** Cloudflare record, and §8 Step 6's HTTP-01 challenge was validated through the Cloudflare-proxied path (Certbot nginx plugin), with renewal by the existing `certbot.timer`.
+
+### Gate results (operator-reported; not independently executed by any AI session)
+
+| Gate | Result |
+|---|---|
+| 2A | Read-only preflight passed. |
+| 2B | Staging checkout deployed to `4cf55c09fb050db4df570bb5182fde4397503b0b`; Docker `nginx` changed to loopback-only `127.0.0.1:8012`; health passed. |
+| 2C | DNS record and HTTP host-Nginx vhost created; external direct-origin HTTP blocked by the shared DigitalOcean Cloud Firewall; Cloudflare/shared-infrastructure architecture discovered. |
+| 2D | Cloudflare proxy and SSL/TLS Full (strict) confirmed; Let's Encrypt certificate `company-staging.storm-ark.com` issued; HTTPS health passed; HTTP → HTTPS redirect passed. |
+| 2E | `APP_URL=https://company-staging.storm-ark.com` and `SESSION_SECURE_COOKIE=true` applied; trusted-proxy HTTPS recognition passed; Admin login/session/logout passed; `Secure` cookie attributes passed; API authentication over HTTPS passed. |
+
+### Operational finding recorded during Gate 2E
+
+`apps/api/.env` is a single-file bind mount. An atomic-replacement edit (e.g. `sed -i`) changes the host inode while the running `app` container keeps the old one, so `config:cache` inside it can re-cache stale values. The proven activation was recreating only the stateless `app` container (no image rebuild, MySQL untouched), then refreshing/verifying Laravel config. Documented in `docs/DEPLOYMENT_STAGING.md` §7a.
+
+### Remaining (not done here)
+
+§8 Step 10 (Flutter staging build and real-device validation) and Step 11's UAT closure. UAT-25-01…04 and UAT-26-01…04 remain `NOT RUN` — infrastructure verification is not UAT.

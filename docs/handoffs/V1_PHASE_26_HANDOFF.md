@@ -114,3 +114,36 @@ None applicable to Gate 1 itself (no runtime behavior changed on any environment
 ## 17. Recommended Next Step
 
 **Phase 26 Gate 2** (VPS/DNS/host-Nginx vhost/Certbot/UFW deployment and real-device validation) — not authorized by this handoff. See `docs/phases/V1_PHASE_26_STAGING_MOBILE_CONNECTIVITY_TLS_PLAN.md` §8 for the exact gated sequence with rollback at every step. Per `CLAUDE.md` §8's Stop Discipline, this session does not begin Gate 2 automatically.
+
+---
+
+## Addendum — Gates 2A–2E (live staging deployment) and Gate 2E.1 (repository reconciliation), 2026-09-23
+
+Sections 1–17 above are the Gate 1 handoff, preserved as written. This addendum records the later gates.
+
+**Gates 2A–2E** were executed on the real staging VPS by the operator (no AI session had VPS access). Reported results:
+
+- **2A** — read-only preflight passed.
+- **2B** — staging checkout deployed to `4cf55c09fb050db4df570bb5182fde4397503b0b`; Docker `nginx` now publishes only `127.0.0.1:8012`; health passed.
+- **2C** — DNS record and HTTP host-Nginx vhost created; external direct-origin HTTP was blocked by the **shared DigitalOcean Cloud Firewall** (inbound 80/443 Cloudflare-scoped), which led to discovering the Cloudflare/shared-infrastructure architecture. No firewall change was made.
+- **2D** — Cloudflare proxy and SSL/TLS Full (strict) confirmed; Let's Encrypt certificate `company-staging.storm-ark.com` issued (Certbot nginx plugin, HTTP-01 through the Cloudflare-proxied path; renewal via the existing `certbot.timer`); HTTPS health and HTTP → HTTPS redirect passed.
+- **2E** — `APP_URL=https://company-staging.storm-ark.com`, `SESSION_SECURE_COOKIE=true`; trusted-proxy HTTPS recognition, Admin login/session/logout, `Secure` cookie attributes, and API authentication over HTTPS all passed. Activating the `.env` change required recreating only the `app` container because of a single-file bind-mount/atomic-replacement interaction (now documented in `docs/DEPLOYMENT_STAGING.md` §7a).
+
+Status per `CLAUDE.md` §7: the above is **manually verified by the operator on staging** (infrastructure). It is **not UAT**.
+
+**Gate 2E.1 (this repository-only reconciliation; no VPS, DNS, Cloudflare, firewall, Nginx, Certbot, Docker-runtime, or `.env` change):**
+
+- `docs/DECISIONS.md` — new **DEC-051** (verified ingress/TLS architecture; shared vs. Company-App-owned layers; refines DEC-050 without rewriting it).
+- `.gitignore` — explicit `/.env.staging` rule (root-anchored, exact; `.env.staging.example` and `apps/api/.env.staging.example` stay tracked). `.env.staging` was confirmed never tracked in any commit.
+- `docs/DEPLOYMENT_STAGING.md` — new §7a (bind-mount/inode gotcha and app-only recreation procedure), pointers from §4/§7/§9, §13 status updated to deployed-and-verified with ownership table and gate results (Gate 1 text preserved).
+- `docs/02_ARCHITECTURE.md` (new §31b), `docs/05_SECURITY_MODEL.md`, `docs/phases/V1_PHASE_26_STAGING_MOBILE_CONNECTIVITY_TLS_PLAN.md` (dated Gate 2 addendum + status-line note), `docs/CURRENT_STATE.md`, `docs/CHANGELOG.md`, this addendum.
+- No application code, test, dependency, migration, or Compose file changed. `docs/testing/UAT_LOG.md` intentionally unchanged.
+
+**UAT:** UAT-25-01…04 and UAT-26-01…04 remain **`NOT RUN`**.
+
+**Known issues/limitations (recorded, not acted on):**
+- A pre-existing DigitalOcean Cloud Firewall rule referencing port `8012` was not cleaned up (explicitly out of scope). It is inert for Company App because Docker publishes 8012 on loopback only.
+- `trustProxies(at: '*')` behind Cloudflare means `X-Forwarded-For`-derived client IPs are only as accurate as the host-Nginx forwarding config; no feature currently depends on real client IPs. Revisit if one does (e.g. rate limiting or audit-log IPs).
+- `docs/DEPLOYMENT_STAGING.md` §8's verification commands still use the pre-TLS `http://<host>:8012` form; §13 explains how to apply them on the current host.
+
+**Recommended next step:** Phase 26 Gate 2F — Flutter staging build with `--dart-define=API_BASE_URL=https://company-staging.storm-ark.com/api/v1` and product-owner real-device validation (UAT-26-03/04, which also exercise UAT-25-01…04), with UAT-26-01/02 recorded by the operator. Not begun by this session.

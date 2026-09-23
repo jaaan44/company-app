@@ -88,6 +88,8 @@ sed -i "s|^APP_KEY=.*|APP_KEY=base64:REPLACE_WITH_THE_VALUE_JUST_PRINTED|" apps/
 
 (Edit the line by hand instead of `sed` if you prefer — either way, the edit happens directly on the host file, never through a write attempt inside the read-only-mounted container.) The application container picks up the new value the next time it's (re)started (§5/§9) — `key:generate --show` itself does not need, and does not perform, a container restart.
 
+**Note:** `sed -i` (and many editors) replaces the file rather than editing it in place. That is harmless here on a first deployment, because the long-running `app` container is only created afterwards in §5 — but once the stack is running, see §7a before relying on `config:cache` to pick up such an edit.
+
 **Never commit the generated value, print it in a commit message or PR description, or paste it into any file under version control** — it is a real secret from the moment it's generated.
 
 ---
@@ -176,7 +178,41 @@ docker compose -p company-app -f docker-compose.staging.yml exec app php artisan
 docker compose -p company-app -f docker-compose.staging.yml exec app php artisan view:cache
 ```
 
-These are not used in local development (Phase 4A) but are standard, low-risk practice for a non-local environment. If you ever change `apps/api/.env` after caching config, run `php artisan config:cache` again — `config:cache` freezes the `.env` values it read at cache time.
+These are not used in local development (Phase 4A) but are standard, low-risk practice for a non-local environment. If you ever change `apps/api/.env` after caching config, run `php artisan config:cache` again — `config:cache` freezes the `.env` values it read at cache time. **Also read §7a first** — depending on *how* the file was edited, the running container may not be able to see the change at all.
+
+---
+
+## 7a. Editing `apps/api/.env` on a running stack — single-file bind-mount gotcha (verified in Phase 26 Gate 2E)
+
+**[Run on the VPS]** — operational behavior observed and verified on the real staging host on 2026-09-23 while changing `APP_URL`/`SESSION_SECURE_COOKIE` (DEC-051).
+
+**What happens.** `docker-compose.staging.yml` mounts `apps/api/.env` into the `app` container as a **single-file bind mount** (`./apps/api/.env:/var/www/html/.env:ro`). A single-file bind mount is attached to the host file's **inode** when the container is created, not to its path. Some edit methods — notably `sed -i`, and editors that save by writing a temporary file and renaming it over the original — perform an **atomic replacement**: the path `apps/api/.env` now points at a *new* inode, while the already-running container keeps seeing the *old* one. Consequently `php artisan config:cache` inside the existing container can silently re-cache the **stale** values, even though `cat apps/api/.env` on the host shows the new ones.
+
+**Scope — this is not "every `.env` edit needs a container recreation."** The issue applies specifically to replacement/inode-changing edits with the current single-file bind-mount design. An edit that writes into the existing file in place keeps the same inode and is visible to the running container. If you are unsure which kind of edit you made, check (this prints only inode numbers and variable *names*, never values):
+
+```sh
+cd /home/deploy/company-app
+stat -c '%i' apps/api/.env                                   # host-side inode now
+docker compose -p company-app -f docker-compose.staging.yml --env-file .env.staging \
+  exec app stat -c '%i' /var/www/html/.env                   # inode the container is holding
+```
+
+Differing numbers (on the same filesystem view) indicate the container is holding the pre-edit file. A more direct check is to confirm the specific non-secret value you changed, e.g. `... exec app php artisan config:show app.url` after caching.
+
+**Proven recovery/activation procedure after an atomic replacement** — recreate **only** the stateless `app` container. Do not rebuild the image, and do not touch `mysql` (or its volume):
+
+```sh
+cd /home/deploy/company-app
+docker compose -p company-app -f docker-compose.staging.yml --env-file .env.staging \
+  up -d --no-deps --no-build --force-recreate app
+docker compose -p company-app -f docker-compose.staging.yml --env-file .env.staging exec app php artisan config:cache
+docker compose -p company-app -f docker-compose.staging.yml --env-file .env.staging exec app php artisan route:cache
+docker compose -p company-app -f docker-compose.staging.yml --env-file .env.staging exec app php artisan view:cache
+```
+
+Then verify the non-secret values you intended to change (e.g. `php artisan config:show app.url`, `php artisan config:show session.secure`) and re-run the relevant parts of §8/§13's verification, including an end-to-end `https://company-staging.storm-ark.com/api/v1/health` request. *Precaution (not observed during Gate 2E):* Docker `nginx` resolves `app:9000` when it starts; if an end-to-end request returns `502` after the `app` container was recreated, restart only the stateless `nginx` service (`... restart nginx`) and re-check.
+
+**Never** print, `cat`, or paste real `.env` values into a terminal log, ticket, commit, or chat while diagnosing this — compare inodes or individual non-secret config keys instead.
 
 ---
 
@@ -232,7 +268,8 @@ docker compose -p company-app -f docker-compose.staging.yml exec app tail -f sto
 **[Run on the VPS]**
 
 ```sh
-# Restart everything (e.g. after an .env change that config:cache alone doesn't cover):
+# Restart everything (e.g. after an .env change that config:cache alone doesn't cover).
+# If apps/api/.env was replaced (e.g. `sed -i`), use §7a's app-only recreation instead.
 docker compose -p company-app -f docker-compose.staging.yml --env-file .env.staging restart
 
 # Stop (containers removed, volumes untouched):
@@ -381,6 +418,31 @@ Do not use this HTTPS value until Gate 2's own real-device validation step confi
 ---
 
 ## 13. TLS / domain / firewall
+
+**Status as of Phase 26 Gate 2E (2026-09-23): DEPLOYED AND VERIFIED ON STAGING (infrastructure only — UAT still `NOT RUN`).** Live deployment refined the Gate 1 model below; the authoritative description is **DEC-051**. Verified request path:
+
+```
+Internet → Cloudflare (proxied, SSL/TLS "Full (strict)")
+         → DigitalOcean Cloud Firewall (shared; inbound 80/443 Cloudflare-scoped)
+         → host Nginx (shared; TLS terminates here; independent vhost per hostname)
+         → http://127.0.0.1:8012
+         → Company App Docker nginx → PHP-FPM/Laravel
+```
+
+| Layer | Owner | State |
+|---|---|---|
+| Cloudflare proxy, Full (strict) | Shared zone; Company App owns only its proxied DNS record `company-staging.storm-ark.com` | Proxied, Full (strict) confirmed |
+| DigitalOcean Cloud Firewall | **Shared VPS infrastructure** — not Company App's | Inbound 80/443 restricted to Cloudflare IP ranges. **No change was made or needed for Company App.** Never loosen it to obtain/renew a certificate. |
+| Host Nginx | **Shared** ingress/TLS terminator | Company App has its own `company-staging.storm-ark.com` vhost → `127.0.0.1:8012`; HTTP → HTTPS redirect |
+| Origin certificate | Company App (cert name `company-staging.storm-ark.com`) | Let's Encrypt via Certbot nginx plugin; HTTP-01 validated through the Cloudflare-proxied path; renewed by the existing, shared `certbot.timer` |
+| Docker `nginx` | Company App | Publishes only `127.0.0.1:8012` (no `0.0.0.0`/`[::]`); `8442` retired/unused |
+| Laravel | Company App | `APP_ENV=staging`, `APP_DEBUG=false`, `APP_URL=https://company-staging.storm-ark.com`, `SESSION_SECURE_COOKIE=true`, `trustProxies(at: '*')` |
+
+**Gate results (operator-run on the real host):** 2A read-only preflight passed · 2B checkout deployed at `4cf55c09fb050db4df570bb5182fde4397503b0b`, 8012 loopback-only, health passed · 2C DNS + HTTP host-Nginx vhost created; external direct-origin HTTP was blocked by the shared DigitalOcean Cloud Firewall, which led to discovering the Cloudflare/shared-infrastructure architecture · 2D Cloudflare proxy and Full (strict) confirmed, Let's Encrypt certificate issued, HTTPS health and HTTP → HTTPS redirect passed · 2E `APP_URL`/`SESSION_SECURE_COOKIE` switched (activated via §7a's app-only recreation), trusted-proxy HTTPS recognition, Admin login/session/logout, `Secure` cookie attributes, and API authentication over HTTPS all passed.
+
+The §8 verification commands above still use the pre-TLS `http://<VPS-IP-or-domain>:8012` form; on the current staging host run them against `https://company-staging.storm-ark.com` from outside, or `http://127.0.0.1:8012` from the VPS itself (8012 is not externally reachable).
+
+*The remainder of this section is the Gate 1 text, preserved as written for history. Where it mentions UFW as the public firewall control, read DEC-051: the control that actually gates public 80/443 is the shared DigitalOcean Cloud Firewall, and no firewall change was made.*
 
 **Status as of Phase 26 Gate 1: PLANNED / CONFIGURED IN REPOSITORY ONLY — NOT YET DEPLOYED, NOT YET REACHABLE.** The architecture and exact procedure below are approved (DEC-050) and documented in full, gated detail in `docs/phases/V1_PHASE_26_STAGING_MOBILE_CONNECTIVITY_TLS_PLAN.md` §5–§8. **No DNS record, host-Nginx vhost, certificate, or UFW rule exists yet** — this section is a preview of Gate 2's work, not a record of anything executed. Do not describe `company-staging.storm-ark.com` as reachable until Gate 2 is actually run and its own verification steps pass.
 

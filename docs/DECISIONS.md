@@ -567,6 +567,44 @@ Two source modules — Work Logs and Leave Requests — have supervisory visibil
 
 ---
 
+### DEC-051 — Phase 26 Gate 2: staging ingress is Cloudflare (proxied, Full strict) → shared DigitalOcean Cloud Firewall (Cloudflare-scoped) → shared host Nginx (TLS, Let's Encrypt) → loopback-only Company App Docker stack
+
+**Date:** 2026-09-23
+**Status:** ACCEPTED (records the architecture as actually deployed and verified in Phase 26 Gates 2A–2E; refines DEC-050, does not supersede it)
+**Context — discovered during live deployment, not known at DEC-050 time:** DEC-050 and the Phase 26 planning document assumed the VPS's public edge was the host Nginx itself, protected by UFW. During Gate 2C, external direct-to-origin HTTP to the new vhost was blocked. Investigation showed the VPS sits behind a **DigitalOcean Cloud Firewall** (shared infrastructure for the whole VPS, not owned by Company App) whose inbound 80/443 rules are restricted to **Cloudflare IP ranges**, and that public web traffic reaches this host through **Cloudflare**'s proxy. DEC-050's text is preserved as written; this decision records the refined, verified model.
+
+**Decision — verified staging request path:**
+
+```
+Internet → Cloudflare (proxied, SSL/TLS "Full (strict)")
+         → DigitalOcean Cloud Firewall (inbound 80/443 Cloudflare-scoped)
+         → host Nginx (TLS termination, per-hostname vhost)
+         → http://127.0.0.1:8012
+         → Company App Docker nginx → PHP-FPM/Laravel
+```
+
+**SHARED VPS INFRASTRUCTURE** (pre-existing, serves other projects; Company App consumes it, does not own it):
+
+1. **Cloudflare** is the public staging ingress/proxy layer. `company-staging.storm-ark.com` stays **proxied** (orange-cloud); the zone uses SSL/TLS mode **Full (strict)**, so Cloudflare requires a valid, publicly trusted certificate at the origin.
+2. **DigitalOcean Cloud Firewall** is shared VPS infrastructure. Inbound 80/443 is Cloudflare-scoped. **No firewall change was required for Company App**, and Company App must never weaken this shared policy (e.g. opening 80/443 to the world) merely to obtain or renew a certificate.
+3. **Host Nginx** is the shared origin ingress and TLS terminator. Each application remains independently routed by hostname (its own `server_name` vhost); unrelated projects on the host remain independent and are not modified by Company App work.
+4. **Certbot** (nginx plugin) and the existing **`certbot.timer`** handle issuance and renewal for every certificate on the host. No second host Nginx or Certbot instance is introduced.
+
+**COMPANY APP OWNED CONFIGURATION:**
+
+5. The Cloudflare DNS record for `company-staging.storm-ark.com` (proxied).
+6. The host-Nginx vhost for `company-staging.storm-ark.com`: TLS termination, HTTP → HTTPS redirect, `proxy_pass http://127.0.0.1:8012` with the sibling-site `Host`/`X-Real-IP`/`X-Forwarded-For`/`X-Forwarded-Proto` header pattern.
+7. A publicly trusted **Let's Encrypt** origin certificate, certificate name `company-staging.storm-ark.com`, issued via the Certbot nginx plugin. **HTTP-01 validation relayed through the Cloudflare-proxied path** is the currently proven issuance mechanism; renewal relies on the existing `certbot.timer`.
+8. `docker-compose.staging.yml`'s `nginx` publishes **only `127.0.0.1:8012`** (no `0.0.0.0:8012`, no `[::]:8012`). Docker application ports remain loopback-only. Port `8442` stays retired/unused (DEC-050).
+9. Laravel staging runtime: `APP_ENV=staging`, `APP_DEBUG=false`, `APP_URL=https://company-staging.storm-ark.com`, `SESSION_SECURE_COOKIE=true`; `apps/api/bootstrap/app.php` keeps `$middleware->trustProxies(at: '*')` unchanged (DEC-050).
+
+**Verified at runtime (Gates 2D/2E, operator-run):** HTTPS health, HTTP → HTTPS redirect, Laravel recognising the proxied request as HTTPS, Admin Backoffice login/session/logout with `Secure` session cookies, and API token authentication over HTTPS. These are infrastructure verifications, **not UAT** — UAT-25-01…04 and UAT-26-01…04 remain `NOT RUN`.
+
+**Rationale:** The shared Cloudflare/firewall/host-Nginx layers already existed and already protect the whole VPS; the smallest safe change was to add one independent hostname/vhost/certificate on top of them rather than bypass or loosen any shared control. Full (strict) plus a real origin certificate keeps the Cloudflare→origin hop authenticated and encrypted. The `trustProxies(at: '*')` safety argument from DEC-050 still holds: Laravel's only reachable listener is loopback-bound, so host Nginx remains the only process that can originate a request to it (client-IP fidelity behind Cloudflare is a separate, not-yet-needed concern).
+**Superseded/reaffirmed:** Refines DEC-050's ingress model (adds Cloudflare and the shared DigitalOcean Cloud Firewall in front of host Nginx; the firewall control that actually gates public 80/443 is the DigitalOcean Cloud Firewall, not the UFW-centric description in DEC-050). DEC-050's core decisions — host-level TLS termination, loopback-only 8012, 8442 retired, `trustProxies(at: '*')` — are reaffirmed unchanged. DEC-047 is unaffected.
+
+---
+
 ## Template for Future Decisions
 
 ```
