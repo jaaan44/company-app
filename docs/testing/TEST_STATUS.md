@@ -495,4 +495,23 @@ In progress. Gate 1 = backend `GET /api/v1/me/home` only; Gate 2 (Flutter) not s
 
 ---
 
+## Phase 27 — Gate 4 (final integration review)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Backend `php artisan test` (full) | Automated | PASS | 1,130/1,130, 3,147 assertions. |
+| Backend `php artisan test tests/Feature/Api/V1/Home` | Automated | PASS | 50/50, 229 assertions. |
+| `vendor/bin/pint --test`, `vendor/bin/phpstan analyse` (level 5) | Automated | PASS | 0 PHPStan errors. |
+| `composer validate --strict`, `composer audit --locked` | Automated | PASS | No advisories. |
+| Flutter `flutter test` (full) | Automated | PASS | 129/129. |
+| Flutter focused: `test/features/home` / Gate 2 suites | Automated | PASS | 64/64 / 46/46. |
+| `flutter pub get`, `dart format --set-exit-if-changed`, `flutter analyze` | Automated | PASS | `pubspec.yaml`/`pubspec.lock` unchanged from `b63599d`. |
+| Cross-layer contract review | Manual | PASS | `MyHomeController` output compared field by field with `HomeSummary.fromJson` (names, types, nullability, `source_type` values, ISO 8601 instants, `utc_offset` format); every nullable column/relation matches a nullable Dart field and every non-null one is `NOT NULL` in its migration. |
+| MySQL ordering (Gate 1A) | Automated (temporary) | PASS | Recorded in the Gate 1A row above; not re-run in Gate 4 (no backend change since). |
+| CI (GitHub Actions) | Automated | See PR | Result recorded on the Phase 27 implementation PR. |
+| Device/emulator verification | Manual | NOT RUN | No device in this sandbox. |
+| UAT | — | NOT RUN | UAT-27-01…08 `NOT RUN`. |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*

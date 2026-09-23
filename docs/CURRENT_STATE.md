@@ -3,10 +3,10 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** **Phase 27 — Employee Home / Dashboard (Mobile) — IN PROGRESS.** Specification approved and merged (PR #43, `b63599d4249d3aa621e29468378dea93d540abe4`); implementation authorized in gates on branch `claude/quirky-curie-82ufli` (not yet merged, no PR). **Gates 1 (backend `GET /api/v1/me/home`), 1A (MySQL verification) and 2 (Flutter authenticated API client and session lifecycle) are accepted. Gate 3 (the Flutter employee Home screen) is implemented and tested** — the mobile Home tab now shows the real Home, replacing the Phase 25 placeholder. Still pending: final integration review, PR/CI, the phase handoff, and UAT (UAT-27-01…08 `NOT RUN`). Phase 26 remains formally closed (2026-09-23).
+**Current phase:** **Phase 27 — Employee Home / Dashboard (Mobile) — IMPLEMENTATION COMPLETE, pending PR review/CI, staging and UAT (not closed).** Specification approved and merged (PR #43, `b63599d4249d3aa621e29468378dea93d540abe4`). Gates 1 (backend `GET /api/v1/me/home`), 1A (MySQL verification), 2 (Flutter authenticated API client and session lifecycle) and 3 (Flutter employee Home screen) are accepted; Gate 4's final integration review is done and the implementation PR is open against `main` (not merged, not deployed). Handoff: `docs/handoffs/V1_PHASE_27_HANDOFF.md`. UAT-27-01…08 are `NOT RUN`. Phase 26 remains formally closed (2026-09-23).
 **Phase status:** Staging is **deployed and reachable over HTTPS** at `https://company-staging.storm-ark.com` (infrastructure verified by the operator; **real-device UAT passed**, Gate 2F, 2026-09-23). Live deployment refined the Gate 1 model: the verified path is Internet → Cloudflare (proxied, Full (strict)) → **shared** DigitalOcean Cloud Firewall (inbound 80/443 Cloudflare-scoped) → **shared** host Nginx (TLS, Let's Encrypt cert `company-staging.storm-ark.com`, HTTP → HTTPS redirect) → `127.0.0.1:8012` → Company App Docker nginx → Laravel (`APP_URL` HTTPS, `SESSION_SECURE_COOKIE=true`, `trustProxies(at: '*')`). Recorded as **DEC-051** (refines DEC-050). See `docs/DEPLOYMENT_STAGING.md` §13/§7a and the Phase 26 handoff addendum.
 **Last completed phase:** Phase 26 — Staging Mobile Connectivity & TLS (formally closed 2026-09-23; Phases 1–26 are merged into `main`). Phase 25 via PR #37 (merged 2026-09-22 into `4ce9f6ea9d9ac86ef57da5e6b067cde37ca09df9`); Phase 26 via PRs #38–#41, final merge `4511d4e5ae37f4b5db74235fdd21903be196ba9e`.
-**Next planned phase:** Phase 27 final integration review / PR, once explicitly authorized; then Phase 28 — People (Mobile), per `docs/ROADMAP.md`. Per `CLAUDE.md` §8, no session begins either automatically.
+**Next planned phase:** Phase 27 PR review and merge, staging deployment and UAT, then formal Phase 27 closure; then Phase 28 — People (Mobile), per `docs/ROADMAP.md`. Per `CLAUDE.md` §8, no session begins either automatically.
 
 ## Current Objective
 
@@ -276,7 +276,8 @@ Phase 22 (Security Audit) was authorized in two steps: an audit/planning session
 ## Pending / Not Started
 
 - **Phase 26's carried-forward, non-blocking items** (see the Phase 26 entry under Completed): UAT-24-04 wording, the inert `8012` DigitalOcean firewall rule, client-IP accuracy behind `trustProxies(at: '*')`, the Android app label, and Android release signing.
-- **Phase 27 closure** — final integration review, PR/CI, the phase handoff (`docs/handoffs/V1_PHASE_27_HANDOFF.md`), and product-owner UAT (UAT-27-01…08, `NOT RUN`). Awaiting authorization.
+- **Phase 27 closure** — PR review/CI and merge, staging deployment, confirming staging's `SCHEDULING_COMPANY_TIMEZONE` (before UAT-27-02), product-owner UAT (UAT-27-01…08, `NOT RUN`), then formal closure. Handoff written.
+- **Deferred from Phase 27 (not changed):** the `/schedule` UTC day-boundary discrepancy (spec §3.4/R-7 → Phase 30, Schedule); the offline-launch sign-out in `AuthController.bootstrap()` and a missing-charset/Latin-1 decoding hardening in the mobile `ApiClient` (currently harmless because Laravel escapes non-ASCII JSON) — both candidates for Phase 36 (Integration & UX Hardening).
 - **Pre-existing, not changed (observed in Gate 2):** `AuthController.bootstrap()` (Phase 4) treats *any* `/auth/me` failure at launch — including a network failure — as an invalid token and deletes it, so launching offline signs the user out. Out of Phase 27's scope; recorded for a later hardening phase. UAT-27-01…08 are logged as `NOT RUN`.
 - **Before UAT-27-02:** establish the staging `SCHEDULING_COMPANY_TIMEZONE` value (spec §14 R-7) — an operational check, not a code change.
 - Phase 28 onward through UAT (now Phase 37) and Release Readiness (now Phase 38) — see `docs/ROADMAP.md`'s re-baselined sequence (DEC-048); none of this is authorized yet.
@@ -315,12 +316,12 @@ Phase 22 (Security Audit) was authorized in two steps: an audit/planning session
 - Phase 26 Gate 2E.1 reconciliation branch: `claude/dazzling-cori-jnu4r9`, from `main` at `4cf55c09fb050db4df570bb5182fde4397503b0b` — documentation/`.gitignore` only; merged into `main` via PR #39 at `b3c80bcbebee2e452de1ef1b4672b506b8598a7c`.
 - Phase 26 Gate 2F branch: `claude/lucid-faraday-l75smn`. It carried the D-1 fix (PR #40, merged at `ee86c6e47bb223dac47f524d2bbd28e7bece0d99`), then was restarted from `main` for the UAT record (PR #41, merged at `4511d4e5ae37f4b5db74235fdd21903be196ba9e`).
 - Phase 26 formal-closure branch: `claude/phase-26-formal-closure`, from `main` at `4511d4e5ae37f4b5db74235fdd21903be196ba9e`. Documentation only.
-- Phase 27 branch: `claude/quirky-curie-82ufli`. Carried the planning specification (PR #43, merged at `b63599d4249d3aa621e29468378dea93d540abe4`), then was restarted from that exact baseline for Phase 27 implementation; Gate 1 (backend), Gate 1A (MySQL verification record), Gate 2 (Flutter session lifecycle) and Gate 3 (Flutter Home screen) are committed and pushed there, **not merged, no PR yet**.
+- Phase 27 branch: `claude/quirky-curie-82ufli`. Carried the planning specification (PR #43, merged at `b63599d4249d3aa621e29468378dea93d540abe4`), then was restarted from that exact baseline for Phase 27 implementation; Gate 1 (backend), Gate 1A (MySQL verification record), Gate 2 (Flutter session lifecycle) and Gate 3 (Flutter Home screen) and the Gate 4 documentation/handoff are committed and pushed there; the implementation PR against `main` is open, **not merged**.
 - **Staging VPS:** the same real, personal, multi-project host (Ubuntu 24.04.4 LTS) runs the **formal Phase 24 staging stack** (`company-app-api:staging`/`company-app-nginx:staging`/`mysql:8.4`), deployed from `main` at `4cf55c09fb050db4df570bb5182fde4397503b0b` (Gate 2B), with its `company-app_mysql-data` volume preserved. Docker `nginx` publishes only `127.0.0.1:8012`; `8442` is retired; MySQL has no host port. Public access is **only** via `https://company-staging.storm-ark.com` through Cloudflare → shared DigitalOcean Cloud Firewall → shared host Nginx (DEC-051).
 
 ## Latest Relevant Handoff
 
-`docs/handoffs/V1_PHASE_26_HANDOFF.md`
+`docs/handoffs/V1_PHASE_27_HANDOFF.md` (Phase 27, implementation complete, not closed); previous: `docs/handoffs/V1_PHASE_26_HANDOFF.md`
 
 ## For the Next Session
 
