@@ -435,6 +435,21 @@ Because this runs through Laravel's real Gate resolution, every existing authori
 
 **Not introduced (Phase 26 Gate 1):** a second host-level Nginx installation, Docker-network CIDR pinning for trusted-proxy purposes (evaluated and rejected — fragile against stack recreation, no real security benefit on this single-tenant Docker network), any diagnostic/debug route, any business-module mobile screen, any Admin Backoffice change, any dependency update.
 
+## 31b. Staging Ingress/TLS — as deployed (Phase 26 Gate 2, DEC-051)
+
+**Status: DEPLOYED AND VERIFIED on staging (2026-09-23; infrastructure verification only — UAT still `NOT RUN`).** Live deployment refined §31a: the VPS's public edge is not host Nginx directly but Cloudflare plus a shared DigitalOcean Cloud Firewall. §31a is preserved as the Gate 1 record.
+
+```
+Internet → Cloudflare (proxied, Full (strict))
+         → DigitalOcean Cloud Firewall (inbound 80/443 Cloudflare-scoped)
+         → host Nginx (TLS termination; vhost company-staging.storm-ark.com)
+         → http://127.0.0.1:8012 → Company App Docker nginx → PHP-FPM/Laravel
+```
+
+- **Shared VPS infrastructure (not owned by Company App):** Cloudflare proxying, the DigitalOcean Cloud Firewall, host Nginx, Certbot and its `certbot.timer`. Other projects on the host route independently by hostname and are untouched by Company App.
+- **Company App owned configuration:** the proxied DNS record, the `company-staging.storm-ark.com` host-Nginx vhost (HTTP → HTTPS redirect, `proxy_pass http://127.0.0.1:8012`), the Let's Encrypt certificate of the same name (Certbot nginx plugin, HTTP-01 through the Cloudflare-proxied path), the loopback-only `127.0.0.1:8012` Docker publish (no `0.0.0.0`/`[::]`; `8442` retired), and the Laravel staging env (`APP_URL=https://company-staging.storm-ark.com`, `SESSION_SECURE_COOKIE=true`, `APP_DEBUG=false`) with `trustProxies(at: '*')` unchanged.
+- **Operational note:** `apps/api/.env` is a single-file bind mount; an atomic-replacement edit (e.g. `sed -i`) is not visible to an already-running `app` container — see `docs/DEPLOYMENT_STAGING.md` §7a.
+
 ## 32. Mobile Application Foundation & Navigation Shell (confirmed, Phase 25)
 
 **Routing (DEC-046, implemented):** `go_router` (the sole new `pubspec.yaml` dependency this phase adds — `flutter_localizations`/`intl`/`material_ui`/`cupertino_ui` arrive transitively) replaces `MaterialApp.home`/the former `AuthGate` widget-switch. `lib/app/router.dart`'s `buildAppRouter()` builds one `GoRouter` wired with `refreshListenable: authController`, so every `AuthController` status change (bootstrap resolving, login, logout) re-evaluates its `redirect` callback automatically. Three top-level states: `/splash` (the former `AuthGate` `CircularProgressIndicator` Scaffold, shown while `AuthStatus.unknown`), `/login`, and a `StatefulShellRoute.indexedStack` wrapping the five bottom-navigation branches (`/home`, `/tasks`, `/schedule`, `/messages`, `/more`) — each branch keeps its own `Navigator`/stack alive across tab switches, IndexedStack-style, rather than being rebuilt from scratch. `redirect` only returns a new location when the current one doesn't already match the target, which is what prevents a redirect loop.
