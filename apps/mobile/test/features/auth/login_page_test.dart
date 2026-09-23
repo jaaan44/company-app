@@ -10,6 +10,7 @@ import 'package:mobile/features/auth/data/auth_api_client.dart';
 import 'package:mobile/features/auth/presentation/login_page.dart';
 import 'package:mobile/features/auth/state/auth_controller.dart';
 
+import '../../support/fake_backend.dart';
 import 'fake_token_storage.dart';
 
 Widget _wrap(Widget child) => MaterialApp(home: child);
@@ -103,5 +104,71 @@ void main() {
       findsOneWidget,
     );
     expect(controller.status, AuthStatus.unauthenticated);
+  });
+
+  group('session-ended notice (Phase 27)', () {
+    Future<AuthController> expiredController(FakeBackend backend) async {
+      final controller = backend.controller(
+        RecordingTokenStorage(initialToken: 'token-a'),
+      );
+      await controller.bootstrap();
+      await controller.expireSession(tokenUsed: 'token-a');
+
+      return controller;
+    }
+
+    testWidgets('is shown, and announced, after an automatic expiry', (
+      tester,
+    ) async {
+      final controller = await expiredController(FakeBackend());
+
+      await tester.pumpWidget(_wrap(LoginPage(controller: controller)));
+
+      final notice = find.text(AuthController.sessionEndedNotice);
+      expect(notice, findsOneWidget);
+      expect(
+        find.ancestor(
+          of: notice,
+          matching: find.byWidgetPredicate(
+            (widget) =>
+                widget is Semantics && widget.properties.liveRegion == true,
+          ),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('disappears as soon as the next sign-in is submitted', (
+      tester,
+    ) async {
+      final backend = FakeBackend()..nextLoginToken = 'token-b';
+      final controller = await expiredController(backend);
+
+      await tester.pumpWidget(_wrap(LoginPage(controller: controller)));
+      await tester.enterText(
+        find.byType(TextFormField).first,
+        'ada@example.com',
+      );
+      await tester.enterText(find.byType(TextFormField).last, 'password');
+      await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
+      await tester.pump();
+
+      expect(find.text(AuthController.sessionEndedNotice), findsNothing);
+      await tester.pumpAndSettle();
+      expect(controller.sessionEndedMessage, isNull);
+    });
+
+    testWidgets('is not shown after a manual logout', (tester) async {
+      final backend = FakeBackend();
+      final controller = backend.controller(
+        RecordingTokenStorage(initialToken: 'token-a'),
+      );
+      await controller.bootstrap();
+      await controller.logout();
+
+      await tester.pumpWidget(_wrap(LoginPage(controller: controller)));
+
+      expect(find.text(AuthController.sessionEndedNotice), findsNothing);
+    });
   });
 }

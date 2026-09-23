@@ -447,4 +447,71 @@ No automated tests apply to this phase — no application code exists yet.
 | GitHub Actions CI | — | PASS (on PR #28, see above) | Path-filtered workflows (DEC-015) triggered correctly for the diff's `apps/api/**` files; mobile workflow correctly did not trigger. |
 | UAT | — | See `docs/testing/UAT_LOG.md` | `UAT-24-01` through `UAT-24-03` now recorded `PASS` (reported directly by the product owner from the real VPS deployment); `UAT-24-04` (deliberate-404/attachment/mobile checks) remains `NOT RUN`. |
 
+## Phase 27 — Employee Home / Dashboard (Mobile) — Gate 1 (Backend Home API)
+
+In progress. Gate 1 = backend `GET /api/v1/me/home` only; Gate 2 (Flutter) not started.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Focused Phase 27 suite (`php artisan test tests/Feature/Api/V1/Home`) | Automated | PASS | 50 tests, 229 assertions: `MyHomeTest` (auth 401 variants incl. expired/revoked token; inactive account → 403 + token revoked; exact response shape; no internal ids/unapproved fields; request parameters ignored; profile/no-profile; employee, Administrator, Manager-with-direct-reports, Project Lead isolation), `MyHomeTodayTest` (creator/participant ownership; project-only entries, leave, milestones, terminal/other-day/others' tasks excluded; inclusive overlap boundaries; company-timezone day in a non-UTC zone; ordering and tie-breaks incl. byte-wise and numeric-looking titles; limit 5 + `total_count`; bounded fetch equals a full sort), `MyHomeCountsTest` (open/overdue/due-today definitions; `OverdueTasks` parity; unread-message parity with `ConversationMember::unreadCount()`; notification parity with `/me/notifications/unread-count`; announcement eligibility, limit 3, preview fields, tie-break, subset of `/me/announcements`; constant query count for 1 vs 20 of everything). |
+| Mutation check of the new tests | Manual | PASS | Nine deliberate controller mutations (announcement limit, unread-message null branch, DB and PHP all-day ordering, strict overlap, announcement tie-break, project-visibility leak, UTC instead of company date, numeric title compare) — each made at least one test fail. One (DB-side all-day ordering) initially survived, which led to adding `test_the_per_source_limit_keeps_an_all_day_entry_ahead_of_timed_entries_sharing_its_start`. The controller was restored byte-for-byte afterwards. |
+| `php artisan test` (full suite) | Automated | PASS | 1,130/1,130 (1,080 pre-existing + 50 new), 3,147 assertions. No existing test changed. |
+| `vendor/bin/pint --test` | Automated | PASS | |
+| `vendor/bin/phpstan analyse` (level 5) | Automated | PASS | 0 errors. |
+| `composer validate --strict` / `composer audit --locked` | Automated | PASS | No advisories. |
+| MySQL byte-wise title ordering (`CAST(title AS BINARY)`) — Gate 1A | Automated (temporary, not committed) + manual | PASS | Run against MySQL 8.4.11 (the repo's `docker-compose.yml` `mysql:8.4` service, bound to `127.0.0.1` only, a throwaway `company_app_phase27_test` database, torn down afterwards; `tasks.title` collation `utf8mb4_unicode_ci`). The committed Home suite (50 tests) passes on MySQL. A temporary verification test drove the real `GET /api/v1/me/home` and confirmed: both bounded source queries execute `CAST(title AS BINARY)`; for titles `b, C, a, 10, 9, B, A` MySQL binary order `10, 9, A, B, C, a, b` equals the PHP `strcmp` comparator order, and the API returns `10, 9, A, B, C` with `total_count` 7 (the column's default collation order would be `10, 9, a, A, b, B, C`); a same-start entry/task merge across the `LIMIT 5` boundary returns the expected items; and a randomized 28-item fixture's top 5 equals a full PHP sort. Negative control: with the `CAST` branch temporarily replaced by plain `title ASC`, the API returned `10, 9, A, a, b` and the test failed, so the fixture does detect collation-dependent ordering. The controller was restored byte-for-byte and no backend source changed. |
+| Flutter checks | — | NOT APPLICABLE (Gate 1) | No Flutter change in Gate 1. |
+| UAT | — | NOT RUN | UAT-27-01…08 added to `docs/testing/UAT_LOG.md` as `NOT RUN`; not runnable until Gate 2. |
+
+---
+
+## Phase 27 — Gate 2 (Flutter authenticated API client & session lifecycle)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `flutter pub get` | Automated | PASS | Flutter 3.47.2 stable. `pubspec.yaml`/`pubspec.lock` unchanged. |
+| `dart format --output=none --set-exit-if-changed .` | Automated | PASS | |
+| `flutter analyze` | Automated | PASS | No issues. |
+| `flutter test` (full) | Automated | PASS | 65/65 — the 22 pre-existing Phase 4/25 tests unchanged, plus 43 new. |
+| Focused Gate 2 suites | Automated | PASS | `api_client_test.dart` (bearer token, configured and default base URL, success decode, non-JSON body, 4xx/5xx/network propagation with session kept, no request without a token, token never in error text); `session_lifecycle_test.dart` (401 → local expiry with notice, no `/auth/logout`, no re-check; two simultaneous 401s and a 401 during deletion → one deletion, one transition; 403 + `/auth/me` 200/401/403/500/503/network with exactly one re-check each; 401 racing manual logout in both orders; stale token-A 401 and stale token-A 403→401 after token-B login leave B signed in; repeated expiry no-op; login clears the notice; token-deletion failure still signs out); `session_expiry_test.dart` (the real `CompanyApp`: 401 and 403→401 return to Login with the notice and dispose the shell; 403→200 and 403→5xx keep the shell; network/server errors never show the notice; manual logout and fresh launch show no notice; re-login after expiry; stale 401 after re-login keeps the shell); `login_page_test.dart` (notice shown in a live region, cleared on submit, absent after manual logout). |
+| Mutation check | Manual | PASS | Eight deliberate mutations (no stale-token check, no single-flight, 403 always expires, inconclusive re-check treated as invalid, 401 not expiring, no notice on expiry, storage failure rethrown, notice on manual logout) — each failed at least one test; sources restored byte-for-byte. |
+| Device/emulator verification | Manual | NOT RUN | No device or emulator in this sandbox. |
+| UAT | — | NOT RUN | UAT-27-01…08 unchanged (`NOT RUN`); Home UI (Gate 3) not built. |
+
+---
+
+## Phase 27 — Gate 3 (Flutter employee Home screen)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `flutter pub get` | Automated | PASS | `pubspec.yaml`/`pubspec.lock` unchanged. |
+| `dart format --output=none --set-exit-if-changed .` | Automated | PASS | |
+| `flutter analyze` | Automated | PASS | No issues. |
+| `flutter test` (full) | Automated | PASS | 129/129 (65 before Gate 3 + 64 new). |
+| Focused Home suites (`flutter test test/features/home`) | Automated | PASS | 64: `home_summary_test.dart` (populated, nullable, no-profile, schedule and task items, company_day and offsets, counts, announcements, 7 malformed-payload cases; company-time formatting incl. multi-day from/until and labels); `home_controller_test.dart` (loading, loaded, no-profile, network/server/shape/ordinary-403 errors, retry, refresh success/failure, one request in flight, 401 via Gate 2, late response after dispose); `home_page_test.dart` through the real `CompanyApp` (section order, greeting/profile, Today items/order/company time/"+N more"/empty, counts and zero wording, announcements and empty, no-profile, no interactive widgets or chevrons in content, taps navigate nowhere, shell tabs still work, spinner, error + Try again, generic server message, pull-to-refresh success/failure, no re-fetch on rebuild/theme/tab switch, `/me/home` 401 → Login + notice, ordinary 403 → Try again with session kept, logout, light/dark/200% text with long content at 360×740 and 1024×768, semantics labels and tap-target/label guidelines). |
+| Mutation check | Manual | PASS | 10 valid mutations (tappable tile, chevron on a row, null messages shown as 0, client re-sorting Today, load removed from `initState`, fetch on every build, device timezone instead of `utc_offset`, expiry shown as a Home error, refresh failure dropping data, time-of-day greeting) each failed at least one test. The fetch-on-build mutation initially survived, which led to forcing real page rebuilds in the no-re-fetch test. Sources restored byte-for-byte. |
+| Device/emulator verification | Manual | NOT RUN | No device or emulator in this sandbox. |
+| UAT | — | NOT RUN | UAT-27-01…08 remain `NOT RUN`. |
+
+---
+
+## Phase 27 — Gate 4 (final integration review)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Backend `php artisan test` (full) | Automated | PASS | 1,130/1,130, 3,147 assertions. |
+| Backend `php artisan test tests/Feature/Api/V1/Home` | Automated | PASS | 50/50, 229 assertions. |
+| `vendor/bin/pint --test`, `vendor/bin/phpstan analyse` (level 5) | Automated | PASS | 0 PHPStan errors. |
+| `composer validate --strict`, `composer audit --locked` | Automated | PASS | No advisories. |
+| Flutter `flutter test` (full) | Automated | PASS | 129/129. |
+| Flutter focused: `test/features/home` / Gate 2 suites | Automated | PASS | 64/64 / 46/46. |
+| `flutter pub get`, `dart format --set-exit-if-changed`, `flutter analyze` | Automated | PASS | `pubspec.yaml`/`pubspec.lock` unchanged from `b63599d`. |
+| Cross-layer contract review | Manual | PASS | `MyHomeController` output compared field by field with `HomeSummary.fromJson` (names, types, nullability, `source_type` values, ISO 8601 instants, `utc_offset` format); every nullable column/relation matches a nullable Dart field and every non-null one is `NOT NULL` in its migration. |
+| MySQL ordering (Gate 1A) | Automated (temporary) | PASS | Recorded in the Gate 1A row above; not re-run in Gate 4 (no backend change since). |
+| CI (GitHub Actions) | Automated | See PR | Result recorded on the Phase 27 implementation PR. |
+| Device/emulator verification | Manual | NOT RUN | No device in this sandbox. |
+| UAT | — | NOT RUN | UAT-27-01…08 `NOT RUN`. |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*

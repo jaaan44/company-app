@@ -1,0 +1,298 @@
+# Phase 27 — Employee Home / Dashboard (Mobile) — Handoff
+
+**Status: implementation complete — pending PR review/CI, staging deployment and product-owner UAT. Phase 27 is NOT formally closed.**
+
+## 1. Phase Identification
+
+- **Phase:** 27 — Employee Home / Dashboard (Mobile)
+- **Date:** 2026-09-23
+- **Specification:** `docs/phases/V1_PHASE_27_DEFINITION.md` (revision 2), approved and merged via PR #43. That merge, `b63599d4249d3aa621e29468378dea93d540abe4`, is the **authoritative specification baseline**.
+- **Branch:** `claude/quirky-curie-82ufli`, restarted from exactly `b63599d` for implementation (after PR #43 merged). Before each gate this session checked the branch, the expected HEAD, a clean tree, `main` at `b63599d`, and that no PRs were open.
+- **Gates (all on the one branch, no history rewritten):**
+  - Gate 1, backend `GET /api/v1/me/home`: `e6a4908`, `43155f4`
+  - Gate 1A, MySQL verification record: `67ed99b`
+  - Gate 2, Flutter authenticated API client and session lifecycle: `68c8f89`, `6d79ed2`
+  - Gate 3, Flutter employee Home screen: `c95c8fd`, `8f16869`
+  - Gate 4, final integration review, this handoff and the implementation PR: the final documentation commit
+- **Pull request:** the Phase 27 implementation PR (`claude/quirky-curie-82ufli` → `main`) was opened in Gate 4. It is **not merged**.
+
+## 2. Objective
+
+Replace the Phase 25 Home placeholder with a small, read-only employee Home that always describes the signed-in person. It shows who they are, what needs their attention, what is on for them today, and the latest announcements addressed to them. No role turns it into a company-wide dashboard, and no later-phase module is pulled forward.
+
+## 3. Scope Implemented
+
+- **Backend:** `GET /api/v1/me/home`: self-scoped, bounded and read-only, with no parameters, no new permission and no migration (spec §6).
+- **Mobile authenticated requests:** `ApiClient` with centralized 401/403 session rules, and a single-flight, stale-token-safe session-ending routine shared by manual logout and automatic expiry. Login shows a session-ended notice after automatic expiry (spec §7).
+- **Mobile Home screen:** greeting, Today, Needs attention and Latest announcements. It also has a no-profile state, a loading state, an error state with "Try again", and pull-to-refresh. Content is non-interactive (spec §8).
+- **Product decisions honoured:**
+  - R-1: no navigation from Home content.
+  - R-2: announcements preview, at most 3.
+  - R-3: Today contains only the employee's own schedule entries and tasks, with no leave.
+  - R-4: no operational status.
+
+Excluded as specified: People, Tasks, Schedule, Operations, HR/leave, Communication inboxes and detail views, Field Reporting, Admin screens, and any Phase 28+ work. The Tasks/Schedule/Messages/More tabs are unchanged Phase 25 placeholders.
+
+## 4. Implementation Summary
+
+### Backend (`apps/api`)
+
+- **Controller:** `App\Http\Controllers\Api\V1\Home\MyHomeController::show`. Route `api.v1.me.home`, behind `auth:sanctum` and `account.active`.
+- **Subject:** taken only from `$request->user()` and its linked Staff record. No request input is read, and there is no `tasks.view`, Project Lead, Manager direct-report or `Gate::before` branch.
+- **No linked Staff:** `200`, with `staff`, `today`, `tasks`, `messages` and `announcements` set to `null`. `user`, `company_day` and `notifications` are always present.
+- **Existing definitions reused, none redefined:**
+  - `CompanyTimezone` and `OverdueTasks::todayInCompanyTimezone()` for the company date and day window;
+  - `OverdueTasks::scope()` for overdue tasks;
+  - the terminal-status set `completed`/`cancelled` for "open";
+  - the Schedule Entry creator/participant clauses for Today ownership;
+  - the task's single assignee for task ownership;
+  - `ConversationMember::unreadCount()`'s predicate, summed in **one** aggregate query, for unread messages;
+  - the `/me/notifications/unread-count` query for unread notifications;
+  - `ScopesAnnouncementVisibility::scopeVisibleToStaff()` for announcements.
+- **Today:**
+  - **Contents:** own schedule entries overlapping the company day (inclusive), plus own open tasks due on the company date.
+  - **Order:** start, then all-day first, then entry before task, then byte-wise title, then `public_id`.
+  - **Limit:** at most 5 items plus `total_count`.
+  - **Queries:** each source is limited to 5 in the database with the same ordering. The database uses `CAST(title AS BINARY)` on MySQL/MariaDB and SQLite's default BINARY collation; PHP compares with `strcmp`.
+- **Queries per request:** 12, whatever the data volume (measured).
+
+### Mobile (`apps/mobile`)
+
+- **`lib/core/network/api_client.dart`:** `ApiClient.getJson(path)` with a bearer token from the current session.
+  - **401:** `expireSession`, which clears the session locally.
+  - **403:** exactly one `GET /auth/me` re-check through `AuthApiClient`, so it can never recurse. A 401 from that check expires the session. A 200, 403, 5xx or network failure keeps the session and reports the original 403.
+- **`lib/core/network/api_exception.dart`:** a sealed error model with five cases: `ApiSessionExpiredException`, `ApiForbiddenException`, `ApiNetworkException`, `ApiServerException` and `ApiRequestException`.
+- **`AuthController`:**
+  - implements `ApiSession` and keeps the current token in memory (it is still persisted in `TokenStorage`);
+  - `logout()` (server revoke, then local clear) and `expireSession(tokenUsed:)` (local clear only) share one single-flight `_endSession`;
+  - an expiry applies only if the session is still authenticated and `tokenUsed` is the current token;
+  - token deletion is awaited, and a storage failure still signs out.
+- **`LoginPage`:** shows "Your session has ended. Please sign in again." in a live region, only after automatic expiry.
+- **`AuthApiException`:** gains an optional `statusCode`.
+- **`lib/features/home/`:**
+  - `domain/home_summary.dart`: strict typed contract; `null` sections stay `null`.
+  - `data/home_api_client.dart`: one `ApiClient` call.
+  - `state/home_controller.dart`: a `ChangeNotifier` with states loading / loaded / error; refresh keeps content; one request in flight; session expiry ignored because Gate 2 handles it.
+  - `presentation/home_page.dart`: loads once in `initState`.
+  - `presentation/home_formatting.dart`: company-time formatting from `company_day.utc_offset`, with no timezone package.
+- **Wiring:** `CompanyApp` and `buildAppRouter` accept an optional injected `HomeApiClient`, mirroring the existing `authController` injection.
+
+## 5. Files Changed
+
+36 files against `b63599d`: 19 added, 16 modified, 1 deleted. The deleted file, `apps/mobile/lib/features/home/home_page.dart`, was rewritten at `presentation/home_page.dart`.
+
+- **Backend implementation (2):**
+  - `apps/api/app/Http/Controllers/Api/V1/Home/MyHomeController.php`
+  - `apps/api/routes/api/v1.php`
+- **Backend tests (3):** `apps/api/tests/Feature/Api/V1/Home/{MyHomeTest,MyHomeTodayTest,MyHomeCountsTest}.php`
+- **Mobile implementation (13, including the deleted placeholder):**
+  - `lib/app/{app,router}.dart`
+  - `lib/core/network/{api_client,api_exception}.dart`
+  - `lib/features/auth/{data/auth_api_client,presentation/login_page,state/auth_controller}.dart`
+  - `lib/features/home/{data/home_api_client,domain/home_summary,state/home_controller,presentation/home_page,presentation/home_formatting}.dart`
+  - the removed `lib/features/home/home_page.dart`
+- **Mobile tests (10):**
+  - `test/app/{router_test,session_expiry_test}.dart`
+  - `test/core/network/api_client_test.dart`
+  - `test/features/auth/{login_page_test,session_lifecycle_test}.dart`
+  - `test/features/home/{home_summary_test,home_controller_test,home_page_test}.dart`
+  - `test/support/{fake_backend,home_fixtures}.dart`
+- **Documentation (9 before this handoff, plus this file):**
+  - `docs/{02_ARCHITECTURE,04_API_CONVENTIONS,05_SECURITY_MODEL,06_UI_UX_GUIDELINES,CHANGELOG,CURRENT_STATE,DECISIONS}.md`
+  - `docs/phases/V1_PHASE_27_DEFINITION.md`
+  - `docs/testing/{TEST_STATUS,UAT_LOG}.md`
+  - `docs/handoffs/V1_PHASE_27_HANDOFF.md`
+
+Nothing else changed: no migrations, environment files, Docker/infrastructure, CI workflows, `composer.json`/`composer.lock`, or `pubspec.yaml`/`pubspec.lock`.
+
+## 6. Database/Schema Changes
+
+None. Existing indexes suffice: `tasks(assignee_staff_id, status)`, `messages(conversation_id, id)`, `conversation_members(conversation_id, staff_id)`, `notifications(recipient_user_id, read_at)`, `schedule_entries(creator_staff_id, starts_at)`, and the participant pivot's foreign keys.
+
+## 7. API Changes
+
+Added `GET /api/v1/me/home` (spec §6.2): a single object with `user`, `staff`, `company_day` (`date`, `timezone`, UTC `starts_at`/`ends_at`, `utc_offset`), `today` (`total_count`, ≤ 5 `items`), `tasks` (`open_count`/`overdue_count`/`due_today_count`), `messages.unread_count`, `notifications.unread_count`, and `announcements.latest` (≤ 3; `public_id`/`title`/`published_at`).
+
+Errors:
+- `401`: missing, invalid, revoked or expired token.
+- `403`: inactive account; `account.active` also revokes the token.
+
+No existing endpoint changed.
+
+## 8. Authorization/Security Changes
+
+- **No new permission.** The subject is token-derived only, and role never widens the response. This is tested for an ordinary employee, an Administrator, a Manager with direct reports and a Project Lead.
+- **No leakage:** no internal ids, contact details, manager, employment or operational status, location, message or announcement bodies, or acknowledgement data.
+- **Mobile session rule:** 401 ends the session. 403 alone never does, and never parses message text. Session ending is single-flight and idempotent, a stale token can't sign out a newer login, and tokens never appear in error text.
+- Recorded in DEC-052 and `05_SECURITY_MODEL.md`.
+
+## 9. Tests Added or Changed
+
+- **Backend: 50 feature tests, 229 assertions.** They cover:
+  - every 401 variant and inactive → 403 with the token revoked;
+  - the exact response shape and forbidden fields;
+  - request parameters being ignored;
+  - profile and no-profile responses;
+  - four-role isolation;
+  - Today ownership and exclusions (project-only entries, leave, milestones, terminal/other-day/others' tasks);
+  - inclusive overlap boundaries and a non-UTC company day;
+  - ordering and tie-breaks, including byte-wise and numeric-looking titles;
+  - the limit plus `total_count`, and the bounded fetch equalling a full sort (randomized);
+  - count definitions, with parity against `OverdueTasks`, `ConversationMember::unreadCount()` and `/me/notifications/unread-count`;
+  - announcement eligibility, limit, fields, tie-break, and being a subset of `/me/announcements`;
+  - constant query count.
+- **Gate 1A (MySQL 8.4.11):** a temporary, uncommitted test on the real endpoint confirmed that `CAST(title AS BINARY)` ordering equals the PHP comparator and that the `LIMIT 5` boundary is correct. A negative control (the plain collation order) failed as expected. The committed Home suite also passed on MySQL.
+- **Mobile: 107 new tests** (43 in Gate 2, 64 in Gate 3). They cover:
+  - bearer token and base URL;
+  - error propagation;
+  - 401 expiry;
+  - 403 with each `/auth/me` outcome, with no recursion;
+  - concurrent 401s;
+  - 401 racing manual logout in both orders;
+  - stale token-A 401/403 after a token-B login;
+  - storage failure;
+  - the Login notice;
+  - Home parsing, including malformed payloads;
+  - controller states, retry and refresh;
+  - UI sections and states;
+  - no-profile;
+  - non-interactivity, including tap-throughs;
+  - no re-fetch on rebuild;
+  - session integration;
+  - light/dark and 200% text with long content at phone and tablet sizes;
+  - semantics and tap-target guidelines.
+- **Changed existing tests:** only where the placeholder was intentionally replaced. One `router_test.dart` assertion changed ("Signed in as …" → the Home app bar), and two import paths changed because `HomePage` moved.
+- **Mutation checks (manual):**
+  - Gate 1: 9 controller mutations.
+  - Gate 2: 8 session mutations.
+  - Gate 3: 10 Home mutations.
+
+  Each made at least one test fail, after two gaps were closed with added tests.
+
+## 10. Commands/Checks Executed
+
+Backend (`apps/api`):
+- `composer validate --strict`
+- `composer audit --locked`
+- `vendor/bin/pint --test`
+- `vendor/bin/phpstan analyse`
+- `php artisan test`
+- `php artisan test tests/Feature/Api/V1/Home`
+- Gate 1A, against the repository's `docker-compose.yml` `mysql` service (bound to `127.0.0.1` only, a throwaway database, torn down afterwards): `vendor/bin/phpunit tests/Feature/Api/V1/Home` with `DB_CONNECTION=mysql`.
+
+Mobile (`apps/mobile`), Flutter 3.47.2:
+- `flutter pub get`
+- `dart format --output=none --set-exit-if-changed .`
+- `flutter analyze`
+- `flutter test`
+- `flutter test test/features/home`
+- `flutter test` on the Gate 2 suites
+
+Repository: `git diff --check`.
+
+## 11. Results (Gate 4 final run)
+
+- **Backend:**
+  - `php artisan test` 1,130/1,130 (3,147 assertions); Home 50/50 (229).
+  - Pint passed; PHPStan level 5 reported 0 errors.
+  - `composer validate --strict` valid; `composer audit --locked` found no advisories.
+- **Mobile:**
+  - `flutter test` 129/129; Home 64/64; Gate 2 suites 46/46.
+  - `dart format` exit 0; `flutter analyze` found no issues; `flutter pub get` OK.
+  - `pubspec.yaml`/`pubspec.lock` unchanged from `b63599d`.
+- **Cross-layer contract:** `MyHomeController` output matches `HomeSummary.fromJson` field by field (see `docs/testing/TEST_STATUS.md`).
+- **CI:** see the implementation PR.
+
+## 12. Deviations from Specification
+
+Implementation refinements of spec §7, not scope changes; both are recorded in DEC-052 and the CHANGELOG:
+
+1. The 401/403 handling lives in the shared `ApiClient` rather than in each feature controller calling `expireSession()`. This was per the Gate 2 instructions, so Home and later phases don't duplicate it.
+2. `AuthController` keeps the current token in memory, so the stale-token comparison has no async gap. This replaces having `CompanyApp` share one `TokenStorage` instance with the client.
+
+Presentation detail within §8:
+- the greeting shows the team on its own line;
+- multi-day entries read "From Wed 23 Sep – 10:00" or "18:00 – until Fri 25 Sep";
+- announcement dates read "22 Sep 2026".
+
+## 13. Known Issues/Limitations
+
+These are deferred and were not changed in Phase 27:
+
+- **Staging `SCHEDULING_COMPANY_TIMEZONE`:** unverified; it defaults to `UTC`. Confirm or set it **before UAT-27-02** as an operational step (spec §14 R-7).
+- **`/schedule` day boundaries:** it filters on UTC day boundaries rather than `CompanyTimezone`. This is pre-existing and deferred to Phase 30 (Schedule).
+- **Offline launch signs the user out:** `AuthController.bootstrap()` treats any launch-time `/auth/me` failure, including a network failure, as an invalid token. Pre-existing since Phase 4; a candidate for Phase 36 (Integration & UX Hardening).
+- **Response decoding:** mobile `ApiClient` reads `response.body`, which `package:http` decodes as Latin-1 when there is no charset. This is harmless today because Laravel escapes non-ASCII JSON as `\uXXXX`; a hardening candidate for Phase 36.
+- **DST display:** a daylight-saving switch within the company day can shift displayed times after the switch by an hour. This is the documented limitation (spec §8/§14).
+- **Strict parsing:** an unknown future Today `source_type` would put Home into its error state; this is contract-strict by design.
+- **Phase 26 carry-forwards, unchanged:**
+  - UAT-24-04's historical `:8012` wording;
+  - the inert shared DigitalOcean firewall `8012` rule (out of scope, no phase assigned);
+  - client-IP accuracy behind `trustProxies(at: '*')` (revisit only if a feature comes to depend on real client IPs);
+  - the Android app label `mobile` and release debug signing (a future release-preparation phase, i.e. Phase 38).
+- **No device testing:** no device or emulator was available. Nothing in Phase 27 is manually verified on a device.
+
+## 14. Manual/UAT Testing Instructions
+
+Prerequisites: the PR is merged and deployed to staging, and staging's company timezone is confirmed. Build the app with `--dart-define=API_BASE_URL=https://company-staging.storm-ark.com/api/v1`.
+
+Seed the UAT-27-02 data with Tinker on staging, because no Admin UI exists. For a Staff user with a linked Staff record, create:
+- a `ScheduleEntry` today with `creator_staff_id` set to them;
+- a second entry where they are attached as a participant;
+- a `Task` with `assignee_staff_id` set to them and `due_date` today;
+- another such task with a past `due_date`;
+- a direct `Conversation` with one unread `Message` from another staff member;
+- an unread `Notification` for their user;
+- a published company-wide `Announcement`.
+
+Then run UAT-27-01…08 exactly as listed in `docs/testing/UAT_LOG.md`:
+- sign-in and greeting;
+- seeded data correct and isolated;
+- empty states;
+- refresh after a new message;
+- airplane-mode error and retry;
+- server-side revocation → Login with the notice;
+- dark mode and large text, with nothing tappable;
+- Administrator (with and without a profile) and Manager see only their own data.
+
+## 15. Documentation Updated
+
+- `CURRENT_STATE.md`, `CHANGELOG.md`
+- `02_ARCHITECTURE.md` (§33)
+- `04_API_CONVENTIONS.md`
+- `05_SECURITY_MODEL.md` (Employee Home isolation; mobile session rule)
+- `06_UI_UX_GUIDELINES.md` (Employee Home)
+- `DECISIONS.md` (DEC-052)
+- `phases/V1_PHASE_27_DEFINITION.md` (status only; the approved text is unchanged)
+- `testing/TEST_STATUS.md` (Gates 1, 1A, 2, 3 and 4)
+- `testing/UAT_LOG.md` (UAT-27-01…08, **all `NOT RUN`**)
+- this handoff
+
+`ROADMAP.md` is deliberately left for formal closure, as in previous phases.
+
+## 16. Session Environment Note
+
+- **Backend dependencies:** `vendor/` needed the recurring Composer workaround. `--prefer-source` clones worked, but `phpstan/phpstan` is dist-only. Its exact locked commit was archived from a verified git mirror into Composer's dist cache; there was no `vendor/` surgery.
+- **Flutter SDK:** 3.47.2 was downloaded from `storage.googleapis.com`, as in Phase 25.
+- **Gate 1A MySQL:** Docker was started with `nohup dockerd` (the Phase 24 note), and `mysql:8.4` was pulled via `mirror.gcr.io` (the Phase 4A note).
+
+`.env` and `vendor/` were never committed.
+
+## 17. Recommended Next Step
+
+1. Review the Phase 27 implementation PR and its CI.
+2. On approval, merge.
+3. Deploy to staging.
+4. Confirm staging's `SCHEDULING_COMPANY_TIMEZONE`.
+5. Run UAT-27-01…08 as product owner.
+6. Formally close Phase 27.
+
+Phase 28 (People) must not begin until Phase 27 is closed and Phase 28 is explicitly authorized (`CLAUDE.md` §8).
+
+**Status summary:**
+- **Implemented:** yes.
+- **Tested automatically:** yes, backend and mobile.
+- **Manually verified on a device:** no.
+- **Awaiting UAT:** yes (UAT-27-01…08 `NOT RUN`).
+- **Deployed:** no.
+- **Formally closed:** no.

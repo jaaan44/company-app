@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\Clients\ClientController;
 use App\Http\Controllers\Api\V1\Clients\ContactController;
 use App\Http\Controllers\Api\V1\Dashboard\DashboardController;
 use App\Http\Controllers\Api\V1\HealthController;
+use App\Http\Controllers\Api\V1\Home\MyHomeController;
 use App\Http\Controllers\Api\V1\IncidentReports\IncidentReportAttachmentController;
 use App\Http\Controllers\Api\V1\IncidentReports\IncidentReportController;
 use App\Http\Controllers\Api\V1\Leave\LeaveBalanceController;
@@ -611,4 +612,17 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
 Route::middleware(['auth:sanctum', 'account.active'])->prefix('audit-logs')->name('audit-logs.')->group(function (): void {
     Route::get('/', [AuditLogController::class, 'index'])->name('index');
     Route::get('export', [AuditLogController::class, 'export'])->name('export');
+});
+
+// Employee Home (Phase 27 — Employee Home / Dashboard (Mobile), DEC-052):
+// a single read-only, bounded summary of the authenticated person's own
+// data for the mobile Home tab. Self-scoped by construction — no request
+// parameter selects its subject — and never widened by role: unlike
+// GET /dashboard (Phase 20, visibility-scoped), an Administrator, Manager,
+// or Project Lead sees only their own figures here. No permission is
+// involved, and (mirroring Notifications, DEC-038) no linked Staff record
+// is required — Staff-dependent sections are null instead of a 403. See
+// docs/phases/V1_PHASE_27_DEFINITION.md §6.
+Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
+    Route::get('me/home', [MyHomeController::class, 'show'])->name('me.home');
 });
