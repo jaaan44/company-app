@@ -4,6 +4,17 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-09-23 — Phase 27 final UAT preparation (docs only)
+- UAT source baseline is `093441a` (PR #45 merge). It has the same production code as the deployed `be43663`.
+- Corrected the stale `CURRENT_STATE` "next step" wording: the timezone is settled as `Asia/Manila` (effective on staging), and the next work is final UAT preparation and execution.
+- Added `docs/testing/PHASE_27_UAT_PREPARATION.md`:
+  - the operator APK-build and provenance procedure for `093441a`;
+  - the UAT27 data plan with expected Home results;
+  - an idempotent staging data script, checked on a scratch database only;
+  - UAT-time helpers.
+- Marked the earlier APK `4C95BA4D…` as superseded.
+- Final APK build and staging data seeding are pending the operator. UAT-27-01…08 remain `NOT RUN`; Phase 27 is not closed.
+
 ### 2026-09-23 — Phase 27 pre-UAT: company timezone decided; test-scroll gap corrected
 - **Company timezone:** the product owner decided `Asia/Manila`. The operator set `SCHEDULING_COMPANY_TIMEZONE=Asia/Manila` in staging `apps/api/.env` by appending in place, so the inode, `deploy:deploy` ownership and `664` mode were unchanged. They then recreated only `app` and ran `config:cache` (`DEPLOYMENT_STAGING.md` §7a). Results: `config:show scheduling.company_timezone` → `Asia/Manila`; company now `2026-09-23T21:29:06+08:00`; `app.env` staging, `app.debug` false, `session.secure` true; `/up` 200, `/login` 200, `/me/home` 401; 8012 is loopback only. UAT-27-02 is unblocked. No application source hardcodes the zone.
 - **Test-only correction** (`apps/mobile/test/features/home/home_page_test.dart`):

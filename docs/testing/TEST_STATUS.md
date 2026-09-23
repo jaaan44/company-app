@@ -551,4 +551,20 @@ Run by the operator on the staging VPS and a Windows build machine (this AI sess
 
 ---
 
+## Phase 27 — Final UAT preparation (2026-09-23)
+
+Source: `main` = `origin/main` = `093441a9526a96a285afe6fe7a0e21d66bc3f764` (UAT source baseline), clean tree. Running on staging: `be43663`. `git diff be43663 093441a` touches no production path (`apps/api/{app,routes,config,database}`, `apps/mobile/{lib,android}`, `composer.*`, `pubspec.*`, `docker/`, `docker-compose.staging.yml`).
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Mobile quality gates at `093441a` (AI sandbox: Flutter 3.47.2 / Dart 3.13.2 / OpenJDK 21.0.10) | Automated | PASS | `flutter pub get` 0; `dart format --set-exit-if-changed` 0; `flutter analyze` no issues; `test/features/home` 64/64; Gate 2 (`test/core/network` + `test/features/auth`) 45/45; full `flutter test` 129/129; 0 hit-test warnings. **Not** the APK build environment. |
+| Quality gates on the APK build machine | Automated | NOT RUN | Operator; `PHASE_27_UAT_PREPARATION.md` §2. |
+| Final UAT APK from `093441a` | Build | NOT RUN | Operator (this sandbox has no Android SDK; `dl.google.com` is denied). Provenance fields to record: §2. The pre-remediation APK `4C95BA4D…EBC1C` is superseded. |
+| UAT27 data script (`plan`/`seed`/`verify`/`announce`) | Manual, scratch SQLite DB with `SCHEDULING_COMPANY_TIMEZONE=Asia/Manila` + all 45 migrations + `RolePermissionSeeder` | PASS | The Home results match §3's expectations. `seed` is idempotent (re-run: 0 new accounts; still 1 unread message/notification). Times are stored in UTC (09:00 Manila → 01:00Z). Real HTTP login + `GET /me/home` as `uat27.staff` returned Asia/Manila, Today 3, 1 unread message, 1 unread notification. The scratch run happened when UTC was still 2026-09-23 and Manila was already 2026-09-24; Home correctly used 2026-09-24. Script SHA-256 `924844478eb5033365512c86d0a903b5a034014a05b296fda8c33659735ab688`. |
+| UAT27 data on staging | Manual, real VPS | NOT RUN | Operator: `PHASE_27_UAT_PREPARATION.md` §4. |
+| Fresh staging reachability | Manual | NOT RUN (this session) | The proxy denies the staging host. Latest operator evidence (2026-09-23): `/up` 200, `/login` 200, `/me/home` 401, `Asia/Manila`/+08:00. |
+| UAT | — | NOT RUN | UAT-27-01…08 `NOT RUN`. |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*
