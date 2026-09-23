@@ -334,7 +334,7 @@ Phase 28 (People) must not begin until Phase 27 is closed and Phase 28 is explic
 
 ## Addendum — Pre-UAT Remediation (2026-09-23)
 
-- **Company timezone decided:** `Asia/Manila` (product owner). It is applied through configuration only (`SCHEDULING_COMPANY_TIMEZONE`), never hardcoded in source. At the time of this update it is **not yet applied on staging**, which still runs the `UTC` default. Application needs the VPS; this AI session has no VPS access. UAT-27-02 remains blocked until the effective value is verified.
+- **Company timezone decided:** `Asia/Manila` (product owner). It is applied through configuration only (`SCHEDULING_COMPANY_TIMEZONE`), never hardcoded in source. The operator applied it on staging by appending in place, so the inode, ownership and mode were unchanged. They then recreated only `app` (MySQL and nginx untouched) and ran `config:cache`. It is verified on staging 2026-09-23: `config:show scheduling.company_timezone` → `Asia/Manila`; company now `2026-09-23T21:29:06+08:00`. App config and smoke checks are unchanged (staging, debug false, secure sessions; 200/200/401; 8012 loopback only). UAT-27-02 is unblocked.
 - **Test-scroll gap corrected (test-only)** in `apps/mobile/test/features/home/home_page_test.dart`:
   - the 200%-text/phone overflow tests walk every lower section with `scrollUntilVisible` on Home's own scrollable and assert each is reached;
   - pull-to-refresh gestures target that scrollable;

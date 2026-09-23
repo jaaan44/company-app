@@ -5,7 +5,7 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 ## [Unreleased]
 
 ### 2026-09-23 — Phase 27 pre-UAT: company timezone decided; test-scroll gap corrected
-- **Company timezone:** the product owner decided `Asia/Manila`. It is not yet applied on staging (still the `UTC` default) — to be set as `SCHEDULING_COMPANY_TIMEZONE=Asia/Manila` in `apps/api/.env` with an in-place edit, recreating only `app`, then `config:cache` (`DEPLOYMENT_STAGING.md` §7a), and verified. UAT-27-02 remains blocked until then. No application source hardcodes the zone.
+- **Company timezone:** the product owner decided `Asia/Manila`. The operator set `SCHEDULING_COMPANY_TIMEZONE=Asia/Manila` in staging `apps/api/.env` by appending in place, so the inode, `deploy:deploy` ownership and `664` mode were unchanged. They then recreated only `app` and ran `config:cache` (`DEPLOYMENT_STAGING.md` §7a). Results: `config:show scheduling.company_timezone` → `Asia/Manila`; company now `2026-09-23T21:29:06+08:00`; `app.env` staging, `app.debug` false, `session.secure` true; `/up` 200, `/login` 200, `/me/home` 401; 8012 is loopback only. UAT-27-02 is unblocked. No application source hardcodes the zone.
 - **Test-only correction** (`apps/mobile/test/features/home/home_page_test.dart`):
   - the 200%-text/phone overflow tests now scroll Home's own scrollable section by section (`scrollUntilVisible`) and assert every lower section is reached;
   - pull-to-refresh gestures target that scrollable;

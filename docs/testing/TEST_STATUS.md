@@ -524,7 +524,7 @@ Run by the operator on the staging VPS and a Windows build machine (this AI sess
 | Pre-deploy DB backup | Manual, real VPS | PASS | `company-app-20260923-092600.sql`, 88,356 bytes. |
 | `migrate:status` | Manual, real VPS | PASS | All 45 migrations Ran; none pending (Phase 27 adds none). |
 | Staging config (`app.env`/`app.debug`/`app.url`/`session.secure`) | Manual, real VPS | PASS | staging / false / `https://company-staging.storm-ark.com` / true. |
-| Company timezone | Manual, real VPS | **Decision needed** | Effective `UTC`; `SCHEDULING_COMPANY_TIMEZONE` not set (default). Blocks UAT-27-02 until decided. |
+| Company timezone | Manual, real VPS | **Resolved** | Was the effective `UTC` default; the product owner decided `Asia/Manila`, now applied and verified (see the pre-UAT section). |
 | Public `/up`, `/login`, HTTP→HTTPS | Manual, real VPS | PASS | 200, 200, 301 → `https://…/up`. |
 | `GET /api/v1/me/home` unauthenticated | Manual, real VPS | PASS | 401 (deployed and authentication-protected). An authenticated response was not tested. |
 | Ports / containers | Manual, real VPS | PASS | Only `127.0.0.1:8012`; no `8442`; `app` recreated and up; `mysql` healthy; `nginx` not recreated — its inputs are unchanged in Phase 27. |
@@ -546,7 +546,7 @@ Run by the operator on the staging VPS and a Windows build machine (this AI sess
 | Proof that the fix catches real overflows | Manual (scratch, reverted) | PASS | An overflow injected into the Announcements section failed all 4 corrected phone variants; the original test missed it in both 200%-text phone variants. The production file was restored. |
 | `flutter test` / `test/features/home` | Automated | PASS | 129/129 / 64/64; no hit-test warnings. |
 | `dart format --set-exit-if-changed`, `flutter analyze`, `flutter pub get` | Automated | PASS | No production, `pubspec.yaml` or `pubspec.lock` change. |
-| Staging timezone `Asia/Manila` applied and verified | Manual, real VPS | NOT RUN | Decided; awaiting application on the VPS. |
+| Staging timezone `Asia/Manila` applied and verified | Manual, real VPS (operator) | PASS | Appended in place (inode `1128804`, `deploy:deploy`, `664` unchanged); only `app` recreated; `config:cache`. `config:show scheduling.company_timezone` → `Asia/Manila`; company now `2026-09-23T21:29:06+08:00`. `app.env` staging, `app.debug` false, `app.url` correct, `session.secure` true; `/up` 200, `/login` 200, `/me/home` 401; 8012 loopback only; MySQL untouched (up 9 days, healthy). |
 | UAT | — | NOT RUN | UAT-27-01…08 `NOT RUN`. |
 
 ---
