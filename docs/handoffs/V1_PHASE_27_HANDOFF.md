@@ -1,6 +1,6 @@
 # Phase 27 — Employee Home / Dashboard (Mobile) — Handoff
 
-**Status: implementation merged (PR #44, `be43663`) and deployed to staging — pending the company-timezone decision and product-owner UAT. Phase 27 is NOT formally closed.** (See the Staging Deployment Addendum at the end.)
+**Status: COMPLETE — Phase 27 formally closed 2026-09-24.** Physical-device UAT-27-01…08 all `PASS`; see the final addendum, "Recovery Execution, Physical-Device UAT and Formal Closure (2026-09-24)". The status line as first written was: *implementation merged (PR #44, `be43663`) and deployed to staging — pending the company-timezone decision and product-owner UAT. Phase 27 is NOT formally closed.* The addenda below record each step in order; each one's status was true when it was written.
 
 ## 1. Phase Identification
 
@@ -367,3 +367,59 @@ Phase 28 (People) must not begin until Phase 27 is closed and Phase 28 is explic
   - script revision 2 (`398dab9cebe8b0b34fe33020d2cf050a1db227471d94e384025956572e57a88b`): read-only `exposure`; all-or-nothing `rotate` of exactly the six UAT27 accounts, with their API tokens and web sessions revoked; an `announce` that never revives an archived announcement;
   - `uat27_archive.sh` (`e057bfa4dd5ddf6fd816dd1e9cbf8a21e71df49d3280f8eb81a4fee2d2808fe9`): archives the exact accidental announcement through the app's own admin API.
 - **Status:** results in `docs/testing/TEST_STATUS.md`. UAT-27-01…08 remain `NOT RUN` (server-side `verify` is not UAT-27-03). Phase 27 is not closed. Phase 28 has not started.
+
+## Addendum — Recovery Execution, Physical-Device UAT and Formal Closure (2026-09-24)
+
+*Operator- and product-owner-reported. This AI session had no VPS, build-machine or device access. Full record: `docs/testing/PHASE_27_UAT_PREPARATION.md` §8; per-scenario UAT evidence: `docs/testing/UAT_LOG.md`.*
+
+**1. Historical pre-UAT state (unchanged, see the previous addendum):**
+- UAT data was seeded with script revision 1.
+- The first-generation UAT27 passwords were then exposed in an external AI chat.
+- `announce` ran before UAT-27-03, publishing `01M38G2Z97D8H6KP2WDJ48X1WH` `[UAT27] Office closed Friday` (`2026-09-24T01:22:10+00:00`).
+
+**2. Recovery (executed on staging; PASS before any physical UAT):**
+- Both tools were taken from merged `origin/main`, and their SHA-256s were verified: revision 2 `398dab9c…a57a88b`, archive helper `e057bfa4…808fe9`.
+- Read-only `exposure` first: all six UAT27 accounts had 0 API tokens, 0 web sessions and no auth audit, and exactly one UAT27 announcement was published. There is no evidence that the exposed passwords were used.
+- `rotate`: exactly six accounts, `exit=0`. The file was mode `600`, owner `deploy`, 6 lines; the passwords were stored privately and the file was `shred`ded. No password is in the repository.
+- Archive: `01M38G2Z97D8H6KP2WDJ48X1WH` archived (`archived_audit=1`) and the helper's token revoked.
+- Post-recovery: all UAT27 tokens and sessions zero; the only admin auth audit was the archive's sign-in/sign-out.
+- The accidental announcement stays archived as historical evidence.
+
+**3. Final UAT APK:**
+- **Source:** built and verified from `093441a9526a96a285afe6fe7a0e21d66bc3f764` (operator-confirmed; the repository holds no build-time `git` transcript). Staging runs `be43663f1e3527867c04adb73071eb3bace01ba5`; the two differ only in `home_page_test.dart` and `docs/`.
+- **Build-machine gates:** format (32 files, 0 changed) and analyze clean; Home 64/64; core network + auth 45/45; full 129/129.
+- **Toolchain:** Flutter 3.47.2 (`d3b14c8769`), Dart 3.13.2, Temurin JDK 17.0.15+6, Android SDK 36.
+- **Artifact:** 51,582,167 bytes, SHA-256 `4C95BA4D5D58B50B4AA9388B9C5F52AA4AB1A669FE25D16DAADAB94A757EBC1C`, `com.companyapp.mobile` 1.0.0 (1), SDK 36/24/36, INTERNET present, v2 debug signature (`CN=Android Debug`).
+- **Identical hash:** this is byte-identical to the earlier APK in the Merge and Staging Deployment addendum. That earlier copy **remains superseded**, because its checkout provenance was not recorded. The identical hash does not retroactively establish its provenance. The authoritative artifact is identified by its controlled provenance **and** its hash.
+
+**4. Physical-device UAT (2026-09-24, staging `be43663`, company date 2026-09-24 Asia/Manila): UAT-27-01…08 all `PASS`.**
+- 01: linked-profile greeting ("Uat", UAT27 Field Technician / UAT27 Operations).
+- 02: own data only — Today 3; tasks 2/1/1; 1 unread message; 1 unread notification; no colleague items; stable across refresh.
+- 03: every empty state, with **no announcement**. Only after this passed was the replacement announcement `01M38R3M012BFS7JMWFVJ36QDM` published (`2026-09-24T03:42:20+00:00`); a refresh then showed it while everything else stayed empty.
+- 04: the colleague's API message (`201`/`200`, runbook §5; the Messages tab is still a Phase 25 placeholder) moved Staff Messages from 1 to 2 unread.
+- 05: an offline refresh kept the earlier content, showed "Couldn't refresh. Showing earlier information.", did not crash or sign out, and recovered once back online. The initial-load "Try again" state was not exercised on the device; it is covered by automated tests.
+- 06: server-side token deletion led to Login with "Your session has ended. Please sign in again."; signing in again worked (Messages 2, Notifications 2).
+- 07: dark mode and large font were readable with no overflow; Today items, My tasks, Messages, Notifications and the announcement were not tappable.
+- 08: Manager and Administrator saw only their own task (1/0/1), never other employees' data; the Administrator without a profile degraded gracefully (no fabricated profile, no crash or endless loading, no forced logout; Notifications 0).
+
+**5. Final staging state (intentional; not cleaned up):**
+- The final `verify`/`exposure` (04:21:51Z/04:21:56Z) matched the expected post-UAT state.
+- Staff has 1 API token, because the device was left signed in. Every other UAT27 account has none.
+- `01M38G2Z97D8H6KP2WDJ48X1WH` is archived and `01M38R3M012BFS7JMWFVJ36QDM` is published.
+- This closure made no staging, database, credential or announcement change.
+
+**6. Closure.**
+- **Implemented:** yes.
+- **Tested automatically:** yes, backend and mobile.
+- **Manually verified on a device:** yes, by the product owner through UAT.
+- **UAT:** UAT-27-01…08 `PASS`, reported by the product owner.
+- **Deployed:** staging `be43663`.
+- **Formally closed:** **yes, 2026-09-24.**
+- No blocking defect is open.
+- **Carried forward, non-blocking:**
+  - the §13 deferred items (`/schedule` UTC day boundaries → Phase 30; offline-launch sign-out and `ApiClient` charset hardening → Phase 36; the DST display limitation);
+  - the Phase 26 carry-forwards;
+  - the Android debug signing and `mobile` label (Phase 38);
+  - the UAT27 staging data, left in place.
+
+**Phase 28 — People (Mobile) has not started.** It needs explicit authorization (`CLAUDE.md` §8).
