@@ -342,3 +342,17 @@ Phase 28 (People) must not begin until Phase 27 is closed and Phase 28 is explic
 - **Proof:** an injected Announcements overflow failed all 4 corrected phone variants, while the original test missed it in both 200%-text variants. Results: `flutter test` 129/129, Home 64/64, `dart format`/`flutter analyze` clean, no hit-test warnings. No production or dependency change.
 - **Final UAT APK:** to be built only after this correction merges into `main`, so its source provenance is exact.
 - **Status:** UAT-27-01…08 remain `NOT RUN`. Phase 27 is not formally closed.
+
+## Addendum — Final UAT Preparation (2026-09-23)
+
+- **UAT source baseline:** `093441a9526a96a285afe6fe7a0e21d66bc3f764` (PR #45 merged with a merge commit; parents `be43663` and `644695a`). Staging runs `be43663`. The diff between them contains no production code, dependency or runtime-config change, so staging needs no rebuild.
+- **Company timezone:** `Asia/Manila` is the effective setting on staging, verified by the operator 2026-09-23 with `+08:00`. The prerequisite is satisfied.
+- **Quality gates at `093441a`:** run in this AI sandbox (Flutter 3.47.2 / Dart 3.13.2).
+  - Results: Home 64/64; Gate 2 45/45; full 129/129; analyze and format clean.
+  - They must be re-run on the APK build machine.
+- **Final UAT APK: not built.** This session has no Android SDK and cannot download one. The operator builds it from `093441a` per `docs/testing/PHASE_27_UAT_PREPARATION.md` §2 and records full provenance. The earlier APK `4C95BA4D…EBC1C` is superseded.
+- **UAT data: not seeded.** §14's recipe is made concrete as a deterministic, idempotent script with dedicated `UAT27` accounts and records dated to the Asia/Manila company day (`PHASE_27_UAT_PREPARATION.md` §3–§6).
+  - It was checked on a scratch database only.
+  - The staging run is pending the operator.
+  - Order constraint: publish the UAT announcement only after UAT-27-03.
+- **Status:** UAT-27-01…08 remain `NOT RUN`. Phase 27 is not formally closed. Phase 28 has not started.
