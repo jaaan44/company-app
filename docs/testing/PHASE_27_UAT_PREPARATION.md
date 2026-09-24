@@ -2,6 +2,8 @@
 
 *Operator runbook. Nothing in this file has been run against the staging VPS or on the Windows build machine by an AI session: this AI session cannot reach the VPS (the egress proxy denies `company-staging.storm-ark.com`) or build an APK (it has no Android SDK, and `dl.google.com` is denied). Every step marked **[Operator]** is still pending until its output is recorded.*
 
+**Status:** UAT-27-01…08 remain `NOT RUN`; this runbook prepares the APK and data only and executes no scenario.
+
 ## 1. Baselines
 
 | Item | SHA | Meaning |
