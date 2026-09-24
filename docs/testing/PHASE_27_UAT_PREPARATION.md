@@ -2,7 +2,9 @@
 
 *Operator runbook. Nothing in this file has been run against the staging VPS or on the Windows build machine by an AI session: this AI session cannot reach the VPS (the egress proxy denies `company-staging.storm-ark.com`) or build an APK (it has no Android SDK, and `dl.google.com` is denied). Every step marked **[Operator]** is still pending until its output is recorded.*
 
-**Status:** UAT-27-01…08 remain `NOT RUN`; this runbook prepares the APK and data only and executes no scenario.
+**Status (as written, 2026-09-23/24):** UAT-27-01…08 remain `NOT RUN`; this runbook prepares the APK and data only and executes no scenario.
+
+> **Final status (2026-09-24):** the operator executed this runbook. The §4a recovery was executed on staging and passed **before** any physical UAT. The final UAT APK was built and verified from `093441a`. Physical-device UAT-27-01…08 all **PASS** (`docs/testing/UAT_LOG.md`). **Phase 27 is formally closed.** The execution record is §8. The sections below are kept as written; their "pending"/"not yet executed" wording describes the state at the time.
 
 ## 1. Baselines
 
@@ -62,6 +64,8 @@ Record all of the following:
 - `uses-permission: name='android.permission.INTERNET'` present in the `aapt2` output.
 
 Do not change signing, dependencies or source. This APK is the **only** authorized APK for Phase 27 UAT.
+
+> **Result (2026-09-24):** built and verified by the operator from `093441a9526a96a285afe6fe7a0e21d66bc3f764`. Its SHA-256 is byte-identical to the superseded APK above; that earlier copy stays superseded. Full provenance: §8.1.
 
 ## 3. UAT data plan (Asia/Manila company day)
 
@@ -135,7 +139,7 @@ Nothing is truncated, reset or migrated, and no route or application file change
 
 ## 4a. Recovery after the 2026-09-24 preparation incident — **[Operator, VPS]**
 
-*Designed and rehearsed on a disposable scratch database only. **Not yet executed on staging.***
+*Designed and rehearsed on a disposable scratch database only. **Not yet executed on staging.*** *(As written for PR #47. **Executed on staging 2026-09-24 and passed before physical UAT began**; see §8.2.)*
 
 **What happened.** The operator ran script revision 1 (SHA-256 `924844478eb5033365512c86d0a903b5a034014a05b296fda8c33659735ab688`) on staging on 2026-09-24 (Asia/Manila):
 1. `plan` passed: all six UAT27 accounts absent; 0 non-UAT27 published company-wide announcements; roles 3/3.
@@ -670,3 +674,112 @@ RESULT=$(call POST "/announcements/$AID/archive" 200)
 [[ "$(printf '%s' "$RESULT" | field status)" == "archived" ]] || { echo "STOP: archive response did not report archived" >&2; exit 1; }
 echo "archived: $AID ($TITLE)" >&2
 ```
+
+## 8. Execution record and outcome (2026-09-24)
+
+*Operator-reported, 2026-09-24 (Asia/Manila). This AI session did not access the VPS or the build machine. It recorded what the operator reported and cross-checked every commit against repository history. No password or token appears here.*
+
+### 8.1 Final UAT APK: provenance
+
+**Baselines:**
+
+| Item | Value | Evidence |
+|---|---|---|
+| Deployed Phase 27 implementation on staging | `be43663f1e3527867c04adb73071eb3bace01ba5` (PR #44 merge) | Repository history; operator deployment record (2026-09-23). Unchanged throughout UAT. |
+| Final UAT APK source baseline | `093441a9526a96a285afe6fe7a0e21d66bc3f764` (PR #45 merge) | A valid commit in repository history. Operator-confirmed as the checkout of the controlled final build. |
+| Production-source equivalence | — | Repository history: `git diff be43663 093441a` changes only `apps/mobile/test/features/home/home_page_test.dart` and `docs/`. The APK's production source is the Phase 27 implementation deployed to staging. |
+
+**Build provenance.** The operator-confirmed controlled final build ran from `093441a` on the Windows build machine, after these checks passed there:
+- `flutter pub get`;
+- format: 32 files, 0 changed;
+- `flutter analyze`: no issues;
+- Home tests 64/64; core network + auth tests 45/45; full Flutter suite 129/129.
+
+The literal `git rev-parse HEAD` / `git status --porcelain` transcript from that build is **not** preserved in the repository. The build checkout is recorded here as operator-confirmed, not as captured command output.
+
+**Build environment (operator-recorded):**
+- Flutter 3.47.2 (framework `d3b14c8769`, engine `a804b26164`), Dart 3.13.2, DevTools 2.60.0. Flutter printed an `[user-branch]` channel warning; the exact revision above was captured.
+- Windows 11 25H2.
+- Android SDK 36.0.0, platform `android-36`, build-tools 36.0.0.
+- Temurin JDK 17.0.15+6.
+
+**Artifact (operator-recorded):**
+
+| Field | Value |
+|---|---|
+| Path | `build/app/outputs/flutter-apk/app-release.apk` |
+| Size | 51,582,167 bytes |
+| SHA-256 | `4C95BA4D5D58B50B4AA9388B9C5F52AA4AB1A669FE25D16DAADAB94A757EBC1C` |
+| Package / versionCode / versionName | `com.companyapp.mobile` / `1` / `1.0.0` |
+| compileSdk / minSdk / targetSdk | 36 / 24 / 36 |
+| Label | `mobile` |
+| `android.permission.INTERNET` | present |
+| Signing | APK Signature Scheme v2; signer `C=US, O=Android, CN=Android Debug`; certificate SHA-256 `8c97303ec1a4d6eda2f2b9ee83694cf0915e8f9e55077d169f30d23bf4804412`; RSA 2048-bit |
+
+The debug signing and the generic `mobile` label are known and deferred to Phase 38 (Release Readiness). They are not Phase 27 blockers.
+
+**Identical hash.**
+- This APK is byte-identical to the earlier APK recorded on 2026-09-23 (same size and SHA-256).
+- That earlier copy **remains superseded** (§2), because its checkout provenance was not recorded when it was built.
+- The identical hash does **not** retroactively establish provenance for the earlier build.
+- The authoritative final UAT artifact is identified by **both** its controlled provenance (`093441a`) **and** its hash, not by the hash alone.
+- This frozen APK was installed and used for all of physical-device UAT-27-01…08. It was not rebuilt afterwards.
+
+### 8.2 Recovery execution on staging (before physical UAT)
+
+**Starting point (the PR #47 incident, unchanged):**
+- revision 1 `plan`/`seed`/`verify` had succeeded;
+- the first-generation UAT27 passwords had been exposed in an external AI chat;
+- `announce` had run before UAT-27-03, publishing `01M38G2Z97D8H6KP2WDJ48X1WH` `[UAT27] Office closed Friday` (`published_at` `2026-09-24T01:22:10+00:00`).
+
+| §4a step | Result |
+|---|---|
+| 0. Tools from merged `origin/main` | The operator extracted both and verified the exact SHA-256s: script revision 2 `398dab9c…a57a88b`, `uat27_archive.sh` `e057bfa4…808fe9`. |
+| 1. Read-only `exposure` | All six UAT27 accounts (staff, colleague, empty, manager, admin, admin_noprofile): `api_tokens=0 web_sessions=0 audit:none`. Exactly one UAT27 announcement: `01M38G2Z97D8H6KP2WDJ48X1WH status=published archived_audit=0`. **No evidence that the exposed passwords were ever used.** |
+| 2. `rotate` | `exit=0`; exactly six accounts rotated (`uat27.staff`, `uat27.colleague`, `uat27.empty`, `uat27.manager`, `uat27.admin`, `uat27.admin.noprofile` `@company-app.test`). Credentials file mode `600`, owner `deploy`, 6 lines. The operator stored the passwords privately and removed the file with `shred`. |
+| 3. Archive | `archived: 01M38G2Z97D8H6KP2WDJ48X1WH ([UAT27] Office closed Friday)`; `logout: token revoked`. |
+| 4. Verify | `exposure`: old announcement `status=archived archived_audit=1`; all UAT27 API tokens and web sessions zero. The only admin auth audit was the expected sign-in/sign-out of step 3. |
+
+**Recovery result: PASS, before physical UAT began.** The accidental announcement stays archived on staging as historical evidence. It is not deleted or revived.
+
+### 8.3 Physical-device UAT (2026-09-24)
+
+- All eight scenarios ran against the deployed `be43663` using the §8.1 APK. Each one **PASS**; the per-scenario evidence is in `docs/testing/UAT_LOG.md`.
+- Order was kept: UAT-27-03 (empty states, no announcement) passed **first**. Only then did §4a step 5 publish the replacement announcement `01M38R3M012BFS7JMWFVJ36QDM` `[UAT27] Office closed Friday` (`published_at` `2026-09-24T03:42:20+00:00`).
+- UAT-27-04 used the §5 API helper (`message 201`, `logout 200`), because the Phase 27 Messages tab is still a placeholder.
+- UAT-27-06 used the §5 token-deletion method.
+
+### 8.4 Final staging snapshot (intentional; not cleaned up)
+
+`verify` at `utc_now=2026-09-24T04:21:51+00:00` (`company_timezone=Asia/Manila`, `company_date=2026-09-24`):
+
+| Account | Role | Home |
+|---|---|---|
+| staff | staff | Uat Staff / UAT27 Field Technician / UAT27 Operations; Today 3 (task `[UAT27] Replace filter unit`, entries `[UAT27] Site visit — Acme`, `[UAT27] Team meeting`); tasks open 2 / overdue 1 / due today 1; messages unread 2; announcement `[UAT27] Office closed Friday`; notifications unread 2 |
+| colleague | staff | Today 3 (task `[UAT27] Colleague task (must not show for UAT27 Staff)`, entries `[UAT27] Colleague-only visit`, `[UAT27] Team meeting`); tasks 2/1/1; messages 0; announcement present; notifications 0 |
+| empty | staff | Today 0; tasks 0/0/0; messages 0; announcement present; notifications 0 |
+| manager | manager | Today 1 (task `[UAT27] Manager own task`); tasks 1/0/1; messages 0; announcement present; notifications 0 |
+| admin | administrator | Today 1 (task `[UAT27] Admin own task`); tasks 1/0/1; messages 0; announcement present; notifications 0 |
+| admin_noprofile | administrator | staff none; notifications 0 |
+
+Conversation: `01M38G2E9ED37FMXP224HRD645`.
+
+`exposure` at `utc_now=2026-09-24T04:21:56+00:00`:
+
+| Account | API tokens | Web sessions | `auth.login_succeeded` | `auth.logout` | Explanation |
+|---|---|---|---|---|---|
+| staff | 1 (last used 2026-09-24 04:21:16) | 0 | 3 (last 04:21:09) | 1 (last 04:09:46) | The one token is **expected**: the device was intentionally left signed in as Staff after the final check. |
+| colleague | 0 | 0 | 1 | 1 | The UAT-27-04 API message. |
+| empty | 0 | 0 | 1 | 1 | Consistent with the UAT-27-03 sign-in. |
+| manager | 0 | 0 | 1 | 1 | Consistent with the UAT-27-08 sign-in. |
+| admin | 0 | 0 | 2 | 2 | The §8.2 archive operation, then UAT-27-08. |
+| admin_noprofile | 0 | 0 | 1 | 1 | Consistent with the UAT-27-08 no-profile sign-in. |
+
+Announcements:
+
+| `public_id` | Title | Status | `published_at` | `archived_audit` | Meaning |
+|---|---|---|---|---|---|
+| `01M38G2Z97D8H6KP2WDJ48X1WH` | `[UAT27] Office closed Friday` | archived | `2026-09-24T01:22:10+00:00` | 1 | The accidental pre-UAT publication, archived in recovery. |
+| `01M38R3M012BFS7JMWFVJ36QDM` | `[UAT27] Office closed Friday` | published | `2026-09-24T03:42:20+00:00` | 0 | The replacement, published after UAT-27-03. |
+
+This state is intentional. The closure made **no** staging cleanup, credential rotation, announcement change or database change. Any future cleanup of the UAT27 data needs its own authorization.

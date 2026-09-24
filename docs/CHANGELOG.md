@@ -4,6 +4,26 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-09-24 — Phase 27 formally closed (documentation only)
+- Phase 27 — Employee Home / Dashboard (Mobile) is formally closed as of 2026-09-24. Implementation (PR #44, `be43663`) is deployed on staging, UAT-27-01…08 all `PASS`, and no Phase 27 blocking defect remains.
+- `docs/CURRENT_STATE.md`: last completed phase is Phase 27. Next planned phase is Phase 28 — People: Staff Directory & Profile (Mobile), **not started**. `docs/ROADMAP.md`: Phase 27 marked complete, with the DEC-052 refinement (a dedicated self-scoped `/me/home`, not a scoped `/dashboard`). The spec, handoff, `02_ARCHITECTURE.md` §33 and `06_UI_UX_GUIDELINES.md` status labels were updated; earlier status text is kept as history.
+- Carried forward, non-blocking: `/schedule` UTC day boundaries (Phase 30); offline-launch sign-out and `ApiClient` charset hardening (Phase 36); DST display; Android debug signing and the `mobile` label (Phase 38); the Phase 26 carry-forwards; the UAT27 staging data (left in place).
+
+### 2026-09-24 — Phase 27: recovery executed, final UAT APK, physical-device UAT passed (documentation only)
+- **Pre-UAT incident (recorded in PR #47, preserved):** script revision 1 seeded the UAT27 data. The first-generation UAT27 passwords were then exposed in an external AI chat, and `announce` ran before UAT-27-03, publishing `01M38G2Z97D8H6KP2WDJ48X1WH` `[UAT27] Office closed Friday` (`2026-09-24T01:22:10+00:00`).
+- **Recovery (operator, staging, before physical UAT): PASS.**
+  - The tools from merged `origin/main` matched their SHA-256s (revision 2 `398dab9c…`, helper `e057bfa4…`).
+  - Read-only `exposure`: all six UAT27 accounts had 0 tokens, 0 sessions and no auth audit, so there is no evidence the exposed passwords were used.
+  - `rotate` of exactly six accounts: `exit=0`, file `600`/`deploy`/6 lines, stored privately and `shred`ded.
+  - Archive of `01M38G2Z97D8H6KP2WDJ48X1WH` (`archived_audit=1`, helper token revoked).
+  - Post-recovery: all UAT27 tokens and sessions zero. The accidental announcement stays archived.
+- **Final UAT APK:** built and verified from `093441a9526a96a285afe6fe7a0e21d66bc3f764` (operator-confirmed; production code identical to the deployed `be43663`) after build-machine gates passed (format 0 changed, analyze clean, Home 64/64, network+auth 45/45, full 129/129).
+  - Artifact: SHA-256 `4C95BA4D5D58B50B4AA9388B9C5F52AA4AB1A669FE25D16DAADAB94A757EBC1C`, 51,582,167 bytes, `com.companyapp.mobile` 1.0.0 (1), SDK 36/24/36, INTERNET present, v2 debug signature.
+  - It is byte-identical to the earlier APK, which **remains superseded** because its provenance was not recorded. The identical hash does not retroactively establish that provenance.
+- **Physical-device UAT (2026-09-24, staging `be43663`, Asia/Manila):** UAT-27-01…08 all `PASS`, reported by the product owner with per-scenario evidence (`docs/testing/UAT_LOG.md`). The replacement announcement `01M38R3M012BFS7JMWFVJ36QDM` (`2026-09-24T03:42:20+00:00`) was published only after UAT-27-03 passed.
+- **Final staging state** (`verify`/`exposure` at 04:21:51Z/04:21:56Z) is intentional and was not cleaned up. Staff keeps one API token because the device was left signed in. See `docs/testing/PHASE_27_UAT_PREPARATION.md` §8.
+- Docs: `UAT_LOG.md` (UAT-27 rows), `TEST_STATUS.md`, `PHASE_27_UAT_PREPARATION.md` §8, and the Phase 27 handoff addendum. No password, token or credential file is recorded. No source, configuration, infrastructure, database or staging change.
+
 ### 2026-09-23 — Phase 27 final UAT preparation (docs only)
 - UAT source baseline is `093441a` (PR #45 merge). It has the same production code as the deployed `be43663`.
 - Corrected the stale `CURRENT_STATE` "next step" wording: the timezone is settled as `Asia/Manila` (effective on staging), and the next work is final UAT preparation and execution.

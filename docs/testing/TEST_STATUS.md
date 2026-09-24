@@ -610,4 +610,25 @@ Operator-reported, 2026-09-24 (Asia/Manila). Script revision 1 (SHA-256 `9248444
 
 ---
 
+## Phase 27 — Recovery execution, final UAT APK and physical-device UAT (2026-09-24)
+
+Operator- and product-owner-reported, 2026-09-24 (Asia/Manila). The earlier sections above are kept as written; their `NOT RUN`/"not executed" entries describe the state at the time. Full record: `docs/testing/PHASE_27_UAT_PREPARATION.md` §8.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Recovery tools extracted from merged `origin/main` | Manual, real VPS (operator) | PASS | Script revision 2 `398dab9c…a57a88b` and `uat27_archive.sh` `e057bfa4…808fe9` matched exactly. |
+| `exposure` before recovery (read-only) | Manual, real VPS (operator) | PASS | All six UAT27 accounts: `api_tokens=0 web_sessions=0 audit:none`. One UAT27 announcement, `01M38G2Z97D8H6KP2WDJ48X1WH`, `published`, `archived_audit=0`. No evidence that the exposed first-generation passwords were used. |
+| `rotate` (six UAT27 accounts) | Manual, real VPS (operator) | PASS | `exit=0`; credentials file `600`, owner `deploy`, 6 lines; stored privately, then removed with `shred`. No password is recorded in the repository. |
+| Archive of the accidental announcement | Manual, real VPS (operator) | PASS | `archived: 01M38G2Z97D8H6KP2WDJ48X1WH ([UAT27] Office closed Friday)`; `logout: token revoked`. It stays archived as historical evidence. |
+| Post-recovery `exposure`/`verify` | Manual, real VPS (operator) | PASS | Old announcement `archived`, `archived_audit=1`; all UAT27 tokens and web sessions zero; the only admin auth audit was the archive's sign-in/sign-out. Completed **before** physical UAT. |
+| Quality gates on the APK build machine (at `093441a`) | Automated (operator, Windows) | PASS | `flutter pub get`; format 32 files, 0 changed; `flutter analyze` no issues; Home 64/64; core network + auth 45/45; full 129/129. Flutter 3.47.2 (`d3b14c8769` / engine `a804b26164`), Dart 3.13.2, Temurin JDK 17.0.15+6, Android SDK/build-tools 36.0.0. |
+| Final UAT APK from `093441a` | Build (operator) | PASS | Source `093441a9526a96a285afe6fe7a0e21d66bc3f764` (operator-confirmed; no build-time `git` transcript is preserved in the repository). 51,582,167 bytes; SHA-256 `4C95BA4D5D58B50B4AA9388B9C5F52AA4AB1A669FE25D16DAADAB94A757EBC1C`; `com.companyapp.mobile` 1.0.0 (1); compile/min/target SDK 36/24/36; INTERNET present; v2 debug signature (deferred to Phase 38). Byte-identical to the earlier APK, which **remains superseded** because its provenance was not recorded. The identical hash does not retroactively establish that earlier build's provenance. |
+| Replacement announcement (§4a step 5) | Manual, real VPS (operator) | PASS | Published only **after** UAT-27-03 passed: `01M38R3M012BFS7JMWFVJ36QDM`, `2026-09-24T03:42:20+00:00`. |
+| UAT-27-01…08 (physical device, staging `be43663`) | UAT (product owner) | **PASS** | All eight `PASS`, with per-scenario evidence in `docs/testing/UAT_LOG.md`. |
+| Final `verify`/`exposure` (04:21:51Z / 04:21:56Z) | Manual, real VPS (operator) | PASS | Matches the expected post-UAT state (`PHASE_27_UAT_PREPARATION.md` §8.4). The one Staff API token is expected: the device was left signed in. This state is intentional and was not cleaned up. |
+
+**Phase 27 formally closed 2026-09-24.**
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*
