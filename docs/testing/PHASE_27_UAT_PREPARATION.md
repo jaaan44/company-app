@@ -131,16 +131,133 @@ $C exec -T app php -- verify   < uat27_data.php
 
 Nothing is truncated, reset or migrated, and no route or application file changes. Record the `plan` and `verify` output (never the passwords) in `docs/testing/TEST_STATUS.md`.
 
+> **Status 2026-09-24:** `plan`, `seed` and `verify` have been run on staging (script revision 1). The seeded data is in place. The first-generation passwords were exposed, and `announce` ran before UAT-27-03. **Do not repeat §4. Follow §4a.**
+
+## 4a. Recovery after the 2026-09-24 preparation incident — **[Operator, VPS]**
+
+*Designed and rehearsed on a disposable scratch database only. **Not yet executed on staging.***
+
+**What happened.** The operator ran script revision 1 (SHA-256 `924844478eb5033365512c86d0a903b5a034014a05b296fda8c33659735ab688`) on staging on 2026-09-24 (Asia/Manila):
+1. `plan` passed: all six UAT27 accounts absent; 0 non-UAT27 published company-wide announcements; roles 3/3.
+2. `seed` succeeded.
+3. `verify` matched §3 exactly.
+4. The six first-generation passwords were then pasted into an external AI chat. They are **exposed and invalid for UAT**.
+5. `announce` was then run **before** physical-device UAT-27-03, so `[UAT27] Office closed Friday` is published on staging.
+
+None of those server-side `verify` runs is UAT-27-03. **UAT-27-03, and all of UAT-27-01…08, remain `NOT RUN`.**
+
+**What the recovery changes, and nothing else:**
+- **Passwords:** new passwords for exactly the six `uat27.*@company-app.test` accounts, in one transaction that either fully commits or fully rolls back.
+  - That transaction also revokes their API tokens and web sessions and invalidates saved "remember me" logins.
+- **Announcement:** archives the one accidental UAT27 announcement through the application's own admin API. The app has no Archived → Published transition; archiving writes an `announcement.archived` audit entry and notifies nobody.
+  - The admin *publish* API notifies every staff user, so it is never used for UAT.
+
+The seeded schedule, task, message and notification data is untouched, as are all non-UAT27 users and data, application code and configuration. Revision 2 of `announce` never revives an archived announcement. After UAT-27-03 it publishes a fresh one; re-running it reuses that one.
+
+**Security properties:**
+- Every failure stops before any change.
+- No password or token is ever a process argument or in shell history. The password is read silently and piped; the token travels only through a header file.
+- JSON is built and parsed with PHP from the app image, not with `sed`.
+- `rotate` writes only `email password` lines to stdout; its header, status and errors go to stderr, and an error message never includes SQL or password hashes.
+- The credentials file is created mode `0600` and never overwritten.
+- The archive targets only the exact `public_id` found in step 1, and only if it is still the published `[UAT27] Office closed Friday`.
+
+**0. Get revision 2 of both tools** from `origin/main`, without changing the deployed checkout:
+```sh
+cd /home/deploy/company-app/company-app-build/company-app
+git fetch origin main
+git show origin/main:docs/testing/PHASE_27_UAT_PREPARATION.md | awk '/^```php$/{f=1;next} /^```$/{f=0} f' > "$HOME/uat27_data.php"
+git show origin/main:docs/testing/PHASE_27_UAT_PREPARATION.md | awk '/^```bash$/{f=1;next} /^```$/{f=0} f' > "$HOME/uat27_archive.sh"
+sha256sum "$HOME/uat27_data.php" "$HOME/uat27_archive.sh"
+#   398dab9cebe8b0b34fe33020d2cf050a1db227471d94e384025956572e57a88b  uat27_data.php
+#   e057bfa4dd5ddf6fd816dd1e9cbf8a21e71df49d3280f8eb81a4fee2d2808fe9  uat27_archive.sh
+#   -> any mismatch: STOP.
+C="docker compose -p company-app -f docker-compose.staging.yml --env-file .env.staging"
+U="$HOME/uat27_data.php"
+```
+
+**1. Read-only assessment.** Record this output; it contains no secrets.
+```sh
+$C exec -T app php -- exposure < "$U"
+$C exec -T app php -- verify   < "$U"
+```
+- **STOP** if `exposure` shows a UAT27 sign-in (`auth.login_succeeded`), API token or web session the team cannot account for. Treat that as a security incident before anything else.
+- **STOP** if more than one `[UAT27]` announcement is listed.
+- Otherwise, note the `public_id` on the line `announcement <public_id> status=published … title=[UAT27] Office closed Friday`. This is `AID` for step 3.
+
+**2. Rotate the six UAT27 passwords.**
+```sh
+CRED="$HOME/uat27-credentials.txt"
+test ! -e "$CRED" && (umask 077; set -o noclobber; $C exec -T app php -- rotate < "$U" > "$CRED"); echo "rotate exit=$?"
+```
+Before opening the file, check each of these:
+- The exit code must be `0`, and stderr must show exactly six `rotated uat27.…` lines.
+- On any failure, the transaction rolled back and nothing changed. **STOP** and report the stderr.
+```sh
+stat -c '%a %U' "$CRED"      # must be: 600 <your user>
+wc -l < "$CRED"              # must be: 6
+```
+- If the mode is not `600`, run `shred -u "$CRED"` and **STOP**.
+
+Then:
+- Open the file privately (`less "$CRED"`) and move the six passwords into a password manager.
+- Run `shred -u "$CRED"`.
+- Never paste them into any chat, AI tool, ticket or document.
+
+**3. Archive the accidental announcement** with the rotated `uat27.admin` password. The helper prompts for it silently.
+```sh
+bash "$HOME/uat27_archive.sh" <AID from step 1>
+```
+Expected stderr: `archived: <AID> ([UAT27] Office closed Friday)`, then `logout: token revoked`.
+
+Any `STOP:` line means nothing was archived:
+- A wrong password, or a target that no longer matches, is refused.
+- `HTTP 429` means the login rate limit was hit: wait 60 s and re-run.
+
+**4. Verify before physical-device UAT-27-03:**
+```sh
+$C exec -T app php -- verify   < "$U"
+$C exec -T app php -- exposure < "$U"
+$C exec -T app php -- plan     < "$U"
+```
+Expected:
+- **`verify`:**
+  - every account with a profile shows `announcements: (none)`;
+  - staff: Today 3, tasks `open=2 overdue=1 due_today=1`, `messages unread=1`, `notifications unread=1`;
+  - empty: all zero.
+- **`exposure`:**
+  - every UAT27 account shows `api_tokens=0 web_sessions=0`;
+  - `announcement <AID> status=archived … archived_audit=1`;
+  - the admin's audit shows only step 3's sign-in and sign-out beyond anything recorded in step 1.
+- **`plan`:** non-UAT27 announcements still `0`.
+
+If the company date (Asia/Manila) has changed since `seed`, re-run `seed` first. It is idempotent, does not change passwords and does not touch announcements. Then re-run `verify`.
+
+Only then run physical-device UAT-27-03, signing in as `uat27.empty` with its new password.
+
+**5. After UAT-27-03 only:**
+```sh
+$C exec -T app php -- announce < "$U"      # publishes a NEW "[UAT27] Office closed Friday"; the archived one stays archived
+$C exec -T app php -- verify   < "$U"      # every account with a profile now lists it
+```
+
 ## 5. UAT-time helpers (for **execution**, not preparation)
 
 - **UAT-27-04:** the colleague sends the message through the real API, so the same notification path runs. Take the conversation `public_id` from the `verify` output.
+  The password is piped rather than passed as an argument, and the token travels through a header file (the same rules as §4a):
   ```sh
   B=https://company-staging.storm-ark.com/api/v1
-  read -rs PW   # colleague password (not echoed)
-  TOKEN=$(curl -sS -X POST $B/auth/login -H 'Accept: application/json' -H 'Content-Type: application/json' \
-      -d "{\"email\":\"uat27.colleague@company-app.test\",\"password\":\"$PW\",\"device_name\":\"uat27-04\"}" | php -r 'echo json_decode(stream_get_contents(STDIN),true)["data"]["token"] ?? "";')
-  curl -sS -X POST $B/conversations/<conversation_public_id>/messages -H "Authorization: Bearer $TOKEN" \
-      -H 'Accept: application/json' -H 'Content-Type: application/json' -d '{"body":"UAT-27-04 test message"}' -o /dev/null -w '%{http_code}\n'   # 201
+  CID=<conversation_public_id>
+  read -rsp 'uat27.colleague password: ' PW; echo
+  AT=$(printf '%s' "$PW" | $C exec -T app php -r 'echo json_encode(["email" => "uat27.colleague@company-app.test", "password" => stream_get_contents(STDIN)]);' \
+      | curl -sS -X POST "$B/auth/login" -H 'Accept: application/json' -H 'Content-Type: application/json' --data @- \
+      | $C exec -T app php -r 'echo json_decode(stream_get_contents(STDIN), true)["data"]["token"] ?? "";'); unset PW
+  if [ -n "$AT" ]; then
+    curl -sS -o /dev/null -w 'message %{http_code}\n' -X POST "$B/conversations/$CID/messages" -H @<(printf 'Authorization: Bearer %s' "$AT") \
+        -H 'Accept: application/json' -H 'Content-Type: application/json' --data '{"body":"UAT-27-04 test message"}'   # 201
+    curl -sS -o /dev/null -w 'logout %{http_code}\n' -X POST "$B/auth/logout" -H @<(printf 'Authorization: Bearer %s' "$AT") -H 'Accept: application/json'   # 200
+  else echo "STOP: colleague login failed; no message sent"; fi
+  unset AT
   ```
 - **UAT-27-06:** revoke server-side. Either delete the staff account's tokens:
   ```sh
@@ -148,9 +265,16 @@ Nothing is truncated, reset or migrated, and no route or application file change
   ```
   or suspend the account as an Administrator. If you suspend it, restore it before signing in again.
 
-## 6. Script — `uat27_data.php`
+## 6. Script — `uat27_data.php` (revision 2)
 
-SHA-256 of the exact text below, saved with a trailing newline: see `docs/testing/TEST_STATUS.md` (Phase 27 final UAT preparation).
+**Revision 2 (2026-09-24), SHA-256 `398dab9cebe8b0b34fe33020d2cf050a1db227471d94e384025956572e57a88b`** (the exact text below, with a trailing newline).
+
+Changes from revision 1 (`924844478eb5033365512c86d0a903b5a034014a05b296fda8c33659735ab688`, the version run on staging on 2026-09-24):
+- adds the `exposure` (read-only) and `rotate` stages;
+- sends the stage header, status and errors to stderr only; any failure exits `1` without SQL or password hashes in the message;
+- `announce` never revives an archived announcement.
+
+`plan`, `seed` and `verify` behave exactly as before.
 
 ```php
 <?php
@@ -173,6 +297,16 @@ SHA-256 of the exact text below, saved with a trailing newline: see `docs/testin
  *             UAT-27-03, whose empty state needs no visible announcement)
  *   verify    read-only: runs the real GET /me/home controller for each UAT27
  *             account and prints a summary of what Home will show
+ *   exposure  read-only: per UAT27 account, API tokens, web sessions and
+ *             login/logout audit events (were the exposed credentials used?),
+ *             plus every "[UAT27]" announcement with public_id, status,
+ *             published_at and its announcement.archived audit count
+ *   rotate    new password for EXACTLY the six UAT27 accounts, all-or-nothing
+ *             in one transaction; revokes their API tokens and web sessions
+ *             and cycles remember_token. STDOUT carries only "email password"
+ *             lines (redirect it to a 0600 file); everything else is STDERR.
+ *
+ * The stage header and all status output go to STDERR.
  *
  * Only records prefixed "UAT27" / "[UAT27]" or UAT27 accounts are created
  * or changed. No truncation, no migrations, no existing business data edited.
@@ -211,6 +345,13 @@ require getcwd().'/vendor/autoload.php';
 $app = require getcwd().'/bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
 
+// Any failure: exit 1 with a short message on STDERR only — never on STDOUT
+// (which may be a credentials file), never with SQL bindings (password hashes).
+set_exception_handler(function (Throwable $e): void {
+    fwrite(STDERR, 'ERROR '.$e::class.': '.preg_replace('/ \(Connection: .*$/s', '', $e->getMessage()).PHP_EOL);
+    exit(1);
+});
+
 $stage = $argv[1] ?? 'plan';
 
 // key => [email, user name, role, staff profile [employee_number, first, last] or null]
@@ -228,7 +369,14 @@ $day = OverdueTasks::todayInCompanyTimezone(); // Y-m-d in the company timezone
 $at = fn (string $time, int $dayOffset = 0) => Carbon::parse($day.' '.$time, $tz)->addDays($dayOffset)->utc();
 $dueDate = fn (int $dayOffset = 0) => Carbon::parse($day, $tz)->addDays($dayOffset)->toDateString();
 
-echo "stage={$stage} company_timezone={$tz} company_date={$day} utc_now=".now('UTC')->toIso8601String().PHP_EOL;
+fwrite(STDERR, "stage={$stage} company_timezone={$tz} company_date={$day} utc_now=".now('UTC')->toIso8601String().PHP_EOL);
+
+$uat27Only = function (User $user): void {
+    if (! preg_match('/^uat27\.[a-z.]+@company-app\.test$/', $user->email)) {
+        fwrite(STDERR, "refusing non-UAT27 account\n");
+        exit(1);
+    }
+};
 
 $users = fn () => collect($accounts)->map(fn ($a) => User::query()->where('email', $a[0])->first());
 
@@ -348,7 +496,11 @@ if ($stage === 'seed') {
 
 if ($stage === 'announce') {
     $admin = User::query()->where('email', $accounts['admin'][0])->firstOrFail();
-    $a = Announcement::query()->firstOrNew(['title' => '[UAT27] Office closed Friday']);
+    // An archived UAT27 announcement is never revived (the app allows no
+    // Archived -> Published transition); a fresh one is published instead.
+    $a = Announcement::query()
+        ->where('status', '!=', AnnouncementStatus::Archived->value)
+        ->firstOrNew(['title' => '[UAT27] Office closed Friday']);
     $a->fill([
         'body' => 'Phase 27 UAT announcement.',
         'status' => AnnouncementStatus::Published,
@@ -392,6 +544,129 @@ if ($stage === 'verify') {
     exit(0);
 }
 
+if ($stage === 'exposure') {
+    foreach ($users() as $key => $user) {
+        if ($user === null) {
+            echo "{$key}: absent".PHP_EOL;
+
+            continue;
+        }
+        $uat27Only($user);
+        $tokens = $user->tokens()->get(['created_at', 'last_used_at']);
+        $audit = DB::table('audit_logs')->where('actor_user_id', $user->id)
+            ->whereIn('action', ['auth.login_succeeded', 'auth.logout'])
+            ->selectRaw('action, count(*) as n, max(created_at) as last')->groupBy('action')->get()
+            ->map(fn ($r) => "{$r->action}={$r->n} (last {$r->last})")->implode(', ');
+        echo str_pad($key, 16)."api_tokens={$tokens->count()} last_used=".($tokens->max('last_used_at') ?? '-')
+            .' web_sessions='.DB::table('sessions')->where('user_id', $user->id)->count()
+            .' audit: '.($audit ?: 'none').PHP_EOL;
+    }
+    foreach (Announcement::query()->where('title', 'like', '[UAT27]%')->orderBy('id')->get() as $a) {
+        $archivedAudits = DB::table('audit_logs')->where('action', 'announcement.archived')
+            ->where('entity_public_id', $a->public_id)->count();
+        echo "announcement {$a->public_id} status={$a->status->value} published_at="
+            .($a->published_at?->toIso8601String() ?? '-')." archived_audit={$archivedAudits} title={$a->title}".PHP_EOL;
+    }
+    exit(0);
+}
+
+if ($stage === 'rotate') {
+    $all = $users();
+    if ($all->contains(null) || $all->count() !== 6) {
+        fwrite(STDERR, "rotate: expected all six UAT27 accounts to exist; nothing changed\n");
+        exit(1);
+    }
+    $all->each($uat27Only);
+    $passwords = [];
+    DB::transaction(function () use ($all, &$passwords) {
+        foreach ($all as $user) {
+            $passwords[$user->email] = Str::password(20, symbols: false);
+            $user->password = Hash::make($passwords[$user->email]);
+            $user->setRememberToken(Str::random(60));
+            $user->save();
+            $revoked = $user->tokens()->delete();
+            $sessions = DB::table('sessions')->where('user_id', $user->id)->delete();
+            fwrite(STDERR, "rotated {$user->email}: api_tokens_revoked={$revoked} web_sessions_removed={$sessions}\n");
+        }
+    });
+    foreach ($passwords as $email => $password) {
+        echo "{$email} {$password}".PHP_EOL;
+    }
+    fwrite(STDERR, 'rotate: done ('.count($passwords)." accounts)\n");
+    exit(0);
+}
+
 fwrite(STDERR, "unknown stage: {$stage}\n");
 exit(1);
+```
+
+## 7. Helper — `uat27_archive.sh` (§4a step 3)
+
+**SHA-256 `e057bfa4dd5ddf6fd816dd1e9cbf8a21e71df49d3280f8eb81a4fee2d2808fe9`** (the exact text below, with a trailing newline).
+
+```bash
+#!/usr/bin/env bash
+# Phase 27 UAT recovery — archive ONE accidentally published UAT27 announcement
+# through the application's own admin API (POST /announcements/{id}/archive:
+# status change + audit entry, no notifications). Operator tool, not app code.
+#
+# Usage (from the staging checkout, after `rotate`):
+#   bash uat27_archive.sh <announcement_public_id from the `exposure` stage>
+#
+# Any failure stops immediately; the archive request can never be sent without
+# a valid admin token or against anything but the exact public_id given, which
+# must still be the published "[UAT27] Office closed Friday". The password is
+# read silently from the terminal and piped (never an argument); the token only
+# travels through a process-substitution header file; the token is revoked
+# (logout) on every exit path.
+set -euo pipefail
+
+AID="${1:?usage: bash uat27_archive.sh <announcement_public_id>}"
+[[ "$AID" =~ ^[0-9A-HJKMNP-TV-Z]{26}$ ]] || { echo "STOP: '$AID' is not a ULID public_id" >&2; exit 1; }
+
+if [[ -n "${UAT27_REHEARSAL_API_BASE:-}" ]]; then   # scratch rehearsal only
+    B="$UAT27_REHEARSAL_API_BASE"
+    PHP=(php)
+else
+    B="https://company-staging.storm-ark.com/api/v1"
+    PHP=(docker compose -p company-app -f docker-compose.staging.yml --env-file .env.staging exec -T app php)
+fi
+TITLE='[UAT27] Office closed Friday'
+AT=""
+
+# call METHOD PATH EXPECTED_HTTP_CODE — authenticated; prints the body only on the expected code.
+call() {
+    local out code
+    out=$(mktemp)
+    code=$(curl -sS -o "$out" -w '%{http_code}' -X "$1" "$B$2" -H 'Accept: application/json' \
+        -H @<(printf 'Authorization: Bearer %s' "$AT")) || { rm -f "$out"; echo "STOP: $1 $2 failed" >&2; return 1; }
+    if [[ "$code" != "$3" ]]; then rm -f "$out"; echo "STOP: $1 $2 -> HTTP $code (expected $3)" >&2; return 1; fi
+    cat "$out"; rm -f "$out"
+}
+# field KEY — reads JSON on stdin, prints data.KEY; fails if absent (PHP from the app image, not sed).
+field() { "${PHP[@]}" -r '$v = json_decode(stream_get_contents(STDIN), true)["data"][$argv[1]] ?? null; if (! is_string($v) || $v === "") { exit(1); } echo $v;' "$1"; }
+logout() { [[ -n "$AT" ]] && call POST /auth/logout 200 >/dev/null && echo "logout: token revoked" >&2; AT=""; }
+trap logout EXIT
+
+read -rsp 'uat27.admin password: ' PW; echo >&2
+LOGIN_OUT=$(mktemp)
+CODE=$(printf '%s' "$PW" \
+    | "${PHP[@]}" -r 'echo json_encode(["email" => "uat27.admin@company-app.test", "password" => stream_get_contents(STDIN)]);' \
+    | curl -sS -o "$LOGIN_OUT" -w '%{http_code}' -X POST "$B/auth/login" \
+        -H 'Accept: application/json' -H 'Content-Type: application/json' --data @-) || CODE=curl-error
+unset PW
+if [[ "$CODE" != "200" ]]; then rm -f "$LOGIN_OUT"; echo "STOP: admin login failed (HTTP $CODE); nothing archived" >&2; exit 1; fi
+AT=$(field token < "$LOGIN_OUT") || { rm -f "$LOGIN_OUT"; echo "STOP: no token in login response; nothing archived" >&2; exit 1; }
+rm -f "$LOGIN_OUT"
+[[ -n "$AT" ]] || { echo "STOP: empty token; nothing archived" >&2; exit 1; }
+
+# Re-confirm the exact target before changing anything.
+SHOW=$(call GET "/announcements/$AID" 200)
+[[ "$(printf '%s' "$SHOW" | field public_id)" == "$AID" ]] || { echo "STOP: public_id mismatch" >&2; exit 1; }
+[[ "$(printf '%s' "$SHOW" | field title)" == "$TITLE" ]] || { echo "STOP: $AID is not '$TITLE'" >&2; exit 1; }
+[[ "$(printf '%s' "$SHOW" | field status)" == "published" ]] || { echo "STOP: $AID is not published; nothing to archive" >&2; exit 1; }
+
+RESULT=$(call POST "/announcements/$AID/archive" 200)
+[[ "$(printf '%s' "$RESULT" | field status)" == "archived" ]] || { echo "STOP: archive response did not report archived" >&2; exit 1; }
+echo "archived: $AID ($TITLE)" >&2
 ```

@@ -567,4 +567,47 @@ Source: `main` = `origin/main` = `093441a9526a96a285afe6fe7a0e21d66bc3f764` (UAT
 
 ---
 
+## Phase 27 — UAT data on staging: incident and recovery (2026-09-24)
+
+Operator-reported, 2026-09-24 (Asia/Manila). Script revision 1 (SHA-256 `924844478eb5033365512c86d0a903b5a034014a05b296fda8c33659735ab688`).
+
+| Step | Type | Status | Notes |
+|---|---|---|---|
+| `plan` | Manual, real VPS (operator) | PASS | All six UAT27 accounts absent; non-UAT27 published company-wide announcements `0`; roles `3/3`. |
+| `seed` | Manual, real VPS (operator) | PASS | Seeded for company date 2026-09-24 (Asia/Manila). |
+| `verify` (server-side) | Manual, real VPS (operator) | PASS | Matched `PHASE_27_UAT_PREPARATION.md` §3 exactly. This is a data check, **not** UAT. |
+| First-generation UAT27 passwords | Incident | **EXPOSED — invalid for UAT** | All six were pasted into an external AI chat. They must be rotated before any UAT sign-in. |
+| `announce` | Incident | **Run too early** | Run before physical-device UAT-27-03. `[UAT27] Office closed Friday` is published on staging, so UAT-27-03's "no announcements" state is currently not observable. |
+| Recovery (§4a: `exposure` → `rotate` → archive via the admin API → verify) | Design | Rehearsed; **NOT executed on staging** | Script revision 2 SHA-256 `398dab9cebe8b0b34fe33020d2cf050a1db227471d94e384025956572e57a88b`; `uat27_archive.sh` SHA-256 `e057bfa4dd5ddf6fd816dd1e9cbf8a21e71df49d3280f8eb81a4fee2d2808fe9`. |
+| Recovery rehearsal (scratch SQLite, Asia/Manila, 45 migrations + `RolePermissionSeeder`, non-UAT27 control user/token/web session/draft announcement) | Manual, AI sandbox | PASS (0 failures) | See the list below the table. |
+| UAT-27-04 helper (§5) | Manual, AI sandbox | PASS | Now pipes the password and passes the token through a header file (previously both were `curl` arguments). Scratch: message `201` and logout `200`; unread messages and notifications both 1 → 2; a wrong password STOPs with nothing sent. |
+| UAT-27-01…08 | — | NOT RUN | Server-side `verify` is not UAT-27-03. Physical-device UAT-27-03 is `NOT RUN`. |
+
+**Rehearsal results:**
+- **Revision-1 behaviour:** `plan`/`seed`/`verify` behave as before; revision 1 reproduced the accidental publish.
+- **`exposure` is read-only:**
+  - the database file was byte-identical afterwards (`verify` and `plan` too);
+  - it reported a simulated misuse (a staff sign-in and token with an old password, and an admin web session) and the published announcement's `public_id`.
+- **`rotate` is all-or-nothing:**
+  - With an injected failure on the 5th account it exited `1`, wrote nothing to stdout, and left every password hash, token and session unchanged.
+  - A normal run created the credentials file with mode `0600`, containing exactly six `email password` lines. Stderr held only the header and six status lines.
+  - It revoked the pre-rotation token (`401`) and the UAT27 web session.
+  - All six old passwords are rejected (`422`); all six new ones work.
+  - Non-UAT27 users, tokens, sessions, announcements and staff were unchanged, as were the seeded schedule, task, message and notification rows.
+- **`uat27_archive.sh`:**
+  - A wrong password: STOP, archive never sent.
+  - A malformed id: STOP before login.
+  - A non-UAT27 announcement id: STOP, nothing archived, token revoked.
+  - The correct id: `200`, archived, token revoked, 1 `announcement.archived` audit entry.
+  - A re-run: STOP (not published). A login throttle (`429`) also STOPs safely.
+  - No UAT27 tokens remain afterwards.
+- **After archiving:** no announcement appears on any Home. Staff Home is intact (Today 3; tasks 2/1/1; 1 unread message; 1 unread notification), and empty Home is all zero.
+- **Revised `announce`:**
+  - it created a fresh announcement and left the archived one archived;
+  - a re-run reused the same one (idempotent);
+  - the new one is visible on all 5 accounts with profiles;
+  - it created no notifications, and non-UAT27 data was unchanged end to end.
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*
