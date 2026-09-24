@@ -356,3 +356,14 @@ Phase 28 (People) must not begin until Phase 27 is closed and Phase 28 is explic
   - The staging run is pending the operator.
   - Order constraint: publish the UAT announcement only after UAT-27-03.
 - **Status:** UAT-27-01…08 remain `NOT RUN`. Phase 27 is not formally closed. Phase 28 has not started.
+
+## Addendum — UAT Data Preparation Incident and Recovery Design (2026-09-24)
+
+- **Staging preparation (operator):** script revision 1 ran on 2026-09-24 (Asia/Manila). `plan` passed, `seed` succeeded, and `verify` matched the plan exactly.
+- **Incident:**
+  - all six first-generation UAT27 passwords were pasted into an external AI chat, so they are exposed and invalid for UAT;
+  - `announce` ran before physical-device UAT-27-03, so the UAT27 announcement is published on staging.
+- **Recovery:** designed and rehearsed on a scratch database only; **not executed on staging**. See `docs/testing/PHASE_27_UAT_PREPARATION.md` §4a. It uses:
+  - script revision 2 (`398dab9cebe8b0b34fe33020d2cf050a1db227471d94e384025956572e57a88b`): read-only `exposure`; all-or-nothing `rotate` of exactly the six UAT27 accounts, with their API tokens and web sessions revoked; an `announce` that never revives an archived announcement;
+  - `uat27_archive.sh` (`e057bfa4dd5ddf6fd816dd1e9cbf8a21e71df49d3280f8eb81a4fee2d2808fe9`): archives the exact accidental announcement through the app's own admin API.
+- **Status:** results in `docs/testing/TEST_STATUS.md`. UAT-27-01…08 remain `NOT RUN` (server-side `verify` is not UAT-27-03). Phase 27 is not closed. Phase 28 has not started.
