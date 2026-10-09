@@ -684,4 +684,19 @@ Same branch. AI sandbox, Flutter 3.47.2 / Dart 3.13.2. No device or emulator: ev
 
 ---
 
+## Phase 28 — Gate 4 (final integration review)
+
+Final tree on `claude/amazing-brahmagupta-dbsrjc` (contains `main` at `116526f`). AI sandbox: PHP 8.4.19; Flutter 3.47.2 / Dart 3.13.2.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Backend `CLAUDE.md` §5 gates | Automated | PASS | `composer validate --strict` valid. `composer audit --locked` has **no advisories** (PR #56 merged in). Pint pass. PHPStan level 5: 0 errors. `php artisan test` 1,147/1,147 (3,215 assertions). `vendor/` re-synced to the merged lock (`league/commonmark` 2.10.3) before the run. |
+| Mobile `CLAUDE.md` §5 gates | Automated | PASS | `flutter pub get` ok; `pubspec` unchanged. `dart format`: 51 files, 0 changed. `flutter analyze`: no issues. `flutter test` 213/213 with 0 hit-test warnings. |
+| Contract parity (scratch, not committed) | Automated (temporary) | PASS | Real Laravel `/me/profile`, `/staff/{id}` and `/staff` responses parsed by the production Flutter models. Cases: Staff, Manager and Administrator; a no-profile account; a record with every optional field null; non-ASCII names; paginator `meta`. Both scratch tests were deleted afterwards and the tree was clean. |
+| Full Phase 28 diff review | Manual (code review) | Done | Backend and mobile match spec §6–§8 and R-1…R-8. Deviations and limitations are in the handoff §12/§13. No migration, permission, dependency, environment, infrastructure or CI change. |
+| Device / emulator | Manual | NOT RUN | None available in this sandbox. |
+| UAT | — | NOT RUN | UAT-28-01…07 `NOT RUN`: they need the merge, a staging deployment, UAT data and an APK. |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*

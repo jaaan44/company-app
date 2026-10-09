@@ -1,6 +1,6 @@
 # Phase 28 — People: Staff Directory & Profile (Mobile) — Specification
 
-**Status:** AUTHORIZED — IN PROGRESS. Approved (revision 2, merged via PR #55 at `0bb3a64fe5d4da44f4c79fce152047acabb049dc`); implementation authorized in gates. **Gate 1 (backend `GET /api/v1/me/profile` and the `/staff` tie-breaker) implemented**; **Gate 2 (Flutter People models, `PeopleApiClient` and controllers) implemented**; **Gate 3 (Flutter `More` menu, My profile, Staff directory and detail screens, `/more` sub-routes) implemented**; Gate 4 (integration review, docs, handoff, PR) not started. The specification text below is unchanged from the approved revision.
+**Status:** AUTHORIZED — IN PROGRESS. Approved (revision 2, merged via PR #55 at `0bb3a64fe5d4da44f4c79fce152047acabb049dc`); implementation authorized in gates. **Gate 1 (backend `GET /api/v1/me/profile` and the `/staff` tie-breaker) implemented**; **Gate 2 (Flutter People models, `PeopleApiClient` and controllers) implemented**; **Gate 3 (Flutter `More` menu, My profile, Staff directory and detail screens, `/more` sub-routes) implemented**; **Gate 4** final integration review done and the handoff written (`docs/handoffs/V1_PHASE_28_HANDOFF.md`). Remaining before closure: PR review/CI and merge, staging deployment, UAT data and APK preparation, and product-owner UAT (UAT-28-01…07). The specification text below is unchanged from the approved revision.
 
 **Depends on:**
 - Phase 25 (Mobile Application Foundation & Navigation Shell): the `go_router` shell and the `More` tab

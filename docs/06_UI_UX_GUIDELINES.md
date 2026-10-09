@@ -28,11 +28,40 @@ Principles:
 
 Both needs that motivated the choice are realized: **auth-gated redirects at the route level** (the `redirect` callback above, evaluated on every `AuthController` change) and the **structural readiness for deep linking** (`go_router`'s path-based routes make it possible; actual deep-link *consumption* from a Notification is still unbuilt, deferred to whichever later phase first needs it).
 
-Four of the five destinations (`Tasks`/`Schedule`/`Messages`/`More`) are still honest placeholders — Phase 25 built the shell and routing only, per its own scope boundary; Phases 27–33 give them real content. See `docs/phases/V1_PHASE_25_DEFINITION.md` and `docs/handoffs/V1_PHASE_25_HANDOFF.md` for the full account.
+Three of the five destinations (`Tasks`/`Schedule`/`Messages`) are still honest placeholders — Phase 25 built the shell and routing only, per its own scope boundary; Phases 27–33 give them real content. *(Home became real in Phase 27, and `More` in Phase 28.)* See `docs/phases/V1_PHASE_25_DEFINITION.md` and `docs/handoffs/V1_PHASE_25_HANDOFF.md` for the full account.
 
 ### Employee Home (implemented, Phase 27 — complete, formally closed 2026-09-24)
 
 The Home tab is the first real mobile screen, and the first real use of the loading/empty/error conventions below. In order: greeting ("Hello, {preferred ?? first name}", position · department, team — no time-of-day wording), **Today** (the employee's own schedule entries and tasks due today, in server order, times in the *company* timezone via the server's `company_day.utc_offset`, "+N more today"), **Needs attention** (task, message and notification counts as tiles, each one semantics label; overdue shown in the `error` role *with* text), and **Latest announcements** (≤ 3, title + date). Users with no employee profile see an explanation and only the notifications count. States: centered `CircularProgressIndicator` on first load; inline error in the `error` role (live region) with a "Try again" `FilledButton`; pull-to-refresh that keeps content and shows a `SnackBar` if it fails. **Home content is deliberately non-interactive** (no `InkWell`/`ListTile`/`GestureDetector`/chevrons) until the Tasks/Schedule/Messages screens exist (spec R-1). Verified by widget tests in light and dark mode and at 200% text scale; not yet verified on a device.
+
+### People — More, My profile, Staff directory (implemented, Phase 28 — pending PR/CI, staging and UAT)
+
+- **`More`** lists only real areas: *My profile* (subtitle: the account name) and *Staff directory*. There are no "coming soon" rows; each later phase adds its own row (R-8). Rows are standard `ListTile`s with a chevron.
+- **My profile** is read-only:
+  - a header with display name, full name if different, position · department, and team;
+  - **Work**, **Employment** and **Account** sections;
+  - a closing line: "To change these details, contact an administrator.";
+  - an account without a staff record shows "No staff profile is linked to this account." and the Account section only.
+- **Staff directory:**
+  - a search field ("Search by name", with a clear button) above the list;
+  - rows show display name and "position · department", missing parts skipped;
+  - pull-to-refresh;
+  - empty states: "No active staff yet." and "No one matches "{q}".".
+- **Staff detail:**
+  - a name header (full name as a second line when it differs);
+  - position, department, team, and a manager row that navigates;
+  - company email and phone with a **Copy** button each (a "Copied" `SnackBar`).
+  - No tap-to-call or tap-to-email (R-3).
+
+Conventions this phase establishes for later list screens:
+- **Missing values read "Not set"**, never blank.
+- **Paged lists:**
+  - load the next page automatically when the list nears its end, with an inline spinner row;
+  - a failed page becomes a "Couldn't load more. Tap to retry." row, not a full-screen error, and the loaded rows stay;
+  - a failed **first** page uses the full-screen error with "Try again";
+  - a failed **refresh** keeps the list and shows the Home "Couldn't refresh. Showing earlier information." notice.
+- **Search** waits about 300 ms after typing pauses, and only the latest search's results are ever shown.
+- **List density:** Material's standard comfortable density proved sufficient for a ~100-person directory, so no denser variant was introduced (see Spacing below).
 
 ## Admin Backoffice (Web) — Navigation
 
@@ -98,7 +127,7 @@ No custom font family — the platform default is retained; a custom font is a f
 | `xl` | 32px | Spacing between major page regions |
 | `xxl` | 48px | Large empty-state/hero spacing |
 
-`md`/`lg` are already the de facto values `LoginPage` uses informally — this scale formalizes, rather than changes, that existing pattern. List density defaults to Material's standard comfortable sizing; a denser variant is a decision for whichever module first demonstrates a real need (most likely a long Staff Directory), not decided speculatively here.
+`md`/`lg` are already the de facto values `LoginPage` uses informally — this scale formalizes, rather than changes, that existing pattern. List density defaults to Material's standard comfortable sizing; a denser variant is a decision for whichever module first demonstrates a real need, not decided speculatively here. *(Phase 28's Staff directory, the predicted candidate, uses standard density; a ~100-person, paged and searchable list did not need a denser variant.)*
 
 ### Components — baseline conventions, not a library
 

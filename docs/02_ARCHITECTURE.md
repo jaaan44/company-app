@@ -469,3 +469,26 @@ Internet → Cloudflare (proxied, Full (strict))
 **Mobile — authenticated requests (`lib/core/network/`):** `ApiClient` (GET, bearer token from the current session) plus a small `ApiException` model. It owns the session rules: a 401 expires the session locally; a 403 triggers exactly one `GET /auth/me` re-check through `AuthApiClient` (401 → expire; anything else → session kept, original 403 reported). `AuthController` implements `ApiSession`, keeps the current token in memory (still persisted in `TokenStorage`), and owns one single-flight session-ending routine shared by manual logout and automatic expiry; an expiry applies only when the failing request's token is still current. `LoginPage` shows a session-ended notice only after automatic expiry.
 
 **Mobile — Home (`lib/features/home/{domain,data,state,presentation}/`):** `HomeSummary` (strict typed contract; null sections stay null), `HomeApiClient` (one call through `ApiClient`), `HomeController` (`ChangeNotifier`; loading / loaded / error, refresh keeping content, one request in flight), and `HomePage` (loads once in `initState`; greeting, Today, Needs attention, Latest announcements; non-interactive content; pull-to-refresh). `CompanyApp`/`buildAppRouter` accept an optional injected `HomeApiClient` for tests. No new dependency; the other four tabs remain Phase 25 placeholders. See `docs/phases/V1_PHASE_27_DEFINITION.md` and `docs/handoffs/V1_PHASE_27_HANDOFF.md`.
+
+## 34. People — My Profile & Staff Directory (Phase 28 — implementation complete, pending PR/CI, staging and UAT; DEC-053)
+
+**Backend:**
+- **`GET /api/v1/me/profile`** (`App\Http\Controllers\Api\V1\Profile\MyProfileController`, `auth:sanctum` + `account.active`) returns `user` (`public_id`, `name`, `email`, `role`) and `staff`.
+  - `staff` is the unchanged Phase 7 `StaffResource` with `StaffController`'s eager loads, or `null` when no Staff record is linked.
+  - It is self-scoped by construction (no request parameter), needs no permission, and runs a constant number of queries.
+- **The directory reuses the Phase 7 `GET /api/v1/staff` and `GET /api/v1/staff/{public_id}` unchanged**, except that `index` now orders by `last_name, first_name, id`. The `id` tie-breaker stops paginated clients from skipping or repeating same-named staff. No migration and no permission change. DEC-030's company-wide `staff.view` visibility is unchanged.
+
+**Mobile — People (`lib/features/people/{domain,data,state,presentation}/`):**
+- **`domain/`:** strict `StaffMember`, `MyProfile` and `StaffDirectoryPage` models. Only the fields the screens use are parsed: `operational_status` and the Administrator-only `user` block are ignored.
+- **`data/PeopleApiClient`:** `fetchMyProfile`; `fetchDirectoryPage` (always `status=active&per_page=25`, search text encoded with `Uri`); `fetchStaff`. Everything goes through the Phase 27 `ApiClient`, so the 401/403 session rule is reused rather than re-implemented.
+- **`state/`:**
+  - A small abstract `ResourceController<T>` carries the Home lifecycle (loading / loaded / error, a refresh that keeps content, one request in flight). `MyProfileController` and `StaffDetailController` extend it.
+  - `StaffDirectoryController` adds a debounced search, load-more paging, refresh, de-duplication, and **generation-based stale-response dropping**: each new search or refresh increments a generation, and older responses are ignored.
+- **`presentation/`:**
+  - `MorePage` (two rows), `MyProfilePage`, `StaffDirectoryPage` and `StaffDetailPage`.
+  - Shared `people_widgets.dart`: an info row with "Not set" and optional Copy via the SDK `Clipboard`, a section header, and an error view.
+  - The directory's footer row triggers the next page when it is built. That covers both scrolling and a first page too short to scroll.
+
+**Routing:** `/more` → `/more/profile`, `/more/directory`, `/more/directory/:publicId`, all inside the `More` `StatefulShellBranch`, so the tab keeps its own stack. A manager link pushes another detail page. `CompanyApp` builds one shared `ApiClient` for `HomeApiClient` and `PeopleApiClient`; both are injectable for tests.
+
+**Not introduced:** no editing of any kind, photos, an org chart, `url_launcher` (copy-only, R-3), operational status (R-4), caching or offline storage, or a new dependency. See `docs/phases/V1_PHASE_28_DEFINITION.md` and `docs/handoffs/V1_PHASE_28_HANDOFF.md`.

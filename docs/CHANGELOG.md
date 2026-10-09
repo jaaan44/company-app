@@ -4,6 +4,17 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-09 — Phase 28 Gate 4: final integration review, handoff and implementation PR
+- Final gates on the complete branch: backend 1,147/1,147 with Pint, PHPStan level 5, `composer validate --strict` and `composer audit --locked` (no advisories); Flutter 213/213 with format and analyze clean and `pubspec` unchanged.
+- **Contract parity:** real Laravel `/me/profile` and `/staff` output for every role, a no-profile account, all-null optional fields and non-ASCII names was parsed by the production Flutter models (in temporary tests that were not committed).
+- Docs:
+  - new `docs/handoffs/V1_PHASE_28_HANDOFF.md`;
+  - `02_ARCHITECTURE.md` §34 (People);
+  - `06_UI_UX_GUIDELINES.md` (People, the paged-list and "Not set" conventions, and the list-density question resolved);
+  - spec status → implementation complete, pending PR/CI, staging and UAT;
+  - UAT-28 notes updated (still `NOT RUN`).
+- Phase 28 is **not** closed, and nothing is deployed.
+
 ### 2026-10-09 — Phase 28 Gate 3: Flutter People screens and routes
 - **`More` (R-8)** is now a real menu with only *My profile* and *Staff directory*. `MorePlaceholderPage` was removed; logout stays on Home.
 - **My profile:** the person's own record (work, employment, account), read-only with "To change these details, contact an administrator." No-profile accounts see a message and the Account section. Missing values read "Not set".
