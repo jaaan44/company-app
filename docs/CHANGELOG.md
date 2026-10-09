@@ -4,11 +4,46 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-09 — Phase 28 Gate 4: final integration review, handoff and implementation PR
+- Final gates on the complete branch: backend 1,147/1,147 with Pint, PHPStan level 5, `composer validate --strict` and `composer audit --locked` (no advisories); Flutter 213/213 with format and analyze clean and `pubspec` unchanged.
+- **Contract parity:** real Laravel `/me/profile` and `/staff` output for every role, a no-profile account, all-null optional fields and non-ASCII names was parsed by the production Flutter models (in temporary tests that were not committed).
+- Docs:
+  - new `docs/handoffs/V1_PHASE_28_HANDOFF.md`;
+  - `02_ARCHITECTURE.md` §34 (People);
+  - `06_UI_UX_GUIDELINES.md` (People, the paged-list and "Not set" conventions, and the list-density question resolved);
+  - spec status → implementation complete, pending PR/CI, staging and UAT;
+  - UAT-28 notes updated (still `NOT RUN`).
+- Phase 28 is **not** closed, and nothing is deployed.
+
+### 2026-10-09 — Phase 28 Gate 3: Flutter People screens and routes
+- **`More` (R-8)** is now a real menu with only *My profile* and *Staff directory*. `MorePlaceholderPage` was removed; logout stays on Home.
+- **My profile:** the person's own record (work, employment, account), read-only with "To change these details, contact an administrator." No-profile accounts see a message and the Account section. Missing values read "Not set".
+- **Staff directory:** active staff only (R-1), debounced name search, automatic "load more" with a tap-to-retry row on failure, pull-to-refresh, and two distinct empty states. Rows show name and "position · department" (R-5). A 403 shows an access message without signing out.
+- **Staff detail:** name (and full name when different), position, department, team, manager (opens the manager's entry, R-7), and company email and phone with Copy buttons (R-3, no new dependency). No employee number, dates or operational status (R-4/R-5).
+- **Routes:** `/more/profile`, `/more/directory` and `/more/directory/:publicId`, all inside the `More` branch, so the tab keeps its stack. `CompanyApp` shares one `ApiClient` between Home and People and injects a `PeopleApiClient`.
+- 23 new widget tests (including dark mode, 200% text and tablet); `router_test` updated for the new More. `flutter test` 213/213; format and analyze clean; `pubspec` unchanged.
+
+### 2026-10-09 — Phase 28 Gate 2: Flutter People data and state (no UI yet)
+- New `apps/mobile/lib/features/people/`:
+  - **`domain/`:** strict `StaffMember` (Phase 7 `StaffResource`; `operational_status` and the Administrator-only `user` block are deliberately not parsed, R-4), `MyProfile` (`staff` null when unlinked) and `StaffDirectoryPage`.
+  - **`data/PeopleApiClient`:** `/me/profile`; `/staff?status=active&per_page=25&page=N[&q=…]` (R-1, encoded with `Uri`); `/staff/{publicId}`. All go through the Phase 27 `ApiClient`, so the 401/403 session rule is unchanged.
+  - **`state/`:** a shared `ResourceController` (the Phase 27 Home lifecycle) behind `MyProfileController` and `StaffDetailController`. `StaffDirectoryController` adds debounced search, load-more paging, refresh, de-duplication, and stale-response dropping by generation.
+- 61 new tests; `flutter test` 190/190; format and analyze clean. No new dependency. No screen, route or `More` change (Gate 3).
+- Merged `main` (PR #56) into the Phase 28 branch, so it carries the `league/commonmark` 2.10.3 fix.
+
 ### 2026-10-09 — Security: `league/commonmark` 2.10.1 → 2.10.3 (dependency only)
 - Fixes the `composer audit --locked` failure found during Phase 28 Gate 1: GHSA-3q6v-r5mr-hxv8 (high: quadratic-time DoS in the GFM table extension) and GHSA-97jj-33gv-5xf9 (medium: `DisallowedRawHtml` bypass), both published 2026-09-30 and affecting ≤ 2.10.1.
 - `league/commonmark` is transitive (`laravel/framework` requires `^2.8.1`). Only that package changed in `composer.lock` (`composer update league/commonmark`, without `--with-dependencies`). `composer.json` is unchanged, and application code does not call Markdown rendering.
 - Checks: `composer validate --strict`, `composer audit --locked` (no advisories), Pint, PHPStan level 5, `php artisan test` 1,130/1,130.
 - Not part of any phase; Phase 28 is unaffected and still at Gate 1.
+
+### 2026-10-09 — Phase 28 Gate 1: self-scoped `GET /api/v1/me/profile` and a deterministic `/staff` order
+- **`GET /api/v1/me/profile`** (`MyProfileController`): `auth:sanctum` + `account.active`, no permission, no request parameters. It returns `user` (`public_id`, `name`, `email`, `role`) and `staff`: the unchanged Phase 7 `StaffResource` with `StaffController`'s eager loads, or `null` (`200`) when no Staff record is linked. DEC-053.
+- **`GET /api/v1/staff`** now orders by `last_name, first_name, id`. The visible order is unchanged; same-named staff can no longer be skipped or repeated across pages.
+- Tests: 15 new in `MyProfileTest`, 2 new in `StaffTest`. Full suite 1,147/1,147. Pint, PHPStan level 5 and `composer validate --strict` pass.
+- **`composer audit --locked` fails on a pre-existing finding** (`league/commonmark` 2.10.1: GHSA-3q6v-r5mr-hxv8 high, GHSA-97jj-33gv-5xf9 medium, published 2026-09-30). The lockfile is unchanged and `main` has the same finding. It is recorded, not fixed here; see `TEST_STATUS.md`.
+- Docs: DEC-053; `04_API_CONVENTIONS.md`; `05_SECURITY_MODEL.md` (My Profile self-scope); the spec status (authorized, Gate 1 implemented); `CURRENT_STATE.md`; UAT-28-01…07 added as `NOT RUN`.
+- No migration, permission, dependency, mobile or configuration change. Gates 2–4 are not started.
 
 ### 2026-09-24 — Phase 27 formally closed (documentation only)
 - Phase 27 — Employee Home / Dashboard (Mobile) is formally closed as of 2026-09-24. Implementation (PR #44, `be43663`) is deployed on staging, UAT-27-01…08 all `PASS`, and no Phase 27 blocking defect remains.

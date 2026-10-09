@@ -631,4 +631,72 @@ Operator- and product-owner-reported, 2026-09-24 (Asia/Manila). The earlier sect
 
 ---
 
+## Phase 28 — Gate 1 (backend `GET /api/v1/me/profile` and `/staff` tie-breaker)
+
+Branch `claude/amazing-brahmagupta-dbsrjc`, from `main` at `0bb3a64` (PR #55). Run in this AI sandbox (PHP 8.4.19, SQLite in-memory per `phpunit.xml`).
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `tests/Feature/Api/V1/Profile/MyProfileTest.php` (15 tests) | Automated | PASS | Covers authentication: unauthenticated or invalid token → 401; suspended account → 403. Exact `user` fields. Own record for Staff/Manager/Administrator. `staff` identical to `GET /staff/{public_id}` for each role. The `staff.manage`-only `user` block appears for the Administrator only. No internal ids. Null placement/manager. A separated status still returns the own record. An unlinked Administrator gets `staff: null` with 200. A no-role user reads their own profile but not `/staff`. Query parameters cannot change the subject. Query count ≤ 12. |
+| `StaffTest` additions (2 tests) | Automated | PASS | Three same-named staff across `per_page=1` pages come back as 3 distinct records in id order, and the SQL ends `order by "last_name" asc, "first_name" asc, "id" asc`. Distinct names keep their visible order. **Proven to catch the bug:** with the tie-breaker temporarily removed, the first test fails on the SQL assertion; the file was then restored. |
+| Full `php artisan test` | Automated | PASS | 1,147/1,147 (3,215 assertions): the 1,130 from Phase 27 plus these 17. No existing test changed. |
+| `composer validate --strict` | Automated | PASS | — |
+| `vendor/bin/pint --test` | Automated | PASS | — |
+| `vendor/bin/phpstan analyse` (level 5) | Automated | PASS | 0 errors. |
+| `composer audit --locked` | Automated | **FAIL (pre-existing, not caused by this gate)** | `league/commonmark` 2.10.1 (transitive, via `laravel/framework` ^2.8.1). GHSA-3q6v-r5mr-hxv8 (high: quadratic-time DoS in the GFM table extension) and GHSA-97jj-33gv-5xf9 (medium: `DisallowedRawHtml` bypass), both published 2026-09-30, affecting ≤ 2.10.1. Patched 2.10.2/2.10.3 exist. `composer.lock` is identical to `main`, so `main` fails this check too. Application code does not call Markdown rendering. Not fixed in Gate 1: a lockfile change is outside Gate 1's authorized scope. Awaiting a product-owner decision. |
+| Mobile | — | Not affected | No `apps/mobile` change in Gate 1. |
+| UAT | — | NOT RUN | UAT-28-01…07 `NOT RUN` (not yet runnable). |
+
+---
+
+## Phase 28 — Gate 2 (Flutter People data and state)
+
+Same branch, after merging `main` at `116526f` (PR #56, the `league/commonmark` 2.10.3 fix). Run in this AI sandbox: Flutter 3.47.2 (framework `d3b14c8769`) / Dart 3.13.2, downloaded from `storage.googleapis.com` as in Phases 25/27. No device or emulator; nothing here is manually verified.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `test/features/people/people_models_test.dart` (15) | Automated | PASS | Strict parsing of `StaffMember`, `MyProfile` and `StaffDirectoryPage`. Null placement and manager stay null. `roleLine` skips a missing part. A preferred name vs full name is detected. Role labels map correctly. A missing or wrongly typed field is a `FormatException`. |
+| `test/features/people/people_api_client_test.dart` (13) | Automated | PASS | Exact paths, and the bearer token is sent. The directory always sends `status=active&per_page=25&page=N` (R-1). An empty or whitespace query is not sent. Search text is trimmed and fully encoded, including `&`, `?`, `=`, `#` and non-ASCII. A public id can never change the path. A contract mismatch → `ApiRequestException`. 401 ends the session; 403 with a valid session is forbidden, not a sign-out. |
+| `test/features/people/resource_controllers_test.dart` (14) | Automated | PASS | `MyProfileController` / `StaffDetailController`: loading → loaded. No-profile is loaded, not an error. Error messages for network, 5xx, bad shape, 404 and 403. Try again recovers. A failed refresh keeps data and returns false. Concurrent calls make one request. 401 → signed out with no error state. No notifications after dispose. |
+| `test/features/people/staff_directory_controller_test.dart` (19) | Automated | PASS | First page, load more to the last page, one request for overlapping load-more calls, no duplicate person, and a load-more failure that is kept and retried. Search is debounced (last text only), the same query sends nothing, and a search is paged on load more. A slow earlier-search response is dropped, and a load-more overtaken by a refresh is dropped. Refresh keeps the list while loading and replaces it on success; a failed refresh keeps the list. An empty result is loaded. Error messages cover network, 403 and 5xx. Try again recovers. 401 → signed out. A pending search is cancelled by dispose. **Proven to catch the bug:** with the generation guard removed, exactly the two stale-response tests fail; the file was then restored. |
+| `flutter pub get` | Automated | PASS | `pubspec.yaml` and `pubspec.lock` unchanged: no new dependency (R-3). |
+| `dart format --output=none --set-exit-if-changed .` | Automated | PASS | 45 files, 0 changed. |
+| `flutter analyze` | Automated | PASS | No issues. |
+| Full `flutter test` | Automated | PASS | 190/190: the 129 from Phase 27 plus these 61. Home 64/64; core network + auth 45/45 (unchanged). |
+| Backend after merging `main` | — | Unchanged | Gate 2 changes no `apps/api` file. The merge brought only `composer.lock` (PR #56, already CI-green on `main`). |
+| UAT | — | NOT RUN | UAT-28-01…07 `NOT RUN` (no screens yet; Gate 3). |
+
+---
+
+## Phase 28 — Gate 3 (Flutter People screens and routes)
+
+Same branch. AI sandbox, Flutter 3.47.2 / Dart 3.13.2. No device or emulator: everything below is **tested automatically**, nothing is manually verified.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `test/features/people/people_pages_test.dart` (23) | Automated (widget, through the real `CompanyApp`, router, shell, `AuthController` and `ApiClient`) | PASS | **More (R-8):** exactly two rows; the account name as subtitle; no "coming soon"; no request. **My profile:** every field, including employee number, hire date `1 Mar 2024`, login email and role; full name when the preferred name differs; read-only (no text field, no edit icon) with the administrator note. No-profile shows the message and Account only. Missing values read "Not set" (4 of them). Error → Try again recovers. **Directory:** server order; "position · department" with missing parts skipped; no subtitle when both are missing; `status=active` sent; no operational status shown (R-4). Search is debounced (only the paused text is sent); clear resets. Both empty states. Scrolling loads page 2. A failed page shows a retry row that works. Pull-to-refresh refetches. 403 → access message with the session kept; 401 → Login with the session-ended notice. **Detail:** approved fields only, with no employee number, dates or status (R-5). Copy sends the email/phone to the platform clipboard and shows "Copied" (R-3). The manager opens their entry, a manager-less entry has a plain row, and back returns (R-7). Switching tabs keeps the More stack. Android tap-target and labelled-tap-target guidelines met. **Resilience:** light/dark phone at 100% and 200% text, and a light 200% tablet, with long names: More, profile (walked to the last row), directory (walked to the last row) and detail (walked to the copy-phone button) throw no exception and stay hit-testable. Hit-test warnings are fatal in this file. **Proven to catch the bug:** with the footer's load-more trigger disabled, exactly the two paging tests fail; the file was then restored. |
+| `test/app/router_test.dart` | Automated | PASS (updated) | The More tab now expects `MorePage` with My profile and Staff directory, instead of the removed `MorePlaceholderPage`. No other existing test changed. |
+| `flutter pub get` | Automated | PASS | `pubspec.yaml` and `pubspec.lock` unchanged: no `url_launcher` (R-3). |
+| `dart format --output=none --set-exit-if-changed .` | Automated | PASS | 51 files, 0 changed. |
+| `flutter analyze` | Automated | PASS | No issues. |
+| Full `flutter test` | Automated | PASS | 213/213 (190 + 23). Home 64/64; core network + auth 45/45; `test/app` (router + session expiry) 19/19. |
+| UAT | — | NOT RUN | UAT-28-01…07 `NOT RUN`: they need a staging deployment and a device (after Gate 4). |
+
+---
+
+## Phase 28 — Gate 4 (final integration review)
+
+Final tree on `claude/amazing-brahmagupta-dbsrjc` (contains `main` at `116526f`). AI sandbox: PHP 8.4.19; Flutter 3.47.2 / Dart 3.13.2.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Backend `CLAUDE.md` §5 gates | Automated | PASS | `composer validate --strict` valid. `composer audit --locked` has **no advisories** (PR #56 merged in). Pint pass. PHPStan level 5: 0 errors. `php artisan test` 1,147/1,147 (3,215 assertions). `vendor/` re-synced to the merged lock (`league/commonmark` 2.10.3) before the run. |
+| Mobile `CLAUDE.md` §5 gates | Automated | PASS | `flutter pub get` ok; `pubspec` unchanged. `dart format`: 51 files, 0 changed. `flutter analyze`: no issues. `flutter test` 213/213 with 0 hit-test warnings. |
+| Contract parity (scratch, not committed) | Automated (temporary) | PASS | Real Laravel `/me/profile`, `/staff/{id}` and `/staff` responses parsed by the production Flutter models. Cases: Staff, Manager and Administrator; a no-profile account; a record with every optional field null; non-ASCII names; paginator `meta`. Both scratch tests were deleted afterwards and the tree was clean. |
+| Full Phase 28 diff review | Manual (code review) | Done | Backend and mobile match spec §6–§8 and R-1…R-8. Deviations and limitations are in the handoff §12/§13. No migration, permission, dependency, environment, infrastructure or CI change. |
+| Device / emulator | Manual | NOT RUN | None available in this sandbox. |
+| UAT | — | NOT RUN | UAT-28-01…07 `NOT RUN`: they need the merge, a staging deployment, UAT data and an APK. |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*

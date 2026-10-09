@@ -61,12 +61,3 @@ class MessagesPlaceholderPage extends StatelessWidget {
     );
   }
 }
-
-class MorePlaceholderPage extends StatelessWidget {
-  const MorePlaceholderPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const PlaceholderPage(title: 'More', message: 'More — coming soon');
-  }
-}

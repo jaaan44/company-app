@@ -8,6 +8,7 @@ import 'package:mobile/features/auth/data/auth_api_client.dart';
 import 'package:mobile/features/auth/data/token_storage.dart';
 import 'package:mobile/features/auth/state/auth_controller.dart';
 import 'package:mobile/features/home/data/home_api_client.dart';
+import 'package:mobile/features/people/data/people_api_client.dart';
 
 /// Root widget of the Company App staff mobile application.
 ///
@@ -23,18 +24,21 @@ import 'package:mobile/features/home/data/home_api_client.dart';
 /// no third-party state-management framework is introduced now either —
 /// a plain [ChangeNotifier] remains sufficient; see DEC-025.
 class CompanyApp extends StatefulWidget {
-  /// [authController] and [homeApiClient] are exposed for tests to inject
-  /// fakes — production code always omits them and gets the real
-  /// Sanctum-backed implementations below.
+  /// [authController], [homeApiClient] and [peopleApiClient] are exposed
+  /// for tests to inject fakes — production code always omits them and
+  /// gets the real Sanctum-backed implementations below.
   const CompanyApp({
     super.key,
     AuthController? authController,
     HomeApiClient? homeApiClient,
+    PeopleApiClient? peopleApiClient,
   }) : _injectedAuthController = authController,
-       _injectedHomeApiClient = homeApiClient;
+       _injectedHomeApiClient = homeApiClient,
+       _injectedPeopleApiClient = peopleApiClient;
 
   final AuthController? _injectedAuthController;
   final HomeApiClient? _injectedHomeApiClient;
+  final PeopleApiClient? _injectedPeopleApiClient;
 
   @override
   State<CompanyApp> createState() => _CompanyAppState();
@@ -49,14 +53,19 @@ class _CompanyAppState extends State<CompanyApp> {
       );
 
   // The authenticated API client (Phase 27) takes its token and session
-  // rules from the same AuthController.
+  // rules from the same AuthController; every feature client shares it.
+  late final ApiClient _apiClient = ApiClient(session: _authController);
+
   late final HomeApiClient _homeApiClient =
-      widget._injectedHomeApiClient ??
-      HomeApiClient(ApiClient(session: _authController));
+      widget._injectedHomeApiClient ?? HomeApiClient(_apiClient);
+
+  late final PeopleApiClient _peopleApiClient =
+      widget._injectedPeopleApiClient ?? PeopleApiClient(_apiClient);
 
   late final GoRouter _router = buildAppRouter(
     _authController,
     homeApiClient: _homeApiClient,
+    peopleApiClient: _peopleApiClient,
   );
 
   @override

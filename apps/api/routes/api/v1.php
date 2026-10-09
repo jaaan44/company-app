@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\V1\Notifications\NotificationController;
 use App\Http\Controllers\Api\V1\Organization\DepartmentController;
 use App\Http\Controllers\Api\V1\Organization\PositionController;
 use App\Http\Controllers\Api\V1\Organization\TeamController;
+use App\Http\Controllers\Api\V1\Profile\MyProfileController;
 use App\Http\Controllers\Api\V1\Projects\ProjectController;
 use App\Http\Controllers\Api\V1\Projects\ProjectMembershipController;
 use App\Http\Controllers\Api\V1\Projects\ProjectMilestoneController;
@@ -625,4 +626,14 @@ Route::middleware(['auth:sanctum', 'account.active'])->prefix('audit-logs')->nam
 // docs/phases/V1_PHASE_27_DEFINITION.md §6.
 Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
     Route::get('me/home', [MyHomeController::class, 'show'])->name('me.home');
+});
+
+// My profile (Phase 28 — People: Staff Directory & Profile (Mobile), R-2):
+// the authenticated person's own account identity and own Staff record
+// (the Phase 7 StaffResource shape). Self-scoped by construction — no
+// request parameter selects its subject. No permission is involved and,
+// as for /me/home (DEC-052), no linked Staff record is required: `staff`
+// is null instead of a 403. See docs/phases/V1_PHASE_28_DEFINITION.md §6.1.
+Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
+    Route::get('me/profile', [MyProfileController::class, 'show'])->name('me.profile');
 });

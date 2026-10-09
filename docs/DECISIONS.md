@@ -620,6 +620,28 @@ Internet → Cloudflare (proxied, SSL/TLS "Full (strict)")
 **Rationale:** The Home tab must be personal and must never become a company-wide dashboard for elevated roles; a dedicated endpoint is the smallest change that guarantees that without modifying DEC-043's accepted, tested surface. Reusing each module's own definitions keeps Home's numbers identical to what the owning module shows, so later phases (29–32) can link Home cards to their screens without reconciliation.
 **Superseded/reaffirmed:** Refines the `docs/ROADMAP.md` Phase 27 line. DEC-043 (Dashboard/Reports), DEC-038 (Notifications), DEC-037 (Announcements), DEC-039 (Messaging privacy), DEC-040 (Scheduler), and DEC-034 (Tasks) are reaffirmed and reused unchanged. The pre-existing `/schedule` UTC day-boundary discrepancy (see the Phase 27 specification §3.4) is recorded, not changed.
 
+### DEC-053 — Phase 28: the mobile People area — a self-scoped `GET /api/v1/me/profile`, an active-only directory on the unchanged Phase 7 API, and a deterministic `/staff` order
+
+**Date:** 2026-10-09
+**Status:** ACCEPTED (approved with the Phase 28 specification, PR #55; backend implemented in Phase 28 Gate 1)
+**Context:** `docs/ROADMAP.md` Phase 28 is "Staff Directory browsing and the staff member's own profile." Discovery (`docs/phases/V1_PHASE_28_DEFINITION.md` §3) found that the Staff Directory API already exists (Phase 7, DEC-030), but there is no "my profile" endpoint. The full own record was reachable only through `GET /staff/{own public_id}`, which needs `staff.view` and a second call, and has no clean state for a user without a linked Staff record. `/staff` paging also had no unique tie-breaker.
+**Decision** (specification review R-1…R-8, all approved as recommended):
+1. **`GET /api/v1/me/profile`** (`auth:sanctum` + `account.active`, `App\Http\Controllers\Api\V1\Profile\MyProfileController`) returns `{"data": {"user": {public_id, name, email, role}, "staff": StaffResource | null}}`.
+   - **Self-scoped by construction:** it reads no request parameter.
+   - **No permission:** like every `/me/...` surface.
+   - **No linked Staff record required:** `staff: null` with `200`, never a `403` (the DEC-052 precedent). A mobile `403` means "forbidden, keep the session", not "no profile".
+   - **`staff`** is the unchanged Phase 7 `StaffResource` with `StaffController`'s eager loads, so it is identical to `GET /staff/{public_id}` for the same requester, including the `staff.manage`-only `user` block. No new field is exposed.
+2. **Directory population (R-1):** the mobile client requests `status=active` only. **The API is unchanged:** DEC-030's company-wide `staff.view` visibility, including inactive and separated records, is reaffirmed, not narrowed.
+3. **Deterministic `/staff` order (R-6):** `StaffController::index` orders by `last_name, first_name, id`. The visible order is unchanged; the unique tie-breaker stops paginated clients from skipping or repeating same-named staff. `StaffDirectoryReportController` (Phase 20) is not changed.
+4. **Mobile scope (R-3/R-4/R-5/R-7/R-8; Gates 2–3):** the scope is read-only:
+   - email and phone are copy-only, with no new dependency;
+   - operational status is not shown;
+   - colleagues are shown without employee number or employment dates;
+   - the manager is navigable;
+   - `More` holds only *My profile* and *Staff directory*.
+**Rationale:** The smallest backend change that gives the mobile app a clean own-profile call and correct paging. It reuses the Phase 7 resource rather than adding a second staff shape, and it leaves DEC-030's accepted visibility model untouched.
+**Superseded/reaffirmed:** Refines the `docs/ROADMAP.md` Phase 28 line. DEC-030 (Staff) and DEC-052 (the `/me/home` no-profile precedent) are reaffirmed. The recorded cross-cutting findings — uncapped `per_page` and unescaped `q` wildcards across collection endpoints (spec §3.3) — are not changed here and are noted for Phase 36.
+
 ---
 
 ## Template for Future Decisions

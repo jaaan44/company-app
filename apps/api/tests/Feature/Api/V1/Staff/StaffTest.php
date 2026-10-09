@@ -14,6 +14,7 @@ use App\Models\Team;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -338,6 +339,44 @@ class StaffTest extends TestCase
         $this->getJson('/api/v1/staff?q=EMP-1002')
             ->assertOk()->assertJsonCount(1, 'data')
             ->assertJson(['data' => [['employee_number' => 'EMP-1002']]]);
+    }
+
+    public function test_identically_named_staff_have_a_deterministic_order_across_pages(): void
+    {
+        $this->actingAsAdministrator();
+        $created = collect(range(1, 3))
+            ->map(fn () => Staff::factory()->create(['first_name' => 'Sam', 'last_name' => 'Reyes']));
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $paged = collect(range(1, 3))->map(
+            fn (int $page) => $this->getJson("/api/v1/staff?per_page=1&page={$page}")
+                ->assertOk()
+                ->assertJsonCount(1, 'data')
+                ->json('data.0.public_id'),
+        );
+        $sql = collect(DB::getQueryLog())->pluck('query')->first(fn (string $query) => str_contains($query, 'order by'));
+        DB::disableQueryLog();
+
+        // Phase 28 R-6: every page holds a different person, in id order,
+        // because the name sort has a unique tie-breaker.
+        $this->assertSame($created->pluck('public_id')->all(), $paged->all());
+        $this->assertStringContainsString('order by "last_name" asc, "first_name" asc, "id" asc', (string) $sql);
+    }
+
+    public function test_the_tie_breaker_does_not_change_the_visible_name_order(): void
+    {
+        $this->actingAsAdministrator();
+        Staff::factory()->create(['first_name' => 'Zoe', 'last_name' => 'Adams']);
+        Staff::factory()->create(['first_name' => 'Ana', 'last_name' => 'Cruz']);
+        Staff::factory()->create(['first_name' => 'Ben', 'last_name' => 'Adams']);
+
+        $this->assertSame(
+            ['Ben Adams', 'Zoe Adams', 'Ana Cruz'],
+            collect($this->getJson('/api/v1/staff')->assertOk()->json('data'))
+                ->map(fn (array $row) => "{$row['first_name']} {$row['last_name']}")
+                ->all(),
+        );
     }
 
     // --- Organization relationships -------------------------------------

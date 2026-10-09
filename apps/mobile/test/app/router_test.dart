@@ -12,6 +12,7 @@ import 'package:mobile/features/auth/data/auth_api_client.dart';
 import 'package:mobile/features/auth/presentation/login_page.dart';
 import 'package:mobile/features/auth/state/auth_controller.dart';
 import 'package:mobile/features/home/presentation/home_page.dart';
+import 'package:mobile/features/people/presentation/more_page.dart';
 import 'package:mobile/features/shell/presentation/placeholder_page.dart';
 
 import '../features/auth/fake_token_storage.dart';
@@ -195,8 +196,10 @@ void main() {
 
       await tester.tap(find.widgetWithText(NavigationDestination, 'More'));
       await tester.pumpAndSettle();
-      expect(find.byType(MorePlaceholderPage), findsOneWidget);
-      expect(find.text('More — coming soon'), findsOneWidget);
+      // Phase 28: More is the real People menu, not a placeholder.
+      expect(find.byType(MorePage), findsOneWidget);
+      expect(find.text('My profile'), findsOneWidget);
+      expect(find.text('Staff directory'), findsOneWidget);
 
       await tester.tap(find.widgetWithText(NavigationDestination, 'Home'));
       await tester.pumpAndSettle();
