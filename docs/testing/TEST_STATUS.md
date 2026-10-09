@@ -850,4 +850,26 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`793f947`), confirmed up t
 
 ---
 
+## Phase 29A — UAT preparation (runbook and data script rehearsal, 2026-10-09)
+
+`docs/testing/PHASE_29A_UAT_PREPARATION.md`; script `uat29a_data.php` revision 1, SHA-256 `5091d5bb9ea2004428cefe543d9e98040f220f75892325f81c27632a7245732b`. Rehearsed in this AI sandbox on disposable scratch SQLite databases (all 45 migrations + `RolePermissionSeeder`, `SCHEDULING_COMPANY_TIMEZONE=Asia/Manila`) at `main` `3632ce1`, run as the runbook runs it (`php -- <stage> < script`). Nothing touched staging. MySQL was not available here; the runbook's `verify` step is the first MySQL check.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `plan` (read-only) | Manual, scratch DB | PASS | Company day printed; route `api.v1.me.tasks.index` detected; 4 accounts absent; 0 of 4 staff, 0 of 35 tasks, project absent; roles 3/3. |
+| `seed` | Manual, scratch DB | PASS | Exit 0. STDOUT went to a `600` file with exactly 4 `email password` lines; all status went to STDERR. 4 staff records, 4 accounts, 1 project with Tomas as member, 35 tasks. Each seeded password verified with `Hash::check`. |
+| `seed` re-run | Manual, scratch DB | PASS | 0 bytes on STDOUT, no account created, no password changed. After `reassign`, a re-run restored the plan (29 open again). |
+| `verify` (real controllers) | Manual, scratch DB | PASS | Staff open 25 + 4 of 29 in exactly the §4 order (Replace pump seal and Waiting on parts `OVERDUE`, Call the supplier `TODAY`, Routine checks, Tidy the store last); closed 2 (completed, then cancelled); manager and admin 1 each, their own only; no-profile `tasks null`; parity `home=29/2/1 tasks=29/2/1 — OK`. |
+| `reassign` | Manual, scratch DB | PASS | Moved "Reassign me" to UAT29A-004; staff open became 28 and parity `28/2/1 — OK`. |
+| `revoke` / `exposure` | Manual, scratch DB | PASS | `exposure` reported a pre-created token on `uat29a.staff`; `revoke` deleted it (`api_tokens_revoked=1`). |
+| `rotate` | Manual, scratch DB | PASS | Exit 0; `600` file, 4 lines; old passwords rejected and new ones accepted for all four (`Hash::check`). |
+| Refusals | Manual, scratch DB | PASS | `rotate` with an account missing: exit 1, nothing on STDOUT, nothing changed. `seed` when a UAT29A staff record is linked to a non-UAT29A account: exit 1, nothing on STDOUT, a deliberately changed UAT29A task left as it was (the transaction never started). Unknown stage: exit 1. |
+| All-or-nothing `rotate` | Manual, scratch DB (injected failure) | PASS | A failure on the 3rd account: exit 1, nothing on STDOUT, all four password hashes unchanged (rolled back), although STDERR had already printed `rotated …` for two accounts — the runbook now says such lines are void on a non-zero exit. |
+| Non-UAT29A data untouched | Manual, scratch DB | PASS | A control user, staff record and task were identical (hash of all non-UAT29A users, staff and tasks) before and after `seed` and a re-`seed`. |
+| Runbook extraction path | Manual | PASS | The §5 `awk` command applied to the committed runbook reproduces the script byte-for-byte (same SHA-256). |
+| Credentials handling | — | — | Every scratch credentials file was `shred`ded; only email addresses were ever printed. |
+| UAT | — | NOT RUN | UAT-29A-01…07 `NOT RUN`. |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*

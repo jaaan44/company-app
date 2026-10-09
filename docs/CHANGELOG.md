@@ -4,6 +4,16 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-09 — Phase 29A merged (PR #61) and UAT preparation runbook (docs only)
+- **Merged:** PR #61 into `main` as `3632ce1` (a standard merge; Backend CI and Mobile CI passed on the head).
+- New `docs/testing/PHASE_29A_UAT_PREPARATION.md`:
+  - the staging redeploy to `3632ce1` (`route:cache` required for `/me/tasks`; no migration), with smoke tests and a MySQL reachability reminder;
+  - the final UAT APK build and provenance procedure;
+  - the UAT29A data plan: 4 dedicated accounts (staff, manager, admin, no-profile), a staff record without an account, one project, and 35 tasks dated relative to the company day (29 open over 2 pages, 2 closed, 4 for other people);
+  - per-scenario UAT notes.
+- An embedded operator script, `uat29a_data.php` (`plan`/`seed`/`verify`/`reassign`/`revoke`/`exposure`/`rotate`; SHA-256 `5091d5bb…245732b`), rehearsed on scratch databases only. `verify` runs the real `/me/tasks` and `/me/home` controllers, checks their counts agree, and is the first MySQL check of the new ordering.
+- Handoff addendum; UAT-29A notes updated (still `NOT RUN`). Nothing was deployed or seeded on staging.
+
 ### 2026-10-09 — Phase 29A Gate 4: final integration review, handoff and implementation PR
 - Final gates on the complete branch: backend 1,169/1,169 with Pint, PHPStan level 5, `composer validate --strict` and `composer audit --locked` (no advisories); Flutter 330/330 with format and analyze clean and `pubspec` unchanged.
 - **Contract parity:** real Laravel output for `/me/tasks` (open and closed), `GET /tasks/{id}`, `PATCH` success and `422` for Staff, Manager and Administrator, both kinds of `403`, and the no-profile response (with non-ASCII names and null fields) was parsed and mapped by the production Flutter code (9/9, in temporary tests that were not committed). It confirmed that a 403 for a task no longer mine reads "You do not have permission to update this task.", which the detail shows as-is.
