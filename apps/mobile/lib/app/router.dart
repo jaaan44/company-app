@@ -12,6 +12,11 @@ import 'package:mobile/features/people/presentation/staff_detail_page.dart';
 import 'package:mobile/features/people/presentation/staff_directory_page.dart';
 import 'package:mobile/features/shell/presentation/app_shell.dart';
 import 'package:mobile/features/shell/presentation/placeholder_page.dart';
+import 'package:mobile/features/tasks/data/tasks_api_client.dart';
+import 'package:mobile/features/tasks/presentation/task_detail_page.dart';
+import 'package:mobile/features/tasks/presentation/task_widgets.dart';
+import 'package:mobile/features/tasks/presentation/tasks_page.dart';
+import 'package:mobile/features/tasks/state/task_changes.dart';
 
 /// Builds the app's single [GoRouter] — the sole navigation mechanism
 /// (Phase 25, DEC-046), replacing the former [AuthGate] widget-switch with
@@ -22,6 +27,8 @@ GoRouter buildAppRouter(
   AuthController authController, {
   required HomeApiClient homeApiClient,
   required PeopleApiClient peopleApiClient,
+  required TasksApiClient tasksApiClient,
+  required TaskChanges taskChanges,
 }) {
   return GoRouter(
     initialLocation: '/splash',
@@ -44,16 +51,37 @@ GoRouter buildAppRouter(
             routes: [
               GoRoute(
                 path: '/home',
-                builder: (context, state) =>
-                    HomePage(homeApiClient: homeApiClient),
+                builder: (context, state) => HomePage(
+                  homeApiClient: homeApiClient,
+                  taskChanges: taskChanges,
+                ),
               ),
             ],
           ),
           StatefulShellBranch(
             routes: [
+              // Tasks (Phase 29A): the detail stays inside the Tasks branch,
+              // so Home's task links switch to this tab (spec §5.3).
               GoRoute(
                 path: '/tasks',
-                builder: (context, state) => const TasksPlaceholderPage(),
+                builder: (context, state) => TasksPage(
+                  tasksApiClient: tasksApiClient,
+                  taskChanges: taskChanges,
+                ),
+                routes: [
+                  GoRoute(
+                    path: ':publicId',
+                    builder: (context, state) => TaskDetailPage(
+                      key: ValueKey(state.pathParameters['publicId']),
+                      tasksApiClient: tasksApiClient,
+                      taskChanges: taskChanges,
+                      publicId: state.pathParameters['publicId']!,
+                      args: state.extra is TaskDetailArgs
+                          ? state.extra! as TaskDetailArgs
+                          : null,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

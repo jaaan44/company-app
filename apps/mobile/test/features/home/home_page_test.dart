@@ -9,10 +9,12 @@ import 'package:mobile/app/app.dart';
 import 'package:mobile/features/auth/presentation/login_page.dart';
 import 'package:mobile/features/auth/state/auth_controller.dart';
 import 'package:mobile/features/home/presentation/home_page.dart';
-import 'package:mobile/features/shell/presentation/placeholder_page.dart';
+import 'package:mobile/features/tasks/presentation/task_detail_page.dart';
+import 'package:mobile/features/tasks/presentation/tasks_page.dart';
 
 import '../../support/fake_backend.dart';
 import '../../support/home_fixtures.dart';
+import '../../support/task_fixtures.dart';
 
 /// Phase 27 Gate 3 — the employee Home screen through the real app
 /// (`CompanyApp`, router, shell, `AuthController`, Gate 2 `ApiClient`),
@@ -38,7 +40,16 @@ void main() {
     backend = FakeBackend();
     homeRequests = 0;
     backend.onApi = (request) async {
-      expect(request.url.path, endsWith('/me/home'));
+      final path = request.url.path;
+      // Phase 29A: Home's task links open the Tasks tab, which loads its
+      // own data; anything else is a test bug.
+      if (path.endsWith('/me/tasks')) {
+        return jsonResponse(myTasksBody([]));
+      }
+      if (path.contains('/tasks/')) {
+        return jsonResponse({'data': taskJson(publicId: path.split('/').last)});
+      }
+      expect(path, endsWith('/me/home'));
       homeRequests++;
 
       return respond == null ? homeResponse() : await respond();
@@ -49,6 +60,7 @@ void main() {
       CompanyApp(
         authController: auth,
         homeApiClient: homeClientFor(backend, auth),
+        tasksApiClient: tasksClientFor(backend, auth),
       ),
     );
     if (settle) {
@@ -323,21 +335,16 @@ void main() {
     });
   });
 
-  group('non-interactive content (R-1)', () {
+  group('interactive content (R-1, refined by Phase 29A R-6)', () {
     testWidgets(
-      'no row, tile or card has a tap handler or navigation affordance',
+      'only the tasks tile and Today task rows are tappable; the rest stays plain',
       (tester) async {
         await pumpHome(
           tester,
           respond: () => homeResponse(homeDataJson(todayTotal: 7)),
         );
 
-        for (final section in [
-          'home-greeting',
-          'home-today',
-          'home-attention',
-          'home-announcements',
-        ]) {
+        for (final section in ['home-greeting', 'home-announcements']) {
           for (final type in [
             InkWell,
             GestureDetector,
@@ -354,19 +361,43 @@ void main() {
             );
           }
         }
-        for (final icon in [
-          Icons.chevron_right,
-          Icons.arrow_forward,
-          Icons.arrow_forward_ios,
-          Icons.open_in_new,
-        ]) {
-          expect(find.byIcon(icon), findsNothing);
+
+        Finder inkAround(Finder target) =>
+            find.ancestor(of: target, matching: find.byType(InkWell));
+
+        expect(inkAround(find.text('Replace filter unit')), findsOneWidget);
+        expect(inkAround(find.text('Site visit — Acme')), findsNothing);
+        expect(
+          inkAround(find.byKey(const Key('home-tile-tasks'))),
+          findsNothing,
+        );
+        expect(
+          find.descendant(
+            of: find.byKey(const Key('home-tile-tasks')),
+            matching: find.byType(InkWell),
+          ),
+          findsOneWidget,
+        );
+        for (final tile in ['home-tile-messages', 'home-tile-notifications']) {
+          expect(
+            find.descendant(
+              of: find.byKey(Key(tile)),
+              matching: find.byType(InkWell),
+            ),
+            findsNothing,
+            reason: tile,
+          );
         }
+        // One chevron: the task row's.
+        expect(
+          inSection('home-today', find.byIcon(Icons.chevron_right)),
+          findsOneWidget,
+        );
       },
     );
 
     testWidgets(
-      'tapping Today rows, tiles and announcements navigates nowhere',
+      'tapping schedule rows, other tiles and announcements navigates nowhere',
       (tester) async {
         await pumpHome(
           tester,
@@ -376,8 +407,6 @@ void main() {
 
         for (final target in [
           find.text('Site visit — Acme'),
-          find.text('Replace filter unit'),
-          find.byKey(const Key('home-tile-tasks')),
           find.byKey(const Key('home-tile-messages')),
           find.byKey(const Key('home-tile-notifications')),
           find.text('Office closed Friday'),
@@ -400,6 +429,47 @@ void main() {
       },
     );
 
+    testWidgets('the My tasks tile opens the Tasks tab', (tester) async {
+      await pumpHome(tester);
+
+      await tester.tap(find.byKey(const Key('home-tile-tasks')));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(TasksPage), findsOneWidget);
+      expect(
+        tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+        1,
+      );
+    });
+
+    testWidgets(
+      'a Today task row opens that task in the Tasks tab; back shows the list',
+      (tester) async {
+        await pumpHome(tester);
+
+        await tester.tap(find.text('Replace filter unit'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(TaskDetailPage), findsOneWidget);
+        final router = GoRouter.of(tester.element(find.byType(TaskDetailPage)));
+        expect(
+          router.state.matchedLocation,
+          '/tasks/01TASK00000000000000000001',
+        );
+        expect(
+          tester
+              .widget<NavigationBar>(find.byType(NavigationBar))
+              .selectedIndex,
+          1,
+        );
+
+        await tester.pageBack();
+        await tester.pumpAndSettle();
+        expect(find.byType(TasksPage), findsOneWidget);
+        expect(find.byType(TaskDetailPage), findsNothing);
+      },
+    );
+
     testWidgets('the five shell tabs themselves still navigate', (
       tester,
     ) async {
@@ -407,7 +477,7 @@ void main() {
 
       await tester.tap(find.widgetWithText(NavigationDestination, 'Tasks'));
       await tester.pumpAndSettle();
-      expect(find.byType(TasksPlaceholderPage), findsOneWidget);
+      expect(find.byType(TasksPage), findsOneWidget);
 
       await tester.tap(find.widgetWithText(NavigationDestination, 'Home'));
       await tester.pumpAndSettle();

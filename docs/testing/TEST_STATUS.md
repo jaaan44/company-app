@@ -810,4 +810,24 @@ Branch `claude/amazing-brahmagupta-dbsrjc`, on Gate 1 (`3f5045e`). Run in this A
 
 ---
 
+## Phase 29A — Gate 3 (Tasks screens, Home navigation and router)
+
+Branch `claude/amazing-brahmagupta-dbsrjc`, on Gate 2 (`d1e0fdf`). Run in this AI sandbox with Flutter 3.47.2 / Dart 3.13.2.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `test/features/tasks/tasks_pages_test.dart` (22 tests) | Automated | PASS | Through the real `CompanyApp`, router and `ApiClient` against an in-memory task API. **List:** Open shows only open tasks with "Overdue · 3 Sep", "Due today", "Due 12 Oct" and no label, project, and status text; Done loads once on first selection with completed/cancelled (a past due date not shown as overdue), and switching back doesn't refetch; both empty states; no-profile state; load error and Try again; a failed second page becomes the retry row and recovers; a row opens `/tasks/:id` in the Tasks tab and back returns. **Detail:** fields and "3 Sep 2026 · Overdue"; opens with the row's content immediately while reloading; "Not set" due and "No description."; four chips, no Cancelled; a cancelled task is read-only. Saving: chip doesn't move and controls disable while pending, then selected with a notice, one `PATCH {"status"}`; completing removes it from Open, shows it in Done, refreshes Home, and reopening returns it to Open with its overdue label; 403 → server message, reload, locked chips, session kept; offline → message, old status, success after reconnecting; 422 → the status error; 401 → Login with the session-ended notice; failed load without content → Try again; opened from Home, "24 Sep 2026 · Due today" from Home's company day. **Appearance:** light and dark at 200% text: no exceptions on list or detail. |
+| `home_page_test.dart` interaction group (5 tests, was 3) | Automated | PASS | **Changed for R-6** (Phase 27's R-1 "nothing tappable" is refined): greeting and announcements still have no interactive widgets; only the Today task row and the My tasks tile have an `InkWell`, with one chevron; tapping schedule rows, the messages and notifications tiles, announcements and "+5 more today" still goes nowhere (one Home request); the tile opens the Tasks tab; a Today task row opens `/tasks/{id}` in the Tasks tab and back shows the list; the shell tabs still navigate (Tasks → `TasksPage`). |
+| `router_test.dart` | Automated | PASS | One assertion changed: the Tasks tab is `TasksPage` (the "coming soon" placeholder is gone). |
+| Mutation checks (UI) | Manual (AI) | PASS | Each made temporarily and restored. **Caught at once (7):** Home not passing its company date to the detail; no My tasks tile tap; the Open list not refreshing after a change; chips never shown selected; chips enabled while saving; the "Overdue" label dropped; the cancelled read-only branch removed. **Survived, then resolved (2):** forcing Home's change handler to `load()` instead of `refresh()` is equivalent (both re-fetch), so it was replaced by removing Home's listener, which is caught; not passing the row's item to the detail survived because nothing checked the detail opens with content — the "opens with content at once" test was added and the mutant is now caught. |
+| Full `flutter test` | Automated | PASS | 330/330: 306 after Gate 2, plus 22 new and a net 2 in the Home group. |
+| `dart format --output=none --set-exit-if-changed .` | Automated | PASS | — |
+| `flutter analyze` | Automated | PASS | No issues. |
+| `pubspec.yaml` / `pubspec.lock` | — | Unchanged | No new dependency. |
+| Real device / emulator | — | Not run | No device in this sandbox; covered by widget tests only. UAT will exercise it. |
+| Backend | — | Not affected | No `apps/api` change in Gate 3. |
+| UAT | — | NOT RUN | UAT-29A-01…07 `NOT RUN` (not merged or deployed). |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*

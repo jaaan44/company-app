@@ -4,6 +4,21 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-09 — Phase 29A Gate 3: Tasks screens, Home navigation and router
+- **Tasks tab** (`lib/features/tasks/presentation/tasks_page.dart`):
+  - Open | Done segments (`state=open|closed`), each with its own list; Done loads on first selection.
+  - Rows show title, project, a status chip that always carries its text, and the due label: "Due today", "Overdue · 3 Sep" (error colour), "Due 12 Oct", or none.
+  - Phase 28 paging (load more, "Couldn't load more. Tap to retry."), pull-to-refresh, the empty states and "No staff profile is linked to this account."
+- **Task detail** (`task_detail_page.dart`, `/tasks/:publicId`):
+  - Title, status, priority, due date with its flag, project, created by, completed date and description.
+  - The status control offers To do, In progress, Blocked and Completed (R-4). A cancelled task is read-only. Saves are confirmed (R-7): progress bar, then a notice; failures (offline, 403 with reload and lock, 422) show under the control and keep the old status.
+- **Home (R-6):** the My tasks tile opens the Tasks tab; Today task rows open that task (with Home's company date) in the Tasks branch. Schedule rows, other tiles and announcements stay non-interactive. Home and the Tasks lists refresh quietly after a confirmed status change.
+- **Router and app:** `/tasks` and `/tasks/:publicId` in the Tasks branch; `TasksPlaceholderPage` removed; `CompanyApp` owns `TasksApiClient` and `TaskChanges`. `home_formatting.dart` gains `formatShortDate`.
+- Tests: 22 new screen tests (`tasks_pages_test.dart`); Home's R-1 interaction tests rewritten for R-6 (3 → 5); the router test now expects `TasksPage`. Full suite 330/330; format and analyze clean; `pubspec` unchanged. UI mutation checks: 7 of the first 9 were caught; of the 2 survivors, one was equivalent (replaced by a sharper mutant, caught) and one exposed a test gap (a test was added, then caught).
+- Known limitation: the detail's completed date uses the device timezone (no offset in the task responses).
+- Docs: the spec status and Gate 3 notes; `CURRENT_STATE.md`; `TEST_STATUS.md`; the UAT-29A notes.
+- No backend, dependency or configuration change. Gate 4 is not started.
+
 ### 2026-10-09 — Phase 29A Gate 2: mobile write foundation and Tasks data and state
 - **`ApiClient` writes** (`lib/core/network/`): `postJson`, `patchJson` and `delete`, sharing one request path with `getJson`, so the bearer token and the 401/403 session rules are identical for reads and writes.
   - `422` → new `ApiValidationException` (message plus `fieldErrors`; a subtype of `ApiRequestException`).
