@@ -699,4 +699,32 @@ Final tree on `claude/amazing-brahmagupta-dbsrjc` (contains `main` at `116526f`)
 
 ---
 
+## Phase 28 — UAT preparation (runbook and data script rehearsal, 2026-10-09)
+
+`docs/testing/PHASE_28_UAT_PREPARATION.md`; script `uat28_data.php` revision 1, SHA-256 `4e846aec912c5ebc48b29d334311468c590542e82b4fbbcc3ba1474c088cabbd`. Rehearsed in this AI sandbox on disposable scratch SQLite databases (all 45 migrations + `RolePermissionSeeder`) against `main` at `b6e85c5`. **Nothing was run on staging.** No password was displayed during the rehearsal (only lengths), and the scratch credential files were shredded afterwards.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `plan` (read-only) | Manual, scratch DB | PASS | Route `api.v1.me.profile` detected; 3 accounts absent; 0 of 33 UAT28 staff records; roles 3/3. |
+| `seed` | Manual, scratch DB | PASS | Exit 0. STDOUT went to a `600` file with exactly 3 `email password` lines (20-character passwords); all status went to STDERR. 33 staff records, 3 accounts, 3 organization records. |
+| `seed` re-run (idempotent) | Manual, scratch DB | PASS | 0 bytes on STDOUT and no password changed, both before and after `rotate`. |
+| `verify` (real controllers) | Manual, scratch DB | PASS | Staff profile shows `Ros (full: Rosalind UAT28-Abad)` with position, department, team, manager, contact details, `UAT28-001`, hired 2024-03-01. Manager profile correct. No-profile admin → `staff: none`. `/staff?q=UAT28&status=active&per_page=25`: page 1/2 has 25 rows, page 2/2 has 6. 31 distinct; inactive and separated absent. Same-name pair distinct at `per_page=1` (R-6). SQLite sorted `UAT28-Ñuñez` after `UAT28-Twin`; MySQL collation may differ (noted in the runbook). |
+| `exposure` (read-only) | Manual, scratch DB | PASS | Reported a pre-created token on `uat28.staff`. |
+| `rotate` | Manual, scratch DB | PASS | Exit 0; `600` file, 3 lines; that token revoked. Old passwords rejected, new ones accepted (`Hash::check`). |
+| Refusals | Manual, scratch DB | PASS | `rotate` with one account missing: exit 1, nothing on STDOUT, nothing changed. `seed` when a UAT28 staff record is linked to a non-UAT28 account: exit 1, nothing on STDOUT, staff table byte-identical (PHP snapshot; the first check used a missing `sqlite3` CLI and was redone). Unknown stage: exit 1. |
+| All-or-nothing `rotate` | Manual, scratch DB (injected failure) | PASS | A failure on the 3rd account: exit 1, nothing on STDOUT, all three password hashes unchanged (rolled back). |
+| Non-UAT28 data untouched | Manual, scratch DB | PASS | A control user, staff record and token were identical before and after `seed`, re-`seed` and `rotate`. |
+| Runbook extraction path | Manual, scratch DB | PASS | The `awk` command in runbook §5 step 0 reproduces exactly `4e846aec…cabbd`. That extracted copy ran `plan` → `seed` → `verify` on a fresh scratch DB with the same results. |
+| Staging deployment, APK, data, UAT | Operator / product owner | NOT RUN | Runbook §2–§6. UAT-28-01…07 `NOT RUN`. |
+
+**Session note (honest record):** while this runbook was being written, an unquoted shell heredoc made bash run backtick-quoted words from the document text as commands in the AI sandbox. Only harmless "command not found" errors and a `shred` with no operand ran before a bare `sh` blocked and the task was stopped. Verified afterwards:
+- git HEAD, `origin/main` and the working tree were unchanged;
+- `FETCH_HEAD` was older than the incident;
+- `/home/deploy` does not exist;
+- no Docker daemon was running.
+
+No effect on the repository, staging or any data. The runbook was then written with the file tool and a quoted heredoc.
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*

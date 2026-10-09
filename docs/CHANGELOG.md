@@ -4,6 +4,16 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-09 — Phase 28 UAT preparation runbook (docs only)
+- New `docs/testing/PHASE_28_UAT_PREPARATION.md`:
+  - the staging redeploy to `b6e85c5` (including the required `route:cache` for `/me/profile`, and smoke tests);
+  - the final UAT APK build and provenance procedure;
+  - the UAT28 data plan: 3 dedicated accounts and 33 staff records spanning 2 directory pages, a same-name pair, non-ASCII, inactive and separated;
+  - UAT-time notes per scenario.
+- An embedded operator script, `uat28_data.php` (`plan`/`seed`/`verify`/`exposure`/`rotate`; SHA-256 `4e846aec…cabbd`), rehearsed on a scratch database only.
+- `seed` now writes passwords **only** to STDOUT, into a `0600` file, which is a lesson from the Phase 27 incident.
+- Nothing was deployed or seeded on staging. UAT-28-01…07 remain `NOT RUN`.
+
 ### 2026-10-09 — Phase 28 Gate 4: final integration review, handoff and implementation PR
 - Final gates on the complete branch: backend 1,147/1,147 with Pint, PHPStan level 5, `composer validate --strict` and `composer audit --locked` (no advisories); Flutter 213/213 with format and analyze clean and `pubspec` unchanged.
 - **Contract parity:** real Laravel `/me/profile` and `/staff` output for every role, a no-profile account, all-null optional fields and non-ASCII names was parsed by the production Flutter models (in temporary tests that were not committed).
