@@ -1,6 +1,6 @@
 # Phase 29 — Work: Tasks, Work Logs, Projects & Clients (Mobile) — Specification
 
-**Status:** Revision 2, approved (R-1…R-9 as written, 2026-10-09; merged via PR #60). **29A AUTHORIZED — IN PROGRESS: Gate 1 (backend) implemented** (2026-10-09). Gates 2–4 of 29A, and 29B/29C, each need their own explicit authorization (`CLAUDE.md` §1/§8).
+**Status:** Revision 2, approved (R-1…R-9 as written, 2026-10-09; merged via PR #60). **29A AUTHORIZED — IN PROGRESS: Gate 1 (backend) and Gate 2 (mobile write foundation, Tasks data and state) implemented** (2026-10-09). Gates 3–4 of 29A, and 29B/29C, each need their own explicit authorization (`CLAUDE.md` §1/§8).
 
 *Previous status (revision 2 as merged):* DRAFT, revision 2. It incorporates the product owner's specification-review decisions: all nine recommendations R-1…R-9 were approved as written (2026-10-09). It is proposed for approval and **is not authorized for implementation**; each sub-phase's gates need explicit authorization (`CLAUDE.md` §1/§8). No application, test, migration, route, dependency or configuration change has been made.
 
@@ -229,3 +229,8 @@ The product owner approved every recommendation from revision 1 as written (2026
   - The controller is `App\Http\Controllers\Api\V1\Tasks\MyTaskController` (the §5.1 placement choice), route `me.tasks.index`.
   - **Refinement of the closed order:** `completed_at DESC` (nulls last), then **`updated_at DESC`**, then `id`. A cancelled task has no `completed_at`, so without `updated_at` all cancelled tasks would sit after the completed ones in creation order. With it they are most recently changed first. Still total and stable; recorded in DEC-054.
   - Unknown query parameters (for example `assignee`) are ignored and can't change the subject; `page` must be a positive integer.
+- **29A Gate 2 implementation notes (2026-10-09):**
+  - `ApiClient` writes: `postJson`/`patchJson` return the decoded body, or `null` for a `204`; `delete` accepts any 2xx; `getJson` still requires a JSON body. `ApiValidationException` is a subtype of `ApiRequestException` (status 422), so existing generic handlers keep working.
+  - **Detail due state without the device clock:** `GET`/`PATCH /tasks/{id}` carry no `is_overdue`/`is_due_today`. The detail keeps the list item's server flags while they still hold, and otherwise compares the due date with a **server-reported company date** handed over by the screen that opened it (the list's or Home's `company_day.date`), by the server's exact rule. With neither, the due state is shown as unknown rather than guessed.
+  - **After a change:** a session-wide `TaskChanges` record of confirmed saves. Each list applies a change at once (a task moving between Open and Done leaves its segment) and marks itself stale so it refreshes when next shown; Home is wired to it in Gate 3.
+  - **`403` on save:** the server's message is shown, the task reloaded, the status control locked for that screen, and the task recorded as no longer mine (removed from the lists).

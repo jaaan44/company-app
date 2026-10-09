@@ -789,4 +789,25 @@ Branch `claude/amazing-brahmagupta-dbsrjc`, from `main` at `d8d550b` (PR #60). R
 
 ---
 
+## Phase 29A — Gate 2 (mobile write foundation and Tasks data and state)
+
+Branch `claude/amazing-brahmagupta-dbsrjc`, on Gate 1 (`3f5045e`). Run in this AI sandbox with Flutter 3.47.2 / Dart 3.13.2 (`/opt/flutter-sdk`).
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `test/core/network/api_client_write_test.dart` (20 tests) | Automated | PASS | PATCH/POST send JSON bodies with the token and `Content-Type`; POST without a body sends `{}`; DELETE and GET send no body. `204` → `null` for writes; DELETE accepts any 2xx body; a GET `204` and a non-object write body are request failures. `422` → `ApiValidationException` with message and field errors (malformed entries skipped, default message, non-JSON body, also on GET; still an `ApiRequestException`). On writes: 401 ends the session with the write sent once and no `/auth/logout`; 403 → one `/auth/me` re-check, kept session and server message, no resend; 403 + `/auth/me` 401 ends it; network failure and 5xx keep the session, no retry; a write and a read both 401 end the session once; no token → nothing sent. |
+| `test/features/tasks/task_models_test.dart` (21 tests) | Automated | PASS | Every `TaskResource` field; nullable fields stay null; missing title, unknown status/priority, a timestamp as `due_date`, a wrong-typed flag and a malformed project are `FormatException`s. Status wire values, closed set, and no Cancelled in `selectable`. Due state: server flags win; otherwise the company date (before/equal/after); unknown without either; none without a due date; closed never overdue. `withServerUpdate` keeps flags only while still open with the same due date, clears them when closed, drops them on reopen or a changed due date. `/me/tasks` page parsing, no-profile vs empty, malformed bodies. |
+| `test/features/tasks/tasks_api_client_test.dart` (11 tests) | Automated | PASS | Exact `/me/tasks` path and `state`/`per_page`/`page`; default page 1; no-profile; bad shape → `ApiRequestException`. `/tasks/{id}` encoding and 404. `PATCH` sends only `{"status"}` once with wire values (`in_progress`); 204 or malformed → request failure; 403 keeps the session with the server message; 401 ends it. |
+| `test/features/tasks/my_tasks_controller_test.dart` (19 tests) | Automated | PASS | Loading → page 1; Done requests `closed`; load more to the last page; no duplicates; failed load more keeps the list and retries; a load more overtaken by a refresh is dropped; concurrent loads share one request; no-profile state; first-load error and recovery; failed refresh keeps the list; session expiry leaves state alone. Task changes: replaced in place keeping flags; completed leaves Open; removed; unknown task only marks stale; Done drops a reopened task; `refreshIfStale` refreshes once; a change during a refresh keeps it stale; dispose removes the listener. |
+| `test/features/tasks/task_detail_controller_test.dart` (22 tests) | Automated | PASS | Loading with and without an initial item (quiet refresh; list flags survive a flagless GET); network/403/404/500 messages; failed refresh keeps the task; due state from the company date. Saves: status changes only after the server confirms (not optimistic) and is recorded; complete then reopen; Cancelled, the current status, a second concurrent save, a cancelled task, and an unloaded task send nothing; 403 → message, `PATCH` then `GET`, locked, recorded as removed; 403 with a failed reload keeps the task; 422 → the `status` error or the summary; network/500/404 keep the old status and allow a retry; 401 ends the session and changes nothing; a refresh started before a save can't undo it. |
+| Mutation checks | Manual (AI) | PASS | Each made temporarily, the Tasks and network tests run, and the file restored; every one failed at least one test: dropping the detail's save-epoch guard; making the save optimistic; not locking after a 403; not recording the list's loaded revision; not removing a task that moved segment; not removing the change listener on dispose; treating 422 as generic; treating 204 as a body; keeping flags when a closed task reopens. |
+| Full `flutter test` | Automated | PASS | 306/306: the 213 from Phase 28 plus these 93. No existing test changed. |
+| `dart format --output=none --set-exit-if-changed .` | Automated | PASS | After formatting the new test files. |
+| `flutter analyze` | Automated | PASS | No issues. |
+| `pubspec.yaml` / `pubspec.lock` | — | Unchanged | No new dependency. |
+| Backend | — | Not affected | No `apps/api` change in Gate 2. |
+| UAT | — | NOT RUN | UAT-29A-01…07 `NOT RUN` (no screens yet). |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*

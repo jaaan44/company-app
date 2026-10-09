@@ -4,6 +4,19 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-09 — Phase 29A Gate 2: mobile write foundation and Tasks data and state
+- **`ApiClient` writes** (`lib/core/network/`): `postJson`, `patchJson` and `delete`, sharing one request path with `getJson`, so the bearer token and the 401/403 session rules are identical for reads and writes.
+  - `422` → new `ApiValidationException` (message plus `fieldErrors`; a subtype of `ApiRequestException`).
+  - `204` → success with no body (`null` from `postJson`/`patchJson`; a `GET` still needs a body).
+  - JSON request bodies; nothing is retried, so a write is sent at most once, even when a 403 triggers the `/auth/me` re-check.
+- **`lib/features/tasks/`**, data and state only (no screens or routes yet):
+  - `domain/task_item.dart`: `TaskItem` (strict `TaskResource` parsing, plus the `/me/tasks` flags), `TaskStatus` (with `selectable` excluding Cancelled, R-4), `TaskPriority`, `MyTasksPage` (`tasks: null` = no profile), and a due state that uses the server flags or a server-reported company date, never the device clock.
+  - `data/tasks_api_client.dart`: `GET /me/tasks`, `GET /tasks/{id}`, `PATCH /tasks/{id}` `{"status"}`.
+  - `state/`: `MyTasksController` (one per Open/Done segment, Phase 28 paging and stale-response rules, no-profile state), `TaskDetailController` (confirmed saves, R-7; 403 → server message, reload, lock; 422 → the `status` error), and `TaskChanges` (confirmed saves applied to the lists at once; lists then refresh when next shown).
+- Tests: 93 new (20 `ApiClient` write, 21 models, 11 API client, 19 list controller, 22 detail controller). Full suite 306/306. `dart format` and `flutter analyze` clean; `pubspec` unchanged. Nine mutation checks were all caught.
+- Docs: the spec status and Gate 2 notes; `CURRENT_STATE.md`; `TEST_STATUS.md`; the UAT-29A notes.
+- No backend, dependency or configuration change. Gates 3–4 are not started.
+
 ### 2026-10-09 — Phase 29A Gate 1: self-scoped `GET /api/v1/me/tasks` and a deterministic `/tasks` order
 - **`GET /api/v1/me/tasks`** (`MyTaskController`): `auth:sanctum` + `account.active`, no permission. It lists the tasks assigned to the token's own Staff record, for every role.
   - `state=open|closed` (default `open`), `page`, and `per_page` (default 25, max 50).
