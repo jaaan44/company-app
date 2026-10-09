@@ -79,6 +79,10 @@ class StaffController extends Controller
             })
             ->orderBy('last_name')
             ->orderBy('first_name')
+            // Unique tie-breaker (Phase 28, R-6): without it, staff with
+            // the same name have no defined order, so a paginated client
+            // could see one twice or never. Visible order is unchanged.
+            ->orderBy('id')
             ->paginate($request->integer('per_page', 50));
 
         return StaffResource::collection($staff);

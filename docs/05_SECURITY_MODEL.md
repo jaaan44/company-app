@@ -16,6 +16,14 @@ CSV export inherits the identical scoping as its JSON counterpart — no export 
 
 **Implemented as of Phase 27 Gate 1:** `GET /api/v1/me/home` always describes the authenticated person only. Its subject comes solely from the Sanctum token; it reads no request parameter, so it cannot be pointed at another employee or another day. No role widens it — it has no `tasks.view`/Project Lead/Manager direct-report/Administrator (`Gate::before`) branch, and it introduces no permission. Every figure is a subset of what the employee's own self-service or membership surfaces already expose (own assigned tasks, own/participating schedule entries, own conversation memberships, own notifications, audience-eligible published announcements), and it returns preview fields only — no contact details, manager, employment or operational status, location, message or announcement bodies, or acknowledgement data. Feature tests assert that an ordinary employee, an Administrator, a Manager with direct reports, and a Project Lead each see only their own data. **Implemented as of Phase 27 Gate 2 (mobile):** a 401 on any authenticated request ends the session locally (no `/auth/logout` call); a 403 alone never does — it triggers exactly one `GET /auth/me` check, and only a 401 there ends the session; account state is never inferred from message text. Session ending is single-flight and idempotent, a late response for an old token can never sign out a newer login, and a token-storage failure still signs the app out in memory.
 
+## My Profile Self-Scope (Phase 28, DEC-053)
+
+**Implemented as of Phase 28 Gate 1:** `GET /api/v1/me/profile` always describes the authenticated person only.
+- Its subject comes solely from the Sanctum token. It reads no request parameter, so it cannot be pointed at another person.
+- It needs no permission. A user without `staff.view` (for example, no role) can read their **own** record but still cannot read anyone else's through `/staff`.
+- It exposes nothing new: `user` is the person's own account identity (name, login email, role), and `staff` is the unchanged Phase 7 `StaffResource`, including its `staff.manage`-only `user` block, exactly as `/staff/{public_id}` returns it for the same requester.
+- The Staff Directory's visibility (DEC-030: every `staff.view` holder sees every Staff record, including inactive and separated ones) is **unchanged**. The mobile directory requests active staff only, which is a presentation choice, not an access control.
+
 ## Authentication
 
 - **Implemented (DEC-022):** the Admin Backoffice authenticates via Laravel's session/secure-cookie `web` guard (Blade + Livewire login). The Flutter mobile app authenticates via Laravel Sanctum personal access tokens (`Authorization: Bearer <token>`) — bearer-token only, no cookie-based SPA/stateful authentication. No OAuth server, JWT infrastructure, or Passport.

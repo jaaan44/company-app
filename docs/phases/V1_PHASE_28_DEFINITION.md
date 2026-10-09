@@ -1,6 +1,6 @@
 # Phase 28 — People: Staff Directory & Profile (Mobile) — Specification
 
-**Status:** DRAFT, revision 2. It incorporates the product owner's specification-review decisions: all eight recommendations R-1…R-8 were approved as written (2026-10-09). It is proposed for approval and **is not authorized for implementation** (`CLAUDE.md` §1/§8). No application, test, migration, route, dependency or configuration change has been made.
+**Status:** AUTHORIZED — IN PROGRESS. Approved (revision 2, merged via PR #55 at `0bb3a64fe5d4da44f4c79fce152047acabb049dc`); implementation authorized in gates. **Gate 1 (backend `GET /api/v1/me/profile` and the `/staff` tie-breaker) implemented**; Gates 2–4 (Flutter data/state, UI, integration review) not started. The specification text below is unchanged from the approved revision.
 
 **Depends on:**
 - Phase 25 (Mobile Application Foundation & Navigation Shell): the `go_router` shell and the `More` tab
