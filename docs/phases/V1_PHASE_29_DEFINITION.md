@@ -1,6 +1,6 @@
 # Phase 29 — Work: Tasks, Work Logs, Projects & Clients (Mobile) — Specification
 
-**Status:** DRAFT (revision 1). Planning only, **not authorized for implementation**. It needs product-owner review of the §4 open decisions, then explicit authorization (`CLAUDE.md` §1/§8). No application, test, migration, route, dependency or configuration change has been made.
+**Status:** DRAFT, revision 2. It incorporates the product owner's specification-review decisions: all nine recommendations R-1…R-9 were approved as written (2026-10-09). It is proposed for approval and **is not authorized for implementation**; each sub-phase's gates need explicit authorization (`CLAUDE.md` §1/§8). No application, test, migration, route, dependency or configuration change has been made.
 
 **Depends on:**
 - Phase 25: the shell, with a `Tasks` tab placeholder.
@@ -74,21 +74,21 @@ This is the app's **first write surface**. Everything before it (Phases 25–28)
 2. There's no self-scoped, due-date-ordered task list with server-computed overdue and due-today flags (§3.2). A client otherwise needs its own staff id plus its own timezone logic.
 3. The task list has an unstable page order (§3.2).
 
-## 4. Product Decisions — **OPEN, for specification review**
+## 4. Product Decisions (specification review)
 
-Each item gives a recommendation. The product owner decides; nothing here is assumed approved.
+The product owner approved every recommendation from revision 1 as written (2026-10-09). The alternatives that were not chosen are listed so the reasoning is preserved.
 
-| # | Question | Recommendation | Alternatives |
+| # | Decision | Treatment in this specification | Not chosen |
 |---|---|---|---|
-| **R-1** | One phase or several? | **Split into three sub-phases, each with its own gates, PR, staging deploy and UAT:** **29A Tasks** (plus the mobile write foundation), **29B Work logs**, **29C Projects & Clients** (read-only). This document specifies 29A in full; 29B and 29C are outlined here and get a short revision before each starts. | (b) One phase with everything (roughly 2–3× Phase 28's size, and one big UAT). (c) A different order, e.g. 29C first since it is read-only and lowest risk. |
-| **R-2** | What does the Tasks tab list? | **Only tasks assigned to me**, for every role. An Administrator's or Manager's `tasks.view` doesn't widen it, matching Home's self-scope (DEC-052). | (b) Assigned to me plus unassigned tasks in my projects. (c) Everything I can see. |
-| **R-3** | How is "my tasks" served? | A new self-scoped **`GET /api/v1/me/tasks`**: no permission; `?state=open` (default) or `?state=closed`. Open tasks ordered `due_date ASC NULLS LAST, id`; closed ones `completed_at DESC, id`. Each task gets `is_overdue`/`is_due_today` computed with the canonical `OverdueTasks`/`CompanyTimezone`, plus `company_day`. Users without a profile get `200` with `tasks: null` (the `/me/home`/`/me/profile` precedent). | (b) No backend change: `GET /tasks?assignee=<my staff id>` with client-side sorting and overdue logic in the device timezone (newest-first paging, timezone drift). |
-| **R-4** | Which statuses may an assignee choose in the app? | **To do, In progress, Blocked, Completed** (completed tasks can be reopened). **Not `Cancelled`**: cancelling is a management decision. App-side only; the API's existing assignee rule is unchanged. | (b) All five. (c) Also enforce the restriction in the API (a behaviour change to Phase 11, needs a DEC entry). |
-| **R-5** | Edit other task fields from the app? | **No.** Status only, for everyone, including Project Leads and Administrators (who keep full API access). Creating tasks from the app is also out of scope. | (b) Project Leads can create and edit tasks on mobile (a larger form surface; better as a later phase). |
-| **R-6** | Make Home's task tile and Today task rows navigable? | **Yes:** the "My tasks" tile opens the Tasks tab, and a Today task row opens that task. Phase 27 R-1 anticipated this. Schedule and message items stay non-tappable. | (b) Keep Home non-interactive until a later polish phase. |
-| **R-7** | How should a status change feel? | **Confirmed, not optimistic:** the control shows progress until the server answers; on failure the previous status stays and a message explains. | (b) Optimistic update with rollback. |
-| **R-8** | Fix the work-log "today" defect (§3.3) now? | **Yes, in 29B,** by validating against `CompanyTimezone`'s date. A regression test covers 00:30 Manila time. It's recorded now so it isn't lost. | (b) Fix it immediately as a small standalone backend PR (it affects the API today). |
-| **R-9** | `GET /tasks` tie-breaker (§3.2)? | **Yes** (`->orderBy('id')` after `created_at`), the same as Phase 28 R-6. It's harmless and lands with 29A's backend gate. | (b) Leave it; the app uses `/me/tasks`. |
+| **R-1** | **Split into three sub-phases**, each with its own gates, PR, staging deploy and UAT: **29A Tasks** (plus the mobile write foundation), **29B Work logs**, **29C Projects & Clients** (read-only). | §5 specifies 29A in full. §6 and §7 outline 29B and 29C, which each get a short revision before they start. | One phase with everything; a different order. |
+| **R-2** | The Tasks tab lists **only tasks assigned to me**, for every role. | §5.1: an Administrator's or Manager's `tasks.view` doesn't widen it (the DEC-052 self-scope). | Including unassigned project tasks; everything visible. |
+| **R-3** | **Yes**, a new self-scoped **`GET /api/v1/me/tasks`**. | §5.1: `state=open|closed`; due-date ordering; server-computed `is_overdue` and `is_due_today` in company time; `tasks: null` without a profile. | Reusing `GET /tasks?assignee=` with client-side sorting and timezone logic. |
+| **R-4** | The app offers **To do, In progress, Blocked, Completed** (and reopening), **not Cancelled**. | §5.3. App-side only; the API's assignee rule is unchanged (§10). | All five; enforcing it in the API. |
+| **R-5** | **Status only** in the app, for everyone. No task creation. | §5.3, §9. | Project Leads creating and editing tasks on mobile. |
+| **R-6** | **Yes**, the Home "My tasks" tile and Today **task** rows become navigable. | §5.3. Schedule, message, notification and announcement items stay non-interactive. | Keep Home non-interactive. |
+| **R-7** | Status changes are **confirmed, not optimistic.** | §5.3. | Optimistic update with rollback. |
+| **R-8** | The work-log "today" defect (§3.3) is fixed **in 29B**, against `CompanyTimezone`, with a regression test at 00:30 Manila time. | §6. | A standalone backend PR now. |
+| **R-9** | **Yes**, a `GET /tasks` tie-breaker (`->orderBy('id')`), landing in 29A Gate 1. | §5.1. | Leave it. |
 
 ## 5. Sub-phase 29A — Tasks (specified in full)
 
@@ -222,4 +222,4 @@ Each item gives a recommendation. The product owner decides; nothing here is ass
 ## Notes
 
 - **This document is a specification, not an authorization.**
-- If the product owner picks different R-x options, §5–§12 are revised in revision 2 before any implementation.
+- Revision 1 (2026-10-09) proposed R-1…R-9 as open recommendations; revision 2 records them as approved without change. Elsewhere, only this status line and this note changed.
