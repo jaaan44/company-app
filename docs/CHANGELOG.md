@@ -4,6 +4,14 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-09 — Phase 28 Gate 3: Flutter People screens and routes
+- **`More` (R-8)** is now a real menu with only *My profile* and *Staff directory*. `MorePlaceholderPage` was removed; logout stays on Home.
+- **My profile:** the person's own record (work, employment, account), read-only with "To change these details, contact an administrator." No-profile accounts see a message and the Account section. Missing values read "Not set".
+- **Staff directory:** active staff only (R-1), debounced name search, automatic "load more" with a tap-to-retry row on failure, pull-to-refresh, and two distinct empty states. Rows show name and "position · department" (R-5). A 403 shows an access message without signing out.
+- **Staff detail:** name (and full name when different), position, department, team, manager (opens the manager's entry, R-7), and company email and phone with Copy buttons (R-3, no new dependency). No employee number, dates or operational status (R-4/R-5).
+- **Routes:** `/more/profile`, `/more/directory` and `/more/directory/:publicId`, all inside the `More` branch, so the tab keeps its stack. `CompanyApp` shares one `ApiClient` between Home and People and injects a `PeopleApiClient`.
+- 23 new widget tests (including dark mode, 200% text and tablet); `router_test` updated for the new More. `flutter test` 213/213; format and analyze clean; `pubspec` unchanged.
+
 ### 2026-10-09 — Phase 28 Gate 2: Flutter People data and state (no UI yet)
 - New `apps/mobile/lib/features/people/`:
   - **`domain/`:** strict `StaffMember` (Phase 7 `StaffResource`; `operational_status` and the Administrator-only `user` block are deliberately not parsed, R-4), `MyProfile` (`staff` null when unlinked) and `StaffDirectoryPage`.

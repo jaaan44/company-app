@@ -668,4 +668,20 @@ Same branch, after merging `main` at `116526f` (PR #56, the `league/commonmark` 
 
 ---
 
+## Phase 28 — Gate 3 (Flutter People screens and routes)
+
+Same branch. AI sandbox, Flutter 3.47.2 / Dart 3.13.2. No device or emulator: everything below is **tested automatically**, nothing is manually verified.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `test/features/people/people_pages_test.dart` (23) | Automated (widget, through the real `CompanyApp`, router, shell, `AuthController` and `ApiClient`) | PASS | **More (R-8):** exactly two rows; the account name as subtitle; no "coming soon"; no request. **My profile:** every field, including employee number, hire date `1 Mar 2024`, login email and role; full name when the preferred name differs; read-only (no text field, no edit icon) with the administrator note. No-profile shows the message and Account only. Missing values read "Not set" (4 of them). Error → Try again recovers. **Directory:** server order; "position · department" with missing parts skipped; no subtitle when both are missing; `status=active` sent; no operational status shown (R-4). Search is debounced (only the paused text is sent); clear resets. Both empty states. Scrolling loads page 2. A failed page shows a retry row that works. Pull-to-refresh refetches. 403 → access message with the session kept; 401 → Login with the session-ended notice. **Detail:** approved fields only, with no employee number, dates or status (R-5). Copy sends the email/phone to the platform clipboard and shows "Copied" (R-3). The manager opens their entry, a manager-less entry has a plain row, and back returns (R-7). Switching tabs keeps the More stack. Android tap-target and labelled-tap-target guidelines met. **Resilience:** light/dark phone at 100% and 200% text, and a light 200% tablet, with long names: More, profile (walked to the last row), directory (walked to the last row) and detail (walked to the copy-phone button) throw no exception and stay hit-testable. Hit-test warnings are fatal in this file. **Proven to catch the bug:** with the footer's load-more trigger disabled, exactly the two paging tests fail; the file was then restored. |
+| `test/app/router_test.dart` | Automated | PASS (updated) | The More tab now expects `MorePage` with My profile and Staff directory, instead of the removed `MorePlaceholderPage`. No other existing test changed. |
+| `flutter pub get` | Automated | PASS | `pubspec.yaml` and `pubspec.lock` unchanged: no `url_launcher` (R-3). |
+| `dart format --output=none --set-exit-if-changed .` | Automated | PASS | 51 files, 0 changed. |
+| `flutter analyze` | Automated | PASS | No issues. |
+| Full `flutter test` | Automated | PASS | 213/213 (190 + 23). Home 64/64; core network + auth 45/45; `test/app` (router + session expiry) 19/19. |
+| UAT | — | NOT RUN | UAT-28-01…07 `NOT RUN`: they need a staging deployment and a device (after Gate 4). |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*

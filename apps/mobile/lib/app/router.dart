@@ -5,6 +5,11 @@ import 'package:mobile/features/auth/presentation/login_page.dart';
 import 'package:mobile/features/auth/state/auth_controller.dart';
 import 'package:mobile/features/home/data/home_api_client.dart';
 import 'package:mobile/features/home/presentation/home_page.dart';
+import 'package:mobile/features/people/data/people_api_client.dart';
+import 'package:mobile/features/people/presentation/more_page.dart';
+import 'package:mobile/features/people/presentation/my_profile_page.dart';
+import 'package:mobile/features/people/presentation/staff_detail_page.dart';
+import 'package:mobile/features/people/presentation/staff_directory_page.dart';
 import 'package:mobile/features/shell/presentation/app_shell.dart';
 import 'package:mobile/features/shell/presentation/placeholder_page.dart';
 
@@ -16,6 +21,7 @@ import 'package:mobile/features/shell/presentation/placeholder_page.dart';
 GoRouter buildAppRouter(
   AuthController authController, {
   required HomeApiClient homeApiClient,
+  required PeopleApiClient peopleApiClient,
 }) {
   return GoRouter(
     initialLocation: '/splash',
@@ -69,9 +75,35 @@ GoRouter buildAppRouter(
           ),
           StatefulShellBranch(
             routes: [
+              // People (Phase 28): every sub-page stays inside the More
+              // branch, so the tab keeps its own stack across tab switches.
               GoRoute(
                 path: '/more',
-                builder: (context, state) => const MorePlaceholderPage(),
+                builder: (context, state) => const MorePage(),
+                routes: [
+                  GoRoute(
+                    path: 'profile',
+                    builder: (context, state) =>
+                        MyProfilePage(peopleApiClient: peopleApiClient),
+                  ),
+                  GoRoute(
+                    path: 'directory',
+                    builder: (context, state) =>
+                        StaffDirectoryPage(peopleApiClient: peopleApiClient),
+                    routes: [
+                      GoRoute(
+                        path: ':publicId',
+                        builder: (context, state) => StaffDetailPage(
+                          // A new key per person, so opening a manager
+                          // from a detail page builds a fresh page.
+                          key: ValueKey(state.pathParameters['publicId']),
+                          peopleApiClient: peopleApiClient,
+                          publicId: state.pathParameters['publicId']!,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
