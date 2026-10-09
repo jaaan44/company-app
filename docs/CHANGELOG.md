@@ -4,6 +4,17 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-09 — Phase 29A Gate 4: final integration review, handoff and implementation PR
+- Final gates on the complete branch: backend 1,169/1,169 with Pint, PHPStan level 5, `composer validate --strict` and `composer audit --locked` (no advisories); Flutter 330/330 with format and analyze clean and `pubspec` unchanged.
+- **Contract parity:** real Laravel output for `/me/tasks` (open and closed), `GET /tasks/{id}`, `PATCH` success and `422` for Staff, Manager and Administrator, both kinds of `403`, and the no-profile response (with non-ASCII names and null fields) was parsed and mapped by the production Flutter code (9/9, in temporary tests that were not committed). It confirmed that a 403 for a task no longer mine reads "You do not have permission to update this task.", which the detail shows as-is.
+- Docs:
+  - new `docs/handoffs/V1_PHASE_29A_HANDOFF.md`;
+  - `02_ARCHITECTURE.md` §35 (Work — Tasks, and the `ApiClient` write rules);
+  - `06_UI_UX_GUIDELINES.md` (Tasks, Home R-6, and the first write conventions: status chips, chip pickers, confirmed saves, failure messages under the control, no dialog for reversible changes);
+  - spec status → 29A implementation complete, pending PR/CI, merge, staging and UAT;
+  - UAT-29A notes updated (still `NOT RUN`).
+- 29A is **not** closed, and nothing is deployed.
+
 ### 2026-10-09 — Phase 29A Gate 3: Tasks screens, Home navigation and router
 - **Tasks tab** (`lib/features/tasks/presentation/tasks_page.dart`):
   - Open | Done segments (`state=open|closed`), each with its own list; Done loads on first selection.

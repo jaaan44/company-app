@@ -830,4 +830,24 @@ Branch `claude/amazing-brahmagupta-dbsrjc`, on Gate 2 (`d1e0fdf`). Run in this A
 
 ---
 
+## Phase 29A — Gate 4 (final integration review)
+
+Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`793f947`), confirmed up to date with `main` (`d8d550b`).
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `composer validate --strict` | Automated | PASS | — |
+| `composer audit --locked` | Automated | PASS | No advisories. |
+| `vendor/bin/pint --test` | Automated | PASS | — |
+| `vendor/bin/phpstan analyse` (level 5) | Automated | PASS | 0 errors. |
+| `php artisan test` | Automated | PASS | 1,169/1,169 (3,310 assertions). |
+| `flutter pub get` / `dart format` / `flutter analyze` | Automated | PASS | `pubspec` unchanged; 0 files to format; no issues. |
+| `flutter test` | Automated | PASS | 330/330. |
+| Contract parity (real API → app) | Manual (AI), temporary tests | PASS | A scratch Laravel test captured real `/me/tasks` (open; closed at `per_page=2`), `GET /tasks/{id}`, `PATCH` success and `422` for Staff, Manager and Administrator, a `403` for a task assigned to someone else ("You do not have permission to update this task."), a `403` for an assignee changing another field ("You may only update the status of a task assigned to you."), and the no-profile response, in `Asia/Manila` with non-ASCII titles, project and creator names, and null fields. A scratch Flutter test parsed every response with the production models (flags, statuses, priorities, nulls, `completed_at`, `withServerUpdate`) and fed the real `422`/`403` bodies through the real `ApiClient` (`ApiValidationException.firstErrorFor('status')`; `ApiForbiddenException` with the server message and the session kept): 9/9. Both files were deleted; nothing was committed. |
+| Real device / emulator | — | Not run | No device in this sandbox. |
+| MySQL ordering | — | Not run | Standard `IS NULL` ordering; exercised at staging. |
+| UAT | — | NOT RUN | UAT-29A-01…07 `NOT RUN`. |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*

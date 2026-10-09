@@ -28,7 +28,7 @@ Principles:
 
 Both needs that motivated the choice are realized: **auth-gated redirects at the route level** (the `redirect` callback above, evaluated on every `AuthController` change) and the **structural readiness for deep linking** (`go_router`'s path-based routes make it possible; actual deep-link *consumption* from a Notification is still unbuilt, deferred to whichever later phase first needs it).
 
-Three of the five destinations (`Tasks`/`Schedule`/`Messages`) are still honest placeholders — Phase 25 built the shell and routing only, per its own scope boundary; Phases 27–33 give them real content. *(Home became real in Phase 27, and `More` in Phase 28.)* See `docs/phases/V1_PHASE_25_DEFINITION.md` and `docs/handoffs/V1_PHASE_25_HANDOFF.md` for the full account.
+Three of the five destinations (`Tasks`/`Schedule`/`Messages`) are still honest placeholders — Phase 25 built the shell and routing only, per its own scope boundary; Phases 27–33 give them real content. *(Home became real in Phase 27, `More` in Phase 28, and `Tasks` in Phase 29A.)* See `docs/phases/V1_PHASE_25_DEFINITION.md` and `docs/handoffs/V1_PHASE_25_HANDOFF.md` for the full account.
 
 ### Employee Home (implemented, Phase 27 — complete, formally closed 2026-09-24)
 
@@ -62,6 +62,22 @@ Conventions this phase establishes for later list screens:
   - a failed **refresh** keeps the list and shows the Home "Couldn't refresh. Showing earlier information." notice.
 - **Search** waits about 300 ms after typing pauses, and only the latest search's results are ever shown.
 - **List density:** Material's standard comfortable density proved sufficient for a ~100-person directory, so no denser variant was introduced (see Spacing below).
+
+### Tasks — list, detail and the first write (implemented, Phase 29A — pending merge and UAT)
+
+- **Tasks tab:**
+  - An **Open | Done** `SegmentedButton` at the top; each segment keeps its own list, and Done loads the first time it is shown.
+  - Rows: title (up to two lines), project name when there is one, then a status chip and the due label — "Due today", "Overdue · 3 Sep" (in the `error` role, semi-bold), "Due 12 Oct", or nothing. The year is added when it isn't the company year.
+  - Phase 28 paging, retry row and pull-to-refresh; empty states "No open tasks assigned to you." / "No completed tasks yet."; "No staff profile is linked to this account." without a profile.
+- **Task detail:** title as the header; status chip and "Priority: …"; a **Status** section; a **Details** section (due date with " · Overdue" or " · Due today", project or "Independent task", created by, completed date when there is one, "Not set" for missing values); a **Description** section ("No description." when empty).
+- **Home (R-6, refining Phase 27's R-1):** the My tasks tile and Today **task** rows (with a chevron) are tappable and open the Tasks tab or the task. Schedule rows, the other tiles and announcements stay non-interactive until their own phases.
+
+Conventions this phase establishes for writes:
+- **Status chips** are the shared status convention made concrete: a container colour role (to do: surface-container-highest; in progress: primary-container; blocked: error-container; completed: tertiary-container; cancelled: outlined surface) **plus the status's text, always**.
+- **Picking a value that saves immediately** uses a wrapping row of `ChoiceChip`s (not a segmented button, which clips at large text). Only the values the person may choose are offered; a value they can't change is shown read-only with a sentence saying why.
+- **Saves are confirmed, not optimistic (R-7):** the control shows the saved value until the server confirms the new one. While saving, the control is disabled under a `LinearProgressIndicator`. Success shows a `SnackBar` ("Status changed to In progress."). A failure keeps the old value and shows the reason **under the control**, in the `error` role as a live region: the connection message, the server's own message for a 403 or 422, or "This task is no longer available." Nothing is retried automatically; the person retries by choosing again.
+- **No confirmation dialog for reversible changes:** a status change can be undone by choosing again, so it doesn't use the destructive-action `AlertDialog` (that convention stays for hard-to-reverse actions).
+- **After a change**, every other screen showing that data (lists, Home counts) refreshes quietly, so returning to it never shows stale state.
 
 ## Admin Backoffice (Web) — Navigation
 
