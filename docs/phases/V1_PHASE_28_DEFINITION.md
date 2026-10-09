@@ -1,6 +1,6 @@
 # Phase 28 — People: Staff Directory & Profile (Mobile) — Specification
 
-**Status:** DRAFT (revision 1). Planning only, **not authorized for implementation**. It needs product-owner review of the §4 open decisions, then explicit authorization (`CLAUDE.md` §1/§8). No application, test, migration, route, dependency or configuration change has been made.
+**Status:** DRAFT, revision 2. It incorporates the product owner's specification-review decisions: all eight recommendations R-1…R-8 were approved as written (2026-10-09). It is proposed for approval and **is not authorized for implementation** (`CLAUDE.md` §1/§8). No application, test, migration, route, dependency or configuration change has been made.
 
 **Depends on:**
 - Phase 25 (Mobile Application Foundation & Navigation Shell): the `go_router` shell and the `More` tab
@@ -76,22 +76,22 @@ Both are **read-only**. Phase 28 does not add self-service editing, photos, org 
 - There is no `url_launcher` (or any tap-to-call/email) dependency (R-3).
 - `06_UI_UX_GUIDELINES.md` defers list density "to whichever module first demonstrates a real need (most likely a long Staff Directory)". The company is about 100 people (`Staff` model note), so standard comfortable Material density is sufficient.
 
-## 4. Product Decisions — **OPEN, for specification review**
+## 4. Product Decisions (specification review)
 
-Each item gives a recommendation. The product owner decides; nothing here is assumed approved.
+The product owner approved every recommendation from revision 1 as written (2026-10-09). The rejected alternatives are listed so the reasoning is preserved.
 
-| # | Question | Recommendation | Alternatives |
+| # | Decision | Treatment in this specification | Not chosen |
 |---|---|---|---|
-| **R-1** | Who appears in the mobile directory? | Only **`active`** staff. The app always sends `status=active`. The API is unchanged: its company-wide visibility (DEC-030) stays as Phase 7 decided. | (b) Active + inactive. (c) Change the API so non-Administrators never see `separated` (a DEC-030 change, needs a DEC entry). |
-| **R-2** | How is "my profile" served? | A new self-scoped **`GET /api/v1/me/profile`**: no permission and no Staff required, `staff: null` when unlinked (the `/me/home` precedent, §3.2). | (b) No backend change: chain `/me/home` → `GET /staff/{public_id}` (two calls, needs `staff.view`, no clean no-profile state). |
-| **R-3** | Contact actions on email/phone | **Display + "Copy"** (Flutter SDK `Clipboard`): **no new dependency**. | (b) Tap-to-call / tap-to-email via `url_launcher` (a new `pubspec` dependency plus Android `<queries>` manifest entries; needs approval). |
-| **R-4** | Show operational status (Phase 9) in the directory? | **No.** It is consistent with Phase 27 R-4; Phase 30 owns status. The field is still returned by the API and simply not rendered. | (b) Show it as a passive label on the detail screen. |
-| **R-5** | Which fields does the directory show for a colleague? | **List row:** display name; position · department. **Detail:** display name (full name if different), position, department, team, manager, company email, company phone. **Not shown:** employee number, hire/separation dates, status, `has_user_account`. Showing them adds no directory value. | (b) Also show the employee number. |
-| **R-6** | Fix the unstable page order (§3.3-1)? | **Yes.** Add one tie-breaker, `->orderBy('id')`, to `StaffController::index`. `StaffDirectoryReportController` (Phase 20) has the same `last_name, first_name` ordering; fixing it too is optional, since it is an admin report and not used by mobile. The visible order is unchanged; it only adds determinism. Plus a regression test. | (b) No backend change; the mobile client fetches everything in one large page (relies on the unbounded `per_page`; not recommended). |
-| **R-7** | Can the user tap the manager on a detail screen to open the manager's entry? | **Yes**, within People only (a push onto the `/more` branch stack). | (b) Manager shown as plain text. |
-| **R-8** | What does `More` contain? | Only the **real** entries: *My profile* and *Staff directory*. No "coming soon" rows for future modules (each later phase adds its own row). Logout stays in the Home app bar (unchanged). | (b) List all `06` items with disabled future rows. (c) Also add Logout to `More`. |
+| **R-1** | The mobile directory shows **`active`** staff only. | The app always sends `status=active`. The API is unchanged: its company-wide visibility (DEC-030) stays as Phase 7 decided (§14). | Active + inactive; an API restriction for non-Administrators (a DEC-030 change). |
+| **R-2** | **Yes**, a new self-scoped **`GET /api/v1/me/profile`**. | §6.1. No permission, no Staff required; `staff: null` when unlinked (the `/me/home` precedent, §3.2). | Chaining `/me/home` → `GET /staff/{public_id}`. |
+| **R-3** | Email and phone are **displayed with a Copy button** (Flutter SDK `Clipboard`). | §7/§8. **No new `pubspec` dependency.** | Tap-to-call / tap-to-email via `url_launcher`. |
+| **R-4** | **No** operational status in the directory. | Returned by the API but not parsed or rendered. Phase 30 owns status. | A passive label on the detail screen. |
+| **R-5** | **List row:** display name; position · department. **Detail:** display name (full name if different), position, department, team, manager, company email, company phone. | Employee number, hire/separation dates, status and `has_user_account` are not shown for colleagues. My profile shows the person's **own** employee number and hire date (§8). | Showing a colleague's employee number. |
+| **R-6** | **Yes**, a deterministic `/staff` page order. | §6.2: `->orderBy('id')` appended in `StaffController::index`, with a regression test. The visible order is unchanged. `StaffDirectoryReportController` (Phase 20) has the same `last_name, first_name` ordering; fixing it too is optional, since it is an admin report and not used by mobile. | Fetching everything in one large page. |
+| **R-7** | **Yes**, tapping the manager on a detail screen opens the manager's entry. | §7/§8. A push within the `/more` branch stack. | The manager as plain text. |
+| **R-8** | `More` contains only *My profile* and *Staff directory*. | §8. No "coming soon" rows; each later phase adds its own row. Logout stays in the Home app bar (unchanged). | Disabled future rows; Logout in `More`. |
 
-## 5. In Scope (assuming the recommendations)
+## 5. In Scope
 
 - **Backend:**
   - `GET /api/v1/me/profile` (R-2);
@@ -140,7 +140,7 @@ Each item gives a recommendation. The product owner decides; nothing here is ass
 ### 6.3 Explicitly unchanged
 
 - `StaffResource` fields and its manage-only `user` split.
-- `staff.view` / `staff.manage` grants and DEC-030 directory visibility (unless R-1(c) is chosen).
+- `staff.view` / `staff.manage` grants and DEC-030 directory visibility (R-1).
 - All write endpoints, `/auth/me`, `/me/home`, and the Phase 9 status/check-in endpoints.
 - The cross-cutting `per_page` cap and `q` wildcard escaping (§3.3-2/3), recorded for Phase 36.
 
@@ -163,7 +163,7 @@ Each item gives a recommendation. The product owner decides; nothing here is ass
 - **Router:** `/more` → `MorePage`, with child routes `/more/profile`, `/more/directory` and `/more/directory/:publicId`, all inside the existing `/more` `StatefulShellBranch`, so the tab keeps its own stack (Phase 25).
 - **API client injection:** `PeopleApiClient` is injected into `buildAppRouter` the same way as `HomeApiClient`, which is the test seam.
 - **Session rule:** reused unchanged. A `401` anywhere ends the session and returns to Login with the notice. A `403` (for example a no-role user opening the directory) keeps the session and shows a "You don't have access to the staff directory" error state, not a sign-out.
-- **No new dependency** (R-3 recommendation). `MorePlaceholderPage` is removed, and its router test is updated.
+- **No new dependency** (R-3). `MorePlaceholderPage` is removed, and its router test is updated.
 
 ## 8. UX Behavior
 
@@ -200,7 +200,7 @@ Each item gives a recommendation. The product owner decides; nothing here is ass
 | Directory list/detail | `staff.view` holders (Admin/Manager/Staff) | Every Staff record the API already returns. The app requests `active` only (R-1). |
 | Directory | No-role user | `403` → an access-denied state; the session is kept. |
 
-No role widens or narrows any server-side visibility relative to today, apart from R-1(c) if chosen.
+No role widens or narrows any server-side visibility relative to today.
 
 ## 10. Performance
 
@@ -255,13 +255,13 @@ UAT data will need its own small, dedicated, reversible seed (for example `UAT28
 ## 13. Acceptance Criteria
 
 - `/me/profile` behaves as §6.1: self-scoped, no permission, no Staff required, no migration. The R-6 tie-breaker is in place. All §11 backend tests pass, with no regression in Phases 1–27.
-- More, Profile, Directory and Detail render §8. The session rule is reused unchanged. There is no new `pubspec` dependency (unless R-3(b) is approved). Phase 25/27 behavior is intact.
+- More, Profile, Directory and Detail render §8. The session rule is reused unchanged. There is no new `pubspec` dependency (R-3). Phase 25/27 behavior is intact.
 - All `CLAUDE.md` §5 commands pass locally and in CI.
 - UAT-28-01…07 are recorded as `NOT RUN`, and §16 documentation is complete.
 
 ## 14. Risks / Dependencies
 
-- **R-1 trade-off:** with the recommended client-side `status=active`, inactive and separated records remain reachable through the API by any `staff.view` holder (as today). This is an existing Phase 7 decision, not a Phase 28 regression. If the product owner considers it too broad, R-1(c) is the change, and it is a DEC-030 revision.
+- **R-1 trade-off (accepted):** with the client-side `status=active`, inactive and separated records remain reachable through the API by any `staff.view` holder (as today). This is an existing Phase 7 decision, not a Phase 28 regression. Narrowing it later would be a DEC-030 revision.
 - **Search semantics** are the existing `LIKE` match. There is no fuzzy or accent-insensitive search; that depends on the MySQL collation and is acceptable at this scale.
 - **Staging data:** directory UAT shows every active staging staff member, including the UAT27 records. That is acceptable (they are test data) but should be expected.
 - **Phase 27 carry-forwards** are unchanged and none blocks Phase 28: the offline-launch sign-out, `ApiClient` charset, Android debug signing, and the `mobile` app label.
@@ -301,5 +301,5 @@ UAT data will need its own small, dedicated, reversible seed (for example `UAT28
 ## Notes
 
 - **This document is a specification, not an authorization.**
-- If the product owner picks different R-x options, §5–§13 are revised accordingly in revision 2 before any implementation.
+- Revision 1 (2026-10-09) proposed R-1…R-8 as open recommendations; revision 2 records them as approved without change. In §5–§17, the only changes from revision 1 remove references to the alternatives that were not chosen.
 - No database migration is expected.
