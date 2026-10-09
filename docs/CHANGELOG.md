@@ -4,6 +4,12 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-09 — Security: `league/commonmark` 2.10.1 → 2.10.3 (dependency only)
+- Fixes the `composer audit --locked` failure found during Phase 28 Gate 1: GHSA-3q6v-r5mr-hxv8 (high: quadratic-time DoS in the GFM table extension) and GHSA-97jj-33gv-5xf9 (medium: `DisallowedRawHtml` bypass), both published 2026-09-30 and affecting ≤ 2.10.1.
+- `league/commonmark` is transitive (`laravel/framework` requires `^2.8.1`). Only that package changed in `composer.lock` (`composer update league/commonmark`, without `--with-dependencies`). `composer.json` is unchanged, and application code does not call Markdown rendering.
+- Checks: `composer validate --strict`, `composer audit --locked` (no advisories), Pint, PHPStan level 5, `php artisan test` 1,130/1,130.
+- Not part of any phase; Phase 28 is unaffected and still at Gate 1.
+
 ### 2026-10-09 — Phase 28 Gate 1: self-scoped `GET /api/v1/me/profile` and a deterministic `/staff` order
 - **`GET /api/v1/me/profile`** (`MyProfileController`): `auth:sanctum` + `account.active`, no permission, no request parameters. It returns `user` (`public_id`, `name`, `email`, `role`) and `staff`: the unchanged Phase 7 `StaffResource` with `StaffController`'s eager loads, or `null` (`200`) when no Staff record is linked. DEC-053.
 - **`GET /api/v1/staff`** now orders by `last_name, first_name, id`. The visible order is unchanged; same-named staff can no longer be skipped or repeated across pages.
