@@ -727,4 +727,46 @@ No effect on the repository, staging or any data. The runbook was then written w
 
 ---
 
+## Phase 28 — staging deployment, UAT data and physical-device UAT (2026-10-09)
+
+Operator- and product-owner-reported; this AI session has no VPS or device access. The values below are transcribed from the terminal output the operator shared. No password appears anywhere.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Checkout fast-forwarded to `b6e85c5` | Manual, real VPS | PASS | `git rev-parse HEAD` = `b6e85c5a5b8bceac4328805af562fd7a2bb4f5a9`. |
+| Pre-deploy DB backup | Manual, real VPS | PASS | `company-app-20261009-064725.sql`, 101,566 bytes. |
+| Images rebuilt; `app` and `nginx` recreated | Manual, real VPS | PASS (after the incident below) | Per runbook §2. |
+| **MySQL network incident during deploy** | Incident, real VPS | **Resolved** | See the notes below this table. |
+| `migrate:status` | Manual, real VPS | PASS | All 45 migrations Ran, none pending. Run as `docker compose exec app …` rather than `$C exec …`; it reached the staging container, but `$C` is the documented form. |
+| Company timezone | Manual, real VPS | PASS | `scheduling.company_timezone` → `Asia/Manila`. |
+| Config, route and view caches | Manual, real VPS | Reported done | The operator reported "all ok" after the fix. The individual cache outputs were not shared. `/me/profile` answering `401` (below) shows the route cache includes the new route. |
+| Public smoke tests | Manual (operator's Windows `curl.exe`) | PASS | `up 200`, `login 200`, `home 401`, **`profile 401`**, `staff 401`. |
+| Listener check (`127.0.0.1:8012` only) | Manual | Not recorded | The `ss` output was not shared. |
+| UAT28 script integrity | Manual, real VPS | PASS | Extracted from `origin/main`; SHA-256 `4e846aec912c5ebc48b29d334311468c590542e82b4fbbcc3ba1474c088cabbd`. |
+| `plan` (07:45:08Z) | Manual, real VPS | PASS | Phase 28 deployed (route present); 3 accounts absent; 0 of 33 UAT28 records; roles 3/3; 5 active staff in the directory before seeding. |
+| `seed` (07:45:43Z) | Manual, real VPS | PASS | 3 accounts created; 33 UAT28 staff records; exit 0. Credentials file `600 deploy`, 3 lines; moved to a password manager and removed with `shred -u` (an `ls` afterwards confirmed it was gone). |
+| `verify` (07:47:30Z, real controllers) | Manual, real VPS | PASS | `/me/profile`: staff = `Ros (full: Rosalind UAT28-Abad)`, with the expected position, department, team, manager, contact details, `UAT28-001` and hired 2024-03-01; manager correct; `admin_noprofile` → `staff: none`. `/staff?q=UAT28`: page 1/2 has 25 rows, page 2/2 has 6. 31 distinct; inactive and separated absent. Tie-breaker: distinct. On staging's MySQL collation `José UAT28-Ñuñez` sorts before the two `Jamie UAT28-Twin` (SQLite in the rehearsal sorted it after); the runbook anticipated this. |
+| `exposure` before UAT (07:47:31Z) | Manual, real VPS | PASS | All three UAT28 accounts: `api_tokens=0`, `web_sessions=0`, audit none. |
+| Final UAT APK | Build (operator) | **Provenance not supplied** | The APK used for UAT was to be built from `b6e85c5` per runbook §3. Its details were not supplied: the literal `git rev-parse HEAD`/`git status --porcelain`, `flutter --version`, test count, size and SHA-256. They can be added in a follow-up docs update if supplied. |
+| UAT-28-01…07 (physical device, staging `b6e85c5`) | UAT (product owner) | **PASS** | Reported by the product owner on 2026-10-09: "everything passed". `UAT_LOG.md` records all seven as `PASS`. No per-scenario observations were reported. |
+| `exposure` after UAT | Manual, real VPS | Not supplied | Recommended in runbook §6; the output was not shared. |
+
+**MySQL network incident during the deploy (resolved):**
+- **What happened:** after `app` and `nginx` were recreated on the compose-defined `company-app-staging` network, `migrate:status` failed with `getaddrinfo for mysql failed`.
+- **Diagnosis:** `company-app-mysql` had been running for about 4 hours, attached only to a network named `company-app_company-app`. That network is not defined by `docker-compose.staging.yml`, which has used `company-app-staging` since Phase 24.
+- **Fix:** `$C up -d mysql` recreated it at `2026-10-09T07:01:38Z` from `docker-compose.staging.yml` (project `company-app`), followed by `$C restart app`.
+- **Verified afterwards:**
+  - mount `company-app_mysql-data -> /var/lib/mysql` (the real staging volume);
+  - network `company-app-staging` with the alias `mysql`;
+  - the same database as before (9 users, including the 6 Phase 27 `uat27.*` accounts; all 45 migrations);
+  - the server had not been rebooted (up 33 days).
+- **Still open:**
+  - `company-app_company-app` is now empty and was left in place;
+  - what attached MySQL to it about 4 hours before the deploy is **not known**; it may be another tool or project on this shared VPS. The operator was asked to check shell history.
+- No data loss; the deploy backup was taken before the incident.
+
+**Phase 28 formally closed 2026-10-09.**
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*
