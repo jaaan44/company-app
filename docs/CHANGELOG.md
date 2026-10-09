@@ -4,6 +4,14 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-09 — Phase 28 Gate 2: Flutter People data and state (no UI yet)
+- New `apps/mobile/lib/features/people/`:
+  - **`domain/`:** strict `StaffMember` (Phase 7 `StaffResource`; `operational_status` and the Administrator-only `user` block are deliberately not parsed, R-4), `MyProfile` (`staff` null when unlinked) and `StaffDirectoryPage`.
+  - **`data/PeopleApiClient`:** `/me/profile`; `/staff?status=active&per_page=25&page=N[&q=…]` (R-1, encoded with `Uri`); `/staff/{publicId}`. All go through the Phase 27 `ApiClient`, so the 401/403 session rule is unchanged.
+  - **`state/`:** a shared `ResourceController` (the Phase 27 Home lifecycle) behind `MyProfileController` and `StaffDetailController`. `StaffDirectoryController` adds debounced search, load-more paging, refresh, de-duplication, and stale-response dropping by generation.
+- 61 new tests; `flutter test` 190/190; format and analyze clean. No new dependency. No screen, route or `More` change (Gate 3).
+- Merged `main` (PR #56) into the Phase 28 branch, so it carries the `league/commonmark` 2.10.3 fix.
+
 ### 2026-10-09 — Security: `league/commonmark` 2.10.1 → 2.10.3 (dependency only)
 - Fixes the `composer audit --locked` failure found during Phase 28 Gate 1: GHSA-3q6v-r5mr-hxv8 (high: quadratic-time DoS in the GFM table extension) and GHSA-97jj-33gv-5xf9 (medium: `DisallowedRawHtml` bypass), both published 2026-09-30 and affecting ≤ 2.10.1.
 - `league/commonmark` is transitive (`laravel/framework` requires `^2.8.1`). Only that package changed in `composer.lock` (`composer update league/commonmark`, without `--with-dependencies`). `composer.json` is unchanged, and application code does not call Markdown rendering.

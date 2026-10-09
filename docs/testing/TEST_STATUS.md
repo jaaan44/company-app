@@ -649,4 +649,23 @@ Branch `claude/amazing-brahmagupta-dbsrjc`, from `main` at `0bb3a64` (PR #55). R
 
 ---
 
+## Phase 28 — Gate 2 (Flutter People data and state)
+
+Same branch, after merging `main` at `116526f` (PR #56, the `league/commonmark` 2.10.3 fix). Run in this AI sandbox: Flutter 3.47.2 (framework `d3b14c8769`) / Dart 3.13.2, downloaded from `storage.googleapis.com` as in Phases 25/27. No device or emulator; nothing here is manually verified.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `test/features/people/people_models_test.dart` (15) | Automated | PASS | Strict parsing of `StaffMember`, `MyProfile` and `StaffDirectoryPage`. Null placement and manager stay null. `roleLine` skips a missing part. A preferred name vs full name is detected. Role labels map correctly. A missing or wrongly typed field is a `FormatException`. |
+| `test/features/people/people_api_client_test.dart` (13) | Automated | PASS | Exact paths, and the bearer token is sent. The directory always sends `status=active&per_page=25&page=N` (R-1). An empty or whitespace query is not sent. Search text is trimmed and fully encoded, including `&`, `?`, `=`, `#` and non-ASCII. A public id can never change the path. A contract mismatch → `ApiRequestException`. 401 ends the session; 403 with a valid session is forbidden, not a sign-out. |
+| `test/features/people/resource_controllers_test.dart` (14) | Automated | PASS | `MyProfileController` / `StaffDetailController`: loading → loaded. No-profile is loaded, not an error. Error messages for network, 5xx, bad shape, 404 and 403. Try again recovers. A failed refresh keeps data and returns false. Concurrent calls make one request. 401 → signed out with no error state. No notifications after dispose. |
+| `test/features/people/staff_directory_controller_test.dart` (19) | Automated | PASS | First page, load more to the last page, one request for overlapping load-more calls, no duplicate person, and a load-more failure that is kept and retried. Search is debounced (last text only), the same query sends nothing, and a search is paged on load more. A slow earlier-search response is dropped, and a load-more overtaken by a refresh is dropped. Refresh keeps the list while loading and replaces it on success; a failed refresh keeps the list. An empty result is loaded. Error messages cover network, 403 and 5xx. Try again recovers. 401 → signed out. A pending search is cancelled by dispose. **Proven to catch the bug:** with the generation guard removed, exactly the two stale-response tests fail; the file was then restored. |
+| `flutter pub get` | Automated | PASS | `pubspec.yaml` and `pubspec.lock` unchanged: no new dependency (R-3). |
+| `dart format --output=none --set-exit-if-changed .` | Automated | PASS | 45 files, 0 changed. |
+| `flutter analyze` | Automated | PASS | No issues. |
+| Full `flutter test` | Automated | PASS | 190/190: the 129 from Phase 27 plus these 61. Home 64/64; core network + auth 45/45 (unchanged). |
+| Backend after merging `main` | — | Unchanged | Gate 2 changes no `apps/api` file. The merge brought only `composer.lock` (PR #56, already CI-green on `main`). |
+| UAT | — | NOT RUN | UAT-28-01…07 `NOT RUN` (no screens yet; Gate 3). |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*
