@@ -492,3 +492,27 @@ Internet → Cloudflare (proxied, Full (strict))
 **Routing:** `/more` → `/more/profile`, `/more/directory`, `/more/directory/:publicId`, all inside the `More` `StatefulShellBranch`, so the tab keeps its own stack. A manager link pushes another detail page. `CompanyApp` builds one shared `ApiClient` for `HomeApiClient` and `PeopleApiClient`; both are injectable for tests.
 
 **Not introduced:** no editing of any kind, photos, an org chart, `url_launcher` (copy-only, R-3), operational status (R-4), caching or offline storage, or a new dependency. See `docs/phases/V1_PHASE_28_DEFINITION.md` and `docs/handoffs/V1_PHASE_28_HANDOFF.md`.
+
+## 35. Work — Tasks (Phase 29A — implemented, pending merge and UAT; DEC-054)
+
+**Backend:**
+- **`GET /api/v1/me/tasks`** (`App\Http\Controllers\Api\V1\Tasks\MyTaskController`, `auth:sanctum` + `account.active`) lists the tasks assigned to the token's own Staff record (`assignee_staff_id`), for every role.
+  - `state=open|closed` uses the `OverdueTasks` terminal set; `is_overdue`/`is_due_today` use `OverdueTasks::todayInCompanyTimezone()`, so the list agrees with `/me/home` and the Phase 20 reports.
+  - Each item is the Phase 11 `TaskResource` with `TaskController`'s eager loads, plus the two flags; `company_day` states the day used. `tasks: null` without a linked Staff record.
+  - Ordered with a unique `id` tie-breaker; `per_page` capped at 50; constant query count.
+- **`GET /api/v1/tasks`** now orders `created_at DESC, id`. `GET`/`PATCH /tasks/{public_id}` are unchanged and are what the app uses for detail and status changes. No migration, no permission change.
+
+**Mobile — writes (`lib/core/network/`):** `ApiClient` gained `postJson`, `patchJson` and `delete` on the same request path as `getJson`, so every verb shares the bearer token, the 401 expiry and the 403 → one `/auth/me` re-check. `422` becomes `ApiValidationException` (message plus per-field errors); `204` is success with no body. Requests are never retried, so a write is sent at most once.
+
+**Mobile — Tasks (`lib/features/tasks/{domain,data,state,presentation}/`):**
+- **`domain/`:** strict `TaskItem`, `TaskStatus` (`selectable` excludes Cancelled, R-4), `TaskPriority`, `MyTasksPage` (`tasks: null` = no profile). The due state comes from the server's flags, or from a server-reported company date by the server's rule — never the device clock.
+- **`data/TasksApiClient`:** `fetchMyTasks` (`state`, `per_page=25`, `page`), `fetchTask`, `updateStatus` (`PATCH {"status"}`).
+- **`state/`:**
+  - `MyTasksController`, one per Open/Done segment, with the Phase 28 paging and stale-response rules plus a no-profile state.
+  - `TaskDetailController`: confirmed (non-optimistic) single-flight saves, guarded so an older refresh can't overwrite a save; 403 → server message, reload, locked control; 422 → the `status` error.
+  - `TaskChanges`, an app-session record of confirmed saves owned by `CompanyApp`: the lists apply each change at once (a task leaves its segment) and refresh quietly; Home refreshes too.
+- **`presentation/`:** `TasksPage` (Open | Done), `TaskDetailPage` (details and the status control), `task_widgets.dart` (status chip, due label, route args). The People widgets are reused for errors, info rows and padding.
+
+**Routing:** `/tasks` and `/tasks/:publicId`, both inside the `Tasks` `StatefulShellBranch` (the placeholder is gone). Home's My tasks tile `go`es to `/tasks`, and a Today task row to `/tasks/:publicId` with Home's company date, switching to the Tasks branch (R-6). The route `extra` (`TaskDetailArgs`) carries the row's item and company date; without it the detail loads the task itself.
+
+**Not introduced:** task creation, editing beyond status, assignment or deletion; Cancelled in the app; work logs (29B); projects and clients (29C); offline queues; push; caching; a new dependency. See `docs/phases/V1_PHASE_29_DEFINITION.md` and `docs/handoffs/V1_PHASE_29A_HANDOFF.md`.

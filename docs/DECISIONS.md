@@ -642,6 +642,24 @@ Internet → Cloudflare (proxied, SSL/TLS "Full (strict)")
 **Rationale:** The smallest backend change that gives the mobile app a clean own-profile call and correct paging. It reuses the Phase 7 resource rather than adding a second staff shape, and it leaves DEC-030's accepted visibility model untouched.
 **Superseded/reaffirmed:** Refines the `docs/ROADMAP.md` Phase 28 line. DEC-030 (Staff) and DEC-052 (the `/me/home` no-profile precedent) are reaffirmed. The recorded cross-cutting findings — uncapped `per_page` and unescaped `q` wildcards across collection endpoints (spec §3.3) — are not changed here and are noted for Phase 36.
 
+### DEC-054 — Phase 29A: a self-scoped `GET /api/v1/me/tasks` for the mobile Tasks tab, and a deterministic `/tasks` order
+
+**Date:** 2026-10-09
+**Status:** ACCEPTED (approved with the Phase 29 specification, PR #60, R-1…R-9; backend implemented in Phase 29A Gate 1)
+**Context:** `docs/ROADMAP.md` Phase 29 brings Clients, Projects, Tasks and Work Logs to the mobile app. Discovery (`docs/phases/V1_PHASE_29_DEFINITION.md` §3) found the Task API complete for status changes (Phase 11, `PATCH /tasks/{public_id}` with the assignee status-only rule), but no "assigned to me" list: `GET /tasks?assignee=` needs `tasks.view` or project visibility, orders by `created_at` with no tie-breaker, and leaves due-date ordering and the company-timezone "overdue/today" logic to the client.
+**Decision** (specification review R-1…R-9, all approved as recommended; this entry records the 29A backend parts):
+1. **`GET /api/v1/me/tasks`** (R-3; `auth:sanctum` + `account.active`, `App\Http\Controllers\Api\V1\Tasks\MyTaskController`) returns `{"data": {"company_day": {date, timezone}, "tasks": [TaskResource + is_overdue, is_due_today] | null}, "meta": {current_page, last_page, per_page, total}}`.
+   - **Self-scoped by construction (R-2):** the subject is the token's linked Staff record, matched on `assignee_staff_id` only. No role widens it, for Administrators and Managers too (the DEC-052 precedent). No permission.
+   - **No linked Staff record required:** `tasks: null` with `200`, never `403` (DEC-052/053).
+   - **`state=open|closed`** (default `open`, else `422`). Open and closed use `OverdueTasks`' terminal set (completed, cancelled), and `is_overdue`/`is_due_today` use `OverdueTasks::todayInCompanyTimezone()`, so the list agrees with `/me/home`'s `open_count`/`overdue_count`/`due_today_count`.
+   - **Order:** open by `due_date` ascending (nulls last), then `id`; closed by `completed_at` descending (nulls last), then `updated_at` descending, then `id`. The `updated_at` key is a Gate 1 refinement of §5.1, so that cancelled tasks (no `completed_at`) are most recently changed first.
+   - **`per_page`** defaults to 25 and is capped at 50 (`422` above). This endpoint caps it, unlike the legacy collection endpoints.
+2. **Status changes stay on `PATCH /api/v1/tasks/{public_id}`.** It is unchanged.
+3. **Deterministic `/tasks` order (R-9):** `TaskController::index` orders by `created_at DESC`, then `id`. The visible order is unchanged.
+4. **Mobile scope (R-4…R-7; 29A Gates 2–3):** no Cancelled option; status-only edits; the Home task tile and Today task rows become navigable; saves are confirmed, not optimistic. These are presentation choices; the API rules stay authoritative.
+**Rationale:** One small, read-only, self-scoped endpoint gives the app correct ordering and timezone-correct flags without client-side date logic or widened visibility, and reuses the canonical overdue definition rather than adding a second one.
+**Superseded/reaffirmed:** Refines the `docs/ROADMAP.md` Phase 29 line. DEC-052 and DEC-053 (self-scope, no-profile `200`) and the Phase 11 task authorization rules are reaffirmed. 29B (work logs, including the R-8 UTC "today" fix) and 29C (projects and clients) will be recorded when implemented.
+
 ---
 
 ## Template for Future Decisions

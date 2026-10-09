@@ -29,6 +29,10 @@ String formatDayMonth(DateTime companyDate) =>
     '${_weekdays[companyDate.weekday - 1]} ${companyDate.day} '
     '${_months[companyDate.month - 1]}';
 
+/// "3 Sep" — day and month only (Phase 29A task due labels).
+String formatShortDate(DateTime companyDate) =>
+    '${companyDate.day} ${_months[companyDate.month - 1]}';
+
 /// "22 Sep 2026".
 String formatDate(DateTime companyDate) =>
     '${companyDate.day} ${_months[companyDate.month - 1]} ${companyDate.year}';

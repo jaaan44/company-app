@@ -1,6 +1,8 @@
 # Phase 29 — Work: Tasks, Work Logs, Projects & Clients (Mobile) — Specification
 
-**Status:** DRAFT, revision 2. It incorporates the product owner's specification-review decisions: all nine recommendations R-1…R-9 were approved as written (2026-10-09). It is proposed for approval and **is not authorized for implementation**; each sub-phase's gates need explicit authorization (`CLAUDE.md` §1/§8). No application, test, migration, route, dependency or configuration change has been made.
+**Status:** Revision 2, approved (R-1…R-9 as written, 2026-10-09; merged via PR #60). **29A implementation complete (Gates 1–4, 2026-10-09) — pending PR review/CI, merge, staging deployment and UAT; not formally closed.** See `docs/handoffs/V1_PHASE_29A_HANDOFF.md`. 29B and 29C each need their own explicit authorization (`CLAUDE.md` §1/§8).
+
+*Previous status (revision 2 as merged):* DRAFT, revision 2. It incorporates the product owner's specification-review decisions: all nine recommendations R-1…R-9 were approved as written (2026-10-09). It is proposed for approval and **is not authorized for implementation**; each sub-phase's gates need explicit authorization (`CLAUDE.md` §1/§8). No application, test, migration, route, dependency or configuration change has been made.
 
 **Depends on:**
 - Phase 25: the shell, with a `Tasks` tab placeholder.
@@ -223,3 +225,18 @@ The product owner approved every recommendation from revision 1 as written (2026
 
 - **This document is a specification, not an authorization.**
 - Revision 1 (2026-10-09) proposed R-1…R-9 as open recommendations; revision 2 records them as approved without change. Elsewhere, only this status line and this note changed.
+- **29A Gate 1 implementation notes (2026-10-09):**
+  - The controller is `App\Http\Controllers\Api\V1\Tasks\MyTaskController` (the §5.1 placement choice), route `me.tasks.index`.
+  - **Refinement of the closed order:** `completed_at DESC` (nulls last), then **`updated_at DESC`**, then `id`. A cancelled task has no `completed_at`, so without `updated_at` all cancelled tasks would sit after the completed ones in creation order. With it they are most recently changed first. Still total and stable; recorded in DEC-054.
+  - Unknown query parameters (for example `assignee`) are ignored and can't change the subject; `page` must be a positive integer.
+- **29A Gate 2 implementation notes (2026-10-09):**
+  - `ApiClient` writes: `postJson`/`patchJson` return the decoded body, or `null` for a `204`; `delete` accepts any 2xx; `getJson` still requires a JSON body. `ApiValidationException` is a subtype of `ApiRequestException` (status 422), so existing generic handlers keep working.
+  - **Detail due state without the device clock:** `GET`/`PATCH /tasks/{id}` carry no `is_overdue`/`is_due_today`. The detail keeps the list item's server flags while they still hold, and otherwise compares the due date with a **server-reported company date** handed over by the screen that opened it (the list's or Home's `company_day.date`), by the server's exact rule. With neither, the due state is shown as unknown rather than guessed.
+  - **After a change:** a session-wide `TaskChanges` record of confirmed saves. Each list applies a change at once (a task moving between Open and Done leaves its segment) and marks itself stale so it refreshes when next shown; Home is wired to it in Gate 3.
+  - **`403` on save:** the server's message is shown, the task reloaded, the status control locked for that screen, and the task recorded as no longer mine (removed from the lists).
+- **29A Gate 3 implementation notes (2026-10-09):**
+  - **Status control:** a wrapping row of four choice chips (To do, In progress, Blocked, Completed), rather than a segmented button, so it never clips at large text. While a save runs the chips are disabled under a progress bar; the selected chip moves only on the server's confirmation, then a "Status changed to …" notice appears. Failures show under the control.
+  - **Refresh after a change:** rather than detecting "shown again", the Tasks lists and Home refresh quietly in the background as soon as a confirmed change is recorded, so they are already current when shown. Done loads on first selection.
+  - **Home → task:** the My tasks tile goes to `/tasks`; a Today task row goes to `/tasks/:publicId` with Home's `company_day.date`, switching to the Tasks branch (back returns to the Tasks list).
+  - **Known limitation:** "Completed" on the detail is shown in the device's timezone, because `/me/tasks` and `/tasks/{id}` give the company timezone's name but no offset. Due labels are unaffected (they use the server's company date).
+  - The People screens' shared widgets (error view, info rows, section headers, padding) are reused rather than copied.

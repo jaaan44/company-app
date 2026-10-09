@@ -14,6 +14,7 @@ import 'package:mobile/features/auth/state/auth_controller.dart';
 import 'package:mobile/features/home/presentation/home_page.dart';
 import 'package:mobile/features/people/presentation/more_page.dart';
 import 'package:mobile/features/shell/presentation/placeholder_page.dart';
+import 'package:mobile/features/tasks/presentation/tasks_page.dart';
 
 import '../features/auth/fake_token_storage.dart';
 
@@ -181,8 +182,9 @@ void main() {
 
       await tester.tap(find.widgetWithText(NavigationDestination, 'Tasks'));
       await tester.pumpAndSettle();
-      expect(find.byType(TasksPlaceholderPage), findsOneWidget);
-      expect(find.text('Tasks — coming soon'), findsOneWidget);
+      // Phase 29A: Tasks is the real Tasks tab, not a placeholder.
+      expect(find.byType(TasksPage), findsOneWidget);
+      expect(find.text('Tasks — coming soon'), findsNothing);
 
       await tester.tap(find.widgetWithText(NavigationDestination, 'Schedule'));
       await tester.pumpAndSettle();

@@ -9,6 +9,8 @@ import 'package:mobile/features/auth/data/token_storage.dart';
 import 'package:mobile/features/auth/state/auth_controller.dart';
 import 'package:mobile/features/home/data/home_api_client.dart';
 import 'package:mobile/features/people/data/people_api_client.dart';
+import 'package:mobile/features/tasks/data/tasks_api_client.dart';
+import 'package:mobile/features/tasks/state/task_changes.dart';
 
 /// Root widget of the Company App staff mobile application.
 ///
@@ -24,7 +26,8 @@ import 'package:mobile/features/people/data/people_api_client.dart';
 /// no third-party state-management framework is introduced now either —
 /// a plain [ChangeNotifier] remains sufficient; see DEC-025.
 class CompanyApp extends StatefulWidget {
-  /// [authController], [homeApiClient] and [peopleApiClient] are exposed
+  /// [authController], [homeApiClient], [peopleApiClient] and
+  /// [tasksApiClient] are exposed
   /// for tests to inject fakes — production code always omits them and
   /// gets the real Sanctum-backed implementations below.
   const CompanyApp({
@@ -32,13 +35,16 @@ class CompanyApp extends StatefulWidget {
     AuthController? authController,
     HomeApiClient? homeApiClient,
     PeopleApiClient? peopleApiClient,
+    TasksApiClient? tasksApiClient,
   }) : _injectedAuthController = authController,
        _injectedHomeApiClient = homeApiClient,
-       _injectedPeopleApiClient = peopleApiClient;
+       _injectedPeopleApiClient = peopleApiClient,
+       _injectedTasksApiClient = tasksApiClient;
 
   final AuthController? _injectedAuthController;
   final HomeApiClient? _injectedHomeApiClient;
   final PeopleApiClient? _injectedPeopleApiClient;
+  final TasksApiClient? _injectedTasksApiClient;
 
   @override
   State<CompanyApp> createState() => _CompanyAppState();
@@ -62,10 +68,19 @@ class _CompanyAppState extends State<CompanyApp> {
   late final PeopleApiClient _peopleApiClient =
       widget._injectedPeopleApiClient ?? PeopleApiClient(_apiClient);
 
+  late final TasksApiClient _tasksApiClient =
+      widget._injectedTasksApiClient ?? TasksApiClient(_apiClient);
+
+  // Confirmed task saves (Phase 29A): the Tasks lists and Home listen, so
+  // they refresh after a status change made on a detail screen.
+  final TaskChanges _taskChanges = TaskChanges();
+
   late final GoRouter _router = buildAppRouter(
     _authController,
     homeApiClient: _homeApiClient,
     peopleApiClient: _peopleApiClient,
+    tasksApiClient: _tasksApiClient,
+    taskChanges: _taskChanges,
   );
 
   @override
@@ -80,6 +95,7 @@ class _CompanyAppState extends State<CompanyApp> {
   @override
   void dispose() {
     _router.dispose();
+    _taskChanges.dispose();
     _authController.dispose();
     super.dispose();
   }

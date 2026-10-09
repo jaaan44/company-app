@@ -769,4 +769,85 @@ Operator- and product-owner-reported; this AI session has no VPS or device acces
 
 ---
 
+## Phase 29A — Gate 1 (backend `GET /api/v1/me/tasks` and `/tasks` tie-breaker)
+
+Branch `claude/amazing-brahmagupta-dbsrjc`, from `main` at `d8d550b` (PR #60). Run in this AI sandbox (PHP 8.4.19, SQLite in-memory per `phpunit.xml`).
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `tests/Feature/Api/V1/Tasks/MyTaskTest.php` (21 tests) | Automated | PASS | Covers: unauthenticated → 401; suspended account → 403. Exact response shape and `meta`; no internal ids anywhere. No Staff record → 200 with `tasks: null`, `meta: null`; no tasks → empty list. Staff, Manager (with a direct report's task) and Administrator each see only their own assigned tasks, not tasks they created for others or unassigned ones; foreign `assignee`/`staff` parameters are ignored. Open is the default and excludes completed/cancelled; closed is exactly those; an unknown `state` → 422. Open order by due date with undated last; closed order by `completed_at` with cancelled after. Seven same-due-date tasks over three pages come back once each in id order. `per_page` default 25, 50 allowed, 51 and 0 → 422. Flags for overdue/today/future/undated, always false when closed. At 23:59 and 00:00 Manila (15:59/16:00 UTC) the same task flips from due today to overdue and `company_day.date` advances. Totals and flags match `/me/home`'s `open_count`/`overdue_count`/`due_today_count`. Query count identical for 1 and 11 tasks with distinct projects and linked creators. Both ORDER BY clauses end in the `id` tie-breaker. |
+| `TaskTest` addition (1 test) | Automated | PASS | Five tasks with an identical `created_at` across `per_page=2` pages come back once each in id order, and the SQL contains `order by "created_at" desc, "id" asc`. |
+| Mutation checks | Manual (AI) | PASS | Each change was made temporarily, the tests run, and the file restored: removing the `/tasks` tie-breaker fails the `TaskTest` SQL assertion; removing the `/me/tasks` open or closed `id` tie-breaker fails the ORDER BY test; inverting nulls-last fails 3 tests; dropping the assignee filter fails 5. The first `/me/tasks` tie-breaker mutation initially survived because SQLite returns equal keys in rowid order, which is why the ORDER BY assertion was added. |
+| Full `php artisan test` | Automated | PASS | 1,169/1,169 (3,310 assertions): the 1,147 from Phase 28 plus these 22. No existing test changed. |
+| `composer validate --strict` | Automated | PASS | — |
+| `composer audit --locked` | Automated | PASS | No security vulnerability advisories found. |
+| `vendor/bin/pint --test` | Automated | PASS | — |
+| `vendor/bin/phpstan analyse` (level 5) | Automated | PASS | 0 errors. |
+| MySQL ordering | — | Not run | The ORDER BY uses `due_date IS NULL` / `completed_at IS NULL`, valid in MySQL and SQLite. Not exercised against MySQL in this gate (Phase 27 Gate 1A precedent); to be checked at staging. |
+| Mobile | — | Not affected | No `apps/mobile` change in Gate 1. |
+| UAT | — | NOT RUN | UAT-29A-01…07 `NOT RUN` (not yet runnable). |
+
+---
+
+## Phase 29A — Gate 2 (mobile write foundation and Tasks data and state)
+
+Branch `claude/amazing-brahmagupta-dbsrjc`, on Gate 1 (`3f5045e`). Run in this AI sandbox with Flutter 3.47.2 / Dart 3.13.2 (`/opt/flutter-sdk`).
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `test/core/network/api_client_write_test.dart` (20 tests) | Automated | PASS | PATCH/POST send JSON bodies with the token and `Content-Type`; POST without a body sends `{}`; DELETE and GET send no body. `204` → `null` for writes; DELETE accepts any 2xx body; a GET `204` and a non-object write body are request failures. `422` → `ApiValidationException` with message and field errors (malformed entries skipped, default message, non-JSON body, also on GET; still an `ApiRequestException`). On writes: 401 ends the session with the write sent once and no `/auth/logout`; 403 → one `/auth/me` re-check, kept session and server message, no resend; 403 + `/auth/me` 401 ends it; network failure and 5xx keep the session, no retry; a write and a read both 401 end the session once; no token → nothing sent. |
+| `test/features/tasks/task_models_test.dart` (21 tests) | Automated | PASS | Every `TaskResource` field; nullable fields stay null; missing title, unknown status/priority, a timestamp as `due_date`, a wrong-typed flag and a malformed project are `FormatException`s. Status wire values, closed set, and no Cancelled in `selectable`. Due state: server flags win; otherwise the company date (before/equal/after); unknown without either; none without a due date; closed never overdue. `withServerUpdate` keeps flags only while still open with the same due date, clears them when closed, drops them on reopen or a changed due date. `/me/tasks` page parsing, no-profile vs empty, malformed bodies. |
+| `test/features/tasks/tasks_api_client_test.dart` (11 tests) | Automated | PASS | Exact `/me/tasks` path and `state`/`per_page`/`page`; default page 1; no-profile; bad shape → `ApiRequestException`. `/tasks/{id}` encoding and 404. `PATCH` sends only `{"status"}` once with wire values (`in_progress`); 204 or malformed → request failure; 403 keeps the session with the server message; 401 ends it. |
+| `test/features/tasks/my_tasks_controller_test.dart` (19 tests) | Automated | PASS | Loading → page 1; Done requests `closed`; load more to the last page; no duplicates; failed load more keeps the list and retries; a load more overtaken by a refresh is dropped; concurrent loads share one request; no-profile state; first-load error and recovery; failed refresh keeps the list; session expiry leaves state alone. Task changes: replaced in place keeping flags; completed leaves Open; removed; unknown task only marks stale; Done drops a reopened task; `refreshIfStale` refreshes once; a change during a refresh keeps it stale; dispose removes the listener. |
+| `test/features/tasks/task_detail_controller_test.dart` (22 tests) | Automated | PASS | Loading with and without an initial item (quiet refresh; list flags survive a flagless GET); network/403/404/500 messages; failed refresh keeps the task; due state from the company date. Saves: status changes only after the server confirms (not optimistic) and is recorded; complete then reopen; Cancelled, the current status, a second concurrent save, a cancelled task, and an unloaded task send nothing; 403 → message, `PATCH` then `GET`, locked, recorded as removed; 403 with a failed reload keeps the task; 422 → the `status` error or the summary; network/500/404 keep the old status and allow a retry; 401 ends the session and changes nothing; a refresh started before a save can't undo it. |
+| Mutation checks | Manual (AI) | PASS | Each made temporarily, the Tasks and network tests run, and the file restored; every one failed at least one test: dropping the detail's save-epoch guard; making the save optimistic; not locking after a 403; not recording the list's loaded revision; not removing a task that moved segment; not removing the change listener on dispose; treating 422 as generic; treating 204 as a body; keeping flags when a closed task reopens. |
+| Full `flutter test` | Automated | PASS | 306/306: the 213 from Phase 28 plus these 93. No existing test changed. |
+| `dart format --output=none --set-exit-if-changed .` | Automated | PASS | After formatting the new test files. |
+| `flutter analyze` | Automated | PASS | No issues. |
+| `pubspec.yaml` / `pubspec.lock` | — | Unchanged | No new dependency. |
+| Backend | — | Not affected | No `apps/api` change in Gate 2. |
+| UAT | — | NOT RUN | UAT-29A-01…07 `NOT RUN` (no screens yet). |
+
+---
+
+## Phase 29A — Gate 3 (Tasks screens, Home navigation and router)
+
+Branch `claude/amazing-brahmagupta-dbsrjc`, on Gate 2 (`d1e0fdf`). Run in this AI sandbox with Flutter 3.47.2 / Dart 3.13.2.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `test/features/tasks/tasks_pages_test.dart` (22 tests) | Automated | PASS | Through the real `CompanyApp`, router and `ApiClient` against an in-memory task API. **List:** Open shows only open tasks with "Overdue · 3 Sep", "Due today", "Due 12 Oct" and no label, project, and status text; Done loads once on first selection with completed/cancelled (a past due date not shown as overdue), and switching back doesn't refetch; both empty states; no-profile state; load error and Try again; a failed second page becomes the retry row and recovers; a row opens `/tasks/:id` in the Tasks tab and back returns. **Detail:** fields and "3 Sep 2026 · Overdue"; opens with the row's content immediately while reloading; "Not set" due and "No description."; four chips, no Cancelled; a cancelled task is read-only. Saving: chip doesn't move and controls disable while pending, then selected with a notice, one `PATCH {"status"}`; completing removes it from Open, shows it in Done, refreshes Home, and reopening returns it to Open with its overdue label; 403 → server message, reload, locked chips, session kept; offline → message, old status, success after reconnecting; 422 → the status error; 401 → Login with the session-ended notice; failed load without content → Try again; opened from Home, "24 Sep 2026 · Due today" from Home's company day. **Appearance:** light and dark at 200% text: no exceptions on list or detail. |
+| `home_page_test.dart` interaction group (5 tests, was 3) | Automated | PASS | **Changed for R-6** (Phase 27's R-1 "nothing tappable" is refined): greeting and announcements still have no interactive widgets; only the Today task row and the My tasks tile have an `InkWell`, with one chevron; tapping schedule rows, the messages and notifications tiles, announcements and "+5 more today" still goes nowhere (one Home request); the tile opens the Tasks tab; a Today task row opens `/tasks/{id}` in the Tasks tab and back shows the list; the shell tabs still navigate (Tasks → `TasksPage`). |
+| `router_test.dart` | Automated | PASS | One assertion changed: the Tasks tab is `TasksPage` (the "coming soon" placeholder is gone). |
+| Mutation checks (UI) | Manual (AI) | PASS | Each made temporarily and restored. **Caught at once (7):** Home not passing its company date to the detail; no My tasks tile tap; the Open list not refreshing after a change; chips never shown selected; chips enabled while saving; the "Overdue" label dropped; the cancelled read-only branch removed. **Survived, then resolved (2):** forcing Home's change handler to `load()` instead of `refresh()` is equivalent (both re-fetch), so it was replaced by removing Home's listener, which is caught; not passing the row's item to the detail survived because nothing checked the detail opens with content — the "opens with content at once" test was added and the mutant is now caught. |
+| Full `flutter test` | Automated | PASS | 330/330: 306 after Gate 2, plus 22 new and a net 2 in the Home group. |
+| `dart format --output=none --set-exit-if-changed .` | Automated | PASS | — |
+| `flutter analyze` | Automated | PASS | No issues. |
+| `pubspec.yaml` / `pubspec.lock` | — | Unchanged | No new dependency. |
+| Real device / emulator | — | Not run | No device in this sandbox; covered by widget tests only. UAT will exercise it. |
+| Backend | — | Not affected | No `apps/api` change in Gate 3. |
+| UAT | — | NOT RUN | UAT-29A-01…07 `NOT RUN` (not merged or deployed). |
+
+---
+
+## Phase 29A — Gate 4 (final integration review)
+
+Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`793f947`), confirmed up to date with `main` (`d8d550b`).
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `composer validate --strict` | Automated | PASS | — |
+| `composer audit --locked` | Automated | PASS | No advisories. |
+| `vendor/bin/pint --test` | Automated | PASS | — |
+| `vendor/bin/phpstan analyse` (level 5) | Automated | PASS | 0 errors. |
+| `php artisan test` | Automated | PASS | 1,169/1,169 (3,310 assertions). |
+| `flutter pub get` / `dart format` / `flutter analyze` | Automated | PASS | `pubspec` unchanged; 0 files to format; no issues. |
+| `flutter test` | Automated | PASS | 330/330. |
+| Contract parity (real API → app) | Manual (AI), temporary tests | PASS | A scratch Laravel test captured real `/me/tasks` (open; closed at `per_page=2`), `GET /tasks/{id}`, `PATCH` success and `422` for Staff, Manager and Administrator, a `403` for a task assigned to someone else ("You do not have permission to update this task."), a `403` for an assignee changing another field ("You may only update the status of a task assigned to you."), and the no-profile response, in `Asia/Manila` with non-ASCII titles, project and creator names, and null fields. A scratch Flutter test parsed every response with the production models (flags, statuses, priorities, nulls, `completed_at`, `withServerUpdate`) and fed the real `422`/`403` bodies through the real `ApiClient` (`ApiValidationException.firstErrorFor('status')`; `ApiForbiddenException` with the server message and the session kept): 9/9. Both files were deleted; nothing was committed. |
+| Real device / emulator | — | Not run | No device in this sandbox. |
+| MySQL ordering | — | Not run | Standard `IS NULL` ordering; exercised at staging. |
+| UAT | — | NOT RUN | UAT-29A-01…07 `NOT RUN`. |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*

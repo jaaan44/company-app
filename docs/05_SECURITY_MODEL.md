@@ -24,6 +24,14 @@ CSV export inherits the identical scoping as its JSON counterpart — no export 
 - It exposes nothing new: `user` is the person's own account identity (name, login email, role), and `staff` is the unchanged Phase 7 `StaffResource`, including its `staff.manage`-only `user` block, exactly as `/staff/{public_id}` returns it for the same requester.
 - The Staff Directory's visibility (DEC-030: every `staff.view` holder sees every Staff record, including inactive and separated ones) is **unchanged**. The mobile directory requests active staff only, which is a presentation choice, not an access control.
 
+## My Tasks Self-Scope (Phase 29A, DEC-054)
+
+**Implemented as of Phase 29A Gate 1:** `GET /api/v1/me/tasks` lists only tasks assigned to the authenticated person.
+- Its subject comes solely from the Sanctum token's linked Staff record, matched on `assignee_staff_id`. Request parameters cannot point it at anyone else.
+- No role widens it: an Administrator (`Gate::before`), a Manager with direct reports, or a holder of `tasks.view` still sees only their own assigned tasks. Tasks they created but assigned elsewhere are not included.
+- It needs no permission and exposes nothing new: each item is the unchanged `TaskResource` plus two booleans. The assignee could already read these tasks through `GET /tasks/{public_id}`.
+- Writes are unchanged: status changes go through `PATCH /tasks/{public_id}` and its existing authorization (the assignee may change status only).
+
 ## Authentication
 
 - **Implemented (DEC-022):** the Admin Backoffice authenticates via Laravel's session/secure-cookie `web` guard (Blade + Livewire login). The Flutter mobile app authenticates via Laravel Sanctum personal access tokens (`Authorization: Bearer <token>`) — bearer-token only, no cookie-based SPA/stateful authentication. No OAuth server, JWT infrastructure, or Passport.

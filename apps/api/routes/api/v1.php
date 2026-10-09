@@ -41,6 +41,7 @@ use App\Http\Controllers\Api\V1\ServiceReports\ServiceReportController;
 use App\Http\Controllers\Api\V1\Staff\StaffController;
 use App\Http\Controllers\Api\V1\StaffOperations\CheckInController;
 use App\Http\Controllers\Api\V1\StaffOperations\OperationalStatusController;
+use App\Http\Controllers\Api\V1\Tasks\MyTaskController;
 use App\Http\Controllers\Api\V1\Tasks\TaskController;
 use App\Http\Controllers\Api\V1\WorkLogs\MyWorkLogController;
 use App\Http\Controllers\Api\V1\WorkLogs\WorkLogController;
@@ -626,6 +627,17 @@ Route::middleware(['auth:sanctum', 'account.active'])->prefix('audit-logs')->nam
 // docs/phases/V1_PHASE_27_DEFINITION.md §6.
 Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
     Route::get('me/home', [MyHomeController::class, 'show'])->name('me.home');
+});
+
+// My tasks (Phase 29A — Tasks (Mobile), R-2/R-3): the tasks assigned to
+// the authenticated person, open (soonest due first) or closed (most
+// recently finished first), with server-computed `is_overdue`/
+// `is_due_today` in the company timezone. Self-scoped by construction —
+// no role widens it — and no permission or linked Staff record is
+// required (`tasks` is null without one). Status changes keep using
+// PATCH /tasks/{public_id}. See docs/phases/V1_PHASE_29_DEFINITION.md §5.1.
+Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
+    Route::get('me/tasks', [MyTaskController::class, 'index'])->name('me.tasks.index');
 });
 
 // My profile (Phase 28 — People: Staff Directory & Profile (Mobile), R-2):
