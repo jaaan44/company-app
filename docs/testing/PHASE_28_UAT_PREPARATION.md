@@ -2,7 +2,9 @@
 
 *Operator runbook. No AI session has run anything in this file against the staging VPS or on the Windows build machine: this AI session cannot reach the VPS or build an APK. Every step marked **[Operator]** is pending until its output is recorded. The data script in §7 was rehearsed on a disposable scratch database only (see `docs/testing/TEST_STATUS.md`, "Phase 28 — UAT preparation").*
 
-**Status:** UAT-28-01…07 are `NOT RUN`. This runbook prepares the deployment, the APK and the data; it runs no scenario.
+**Status (as written):** UAT-28-01…07 are `NOT RUN`. This runbook prepares the deployment, the APK and the data; it runs no scenario.
+
+> **Final status (2026-10-09):** the operator ran §2 (staging redeploy to `b6e85c5`, including a resolved MySQL network incident) and §5 (UAT28 data). The product owner reported UAT-28-01…07 **PASS**. **Phase 28 is formally closed.** The execution record is in `docs/testing/TEST_STATUS.md`, "Phase 28 — staging deployment, UAT data and physical-device UAT". The APK's §3 provenance details and the post-UAT `exposure` output were not supplied. The sections below are kept as written. The UAT28 data stays on staging; any cleanup needs its own authorization.
 
 **Lessons carried over from Phase 27** (`PHASE_27_UAT_PREPARATION.md` §4a):
 - **No password ever leaves the VPS terminal.**

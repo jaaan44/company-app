@@ -34,7 +34,7 @@ Three of the five destinations (`Tasks`/`Schedule`/`Messages`) are still honest 
 
 The Home tab is the first real mobile screen, and the first real use of the loading/empty/error conventions below. In order: greeting ("Hello, {preferred ?? first name}", position · department, team — no time-of-day wording), **Today** (the employee's own schedule entries and tasks due today, in server order, times in the *company* timezone via the server's `company_day.utc_offset`, "+N more today"), **Needs attention** (task, message and notification counts as tiles, each one semantics label; overdue shown in the `error` role *with* text), and **Latest announcements** (≤ 3, title + date). Users with no employee profile see an explanation and only the notifications count. States: centered `CircularProgressIndicator` on first load; inline error in the `error` role (live region) with a "Try again" `FilledButton`; pull-to-refresh that keeps content and shows a `SnackBar` if it fails. **Home content is deliberately non-interactive** (no `InkWell`/`ListTile`/`GestureDetector`/chevrons) until the Tasks/Schedule/Messages screens exist (spec R-1). Verified by widget tests in light and dark mode and at 200% text scale; not yet verified on a device.
 
-### People — More, My profile, Staff directory (implemented, Phase 28 — pending PR/CI, staging and UAT)
+### People — More, My profile, Staff directory (implemented, Phase 28 — complete, formally closed 2026-10-09)
 
 - **`More`** lists only real areas: *My profile* (subtitle: the account name) and *Staff directory*. There are no "coming soon" rows; each later phase adds its own row (R-8). Rows are standard `ListTile`s with a chevron.
 - **My profile** is read-only:

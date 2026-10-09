@@ -470,7 +470,7 @@ Internet → Cloudflare (proxied, Full (strict))
 
 **Mobile — Home (`lib/features/home/{domain,data,state,presentation}/`):** `HomeSummary` (strict typed contract; null sections stay null), `HomeApiClient` (one call through `ApiClient`), `HomeController` (`ChangeNotifier`; loading / loaded / error, refresh keeping content, one request in flight), and `HomePage` (loads once in `initState`; greeting, Today, Needs attention, Latest announcements; non-interactive content; pull-to-refresh). `CompanyApp`/`buildAppRouter` accept an optional injected `HomeApiClient` for tests. No new dependency; the other four tabs remain Phase 25 placeholders. See `docs/phases/V1_PHASE_27_DEFINITION.md` and `docs/handoffs/V1_PHASE_27_HANDOFF.md`.
 
-## 34. People — My Profile & Staff Directory (Phase 28 — implementation complete, pending PR/CI, staging and UAT; DEC-053)
+## 34. People — My Profile & Staff Directory (Phase 28 — complete, formally closed 2026-10-09; DEC-053)
 
 **Backend:**
 - **`GET /api/v1/me/profile`** (`App\Http\Controllers\Api\V1\Profile\MyProfileController`, `auth:sanctum` + `account.active`) returns `user` (`public_id`, `name`, `email`, `role`) and `staff`.

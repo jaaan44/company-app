@@ -4,6 +4,18 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-09 — Phase 28 formally closed (documentation only)
+- Phase 28 — People: Staff Directory & Profile (Mobile) is formally closed as of 2026-10-09. The implementation (PR #57, `b6e85c5`) is deployed on staging, UAT-28-01…07 all `PASS`, and no Phase 28 blocking defect remains.
+- `docs/CURRENT_STATE.md`: last completed phase is Phase 28; next planned is Phase 29 — Work: Clients, Projects, Tasks & Work Logs (Mobile), **not started**. `docs/ROADMAP.md`: Phase 28 marked complete. The spec, handoff, `02_ARCHITECTURE.md` §34 and `06_UI_UX_GUIDELINES.md` status labels were updated; earlier status text is kept as history.
+- Carried forward, non-blocking: `per_page`/`q` hardening (Phase 36); the `StaffDirectoryReportController` order; the shared `formatDate` location; the Phase 27/26 items; the empty `company-app_company-app` Docker network on the VPS; the UAT28 and UAT27 staging data (left in place).
+
+### 2026-10-09 — Phase 28: staging deployment, UAT data and physical-device UAT passed (documentation only)
+- **Deployment (operator):** staging redeployed to `b6e85c5`. Backup `company-app-20261009-064725.sql` (101,566 bytes); 45 migrations Ran with none pending; `Asia/Manila`; smoke tests `/up` 200, `/login` 200, `/me/home` 401, `/me/profile` 401, `/staff` 401.
+- **MySQL network incident (resolved):** after `app` was recreated it could not resolve `mysql`, because the MySQL container had been attached only to an unrelated `company-app_company-app` network about 4 hours earlier. Recreated from `docker-compose.staging.yml`. Verified: the same `company-app_mysql-data` volume and database (UAT27 accounts present), no data loss. The cause of the earlier attachment is unknown.
+- **UAT28 data:** script SHA-256 verified; `plan`/`seed`/`verify`/`exposure` as expected (3 accounts, 33 records, 2 directory pages with 31 distinct people, inactive and separated hidden, tie-breaker OK, no tokens). Credentials were kept in a `600` file and shredded; no password was recorded.
+- **UAT:** UAT-28-01…07 all `PASS` (2026-10-09), reported by the product owner.
+- **Not supplied (recorded as gaps):** the UAT APK's provenance details and the post-UAT `exposure` output.
+
 ### 2026-10-09 — Phase 28 UAT preparation runbook (docs only)
 - New `docs/testing/PHASE_28_UAT_PREPARATION.md`:
   - the staging redeploy to `b6e85c5` (including the required `route:cache` for `/me/profile`, and smoke tests);

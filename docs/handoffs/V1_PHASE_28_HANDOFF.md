@@ -1,6 +1,6 @@
 # Phase 28 — People: Staff Directory & Profile (Mobile) — Handoff
 
-**Status: implementation complete — pending PR review/CI, merge, staging deployment and product-owner UAT. Phase 28 is NOT formally closed.**
+**Status: COMPLETE — Phase 28 formally closed 2026-10-09.** Physical-device UAT-28-01…07 all `PASS`; see the final addendum. The status line as first written was: *implementation complete — pending PR review/CI, merge, staging deployment and product-owner UAT. Phase 28 is NOT formally closed.* Each addendum below was true when it was written.
 
 ## 1. Phase Identification
 
@@ -266,3 +266,40 @@ Phase 29 (Work) must not begin until Phase 28 is closed and Phase 29 is explicit
 - **Rehearsal:** the script was rehearsed on scratch databases only, including refusals, the all-or-nothing `rotate` and the runbook's own extraction path. Results are in `TEST_STATUS.md`.
 - **Change from §14:** dedicated `uat28.*` accounts instead of reusing the UAT27 ones, so Phase 28 UAT does not depend on Phase 27's data state or rotated passwords.
 - **Status:** nothing is deployed or seeded on staging. UAT-28-01…07 remain `NOT RUN`. Phase 28 is not closed.
+
+## Addendum — Staging Deployment, UAT and Formal Closure (2026-10-09)
+
+*Operator- and product-owner-reported; this AI session had no VPS or device access. Full record: `docs/testing/TEST_STATUS.md`, "Phase 28 — staging deployment, UAT data and physical-device UAT".*
+
+- **Deployment:** staging runs `b6e85c5a5b8bceac4328805af562fd7a2bb4f5a9`.
+  - Backup `company-app-20261009-064725.sql` (101,566 bytes).
+  - No migration (45 Ran); timezone `Asia/Manila`.
+  - Smoke tests: `/up` 200, `/login` 200, `/me/home` 401, `/me/profile` 401, `/staff` 401.
+- **Incident during deploy, resolved:**
+  - the recreated `app` could not resolve `mysql`, because `company-app-mysql` had been attached only to an unrelated `company-app_company-app` network about 4 hours earlier;
+  - fixed with `$C up -d mysql` and an app restart;
+  - verified the real `company-app_mysql-data` volume and the same database (Phase 27's 6 UAT27 accounts present);
+  - no data loss;
+  - the cause of the earlier attachment is unknown and the empty network is left in place.
+- **UAT data:**
+  - script SHA-256 verified;
+  - `plan`, `seed` (3 accounts, 33 records; the credentials file was `600` and then shredded), `verify` (2 pages, 31 distinct, inactive and separated hidden, tie-breaker OK) and `exposure` (no tokens or sessions) all as expected.
+- **UAT:** UAT-28-01…07 all **`PASS`** (2026-10-09), reported by the product owner. No per-scenario observations were reported.
+- **Not supplied:** the UAT APK's provenance details (§3: checkout, toolchain, size, SHA-256) and the post-UAT `exposure` output. These are recorded as gaps, not invented. They can be added later.
+- **Closure:**
+  - **Implemented:** yes.
+  - **Tested automatically:** yes (backend 1,147, Flutter 213).
+  - **Manually verified on a device:** yes, by the product owner through UAT.
+  - **UAT:** `PASS`.
+  - **Deployed:** staging `b6e85c5`.
+  - **Formally closed:** **yes, 2026-10-09.**
+  - No blocking defect is open.
+  - **Carried forward, non-blocking:**
+    - uncapped `per_page` and unescaped `q` (Phase 36);
+    - the `StaffDirectoryReportController` order;
+    - the `formatDate` cross-feature reuse;
+    - the Phase 27/26 carry-forwards;
+    - the empty `company-app_company-app` network on the VPS;
+    - the UAT28 (and UAT27) staging data, left in place.
+
+**Phase 29 — Work (Mobile) has not started.** It needs explicit authorization (`CLAUDE.md` §8).
