@@ -4,6 +4,14 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-09 — Phase 28 Gate 1: self-scoped `GET /api/v1/me/profile` and a deterministic `/staff` order
+- **`GET /api/v1/me/profile`** (`MyProfileController`): `auth:sanctum` + `account.active`, no permission, no request parameters. It returns `user` (`public_id`, `name`, `email`, `role`) and `staff`: the unchanged Phase 7 `StaffResource` with `StaffController`'s eager loads, or `null` (`200`) when no Staff record is linked. DEC-053.
+- **`GET /api/v1/staff`** now orders by `last_name, first_name, id`. The visible order is unchanged; same-named staff can no longer be skipped or repeated across pages.
+- Tests: 15 new in `MyProfileTest`, 2 new in `StaffTest`. Full suite 1,147/1,147. Pint, PHPStan level 5 and `composer validate --strict` pass.
+- **`composer audit --locked` fails on a pre-existing finding** (`league/commonmark` 2.10.1: GHSA-3q6v-r5mr-hxv8 high, GHSA-97jj-33gv-5xf9 medium, published 2026-09-30). The lockfile is unchanged and `main` has the same finding. It is recorded, not fixed here; see `TEST_STATUS.md`.
+- Docs: DEC-053; `04_API_CONVENTIONS.md`; `05_SECURITY_MODEL.md` (My Profile self-scope); the spec status (authorized, Gate 1 implemented); `CURRENT_STATE.md`; UAT-28-01…07 added as `NOT RUN`.
+- No migration, permission, dependency, mobile or configuration change. Gates 2–4 are not started.
+
 ### 2026-09-24 — Phase 27 formally closed (documentation only)
 - Phase 27 — Employee Home / Dashboard (Mobile) is formally closed as of 2026-09-24. Implementation (PR #44, `be43663`) is deployed on staging, UAT-27-01…08 all `PASS`, and no Phase 27 blocking defect remains.
 - `docs/CURRENT_STATE.md`: last completed phase is Phase 27. Next planned phase is Phase 28 — People: Staff Directory & Profile (Mobile), **not started**. `docs/ROADMAP.md`: Phase 27 marked complete, with the DEC-052 refinement (a dedicated self-scoped `/me/home`, not a scoped `/dashboard`). The spec, handoff, `02_ARCHITECTURE.md` §33 and `06_UI_UX_GUIDELINES.md` status labels were updated; earlier status text is kept as history.

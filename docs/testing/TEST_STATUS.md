@@ -631,4 +631,22 @@ Operator- and product-owner-reported, 2026-09-24 (Asia/Manila). The earlier sect
 
 ---
 
+## Phase 28 — Gate 1 (backend `GET /api/v1/me/profile` and `/staff` tie-breaker)
+
+Branch `claude/amazing-brahmagupta-dbsrjc`, from `main` at `0bb3a64` (PR #55). Run in this AI sandbox (PHP 8.4.19, SQLite in-memory per `phpunit.xml`).
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `tests/Feature/Api/V1/Profile/MyProfileTest.php` (15 tests) | Automated | PASS | Covers authentication: unauthenticated or invalid token → 401; suspended account → 403. Exact `user` fields. Own record for Staff/Manager/Administrator. `staff` identical to `GET /staff/{public_id}` for each role. The `staff.manage`-only `user` block appears for the Administrator only. No internal ids. Null placement/manager. A separated status still returns the own record. An unlinked Administrator gets `staff: null` with 200. A no-role user reads their own profile but not `/staff`. Query parameters cannot change the subject. Query count ≤ 12. |
+| `StaffTest` additions (2 tests) | Automated | PASS | Three same-named staff across `per_page=1` pages come back as 3 distinct records in id order, and the SQL ends `order by "last_name" asc, "first_name" asc, "id" asc`. Distinct names keep their visible order. **Proven to catch the bug:** with the tie-breaker temporarily removed, the first test fails on the SQL assertion; the file was then restored. |
+| Full `php artisan test` | Automated | PASS | 1,147/1,147 (3,215 assertions): the 1,130 from Phase 27 plus these 17. No existing test changed. |
+| `composer validate --strict` | Automated | PASS | — |
+| `vendor/bin/pint --test` | Automated | PASS | — |
+| `vendor/bin/phpstan analyse` (level 5) | Automated | PASS | 0 errors. |
+| `composer audit --locked` | Automated | **FAIL (pre-existing, not caused by this gate)** | `league/commonmark` 2.10.1 (transitive, via `laravel/framework` ^2.8.1). GHSA-3q6v-r5mr-hxv8 (high: quadratic-time DoS in the GFM table extension) and GHSA-97jj-33gv-5xf9 (medium: `DisallowedRawHtml` bypass), both published 2026-09-30, affecting ≤ 2.10.1. Patched 2.10.2/2.10.3 exist. `composer.lock` is identical to `main`, so `main` fails this check too. Application code does not call Markdown rendering. Not fixed in Gate 1: a lockfile change is outside Gate 1's authorized scope. Awaiting a product-owner decision. |
+| Mobile | — | Not affected | No `apps/mobile` change in Gate 1. |
+| UAT | — | NOT RUN | UAT-28-01…07 `NOT RUN` (not yet runnable). |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*
