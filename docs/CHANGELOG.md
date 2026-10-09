@@ -4,6 +4,17 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-09 — Phase 29A Gate 1: self-scoped `GET /api/v1/me/tasks` and a deterministic `/tasks` order
+- **`GET /api/v1/me/tasks`** (`MyTaskController`): `auth:sanctum` + `account.active`, no permission. It lists the tasks assigned to the token's own Staff record, for every role.
+  - `state=open|closed` (default `open`), `page`, and `per_page` (default 25, max 50).
+  - Open: by due date with undated last, then `id`. Closed: by `completed_at` descending, then `updated_at` descending, then `id`. The `updated_at` key is a recorded refinement of spec §5.1.
+  - Each item is the unchanged `TaskResource` plus `is_overdue`/`is_due_today`, computed in the company timezone with the canonical `OverdueTasks` definitions. `company_day` states the day used.
+  - `tasks: null` (`200`) without a linked Staff record. DEC-054.
+- **`GET /api/v1/tasks`** now orders by `created_at` descending, then `id`. The visible order is unchanged.
+- Tests: 21 new in `MyTaskTest` (19 methods, one run for three roles) and 1 in `TaskTest`. Full suite 1,169/1,169. Pint, PHPStan level 5, `composer validate --strict` and `composer audit --locked` (no advisories) pass. Mutation checks: removing either tie-breaker, inverting the nulls-last rule or dropping the assignee filter each fail the tests.
+- Docs: DEC-054; `04_API_CONVENTIONS.md`; `05_SECURITY_MODEL.md` (My Tasks self-scope); the spec status and Gate 1 notes; `CURRENT_STATE.md`; `TEST_STATUS.md`; UAT-29A-01…07 added as `NOT RUN`.
+- No migration, permission, dependency, mobile or configuration change. Gates 2–4 are not started.
+
 ### 2026-10-09 — Phase 28 formally closed (documentation only)
 - Phase 28 — People: Staff Directory & Profile (Mobile) is formally closed as of 2026-10-09. The implementation (PR #57, `b6e85c5`) is deployed on staging, UAT-28-01…07 all `PASS`, and no Phase 28 blocking defect remains.
 - `docs/CURRENT_STATE.md`: last completed phase is Phase 28; next planned is Phase 29 — Work: Clients, Projects, Tasks & Work Logs (Mobile), **not started**. `docs/ROADMAP.md`: Phase 28 marked complete. The spec, handoff, `02_ARCHITECTURE.md` §34 and `06_UI_UX_GUIDELINES.md` status labels were updated; earlier status text is kept as history.

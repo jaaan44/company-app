@@ -1,6 +1,8 @@
 # Phase 29 — Work: Tasks, Work Logs, Projects & Clients (Mobile) — Specification
 
-**Status:** DRAFT, revision 2. It incorporates the product owner's specification-review decisions: all nine recommendations R-1…R-9 were approved as written (2026-10-09). It is proposed for approval and **is not authorized for implementation**; each sub-phase's gates need explicit authorization (`CLAUDE.md` §1/§8). No application, test, migration, route, dependency or configuration change has been made.
+**Status:** Revision 2, approved (R-1…R-9 as written, 2026-10-09; merged via PR #60). **29A AUTHORIZED — IN PROGRESS: Gate 1 (backend) implemented** (2026-10-09). Gates 2–4 of 29A, and 29B/29C, each need their own explicit authorization (`CLAUDE.md` §1/§8).
+
+*Previous status (revision 2 as merged):* DRAFT, revision 2. It incorporates the product owner's specification-review decisions: all nine recommendations R-1…R-9 were approved as written (2026-10-09). It is proposed for approval and **is not authorized for implementation**; each sub-phase's gates need explicit authorization (`CLAUDE.md` §1/§8). No application, test, migration, route, dependency or configuration change has been made.
 
 **Depends on:**
 - Phase 25: the shell, with a `Tasks` tab placeholder.
@@ -223,3 +225,7 @@ The product owner approved every recommendation from revision 1 as written (2026
 
 - **This document is a specification, not an authorization.**
 - Revision 1 (2026-10-09) proposed R-1…R-9 as open recommendations; revision 2 records them as approved without change. Elsewhere, only this status line and this note changed.
+- **29A Gate 1 implementation notes (2026-10-09):**
+  - The controller is `App\Http\Controllers\Api\V1\Tasks\MyTaskController` (the §5.1 placement choice), route `me.tasks.index`.
+  - **Refinement of the closed order:** `completed_at DESC` (nulls last), then **`updated_at DESC`**, then `id`. A cancelled task has no `completed_at`, so without `updated_at` all cancelled tasks would sit after the completed ones in creation order. With it they are most recently changed first. Still total and stable; recorded in DEC-054.
+  - Unknown query parameters (for example `assignee`) are ignored and can't change the subject; `page` must be a positive integer.

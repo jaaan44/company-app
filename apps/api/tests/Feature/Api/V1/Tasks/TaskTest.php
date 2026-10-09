@@ -11,6 +11,7 @@ use App\Models\Staff;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -425,6 +426,33 @@ class TaskTest extends TestCase
         $this->getJson('/api/v1/tasks?q=domain')
             ->assertOk()->assertJsonCount(1, 'data')
             ->assertJson(['data' => [['title' => 'Renew the domain']]]);
+    }
+
+    // --- Ordering (Phase 29A, R-9) ---------------------------------------
+
+    public function test_listing_breaks_created_at_ties_by_id_so_pages_are_stable(): void
+    {
+        $this->actingAsAdministrator();
+        // Same created_at for every task: only the tie-breaker orders them.
+        $created = Task::factory()->count(5)->create(['created_at' => '2026-09-24 08:00:00']);
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $seen = [];
+        foreach ([1, 2, 3] as $page) {
+            $seen = [
+                ...$seen,
+                ...array_column($this->getJson("/api/v1/tasks?per_page=2&page={$page}")->assertOk()->json('data'), 'public_id'),
+            ];
+        }
+        $queries = array_column(DB::getQueryLog(), 'query');
+        DB::disableQueryLog();
+
+        $this->assertSame($created->sortBy('id')->pluck('public_id')->all(), $seen);
+        $this->assertNotEmpty(array_filter(
+            $queries,
+            fn (string $q) => str_contains($q, 'order by "created_at" desc, "id" asc'),
+        ));
     }
 
     // --- Creator ----------------------------------------------------------

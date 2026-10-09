@@ -769,4 +769,24 @@ Operator- and product-owner-reported; this AI session has no VPS or device acces
 
 ---
 
+## Phase 29A — Gate 1 (backend `GET /api/v1/me/tasks` and `/tasks` tie-breaker)
+
+Branch `claude/amazing-brahmagupta-dbsrjc`, from `main` at `d8d550b` (PR #60). Run in this AI sandbox (PHP 8.4.19, SQLite in-memory per `phpunit.xml`).
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `tests/Feature/Api/V1/Tasks/MyTaskTest.php` (21 tests) | Automated | PASS | Covers: unauthenticated → 401; suspended account → 403. Exact response shape and `meta`; no internal ids anywhere. No Staff record → 200 with `tasks: null`, `meta: null`; no tasks → empty list. Staff, Manager (with a direct report's task) and Administrator each see only their own assigned tasks, not tasks they created for others or unassigned ones; foreign `assignee`/`staff` parameters are ignored. Open is the default and excludes completed/cancelled; closed is exactly those; an unknown `state` → 422. Open order by due date with undated last; closed order by `completed_at` with cancelled after. Seven same-due-date tasks over three pages come back once each in id order. `per_page` default 25, 50 allowed, 51 and 0 → 422. Flags for overdue/today/future/undated, always false when closed. At 23:59 and 00:00 Manila (15:59/16:00 UTC) the same task flips from due today to overdue and `company_day.date` advances. Totals and flags match `/me/home`'s `open_count`/`overdue_count`/`due_today_count`. Query count identical for 1 and 11 tasks with distinct projects and linked creators. Both ORDER BY clauses end in the `id` tie-breaker. |
+| `TaskTest` addition (1 test) | Automated | PASS | Five tasks with an identical `created_at` across `per_page=2` pages come back once each in id order, and the SQL contains `order by "created_at" desc, "id" asc`. |
+| Mutation checks | Manual (AI) | PASS | Each change was made temporarily, the tests run, and the file restored: removing the `/tasks` tie-breaker fails the `TaskTest` SQL assertion; removing the `/me/tasks` open or closed `id` tie-breaker fails the ORDER BY test; inverting nulls-last fails 3 tests; dropping the assignee filter fails 5. The first `/me/tasks` tie-breaker mutation initially survived because SQLite returns equal keys in rowid order, which is why the ORDER BY assertion was added. |
+| Full `php artisan test` | Automated | PASS | 1,169/1,169 (3,310 assertions): the 1,147 from Phase 28 plus these 22. No existing test changed. |
+| `composer validate --strict` | Automated | PASS | — |
+| `composer audit --locked` | Automated | PASS | No security vulnerability advisories found. |
+| `vendor/bin/pint --test` | Automated | PASS | — |
+| `vendor/bin/phpstan analyse` (level 5) | Automated | PASS | 0 errors. |
+| MySQL ordering | — | Not run | The ORDER BY uses `due_date IS NULL` / `completed_at IS NULL`, valid in MySQL and SQLite. Not exercised against MySQL in this gate (Phase 27 Gate 1A precedent); to be checked at staging. |
+| Mobile | — | Not affected | No `apps/mobile` change in Gate 1. |
+| UAT | — | NOT RUN | UAT-29A-01…07 `NOT RUN` (not yet runnable). |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*

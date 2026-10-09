@@ -80,6 +80,10 @@ class TaskController extends Controller
                 $query->where('title', 'like', '%'.$request->string('q').'%');
             })
             ->orderByDesc('created_at')
+            // Unique tie-breaker (Phase 29A, R-9): tasks created in the same
+            // second otherwise have no defined order, so a paginated client
+            // could see one twice or never. Visible order is unchanged.
+            ->orderBy('id')
             ->paginate($request->integer('per_page', 50));
 
         return TaskResource::collection($tasks);
