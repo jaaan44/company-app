@@ -242,3 +242,16 @@ Then run UAT-29A-01…07 as listed in `docs/testing/UAT_LOG.md`.
 - **Awaiting UAT:** yes (UAT-29A-01…07 `NOT RUN`).
 - **Deployed:** no.
 - **Formally closed:** no.
+
+## Addendum — Merge and UAT Preparation Runbook (2026-10-09)
+
+- **Merged:** PR #61 merged into `main` as `3632ce1e821ccaca205f19abf5196e3df54fd35b`, a standard merge commit with parents `d8d550b` and `e06d042`. Backend CI and Mobile CI passed on the PR head before the merge, and the merged tree is identical to the reviewed head. This is the source for both the staging deployment and the final UAT APK.
+- **Runbook:** `docs/testing/PHASE_29A_UAT_PREPARATION.md`, which turns §14 above into concrete operator steps:
+  - §2: the staging redeploy from `b6e85c5` (`route:cache` is required for the new route; no migration), with a MySQL reachability reminder from the Phase 28 incident;
+  - §3: the APK build and provenance procedure (expected counts 330 / tasks 95 / home 66 / network 29);
+  - §4–§5: the UAT29A data plan and data steps, including a same-day re-`seed` because the data is dated relative to the company day;
+  - §6: per-scenario UAT notes, including the `reassign` and `revoke` stages for UAT-29A-06;
+  - §7: the script `uat29a_data.php`, SHA-256 `5091d5bb9ea2004428cefe543d9e98040f220f75892325f81c27632a7245732b`.
+- **Rehearsal:** the script was rehearsed on scratch databases only, including its refusals, the all-or-nothing `rotate` and the runbook's own extraction path. Results are in `TEST_STATUS.md`. Its `verify` stage doubles as the first MySQL check of the new ordering.
+- **Changes from §14:** dedicated `uat29a.*` accounts (four, including the no-profile one) rather than reusing UAT27/UAT28 ones; and the `reassign`/`revoke` steps are script stages instead of ad hoc commands.
+- **Status:** nothing is deployed or seeded on staging. UAT-29A-01…07 remain `NOT RUN`. Phase 29A is not closed.
