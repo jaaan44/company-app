@@ -4,6 +4,12 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-09 — Security: `league/commonmark` 2.10.1 → 2.10.3 (dependency only)
+- Fixes the `composer audit --locked` failure found during Phase 28 Gate 1: GHSA-3q6v-r5mr-hxv8 (high: quadratic-time DoS in the GFM table extension) and GHSA-97jj-33gv-5xf9 (medium: `DisallowedRawHtml` bypass), both published 2026-09-30 and affecting ≤ 2.10.1.
+- `league/commonmark` is transitive (`laravel/framework` requires `^2.8.1`). Only that package changed in `composer.lock` (`composer update league/commonmark`, without `--with-dependencies`). `composer.json` is unchanged, and application code does not call Markdown rendering.
+- Checks: `composer validate --strict`, `composer audit --locked` (no advisories), Pint, PHPStan level 5, `php artisan test` 1,130/1,130.
+- Not part of any phase; Phase 28 is unaffected and still at Gate 1.
+
 ### 2026-09-24 — Phase 27 formally closed (documentation only)
 - Phase 27 — Employee Home / Dashboard (Mobile) is formally closed as of 2026-09-24. Implementation (PR #44, `be43663`) is deployed on staging, UAT-27-01…08 all `PASS`, and no Phase 27 blocking defect remains.
 - `docs/CURRENT_STATE.md`: last completed phase is Phase 27. Next planned phase is Phase 28 — People: Staff Directory & Profile (Mobile), **not started**. `docs/ROADMAP.md`: Phase 27 marked complete, with the DEC-052 refinement (a dedicated self-scoped `/me/home`, not a scoped `/dashboard`). The spec, handoff, `02_ARCHITECTURE.md` §33 and `06_UI_UX_GUIDELINES.md` status labels were updated; earlier status text is kept as history.
