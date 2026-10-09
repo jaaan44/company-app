@@ -253,3 +253,16 @@ Phase 29 (Work) must not begin until Phase 28 is closed and Phase 29 is explicit
 - **Awaiting UAT:** yes (UAT-28-01…07 `NOT RUN`).
 - **Deployed:** no.
 - **Formally closed:** no.
+
+## Addendum — Merge and UAT Preparation Runbook (2026-10-09)
+
+- **Merged:** PR #57 merged into `main` as `b6e85c5a5b8bceac4328805af562fd7a2bb4f5a9`, a standard merge commit with parents `116526f` and `d85b62f`. Backend CI and Mobile CI passed on the PR head. This is the source for both the staging deployment and the final UAT APK.
+- **Runbook:** `docs/testing/PHASE_28_UAT_PREPARATION.md`, which turns §14 above into concrete operator steps:
+  - §2: the staging redeploy (`route:cache` is required for the new route; no migration);
+  - §3: the APK build and provenance procedure;
+  - §4–§5: the UAT28 data plan and data steps;
+  - §6: per-scenario UAT notes;
+  - §7: the script `uat28_data.php`, SHA-256 `4e846aec912c5ebc48b29d334311468c590542e82b4fbbcc3ba1474c088cabbd`.
+- **Rehearsal:** the script was rehearsed on scratch databases only, including refusals, the all-or-nothing `rotate` and the runbook's own extraction path. Results are in `TEST_STATUS.md`.
+- **Change from §14:** dedicated `uat28.*` accounts instead of reusing the UAT27 ones, so Phase 28 UAT does not depend on Phase 27's data state or rotated passwords.
+- **Status:** nothing is deployed or seeded on staging. UAT-28-01…07 remain `NOT RUN`. Phase 28 is not closed.
