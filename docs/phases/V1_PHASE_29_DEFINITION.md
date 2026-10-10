@@ -1,6 +1,6 @@
 # Phase 29 — Work: Tasks, Work Logs, Projects & Clients (Mobile) — Specification
 
-**Status:** Revision 3 (2026-10-10, **DRAFT for 29B**): §6 now specifies 29B — Work logs in full, with decisions **R-10…R-18 proposed for approval** (not yet approved). 29B is **not authorized for implementation**. Everything outside §6 (the approved revision 2, R-1…R-9, and the 29A sections) is unchanged. **29A: COMPLETE — FORMALLY CLOSED 2026-10-10** (PR #61, `3632ce1`; UAT-29A-01…07 PASS). 29C is not started.
+**Status:** Revision 3 (2026-10-10): §6 specifies 29B — Work logs in full. **Decisions R-10…R-18 approved as written by the product owner (2026-10-10).** 29B is **not yet authorized for implementation**; each gate needs its own authorization. Everything outside §6 (the approved revision 2, R-1…R-9, and the 29A sections) is unchanged. **29A: COMPLETE — FORMALLY CLOSED 2026-10-10** (PR #61, `3632ce1`; UAT-29A-01…07 PASS). 29C is not started.
 
 *Previous status line (kept as written):* Revision 2, approved (R-1…R-9 as written, 2026-10-09; merged via PR #60). **29A: COMPLETE — FORMALLY CLOSED 2026-10-10.** Implementation merged (PR #61, `3632ce1e821ccaca205f19abf5196e3df54fd35b`) and deployed to staging; physical-device UAT-29A-01…07 all **PASS** (2026-10-10; `docs/testing/UAT_LOG.md`). The §5.4 table keeps its wording as specified; it is not the results record. **29B and 29C are not started**; each needs its own explicit authorization, and 29B its detailed revision first (`CLAUDE.md` §1/§8).
 
@@ -162,9 +162,9 @@ The product owner approved every recommendation from revision 1 as written (2026
 | UAT-29A-06 | Offline: a status change fails clearly, the old status stays, and it works after reconnecting. After the task is reassigned to someone else server-side, saving shows the server's message. After token revocation, the app returns to Login. |
 | UAT-29A-07 | Dark mode and large text on the list and detail. |
 
-## 6. Sub-phase 29B — Work logs (revision 3: specified in full; proposed, not yet approved)
+## 6. Sub-phase 29B — Work logs (revision 3: specified in full; R-10…R-18 approved 2026-10-10)
 
-*Revision 3 (2026-10-10) replaces revision 2's outline with a full specification, after read-only discovery on `main` at `c6c6812` (29A closed). It is a proposal: the decisions in §6.2 need the product owner's approval, and implementation then needs its own authorization, gate by gate (`CLAUDE.md` §1/§8).*
+*Revision 3 (2026-10-10) replaces revision 2's outline with a full specification, after read-only discovery on `main` at `c6c6812` (29A closed). The product owner approved R-10…R-18 as written (2026-10-10). Implementation needs its own authorization, gate by gate (`CLAUDE.md` §1/§8).*
 
 ### 6.1 Current-state findings (read-only discovery)
 
@@ -189,9 +189,9 @@ The product owner approved every recommendation from revision 1 as written (2026
 
 **Mobile:** the write foundation from 29A (`ApiClient` POST/PATCH/DELETE, `ApiValidationException` with field errors, `204`) is ready. No form screen exists yet; the 06 guidelines already set the form conventions (`TextFormField`, inline per-field errors, submit disabled in flight, `AlertDialog` for destructive actions).
 
-### 6.2 Product decisions for 29B (proposed — for approval)
+### 6.2 Product decisions for 29B (approved as written, 2026-10-10)
 
-| # | Recommendation | Why | Alternatives |
+| # | Decision | Why | Not chosen |
 |---|---|---|---|
 | **R-10** | **Fix "today" in all four work-log requests**, self-service and Administrator, using the company date (`CompanyTimezone`). Error message: "The work date cannot be later than today." | One rule everywhere; the Administrator Backoffice has the same defect. | Self-service only (leaves the Admin bug). |
 | **R-11** | **Tie-breaker on `GET /me/work-logs`:** `work_date DESC, created_at DESC, id DESC`. | Stable paging; visible order unchanged. | Leave it. |
@@ -272,7 +272,7 @@ The product owner approved every recommendation from revision 1 as written (2026
 - Docs: DEC-055 (the approved R-10…R-18), `02_ARCHITECTURE` (a work-logs part of §35), `04`/`05` (the `meta.company_day` addition and the "today" rule), `06` (form conventions as built), the handoff `V1_PHASE_29B_HANDOFF.md`; UAT-29B-01…08 recorded `NOT RUN`.
 - Merged only with product-owner approval; then a UAT29B runbook, staging deployment and UAT; then formal closure. The session **stops** after each step (`CLAUDE.md` §8).
 
-### 6.9 Proposed implementation sequence for 29B (once approved and authorized; gated like 29A)
+### 6.9 Implementation sequence for 29B (once authorized; gated like 29A)
 
 1. **Gate 1, backend:** R-10 (all four requests) with the 00:30 Manila regression, R-11 tie-breaker, R-12 `meta.company_day`, and their tests.
 2. **Gate 2, mobile data and state:** models, `WorkLogsApiClient`, list/form/picker controllers, the change record.
@@ -352,3 +352,4 @@ The product owner approved every recommendation from revision 1 as written (2026
   - **Known limitation:** "Completed" on the detail is shown in the device's timezone, because `/me/tasks` and `/tasks/{id}` give the company timezone's name but no offset. Due labels are unaffected (they use the server's company date).
   - The People screens' shared widgets (error view, info rows, section headers, padding) are reused rather than copied.
 - **Revision 3 (2026-10-10):** §6 (29B) rewritten from an outline into a full specification after read-only discovery on `main` at `c6c6812`: findings (§6.1, including the R-8 defect confirmed in all four work-log requests, a missing `/me/work-logs` tie-breaker, no company day in the list, and the `403` without a profile), proposed decisions R-10…R-18 (§6.2), backend, mobile, rules, UAT-29B-01…08, Definition of Done and gate sequence. No code, test, route or configuration was changed. Elsewhere only this note and the status line changed.
+- **Revision 3 approval (2026-10-10):** the product owner approved R-10…R-18 as written. Only the status line, the §6 heading and intro, the §6.2 and §6.9 headings, the §6.2 column labels and this note changed.
