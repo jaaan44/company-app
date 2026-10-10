@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:mobile/features/home/presentation/home_formatting.dart';
 import 'package:mobile/features/people/presentation/people_widgets.dart';
@@ -7,6 +8,8 @@ import 'package:mobile/features/tasks/domain/task_item.dart';
 import 'package:mobile/features/tasks/presentation/task_widgets.dart';
 import 'package:mobile/features/tasks/state/task_changes.dart';
 import 'package:mobile/features/tasks/state/task_detail_controller.dart';
+import 'package:mobile/features/work_logs/domain/work_log.dart';
+import 'package:mobile/features/work_logs/presentation/work_log_widgets.dart';
 
 /// One task (Phase 29A, spec §5.3): its details and — unless it was
 /// cancelled — a status control offering To do, In progress, Blocked and
@@ -16,6 +19,9 @@ import 'package:mobile/features/tasks/state/task_detail_controller.dart';
 /// when the server accepts the change; while saving the control is
 /// disabled with a progress bar; a failure leaves the old status and shows
 /// why underneath. See [TaskDetailController] for the 403/422 rules.
+///
+/// Phase 29B adds "Log work" (R-15), opening the work-log form with this
+/// task fixed, inside the Tasks branch.
 class TaskDetailPage extends StatefulWidget {
   const TaskDetailPage({
     super.key,
@@ -146,6 +152,31 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
         ),
         const PeopleSectionHeader('Status'),
         _StatusControl(controller: _controller, onSelected: _save),
+        // Log work against this task (Phase 29B, R-15) — not for a
+        // cancelled task.
+        if (task.status != TaskStatus.cancelled)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: OutlinedButton.icon(
+                key: const Key('task-log-work'),
+                icon: const Icon(Icons.more_time),
+                label: const Text('Log work'),
+                onPressed: () => context.push(
+                  logWorkOnTaskPath(task.publicId),
+                  extra: WorkLogFormArgs(
+                    fixedTarget: TaskTarget(
+                      publicId: task.publicId,
+                      label: task.title,
+                      projectName: task.project?.name,
+                    ),
+                    companyDate: companyDate,
+                  ),
+                ),
+              ),
+            ),
+          ),
         const PeopleSectionHeader('Details'),
         PeopleInfoRow(
           key: const Key('task-due'),

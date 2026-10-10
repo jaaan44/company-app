@@ -4,6 +4,43 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-10 — Phase 29B Gate 4: final integration review, handoff and implementation PR
+- Final gates on the complete branch: backend 1,178/1,178 with Pint, PHPStan level 5, `composer validate --strict` and `composer audit --locked` (no advisories); Flutter 421/421 with format and analyze clean and `pubspec` unchanged.
+- **Contract parity:** 31 real Laravel responses for a Staff user and a Manager (Manila, 00:30) — the list, every create kind, every `422` kind, update, prohibited update, delete, someone else's `404`, `/me/profile`, `/projects?member=` and the no-profile `403` — replayed through the production Flutter code: 7/7 (temporary tests, not committed). It confirmed that `member=` limits a Manager to member projects and that same-date logs come newest first.
+- Docs:
+  - new `docs/handoffs/V1_PHASE_29B_HANDOFF.md`;
+  - `02_ARCHITECTURE.md` §36 (Work — Work logs);
+  - `06_UI_UX_GUIDELINES.md` (Work logs and the form conventions as built: picker fields, ranges in the control, number fields, errors per field and at the top, save, discard and delete);
+  - spec status → 29B implementation complete, pending PR/CI, merge, staging and UAT;
+  - UAT-29B notes updated (still `NOT RUN`).
+- 29B is **not** closed, and nothing is deployed.
+
+### 2026-10-10 — Phase 29B Gate 3: work-log screens, "Log work" and routes
+- **My work logs** (`lib/features/work_logs/presentation/my_work_logs_page.dart`, More → "My work logs"): logs grouped under "Today", "Yesterday" and then the date (judged against the company day); each row shows the task or project, the project under a task, the description and the duration; Phase 28 paging and retry row; pull-to-refresh; "No work logged yet."; the no-profile state without an Add button; an **Add** button. It refreshes after any confirmed save or delete, including from a task.
+- **Add/edit form** (`work_log_form_page.dart`): "What was this for?" (my open tasks, my open projects; read-only when editing or from a task), the date (default and maximum the company today, 365 days back), hours and minutes, the description with a counter, Save with progress; errors under each field and eligibility errors at the top; "Work logged." / "Changes saved." / "Work log deleted."; "Discard changes?" and "Delete this work log?" confirmations (R-18).
+- **"Log work"** on a task's detail (R-15; not for cancelled tasks) opens the form with the task fixed, at `/tasks/:publicId/log-work`.
+- **Router and app:** `/more/work-logs`, `/new`, `/:publicId`; `CompanyApp` owns a `WorkLogsApiClient` (injectable) and `WorkLogChanges`; More gains its third row.
+- Tests: 20 new screen tests (`work_logs_pages_test.dart`); the Phase 28 More test now expects three rows. Full suite 421/421; format and analyze clean; `pubspec` unchanged. 10 UI mutation checks: 9 caught at once; the tenth (future dates allowed in the picker) exposed a weak test, which was strengthened and then caught it.
+- Docs: the spec status and Gate 3 notes; `CURRENT_STATE.md`; `TEST_STATUS.md`; the UAT-29B notes.
+- No backend, dependency or configuration change. Gate 4 is not started.
+
+### 2026-10-10 — Phase 29B Gate 2: mobile work-log data and state
+- **`lib/features/work_logs/`**, data and state only (no screens or routes yet):
+  - `domain/work_log.dart`: strict `WorkLog` and `MyWorkLogsPage` (with `meta.company_day`, R-12), the picker's `TaskTarget`/`ProjectTarget`, `MemberProject` (closed = completed or cancelled), the API limits, and `formatDuration` ("1 h 30 min").
+  - `data/work_logs_api_client.dart`: `GET /me/work-logs` (25 per page), the company day from a one-row page, `POST` (task_id **or** project_id), `PATCH` (only date, duration, description), `DELETE` (204), own staff id from `/me/profile`, and my projects from `/projects?member=` (all pages, capped).
+  - `state/`: `MyWorkLogsController` (Phase 28/29A paging rules, grouping by date across pages, the no-profile state from the `403` per R-13), `WorkLogFormController` (create/edit, fixed target from a task, the R-14 picker, R-17 checks, confirmed single-flight save and delete, server `422`s on the right fields, dirty state for R-18) and `WorkLogChanges`.
+- Tests: 71 new (15 models, 13 API client, 13 list, 30 form). Full suite 401/401; format and analyze clean; `pubspec` unchanged. 13 mutation checks all caught.
+- Docs: the spec status and Gate 2 notes; `CURRENT_STATE.md`; `TEST_STATUS.md`; the UAT-29B notes.
+- No backend, dependency or configuration change. Gates 3–4 are not started.
+
+### 2026-10-10 — Phase 29B Gate 1: company-time "today" for work logs, `/me/work-logs` tie-breaker and company day
+- **R-8/R-10:** `StoreMyWorkLogRequest`, `UpdateMyWorkLogRequest`, `StoreWorkLogRequest` and `UpdateWorkLogRequest` now limit `work_date` to the company today (`OverdueTasks::todayInCompanyTimezone()`, via the new `LimitsWorkDateToCompanyToday` trait) instead of the UTC date, with the message "The work date cannot be later than today." Logging for the Manila today now works from 00:00 to 07:59 local time.
+- **R-11:** `GET /api/v1/me/work-logs` orders `work_date DESC, created_at DESC, id DESC`. The visible order is unchanged.
+- **R-12:** `GET /api/v1/me/work-logs` adds `meta.company_day {date, timezone}`; the paginator's keys are unchanged.
+- Tests: 9 new in `WorkLogCompanyDayTest` (00:30 and 23:30 Manila, create and update, self-service and Administrator; the company day around Manila midnight; the unchanged no-profile `403`; stable paging plus the ORDER BY). `test_work_date_cannot_be_in_the_future` rewritten against the company date: the old `now()->addDay()` version was shown to accept the date (201) at 17:00 UTC with a Manila company day. Full suite 1,178/1,178. Pint, PHPStan level 5, `composer validate --strict` and `composer audit --locked` pass. 8 mutation checks all caught.
+- Docs: DEC-055; `04_API_CONVENTIONS.md`; `05_SECURITY_MODEL.md` (Work Logs); the spec status; `CURRENT_STATE.md`; `TEST_STATUS.md`; UAT-29B-01…08 added as `NOT RUN`.
+- No migration, permission, dependency, mobile or configuration change. Gates 2–4 are not started.
+
 ### 2026-10-10 — Phase 29 specification revision 3: 29B — Work logs specified (docs only; R-10…R-18 approved)
 - `docs/phases/V1_PHASE_29_DEFINITION.md` §6 rewritten from an outline into a full 29B specification after read-only discovery on `main` at `c6c6812`.
 - **Findings:** the work-log "today" rule is UTC in **all four** work-log requests (self-service and Administrator), confirming R-8; `GET /me/work-logs` has no unique tie-breaker; its response has no company day; it answers `403` without a linked profile; picker sources already exist (`/me/tasks`, `/projects?member=`).

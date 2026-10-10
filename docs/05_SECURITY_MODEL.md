@@ -32,6 +32,10 @@ CSV export inherits the identical scoping as its JSON counterpart — no export 
 - It needs no permission and exposes nothing new: each item is the unchanged `TaskResource` plus two booleans. The assignee could already read these tasks through `GET /tasks/{public_id}`.
 - Writes are unchanged: status changes go through `PATCH /tasks/{public_id}` and its existing authorization (the assignee may change status only).
 
+## Work Logs (Phase 29B, DEC-055)
+
+**Implemented as of Phase 29B Gate 1:** the work-log authorization model is unchanged — self-service needs a linked, active Staff record and project membership (or the assignee of an independent task) at creation; someone else's log is `404`; only date, duration and description can be edited; Administrator writes need `work-logs.manage`. The one behavioural change is the date ceiling, which is now the company "today" for everyone, so the rule no longer depends on the server's UTC clock. `meta.company_day` exposes only the company date and timezone name. The mobile app's narrower choices (no closed projects, no cancelled tasks, a 365-day picker) are presentation, not access control.
+
 ## Authentication
 
 - **Implemented (DEC-022):** the Admin Backoffice authenticates via Laravel's session/secure-cookie `web` guard (Blade + Livewire login). The Flutter mobile app authenticates via Laravel Sanctum personal access tokens (`Authorization: Bearer <token>`) — bearer-token only, no cookie-based SPA/stateful authentication. No OAuth server, JWT infrastructure, or Passport.

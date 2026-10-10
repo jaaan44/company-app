@@ -11,6 +11,8 @@ import 'package:mobile/features/home/data/home_api_client.dart';
 import 'package:mobile/features/people/data/people_api_client.dart';
 import 'package:mobile/features/tasks/data/tasks_api_client.dart';
 import 'package:mobile/features/tasks/state/task_changes.dart';
+import 'package:mobile/features/work_logs/data/work_logs_api_client.dart';
+import 'package:mobile/features/work_logs/state/work_log_changes.dart';
 
 /// Root widget of the Company App staff mobile application.
 ///
@@ -26,8 +28,8 @@ import 'package:mobile/features/tasks/state/task_changes.dart';
 /// no third-party state-management framework is introduced now either —
 /// a plain [ChangeNotifier] remains sufficient; see DEC-025.
 class CompanyApp extends StatefulWidget {
-  /// [authController], [homeApiClient], [peopleApiClient] and
-  /// [tasksApiClient] are exposed
+  /// [authController], [homeApiClient], [peopleApiClient],
+  /// [tasksApiClient] and [workLogsApiClient] are exposed
   /// for tests to inject fakes — production code always omits them and
   /// gets the real Sanctum-backed implementations below.
   const CompanyApp({
@@ -36,15 +38,18 @@ class CompanyApp extends StatefulWidget {
     HomeApiClient? homeApiClient,
     PeopleApiClient? peopleApiClient,
     TasksApiClient? tasksApiClient,
+    WorkLogsApiClient? workLogsApiClient,
   }) : _injectedAuthController = authController,
        _injectedHomeApiClient = homeApiClient,
        _injectedPeopleApiClient = peopleApiClient,
-       _injectedTasksApiClient = tasksApiClient;
+       _injectedTasksApiClient = tasksApiClient,
+       _injectedWorkLogsApiClient = workLogsApiClient;
 
   final AuthController? _injectedAuthController;
   final HomeApiClient? _injectedHomeApiClient;
   final PeopleApiClient? _injectedPeopleApiClient;
   final TasksApiClient? _injectedTasksApiClient;
+  final WorkLogsApiClient? _injectedWorkLogsApiClient;
 
   @override
   State<CompanyApp> createState() => _CompanyAppState();
@@ -75,12 +80,21 @@ class _CompanyAppState extends State<CompanyApp> {
   // they refresh after a status change made on a detail screen.
   final TaskChanges _taskChanges = TaskChanges();
 
+  late final WorkLogsApiClient _workLogsApiClient =
+      widget._injectedWorkLogsApiClient ?? WorkLogsApiClient(_apiClient);
+
+  // Confirmed work-log saves and deletions (Phase 29B), so My work logs
+  // refreshes after a log made from a task's detail.
+  final WorkLogChanges _workLogChanges = WorkLogChanges();
+
   late final GoRouter _router = buildAppRouter(
     _authController,
     homeApiClient: _homeApiClient,
     peopleApiClient: _peopleApiClient,
     tasksApiClient: _tasksApiClient,
     taskChanges: _taskChanges,
+    workLogsApiClient: _workLogsApiClient,
+    workLogChanges: _workLogChanges,
   );
 
   @override
@@ -96,6 +110,7 @@ class _CompanyAppState extends State<CompanyApp> {
   void dispose() {
     _router.dispose();
     _taskChanges.dispose();
+    _workLogChanges.dispose();
     _authController.dispose();
     super.dispose();
   }

@@ -516,3 +516,24 @@ Internet → Cloudflare (proxied, Full (strict))
 **Routing:** `/tasks` and `/tasks/:publicId`, both inside the `Tasks` `StatefulShellBranch` (the placeholder is gone). Home's My tasks tile `go`es to `/tasks`, and a Today task row to `/tasks/:publicId` with Home's company date, switching to the Tasks branch (R-6). The route `extra` (`TaskDetailArgs`) carries the row's item and company date; without it the detail loads the task itself.
 
 **Not introduced:** task creation, editing beyond status, assignment or deletion; Cancelled in the app; work logs (29B); projects and clients (29C); offline queues; push; caching; a new dependency. See `docs/phases/V1_PHASE_29_DEFINITION.md` and `docs/handoffs/V1_PHASE_29A_HANDOFF.md`.
+
+## 36. Work — Work logs (Phase 29B — implemented, pending merge and UAT; DEC-055)
+
+**Backend:**
+- The Phase 12 self-service API (`/me/work-logs`) is reused unchanged in shape. Two behaviours changed:
+  - **"No later than today" is the company date** on all four work-log requests (self-service and Administrator), through the shared `LimitsWorkDateToCompanyToday` trait and `OverdueTasks::todayInCompanyTimezone()` — the same "today" as Home, Tasks and the reports.
+  - **`GET /me/work-logs`** orders `work_date DESC, created_at DESC, id DESC` and adds `meta.company_day {date, timezone}`.
+- No migration, no route, no permission change. The picker reuses `GET /me/tasks` (29A), `GET /me/profile` (Phase 28) and `GET /projects?member=` (Phase 10).
+
+**Mobile — Work logs (`lib/features/work_logs/{domain,data,state,presentation}/`):**
+- **`domain/`:** strict `WorkLog`, `MyWorkLogsPage` with `companyDay`, the picker's `WorkTarget` (`TaskTarget` | `ProjectTarget`), `MemberProject`, `WorkLogLimits`, `formatDuration`.
+- **`data/WorkLogsApiClient`:** list, company day, create (`task_id` or `project_id`), update (three fields), delete, own staff id, member projects.
+- **`state/`:**
+  - `MyWorkLogsController`: the Phase 28/29A list rules, grouping by date across pages, and the no-profile state from the `403` (R-13).
+  - `WorkLogFormController`: the first general form controller — field state, client-side checks mirroring the API, server `422` mapping to fields, confirmed single-flight save and delete, and a dirty flag for the discard prompt. It also loads the picker (my open tasks, my non-closed projects).
+  - `WorkLogChanges`: the `TaskChanges` pattern, owned by `CompanyApp`.
+- **`presentation/`:** `MyWorkLogsPage` (More → My work logs) and `WorkLogFormPage` (add/edit), plus route args and date helpers.
+
+**Routing:** `/more/work-logs`, `/more/work-logs/new`, `/more/work-logs/:publicId` in the More branch; `/tasks/:publicId/log-work` in the Tasks branch (from "Log work" on a task's detail). The route `extra` (`WorkLogFormArgs`) carries the log, the fixed task and the company day.
+
+**Not introduced:** day totals, reports, logging for others, timers, approvals, attachments, offline queues, idempotency keys, a new dependency. See `docs/phases/V1_PHASE_29_DEFINITION.md` §6 and `docs/handoffs/V1_PHASE_29B_HANDOFF.md`.

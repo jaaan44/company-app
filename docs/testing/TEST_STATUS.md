@@ -899,4 +899,79 @@ Staging now runs `3632ce1`. The UAT29A data (4 accounts, 4 staff records, projec
 
 ---
 
+## Phase 29B — Gate 1 (backend: company-time "today", `/me/work-logs` tie-breaker and company day)
+
+Branch `claude/amazing-brahmagupta-dbsrjc`, from `main` at `496bd5c` (PR #64). Run in this AI sandbox (PHP 8.4, SQLite in-memory per `phpunit.xml`).
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `tests/Feature/Api/V1/WorkLogs/WorkLogCompanyDayTest.php` (9 tests) | Automated | PASS | Company timezone `Asia/Manila`. At **00:30 Manila** (16:30 UTC the previous day): self-service create for the Manila today → 201, for the Manila tomorrow → 422 with "The work date cannot be later than today."; self-service update the same; Administrator create and update the same. At 23:30 Manila: today 201, tomorrow 422. `meta.company_day` = `{2026-10-10, Asia/Manila}` at 00:30 Manila, with `data`/`links`/`meta` and every paginator `meta` key still present; it turns from 2026-10-09 to 2026-10-10 between 15:59 and 16:00 UTC. No linked Staff record → still `403` with the same message (R-13). Five logs with the same `work_date` and `created_at` over `per_page=2` pages come back once each, newest id first, and the SQL contains `order by "work_date" desc, "created_at" desc, "id" desc`. |
+| `WorkLogTest::test_work_date_cannot_be_in_the_future` (rewritten) | Automated | PASS | Now uses the company tomorrow. **Shown to be necessary:** the old `now()->addDay()` version, run in a temporary test at 17:00 UTC with a Manila company day, got `201` instead of `422`; the temporary test was deleted. The other 38 existing work-log tests are unchanged and pass. |
+| Mutation checks | Manual (AI) | PASS | Each made temporarily, the work-log tests run, and the file restored; all 8 caught: restoring the UTC `before_or_equal:today` in each of the four requests (1 failure each); dropping the custom message (3); dropping the date ceiling altogether (5); removing the `id` tie-breaker (1); computing `meta.company_day` from the UTC date (2). |
+| Full `php artisan test` | Automated | PASS | 1,178/1,178 (3,359 assertions): 1,169 after 29A plus these 9. One existing test changed (above). |
+| `composer validate --strict` | Automated | PASS | — |
+| `composer audit --locked` | Automated | PASS | No advisories. |
+| `vendor/bin/pint --test` | Automated | PASS | — |
+| `vendor/bin/phpstan analyse` (level 5) | Automated | PASS | 0 errors. |
+| MySQL | — | Not run | The ORDER BY is plain columns; the date rule is PHP-side. To be exercised at staging. |
+| Mobile | — | Not affected | No `apps/mobile` change in Gate 1. |
+| UAT | — | NOT RUN | UAT-29B-01…08 `NOT RUN` (not yet runnable). |
+
+---
+
+## Phase 29B — Gate 2 (mobile work-log data and state)
+
+Branch `claude/amazing-brahmagupta-dbsrjc`, on Gate 1 (`58e91ec`). Run in this AI sandbox with Flutter 3.47.2 / Dart 3.13.2.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `test/features/work_logs/work_log_models_test.dart` (15 tests) | Automated | PASS | Task, project and independent-task logs and their labels; missing description, a timestamp as `work_date`, a string duration, neither task nor project, a malformed task → `FormatException`. `/me/work-logs` paging and `meta.company_day`; missing or malformed company day rejected. Project statuses and `isClosed`. Target request fields. `formatDuration`; `isApiDate`. |
+| `test/features/work_logs/work_logs_api_client_test.dart` (13 tests) | Automated | PASS | Exact `/me/work-logs` path and `per_page`/`page`; the company day from `per_page=1`; a `403` keeps the session (one `/auth/me` re-check) and is `ApiForbiddenException`; bad shape → `ApiRequestException`. `POST` with `task_id` only or `project_id` only plus the three fields; a `422`'s field errors. `PATCH` with only date, duration and description (id encoded); `DELETE` 204; `404` as a request failure. Own staff id from `/me/profile` (null without a profile); my projects with `member=` over every page, and the page cap. |
+| `test/features/work_logs/my_work_logs_controller_test.dart` (13 tests) | Automated | PASS | First page with the company day; grouping by date, merging a date that spans pages; no duplicates; `403` → no-profile (session kept, no error); first-load error and recovery; failed refresh keeps the list; failed load more retried; a load more overtaken by a refresh dropped; concurrent loads share one request. Changes: a deletion leaves at once; a same-date edit replaces its row; a date change waits for the refresh; a new log marks stale and `refreshIfStale` refreshes once; dispose removes the listener. |
+| `test/features/work_logs/work_log_form_controller_test.dart` (30 tests) | Automated | PASS | Create: company day from `/me/work-logs`, default date not counted as an edit, my open tasks (with projects) and my projects with completed/cancelled hidden, `member=` and `state=open` sent; a given company day is used without a request; a fixed task loads nothing; edit fields and read-only target. No profile from a `403`, from `/me/tasks` `null`, or from `/me/profile` without staff; load error and recovery. Date bounds: 365 days back, an older edited log's own date, calendar arithmetic across a leap day. Checks with exact messages per field, at and beyond each limit; editing a field clears its error; nothing invalid is sent. Save: the exact `POST` body (trimmed text, total minutes) and the recorded change; edit sends only three fields; single-flight; server `422`s on fields and eligibility at the top; a `422` with no known field; offline/500/403 keep values and allow a retry; a `404` on edit records removal; a `401` ends the session. Delete: once and recorded; already gone counts as deleted; failure kept with a message; a new log can't be deleted. Dirty state across every field. |
+| Mutation checks | Manual (AI) | PASS | Each made temporarily and restored; all 13 caught: the list's and the form's `403` → no-profile mapping (2); grouping that never merges a date; a deletion not removed; closed projects not hidden; the edited log's own date ignored as the floor; the 24-hour limit; no new baseline after saving; eligibility errors not shown; description not trimmed; a `404` delete not counted as done; `member=` not sent; an extra field sent on `PATCH`. (A first attempt at the `403` mutant didn't compile and was redone with a valid substitution.) |
+| Full `flutter test` | Automated | PASS | 401/401: 330 after 29A plus these 71. No existing test changed. |
+| `dart format` / `flutter analyze` | Automated | PASS | No changes; no issues. |
+| `pubspec.yaml` / `pubspec.lock` | — | Unchanged | No new dependency. |
+| Backend | — | Not affected | No `apps/api` change in Gate 2. |
+| UAT | — | NOT RUN | UAT-29B-01…08 `NOT RUN` (no screens yet). |
+
+---
+
+## Phase 29B — Gate 3 (work-log screens, "Log work" and routes)
+
+Branch `claude/amazing-brahmagupta-dbsrjc`, on Gate 2 (`90dfb70`). Run in this AI sandbox with Flutter 3.47.2 / Dart 3.13.2.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `test/features/work_logs/work_logs_pages_test.dart` (20 tests) | Automated | PASS | Through the real `CompanyApp`, router and `ApiClient` against an in-memory work-log API. **List:** More → My work logs; "Today", "Yesterday", "Wed 7 Oct" headers in order; task/project/description/duration per row ("1 h 30 min", "30 min", "2 h"); empty state; no-profile (403) without Add and with the session kept; load error and Try again; paging with a failed page retried and a new date header. **Add:** the form defaults to "Sat 10 Oct 2026"; the picker shows open tasks and open projects, not a cancelled task or a completed project; a project log saves the exact body, shows "Work logged." and appears in the refreshed list; checks before sending (three messages, nothing sent; 25 hours refused); the date picker can't go past the company today (a disabled 11th leaves the date unchanged) and can pick the 9th; a server eligibility `422` shown; offline keeps the text and saves later; a `401` returns to Login. **Edit/delete:** values shown, target not choosable, only three fields sent, "Changes saved." and the row updated; leaving with changes asks — Keep editing stays, Discard leaves and sends nothing; leaving without changes doesn't ask; delete asks, Cancel sends nothing, Delete sends `DELETE`, shows "Work log deleted." and removes the row. **From a task:** "Log work" opens `/tasks/T1/log-work` with the task fixed and today's date, saves with `task_id`, returns to the task, and My work logs then lists it; a cancelled task has no "Log work". **Appearance:** light and dark at 200% text: list, form and picker without exceptions. |
+| `people_pages_test.dart` More test | Automated | PASS | **Changed:** More lists exactly three rows now — My profile, Staff directory and My work logs (Phase 28's R-8: each phase adds its own row). |
+| Mutation checks (UI) | Manual (AI) | PASS | Each made temporarily and restored. **Caught at once (9):** no tap on the More row; the discard check disabled; delete without confirmation; "Log work" shown for a cancelled task; the projects section removed from the picker; the list not refreshing after a change; the task not fixed when logging from it; "Yesterday" never shown; the success message changed. **Survived, then resolved (1):** allowing 30 future days in the date picker — the test chose the 11th and then the 9th, so the 11th never mattered; it now presses OK after the disabled 11th and checks the date is unchanged, and the mutant is caught. |
+| Full `flutter test` | Automated | PASS | 421/421: 401 after Gate 2 plus these 20. One existing test changed (above). |
+| `dart format` / `flutter analyze` | Automated | PASS | No changes; no issues. |
+| `pubspec.yaml` / `pubspec.lock` | — | Unchanged | No new dependency. |
+| Real device / emulator | — | Not run | No device in this sandbox. |
+| Backend | — | Not affected | No `apps/api` change in Gate 3. |
+| UAT | — | NOT RUN | UAT-29B-01…08 `NOT RUN` (not merged or deployed). |
+
+---
+
+## Phase 29B — Gate 4 (final integration review)
+
+Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`733d0fc`), confirmed up to date with `main` (`496bd5c`).
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `composer validate --strict` / `composer audit --locked` | Automated | PASS | Valid; no advisories. |
+| `vendor/bin/pint --test` / `vendor/bin/phpstan analyse` (level 5) | Automated | PASS | 0 errors. |
+| `php artisan test` | Automated | PASS | 1,178/1,178 (3,359 assertions). |
+| `flutter pub get` / `dart format` / `flutter analyze` | Automated | PASS | `pubspec` unchanged; 0 files to format; no issues. |
+| `flutter test` | Automated | PASS | 421/421. |
+| Contract parity (real API → app) | Manual (AI), temporary tests | PASS | A scratch Laravel test recorded 31 responses for a Staff user and a Manager in `Asia/Manila` at 00:30: `GET /me/work-logs` (25 and 1 per page; `meta.company_day` `{2026-10-10, Asia/Manila}`, the paginator keys intact, same-date logs newest first); `POST` for a project, a project task and an independent task (1440 minutes) → 201; `422` for a future date ("The work date cannot be later than today."), a non-member project, both task and project, and zero minutes plus a missing description; `PATCH` → 200; `PATCH` with `task_id` → 422 prohibited; `DELETE` → 204; someone else's log → 404; `/me/profile`; `/projects?member=` (the Manager sees only their two member projects, one completed); and the no-profile `403`. Non-ASCII project, task and description text. A scratch Flutter test replayed them through the production models, `WorkLogsApiClient`, `WorkLogFormController` (each `422` on the right field or at the top; delete `204` and `404` both "gone") and `MyWorkLogsController` (`403` → no-profile, session kept): **7/7**. Two scratch-test mistakes were fixed on the way (parsing the empty `204` body; a duplicated unique project code). Both files were deleted; nothing was committed. |
+| Real device / emulator | — | Not run | No device in this sandbox. |
+| MySQL | — | Not run | Plain-column ORDER BY; to be exercised at staging. |
+| UAT | — | NOT RUN | UAT-29B-01…08 `NOT RUN`. |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*

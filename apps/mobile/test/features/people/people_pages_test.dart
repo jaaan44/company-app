@@ -115,16 +115,20 @@ void main() {
   tearDownAll(() => WidgetController.hitTestWarningShouldBeFatal = false);
 
   group('More (R-8)', () {
-    testWidgets('lists exactly My profile and Staff directory', (tester) async {
+    testWidgets('lists exactly My profile, Staff directory and My work logs', (
+      tester,
+    ) async {
       await pumpApp(tester);
       await openMore(tester);
 
       expect(find.byType(MorePage), findsOneWidget);
-      expect(find.byType(ListTile), findsNWidgets(2));
+      // Phase 29B adds My work logs (each phase adds its own row, R-8).
+      expect(find.byType(ListTile), findsNWidgets(3));
       expect(find.text('My profile'), findsOneWidget);
       // The signed-in account's name, known without a request.
       expect(find.text('Ada Lovelace'), findsOneWidget);
       expect(find.text('Staff directory'), findsOneWidget);
+      expect(find.text('My work logs'), findsOneWidget);
       expect(find.textContaining('coming soon'), findsNothing);
       expect(
         requests.where((u) => !u.path.endsWith('/me/home')),
