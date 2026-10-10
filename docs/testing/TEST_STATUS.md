@@ -872,4 +872,31 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`793f947`), confirmed up t
 
 ---
 
+## Phase 29A — staging deployment, UAT data and physical-device UAT (2026-10-09/10)
+
+*Operator- and product-owner-reported. This AI session had no VPS or device access; the outputs below were pasted by the operator, except where marked "not supplied".*
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Staging checkout | Operator, VPS | PASS | `git merge --ff-only` from `b6e85c5` to `3632ce1e821ccaca205f19abf5196e3df54fd35b`; `git rev-parse HEAD` confirmed. `git status --porcelain` showed one untracked file, `uat27_data.php` (the Phase 27 operator script left in the checkout root; outside the `apps/api` build context, so not in any image). Not blocking; left for the operator to move. |
+| Backup | Operator, VPS | Reported OK | `mysqldump` ran (only the usual password-on-command-line warning). The runbook's `ls -l … \| tail -1` listed the `fms` directory instead of the dump (a runbook command mistake); the operator then reported the backup as OK. The file name and size were **not supplied**. |
+| Build and restart | Operator, VPS | PASS | `company-app-api:staging` and `company-app-nginx:staging` built; `app` recreated; `nginx` kept running (nothing it serves changed); `mysql` untouched and healthy (no repeat of the Phase 28 network incident). |
+| `migrate:status` | Operator, VPS | PASS | All 45 Ran, none pending. |
+| Caches, timezone | Operator, VPS | PASS | `config:cache`, `route:cache`, `view:cache`; `scheduling.company_timezone` = `Asia/Manila`. |
+| Smoke tests (public HTTPS) | Operator, VPS | PASS | `/up` 200, `/login` 200, `/api/v1/me/home` 401, `/api/v1/me/tasks` 401 (route live, not 404), `/api/v1/tasks` 401, `/api/v1/me/profile` 401. Only `127.0.0.1:8012` listening. |
+| Script extraction | Operator, VPS | PASS | `uat29a_data.php` from `origin/main`: SHA-256 `5091d5bb9ea2004428cefe543d9e98040f220f75892325f81c27632a7245732b` (matches). |
+| `plan` | Operator, VPS | PASS | Company day 2026-10-10 (Asia/Manila); route detected; 4 accounts absent; 0 of 4 staff, 0 of 35 tasks, project absent; roles 3/3. |
+| `seed` | Operator, VPS | PASS | Exit 0 at 2026-10-10T00:41:26Z; 4 accounts created; 35 tasks set for company day 2026-10-10; credentials file `600 deploy`, 4 lines, read privately and `shred`ded. No password was recorded anywhere. |
+| `verify` (real controllers, **first MySQL run of the new ordering**) | Operator, VPS | PASS | Staff open 25 + 4 of 29 in exactly the planned order (Replace pump seal 2026-10-05 and Waiting on parts 2026-10-09 `OVERDUE`; Call the supplier 2026-10-10 `TODAY`; Inspect wiring, Reassign me, Order filters; Routine check 01…22; Tidy the store, undated, last). Closed: completed, then cancelled. Manager and admin: their own one task each. No-profile: `tasks null`. Parity `home=29/2/1 tasks=29/2/1 — OK`. This confirms the `due_date IS NULL` / `id` ordering on MySQL 8.4. |
+| `exposure` (before UAT) | Operator, VPS | PASS | All four accounts `api_tokens=0 web_sessions=0 audit: none`. |
+| UAT APK | Operator, Windows | PASS | Checkout `3632ce1e821ccaca205f19abf5196e3df54fd35b`, `git status --porcelain` empty before and after the build. Flutter 3.47.2 (channel shown as `[user-branch]`: pinned by git), Dart 3.13.2, JDK Temurin 17.0.15, Android SDK 36, build-tools 36.0.0 (`flutter doctor` also noted unaccepted Android licences; the build was not affected). `pub get` ok; `dart format` 66 files, 0 changed; `flutter analyze` no issues; `flutter test` **330/330**, tasks **95/95**, home **66/66**, network **29/29**. `flutter build apk --release --dart-define=API_BASE_URL=https://company-staging.storm-ark.com/api/v1` → `app-release.apk`, **52,534,387 bytes**, SHA-256 **`D6242D79B42C0804291551823C7DE86A76BD13A310E33CF512D27427A2131460`**, built 2026-10-10 10:28:56 (operator's local time). An earlier operator build of the same checkout had the identical size and SHA-256 (the release build was reproducible). `aapt2`: `com.companyapp.mobile` versionCode 1 / 1.0.0, minSdk 24, target/compile 36, `INTERNET` present. Signer: Android Debug (SHA-256 `8c97303ec1a4d6eda2f2b9ee83694cf0915e8f9e55077d169f30d23bf4804412`), known and deferred to Phase 38. |
+| APK install | Operator, device | Reported | Installed and used for UAT; the `adb install` output was **not supplied**. |
+| UAT-29A-01…07 | Product owner, physical device | **PASS** | All seven reported `PASS` on 2026-10-10, scenario by scenario, with the step-by-step expectations given for each (list order and labels; detail, status changes, Done and Home counts and reopening; no Cancelled and read-only cancelled task; Manager/Admin self-scope and the no-profile state; Home tile and Today-row navigation; offline save, reassigned-task 403 and token revocation; dark mode and largest text). No per-scenario observations or defects were reported. |
+| `reassign` / `revoke` (UAT-29A-06) | Operator, VPS | Reported | Run during UAT-29A-06, which passed; their output lines were **not supplied**. |
+| `exposure` (after UAT) | Operator, VPS | Reported | The product owner reported everything as passed; the output itself was **not supplied**. |
+
+Staging now runs `3632ce1`. The UAT29A data (4 accounts, 4 staff records, project `UAT29A-P1`, 35 tasks, "Reassign me" now with UAT29A-004) stays in place, alongside the UAT28 and UAT27 data; any cleanup needs its own authorization.
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*

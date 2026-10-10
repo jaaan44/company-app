@@ -4,6 +4,15 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-10 — Phase 29A formally closed: staging deployment and physical-device UAT passed (documentation only)
+- **Deployment (operator):** staging redeployed to `3632ce1` (PR #61). No migration (45 Ran); `Asia/Manila`; smoke tests `/up` 200, `/login` 200, `/me/home`, `/me/tasks`, `/tasks`, `/me/profile` all 401. Backup reported OK (name and size not supplied).
+- **UAT29A data:** script SHA-256 verified; `plan`/`seed`/`verify`/`exposure` as expected (4 accounts, 35 tasks dated for 2026-10-10; credentials in a `600` file, then shredded; no password recorded). `verify` was the first MySQL run of the new ordering: exact, with parity `29/2/1`.
+- **UAT APK:** from `3632ce1`, 52,534,387 bytes, SHA-256 `D6242D79…1460`, debug-signed; 330/330 locally. Full provenance supplied.
+- **UAT:** UAT-29A-01…07 all `PASS` (2026-10-10), reported by the product owner.
+- **Not supplied (recorded as gaps):** backup name and size, `adb install` output, the `reassign`/`revoke` lines, the post-UAT `exposure` output.
+- `CURRENT_STATE.md`: 29A complete; next is 29B (Work logs), **not started**, needing its spec revision and authorization. `ROADMAP.md`: Phase 29 marked in progress with 29A complete. Spec, handoff, runbook, `02_ARCHITECTURE.md` §35 and `06_UI_UX_GUIDELINES.md` status labels updated; earlier status text kept as history. The runbook records two command corrections learned in use.
+- Carried forward, non-blocking: the device-timezone "Completed" date; shared UI to `core/` and `per_page`/`q` hardening (Phase 36); the untracked `uat27_data.php` in the staging checkout; the empty `company-app_company-app` network; the UAT29A/UAT28/UAT27 staging data (left in place).
+
 ### 2026-10-09 — Phase 29A merged (PR #61) and UAT preparation runbook (docs only)
 - **Merged:** PR #61 into `main` as `3632ce1` (a standard merge; Backend CI and Mobile CI passed on the head).
 - New `docs/testing/PHASE_29A_UAT_PREPARATION.md`:

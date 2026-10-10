@@ -493,7 +493,7 @@ Internet → Cloudflare (proxied, Full (strict))
 
 **Not introduced:** no editing of any kind, photos, an org chart, `url_launcher` (copy-only, R-3), operational status (R-4), caching or offline storage, or a new dependency. See `docs/phases/V1_PHASE_28_DEFINITION.md` and `docs/handoffs/V1_PHASE_28_HANDOFF.md`.
 
-## 35. Work — Tasks (Phase 29A — implemented, pending merge and UAT; DEC-054)
+## 35. Work — Tasks (Phase 29A — complete, formally closed 2026-10-10; DEC-054)
 
 **Backend:**
 - **`GET /api/v1/me/tasks`** (`App\Http\Controllers\Api\V1\Tasks\MyTaskController`, `auth:sanctum` + `account.active`) lists the tasks assigned to the token's own Staff record (`assignee_staff_id`), for every role.
