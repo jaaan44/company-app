@@ -11,6 +11,8 @@ use App\Models\Project;
 use App\Models\Staff;
 use App\Models\Task;
 use App\Models\WorkLog;
+use App\Support\CompanyTimezone;
+use App\Support\Reporting\OverdueTasks;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -57,9 +59,23 @@ class MyWorkLogController extends Controller
             ->when($request->filled('to'), fn ($query) => $query->whereDate('work_date', '<=', $request->date('to')))
             ->orderByDesc('work_date')
             ->orderByDesc('created_at')
+            // Unique tie-breaker (Phase 29B, R-11): logs created in the same
+            // second on the same date otherwise have no defined order, so a
+            // paginated client could see one twice or never.
+            ->orderByDesc('id')
             ->paginate($request->integer('per_page', 50));
 
-        return WorkLogResource::collection($workLogs);
+        // The company day (Phase 29B, R-12) — additive: the paginator's own
+        // `meta` keys are unchanged. Clients take "today" from here, never
+        // from the device clock (DEC-052).
+        return WorkLogResource::collection($workLogs)->additional([
+            'meta' => [
+                'company_day' => [
+                    'date' => OverdueTasks::todayInCompanyTimezone(),
+                    'timezone' => CompanyTimezone::value(),
+                ],
+            ],
+        ]);
     }
 
     public function myStore(StoreMyWorkLogRequest $request): JsonResponse

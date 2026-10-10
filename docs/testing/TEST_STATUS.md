@@ -899,4 +899,24 @@ Staging now runs `3632ce1`. The UAT29A data (4 accounts, 4 staff records, projec
 
 ---
 
+## Phase 29B — Gate 1 (backend: company-time "today", `/me/work-logs` tie-breaker and company day)
+
+Branch `claude/amazing-brahmagupta-dbsrjc`, from `main` at `496bd5c` (PR #64). Run in this AI sandbox (PHP 8.4, SQLite in-memory per `phpunit.xml`).
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `tests/Feature/Api/V1/WorkLogs/WorkLogCompanyDayTest.php` (9 tests) | Automated | PASS | Company timezone `Asia/Manila`. At **00:30 Manila** (16:30 UTC the previous day): self-service create for the Manila today → 201, for the Manila tomorrow → 422 with "The work date cannot be later than today."; self-service update the same; Administrator create and update the same. At 23:30 Manila: today 201, tomorrow 422. `meta.company_day` = `{2026-10-10, Asia/Manila}` at 00:30 Manila, with `data`/`links`/`meta` and every paginator `meta` key still present; it turns from 2026-10-09 to 2026-10-10 between 15:59 and 16:00 UTC. No linked Staff record → still `403` with the same message (R-13). Five logs with the same `work_date` and `created_at` over `per_page=2` pages come back once each, newest id first, and the SQL contains `order by "work_date" desc, "created_at" desc, "id" desc`. |
+| `WorkLogTest::test_work_date_cannot_be_in_the_future` (rewritten) | Automated | PASS | Now uses the company tomorrow. **Shown to be necessary:** the old `now()->addDay()` version, run in a temporary test at 17:00 UTC with a Manila company day, got `201` instead of `422`; the temporary test was deleted. The other 38 existing work-log tests are unchanged and pass. |
+| Mutation checks | Manual (AI) | PASS | Each made temporarily, the work-log tests run, and the file restored; all 8 caught: restoring the UTC `before_or_equal:today` in each of the four requests (1 failure each); dropping the custom message (3); dropping the date ceiling altogether (5); removing the `id` tie-breaker (1); computing `meta.company_day` from the UTC date (2). |
+| Full `php artisan test` | Automated | PASS | 1,178/1,178 (3,359 assertions): 1,169 after 29A plus these 9. One existing test changed (above). |
+| `composer validate --strict` | Automated | PASS | — |
+| `composer audit --locked` | Automated | PASS | No advisories. |
+| `vendor/bin/pint --test` | Automated | PASS | — |
+| `vendor/bin/phpstan analyse` (level 5) | Automated | PASS | 0 errors. |
+| MySQL | — | Not run | The ORDER BY is plain columns; the date rule is PHP-side. To be exercised at staging. |
+| Mobile | — | Not affected | No `apps/mobile` change in Gate 1. |
+| UAT | — | NOT RUN | UAT-29B-01…08 `NOT RUN` (not yet runnable). |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*

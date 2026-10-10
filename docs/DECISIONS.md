@@ -660,6 +660,20 @@ Internet → Cloudflare (proxied, SSL/TLS "Full (strict)")
 **Rationale:** One small, read-only, self-scoped endpoint gives the app correct ordering and timezone-correct flags without client-side date logic or widened visibility, and reuses the canonical overdue definition rather than adding a second one.
 **Superseded/reaffirmed:** Refines the `docs/ROADMAP.md` Phase 29 line. DEC-052 and DEC-053 (self-scope, no-profile `200`) and the Phase 11 task authorization rules are reaffirmed. 29B (work logs, including the R-8 UTC "today" fix) and 29C (projects and clients) will be recorded when implemented.
 
+### DEC-055 — Phase 29B: mobile work logs — company-time "today" for every work log, a deterministic `/me/work-logs` order with the company day, and app-side scope choices
+
+**Date:** 2026-10-10
+**Status:** ACCEPTED (approved with the Phase 29 specification revision 3, PR #64, R-10…R-18; backend implemented in Phase 29B Gate 1)
+**Context:** Phase 12's self-service work-log API (`/me/work-logs`) is complete for mobile entry, but discovery (`docs/phases/V1_PHASE_29_DEFINITION.md` §6.1) found that "no later than today" was checked against the **UTC** date in all four work-log form requests, so from 00:00 to 07:59 Manila the company "today" was rejected (R-8). The list also had no unique tie-breaker and gave the client no company day.
+**Decision** (R-10…R-18, all approved as written):
+1. **Company "today" for every work log (R-10):** `StoreMyWorkLogRequest`, `UpdateMyWorkLogRequest`, `StoreWorkLogRequest` and `UpdateWorkLogRequest` validate `work_date` as no later than `OverdueTasks::todayInCompanyTimezone()` (shared trait `LimitsWorkDateToCompanyToday`), with one message: "The work date cannot be later than today." Self-service and Administrator alike.
+2. **Deterministic `GET /me/work-logs` (R-11):** `work_date DESC, created_at DESC, id DESC`. The visible order is unchanged.
+3. **Company day in the list (R-12):** an additive `meta.company_day {date, timezone}`; the paginator's `data`, `links` and `meta` keys are unchanged.
+4. **No API change for a missing profile (R-13):** `/me/work-logs` still answers `403` without a linked Staff record; the app shows its no-profile state for a `403` that survives the `/auth/me` re-check.
+5. **Mobile scope (R-14…R-18; Gates 2–3):** the "what for" picker offers my open assigned tasks (`/me/tasks`) and my non-closed member projects (`/projects?member=`), with no new endpoint; entry from More and from a task's detail (not cancelled tasks); no day totals; a 365-day date picker and hours-plus-minutes duration; discard and delete confirmations. These are presentation choices; the API's eligibility, ownership and field rules stay authoritative.
+**Rationale:** One definition of "today" across Home, Tasks, reports and work logs; stable paging; no device-clock date logic; no change to the established Phase 12 contract beyond additive data.
+**Superseded/reaffirmed:** Refines Phase 12's `before_or_equal:today`. DEC-052 (company day) and DEC-054 (self-scoped `/me/tasks`) are reaffirmed. The `per_page` cap and `q` escaping on legacy endpoints remain Phase 36 items.
+
 ---
 
 ## Template for Future Decisions

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\WorkLogs;
 
+use App\Http\Requests\WorkLogs\Concerns\LimitsWorkDateToCompanyToday;
 use App\Http\Requests\WorkLogs\Concerns\ResolvesWorkLogReferences;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -19,6 +20,7 @@ use Illuminate\Validation\Rule;
  */
 class StoreWorkLogRequest extends FormRequest
 {
+    use LimitsWorkDateToCompanyToday;
     use ResolvesWorkLogReferences;
 
     public function authorize(): bool
@@ -35,7 +37,7 @@ class StoreWorkLogRequest extends FormRequest
             'staff_id' => ['required', 'string', Rule::exists('staff', 'public_id')],
             'task_id' => ['nullable', 'string', Rule::exists('tasks', 'public_id')],
             'project_id' => ['nullable', 'string', Rule::exists('projects', 'public_id')],
-            'work_date' => ['required', 'date', 'before_or_equal:today'],
+            'work_date' => ['required', ...$this->workDateRules()],
             'duration_minutes' => ['required', 'integer', 'min:1', 'max:1440'],
             'description' => ['required', 'string', 'max:2000'],
         ];

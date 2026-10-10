@@ -4,6 +4,14 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-10 — Phase 29B Gate 1: company-time "today" for work logs, `/me/work-logs` tie-breaker and company day
+- **R-8/R-10:** `StoreMyWorkLogRequest`, `UpdateMyWorkLogRequest`, `StoreWorkLogRequest` and `UpdateWorkLogRequest` now limit `work_date` to the company today (`OverdueTasks::todayInCompanyTimezone()`, via the new `LimitsWorkDateToCompanyToday` trait) instead of the UTC date, with the message "The work date cannot be later than today." Logging for the Manila today now works from 00:00 to 07:59 local time.
+- **R-11:** `GET /api/v1/me/work-logs` orders `work_date DESC, created_at DESC, id DESC`. The visible order is unchanged.
+- **R-12:** `GET /api/v1/me/work-logs` adds `meta.company_day {date, timezone}`; the paginator's keys are unchanged.
+- Tests: 9 new in `WorkLogCompanyDayTest` (00:30 and 23:30 Manila, create and update, self-service and Administrator; the company day around Manila midnight; the unchanged no-profile `403`; stable paging plus the ORDER BY). `test_work_date_cannot_be_in_the_future` rewritten against the company date: the old `now()->addDay()` version was shown to accept the date (201) at 17:00 UTC with a Manila company day. Full suite 1,178/1,178. Pint, PHPStan level 5, `composer validate --strict` and `composer audit --locked` pass. 8 mutation checks all caught.
+- Docs: DEC-055; `04_API_CONVENTIONS.md`; `05_SECURITY_MODEL.md` (Work Logs); the spec status; `CURRENT_STATE.md`; `TEST_STATUS.md`; UAT-29B-01…08 added as `NOT RUN`.
+- No migration, permission, dependency, mobile or configuration change. Gates 2–4 are not started.
+
 ### 2026-10-10 — Phase 29 specification revision 3: 29B — Work logs specified (docs only; R-10…R-18 approved)
 - `docs/phases/V1_PHASE_29_DEFINITION.md` §6 rewritten from an outline into a full 29B specification after read-only discovery on `main` at `c6c6812`.
 - **Findings:** the work-log "today" rule is UTC in **all four** work-log requests (self-service and Administrator), confirming R-8; `GET /me/work-logs` has no unique tie-breaker; its response has no company day; it answers `403` without a linked profile; picker sources already exist (`/me/tasks`, `/projects?member=`).

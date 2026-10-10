@@ -8,7 +8,9 @@ use App\Models\Staff;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\WorkLog;
+use App\Support\Reporting\OverdueTasks;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -270,9 +272,14 @@ class WorkLogTest extends TestCase
         $project = Project::factory()->create();
         ProjectMembership::factory()->for($project, 'project')->for($staff, 'staff')->create();
 
+        // The company tomorrow (Phase 29B, R-10): a UTC `now()->addDay()`
+        // can equal the company today when the company zone is ahead of
+        // UTC, which would make this test depend on the time of day.
+        $companyTomorrow = Carbon::parse(OverdueTasks::todayInCompanyTimezone())->addDay()->toDateString();
+
         $this->postJson('/api/v1/me/work-logs', [
             'project_id' => $project->public_id,
-            'work_date' => now()->addDay()->toDateString(),
+            'work_date' => $companyTomorrow,
             'duration_minutes' => 30,
             'description' => 'X',
         ])->assertUnprocessable()->assertJsonValidationErrors('work_date');

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\WorkLogs;
 
+use App\Http\Requests\WorkLogs\Concerns\LimitsWorkDateToCompanyToday;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -13,6 +14,8 @@ use Illuminate\Foundation\Http\FormRequest;
  */
 class UpdateWorkLogRequest extends FormRequest
 {
+    use LimitsWorkDateToCompanyToday;
+
     public function authorize(): bool
     {
         return true;
@@ -27,7 +30,7 @@ class UpdateWorkLogRequest extends FormRequest
             'staff_id' => ['prohibited'],
             'task_id' => ['prohibited'],
             'project_id' => ['prohibited'],
-            'work_date' => ['sometimes', 'required', 'date', 'before_or_equal:today'],
+            'work_date' => ['sometimes', 'required', ...$this->workDateRules()],
             'duration_minutes' => ['sometimes', 'required', 'integer', 'min:1', 'max:1440'],
             'description' => ['sometimes', 'required', 'string', 'max:2000'],
         ];

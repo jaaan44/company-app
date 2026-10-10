@@ -1,6 +1,6 @@
 # Phase 29 — Work: Tasks, Work Logs, Projects & Clients (Mobile) — Specification
 
-**Status:** Revision 3 (2026-10-10): §6 specifies 29B — Work logs in full. **Decisions R-10…R-18 approved as written by the product owner (2026-10-10).** 29B is **not yet authorized for implementation**; each gate needs its own authorization. Everything outside §6 (the approved revision 2, R-1…R-9, and the 29A sections) is unchanged. **29A: COMPLETE — FORMALLY CLOSED 2026-10-10** (PR #61, `3632ce1`; UAT-29A-01…07 PASS). 29C is not started.
+**Status:** Revision 3 (2026-10-10): §6 specifies 29B — Work logs in full. **Decisions R-10…R-18 approved as written by the product owner (2026-10-10).** **29B AUTHORIZED — IN PROGRESS: Gate 1 (backend) implemented** (2026-10-10). Gates 2–4 each need their own authorization. Everything outside §6 (the approved revision 2, R-1…R-9, and the 29A sections) is unchanged. **29A: COMPLETE — FORMALLY CLOSED 2026-10-10** (PR #61, `3632ce1`; UAT-29A-01…07 PASS). 29C is not started.
 
 *Previous status line (kept as written):* Revision 2, approved (R-1…R-9 as written, 2026-10-09; merged via PR #60). **29A: COMPLETE — FORMALLY CLOSED 2026-10-10.** Implementation merged (PR #61, `3632ce1e821ccaca205f19abf5196e3df54fd35b`) and deployed to staging; physical-device UAT-29A-01…07 all **PASS** (2026-10-10; `docs/testing/UAT_LOG.md`). The §5.4 table keeps its wording as specified; it is not the results record. **29B and 29C are not started**; each needs its own explicit authorization, and 29B its detailed revision first (`CLAUDE.md` §1/§8).
 
