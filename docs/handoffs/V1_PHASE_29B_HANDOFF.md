@@ -1,6 +1,6 @@
 # Phase 29B — Work: Work Logs (Mobile) — Handoff
 
-**Status: implementation complete and merged (PR #65, `7e29ffe`); UAT preparation runbook written — pending staging deployment and product-owner UAT. Phase 29B is NOT formally closed.** See the addendum at the end. Phase 29C (Projects & Clients) is not started and not authorized.
+**Status: COMPLETE — Phase 29B formally closed 2026-10-10.** Physical-device UAT-29B-01…08 all `PASS`; see the final addendum. Earlier status lines: *implementation complete — pending PR review/CI, merge, staging deployment and product-owner UAT*, then *merged (PR #65) and UAT runbook written*. Each addendum below was true when it was written. Phase 29C (Projects & Clients) is not started and not authorized.
 
 ## 1. Phase Identification
 
@@ -233,3 +233,24 @@ Then run UAT-29B-01…08 as listed in `docs/testing/UAT_LOG.md`.
 - **Rehearsal:** on scratch SQLite databases only, including the refusals, the all-or-nothing `rotate`, a non-UAT data snapshot and the runbook's own extraction path. Results are in `TEST_STATUS.md`. Its `verify` stage is the first MySQL check of the new `/me/work-logs` ordering.
 - **Changes from §14:** dedicated `uat29b.*` accounts (two, including the no-profile one); the membership removal and token revocation are script stages, not ad hoc commands.
 - **Status:** nothing is deployed or seeded on staging. UAT-29B-01…08 remain `NOT RUN`. Phase 29B is not closed.
+
+## Addendum — Staging Deployment, UAT and Formal Closure (2026-10-10)
+
+*Operator- and product-owner-reported; this AI session had no VPS or device access. Full record: `docs/testing/TEST_STATUS.md`, "Phase 29B — staging deployment, UAT data and physical-device UAT".*
+
+- **Runbook merged:** PR #66 (`491215a`).
+- **Deployment:** staging runs `7e29ffe809c1282c4c9f7e177087cee02fe8410d` (fast-forward from `3632ce1`); 45 Ran, none pending; `Asia/Manila`; only `127.0.0.1:8012`; MySQL healthy. Smoke tests `/up` 200, `/login` 200, `/me/home`, `/me/tasks`, `/me/work-logs`, `/projects` all 401. Backup `company-app-20261010-105229.sql`, 131,099 bytes.
+- **UAT:** UAT-29B-01…08 all **`PASS`** (2026-10-10), reported by the product owner. No defects or observations were reported.
+- **Not supplied:** the `seed`, `verify`, `todaycheck` and `exposure` outputs, the APK build output and its SHA-256, and the `adb install` output. Recorded as gaps, not invented.
+- **Security incident (open, non-blocking by the product owner's decision):** a stray untracked file in the staging checkout root (13,067 bytes, created 2026-10-10 00:59 UTC) whose **name contains a live UAT password** (the operator confirmed it matches a stored UAT password; the account set was not identified). The name appeared in an AI chat session, so the password is treated as exposed. The recommended `rotate` was **deferred by the product owner's decision** (2026-10-10); deleting the file with `shred` was recommended, but its deletion was not confirmed. The file name and the password are deliberately not recorded anywhere.
+- **Runbook correction learned in use:** list backups with `ls -lt /home/deploy/backups/company-app-*.sql | head -3` (newest first); the `| tail -2` form sorts by name and can miss the new dump.
+- **Closure:**
+  - **Implemented:** yes.
+  - **Tested automatically:** yes (backend 1,178, Flutter 421).
+  - **Manually verified on a device:** yes, by the product owner through UAT.
+  - **UAT:** `PASS`.
+  - **Deployed:** staging `7e29ffe`.
+  - **Formally closed:** **yes, 2026-10-10.**
+  - **Carried forward, non-blocking:** the deferred password rotation and the stray file (above); the 29A carry-forwards (device-timezone "Completed" date; shared UI to `core/` and `per_page`/`q` hardening in Phase 36); the empty `company-app_company-app` network on the VPS; the UAT29B, UAT29A, UAT28 and UAT27 staging data, left in place.
+
+**Phase 29C — Projects & Clients has not started.** It needs its detailed specification revision and explicit authorization (`CLAUDE.md` §8).
