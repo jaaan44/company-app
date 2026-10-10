@@ -956,4 +956,22 @@ Branch `claude/amazing-brahmagupta-dbsrjc`, on Gate 2 (`90dfb70`). Run in this A
 
 ---
 
+## Phase 29B — Gate 4 (final integration review)
+
+Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`733d0fc`), confirmed up to date with `main` (`496bd5c`).
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `composer validate --strict` / `composer audit --locked` | Automated | PASS | Valid; no advisories. |
+| `vendor/bin/pint --test` / `vendor/bin/phpstan analyse` (level 5) | Automated | PASS | 0 errors. |
+| `php artisan test` | Automated | PASS | 1,178/1,178 (3,359 assertions). |
+| `flutter pub get` / `dart format` / `flutter analyze` | Automated | PASS | `pubspec` unchanged; 0 files to format; no issues. |
+| `flutter test` | Automated | PASS | 421/421. |
+| Contract parity (real API → app) | Manual (AI), temporary tests | PASS | A scratch Laravel test recorded 31 responses for a Staff user and a Manager in `Asia/Manila` at 00:30: `GET /me/work-logs` (25 and 1 per page; `meta.company_day` `{2026-10-10, Asia/Manila}`, the paginator keys intact, same-date logs newest first); `POST` for a project, a project task and an independent task (1440 minutes) → 201; `422` for a future date ("The work date cannot be later than today."), a non-member project, both task and project, and zero minutes plus a missing description; `PATCH` → 200; `PATCH` with `task_id` → 422 prohibited; `DELETE` → 204; someone else's log → 404; `/me/profile`; `/projects?member=` (the Manager sees only their two member projects, one completed); and the no-profile `403`. Non-ASCII project, task and description text. A scratch Flutter test replayed them through the production models, `WorkLogsApiClient`, `WorkLogFormController` (each `422` on the right field or at the top; delete `204` and `404` both "gone") and `MyWorkLogsController` (`403` → no-profile, session kept): **7/7**. Two scratch-test mistakes were fixed on the way (parsing the empty `204` body; a duplicated unique project code). Both files were deleted; nothing was committed. |
+| Real device / emulator | — | Not run | No device in this sandbox. |
+| MySQL | — | Not run | Plain-column ORDER BY; to be exercised at staging. |
+| UAT | — | NOT RUN | UAT-29B-01…08 `NOT RUN`. |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*

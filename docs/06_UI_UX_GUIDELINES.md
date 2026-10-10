@@ -79,6 +79,19 @@ Conventions this phase establishes for writes:
 - **No confirmation dialog for reversible changes:** a status change can be undone by choosing again, so it doesn't use the destructive-action `AlertDialog` (that convention stays for hard-to-reverse actions).
 - **After a change**, every other screen showing that data (lists, Home counts) refreshes quietly, so returning to it never shows stale state.
 
+### Work logs — list and the first full form (implemented, Phase 29B — pending merge and UAT)
+
+- **My work logs** (More → "My work logs"): date group headers "Today", "Yesterday", then "Wed 7 Oct" (the year added when it isn't the company year), judged against the server's company day. Each row: the task title or project name, the project under a task, the description (two lines) and the duration on the right ("1 h 30 min", "45 min", "2 h"). An extended **Add** button; the list keeps space at its end so the button never covers the last row. Empty: "No work logged yet."; no profile: "No staff profile is linked to this account." (no Add button).
+- **Log work / Edit work log:** one column, in this order — **What was this for?**, **Date**, **Time spent** (Hours, Minutes), **What did you do?**, then **Save** (and **Delete** when editing). A task's detail offers **Log work** (not for cancelled tasks), opening the form with the task fixed.
+
+Form conventions this phase establishes (extending 29A's write conventions):
+- **Picker fields:** a value that's chosen rather than typed (what-for, date) is an outlined, labelled field with an icon; tapping it opens a bottom sheet or the system date picker. Read-only when it can't change (editing; opened from a task) — no arrow, no tap.
+- **Ranges are enforced in the control** where possible (the date picker can't go past the company today or more than 365 days back), and checked again before sending.
+- **Numbers:** short digit-only fields (Hours, Minutes), side by side, wrapping under large text.
+- **Errors:** each field's message directly under it, in the `error` role, announced (live region); errors that aren't about one field (eligibility, offline, a refusal) in an error-container banner at the top. Editing a field clears its error. Nothing is sent while any check fails.
+- **Save:** a full-width `FilledButton` that shows a small spinner and disables the form while saving; success is a `SnackBar` ("Work logged.", "Changes saved.", "Work log deleted.") and the form closes.
+- **Leaving:** with unsaved changes, "Discard changes?" (Keep editing / Discard); without changes, no prompt. **Deleting:** "Delete this work log?" (Cancel / Delete in the error colour) — the destructive-action rule.
+
 ## Admin Backoffice (Web) — Navigation
 
 Primary sections:

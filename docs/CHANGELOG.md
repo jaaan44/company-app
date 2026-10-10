@@ -4,6 +4,17 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-10 — Phase 29B Gate 4: final integration review, handoff and implementation PR
+- Final gates on the complete branch: backend 1,178/1,178 with Pint, PHPStan level 5, `composer validate --strict` and `composer audit --locked` (no advisories); Flutter 421/421 with format and analyze clean and `pubspec` unchanged.
+- **Contract parity:** 31 real Laravel responses for a Staff user and a Manager (Manila, 00:30) — the list, every create kind, every `422` kind, update, prohibited update, delete, someone else's `404`, `/me/profile`, `/projects?member=` and the no-profile `403` — replayed through the production Flutter code: 7/7 (temporary tests, not committed). It confirmed that `member=` limits a Manager to member projects and that same-date logs come newest first.
+- Docs:
+  - new `docs/handoffs/V1_PHASE_29B_HANDOFF.md`;
+  - `02_ARCHITECTURE.md` §36 (Work — Work logs);
+  - `06_UI_UX_GUIDELINES.md` (Work logs and the form conventions as built: picker fields, ranges in the control, number fields, errors per field and at the top, save, discard and delete);
+  - spec status → 29B implementation complete, pending PR/CI, merge, staging and UAT;
+  - UAT-29B notes updated (still `NOT RUN`).
+- 29B is **not** closed, and nothing is deployed.
+
 ### 2026-10-10 — Phase 29B Gate 3: work-log screens, "Log work" and routes
 - **My work logs** (`lib/features/work_logs/presentation/my_work_logs_page.dart`, More → "My work logs"): logs grouped under "Today", "Yesterday" and then the date (judged against the company day); each row shows the task or project, the project under a task, the description and the duration; Phase 28 paging and retry row; pull-to-refresh; "No work logged yet."; the no-profile state without an Add button; an **Add** button. It refreshes after any confirmed save or delete, including from a task.
 - **Add/edit form** (`work_log_form_page.dart`): "What was this for?" (my open tasks, my open projects; read-only when editing or from a task), the date (default and maximum the company today, 365 days back), hours and minutes, the description with a counter, Save with progress; errors under each field and eligibility errors at the top; "Work logged." / "Changes saved." / "Work log deleted."; "Discard changes?" and "Delete this work log?" confirmations (R-18).
