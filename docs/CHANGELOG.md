@@ -4,6 +4,13 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-10 — Phase 29B UAT preparation runbook (docs only)
+- PR #65 merged into `main` as `7e29ffe` (Backend CI and Mobile CI green on the merge commit).
+- New `docs/testing/PHASE_29B_UAT_PREPARATION.md`: staging redeploy from `3632ce1` to `7e29ffe` (no migration, no new route), the APK build and provenance (expected 421 / work_logs 91 / tasks 95 / home 66 / network 29) with `adb install`, the UAT29B data plan, data steps and per-scenario UAT notes. Each operator step gives where to run it, the exact commands, what it does, the expected output and what to paste back. The 29A corrections (backup listing, always build the APK) are included.
+- New operator script `uat29b_data.php` (embedded in §7, SHA-256 `327b56b761740ab8c7f771451250e17690c39933462d6240aadba8a7bb10ad0f`): stages `plan`, `seed`, `verify`, `todaycheck` (R-8 at 00:30 Manila, nothing saved), `unjoin`, `revoke`, `exposure`, `rotate`. Rehearsed on scratch SQLite only, including a mutation check of `todaycheck`, the refusals, an all-or-nothing `rotate` and the extraction path.
+- Docs: the 29B handoff addendum, `CURRENT_STATE.md`, `TEST_STATUS.md` (rehearsal), the UAT-29B notes (still `NOT RUN`).
+- No code change. Nothing deployed or seeded; 29B is not closed.
+
 ### 2026-10-10 — Phase 29B Gate 4: final integration review, handoff and implementation PR
 - Final gates on the complete branch: backend 1,178/1,178 with Pint, PHPStan level 5, `composer validate --strict` and `composer audit --locked` (no advisories); Flutter 421/421 with format and analyze clean and `pubspec` unchanged.
 - **Contract parity:** 31 real Laravel responses for a Staff user and a Manager (Manila, 00:30) — the list, every create kind, every `422` kind, update, prohibited update, delete, someone else's `404`, `/me/profile`, `/projects?member=` and the no-profile `403` — replayed through the production Flutter code: 7/7 (temporary tests, not committed). It confirmed that `member=` limits a Manager to member projects and that same-date logs come newest first.

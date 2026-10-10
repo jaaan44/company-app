@@ -1,6 +1,6 @@
 # Phase 29B — Work: Work Logs (Mobile) — Handoff
 
-**Status: implementation complete — pending PR review/CI, merge, staging deployment and product-owner UAT. Phase 29B is NOT formally closed.** Phase 29C (Projects & Clients) is not started and not authorized.
+**Status: implementation complete and merged (PR #65, `7e29ffe`); UAT preparation runbook written — pending staging deployment and product-owner UAT. Phase 29B is NOT formally closed.** See the addendum at the end. Phase 29C (Projects & Clients) is not started and not authorized.
 
 ## 1. Phase Identification
 
@@ -219,3 +219,17 @@ Then run UAT-29B-01…08 as listed in `docs/testing/UAT_LOG.md`.
 - **Awaiting UAT:** yes (UAT-29B-01…08 `NOT RUN`).
 - **Deployed:** no.
 - **Formally closed:** no.
+
+## Addendum — Merge and UAT Preparation Runbook (2026-10-10)
+
+- **Merged:** PR #65 merged into `main` as `7e29ffe809c1282c4c9f7e177087cee02fe8410d`, a standard merge commit with parents `496bd5c` and `c4ee043`. Backend CI and Mobile CI passed on the merge commit, and the merged tree is identical to the reviewed head. This is the source for both the staging deployment and the final UAT APK.
+- **Runbook:** `docs/testing/PHASE_29B_UAT_PREPARATION.md`, which turns §14 into concrete operator steps. Each step states where to run it, the exact commands, what it does, the expected output, and what to paste back (never a password):
+  - §2: the staging redeploy from `3632ce1` (no migration, no new route; caches rebuilt), with the 29A backup-listing correction and a `/me/work-logs` smoke test;
+  - §3: the APK build (always run) and provenance, expected counts 421 / work_logs 91 / tasks 95 / home 66 / network 29, plus `adb install`;
+  - §4–§5: the UAT29B data plan and steps (extract and SHA, `plan`, `seed`, `verify`, `todaycheck`, a same-day re-`seed`, `exposure`);
+  - §6: per-scenario UAT notes, including `unjoin` (the server-422 test in UAT-29B-04) and `revoke` (UAT-29B-07);
+  - §7: the script `uat29b_data.php`, SHA-256 `327b56b761740ab8c7f771451250e17690c39933462d6240aadba8a7bb10ad0f`.
+- **UAT-29B-06 (R-8):** the `todaycheck` stage runs the real `StoreMyWorkLogRequest` validation with that process's clock at 00:30 Manila on the next company day: the company "today" must be accepted and "tomorrow" rejected. It saves nothing. With the old UTC rule restored, the same stage reports `PROBLEM` (mutation check, scratch only).
+- **Rehearsal:** on scratch SQLite databases only, including the refusals, the all-or-nothing `rotate`, a non-UAT data snapshot and the runbook's own extraction path. Results are in `TEST_STATUS.md`. Its `verify` stage is the first MySQL check of the new `/me/work-logs` ordering.
+- **Changes from §14:** dedicated `uat29b.*` accounts (two, including the no-profile one); the membership removal and token revocation are script stages, not ad hoc commands.
+- **Status:** nothing is deployed or seeded on staging. UAT-29B-01…08 remain `NOT RUN`. Phase 29B is not closed.

@@ -974,4 +974,28 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`733d0fc`), confirmed up t
 
 ---
 
+## Phase 29B — UAT preparation (runbook and data script rehearsal, 2026-10-10)
+
+`docs/testing/PHASE_29B_UAT_PREPARATION.md`; script `uat29b_data.php` revision 1, SHA-256 `327b56b761740ab8c7f771451250e17690c39933462d6240aadba8a7bb10ad0f`. Rehearsed in this AI sandbox on a disposable scratch SQLite database (all 45 migrations + `RolePermissionSeeder`, `SCHEDULING_COMPANY_TIMEZONE=Asia/Manila`, company day 2026-10-10) at `main` `7e29ffe`, run as the runbook runs it (`php -- <stage> < script`), with a non-UAT control user, staff record, project and work log in place. Nothing touched staging. MySQL was not available here; the runbook's `verify` step is the first MySQL check.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `plan` (read-only) | Manual, scratch DB | PASS | Company day printed; both accounts absent; staff record absent; 0 of 3 projects, 0 of 4 tasks, 0 of 30 logs; roles 3/3. |
+| `seed` | Manual, scratch DB | PASS | Exit 0. STDOUT went to a `600` file with exactly 2 `email password` lines (20-character passwords); all status went to STDERR. |
+| `seed` re-run | Manual, scratch DB | PASS | Exit 0, 0 bytes on STDOUT, "password unchanged" for both. After `unjoin`, a re-run restored the Roof Repair membership. |
+| `verify` (real controllers) | Manual, scratch DB | PASS | `meta.company_day` `{2026-10-10, Asia/Manila}`; page 1/2 25 of 30 and page 2/2 5 of 30 in the §4 order (Planning meeting above Checked boiler pressure on the same date; Routine entry 01…21, then 22…26); picker tasks Inspect boiler and Call the vendor only; picker projects Boiler Upgrade and Roof Repair, Archive hidden; no-profile `403 No staff record is linked to this account.` |
+| `todaycheck` (R-8) | Manual, scratch DB | PASS | Clock 2026-10-11 00:30 Manila (2026-10-10 16:30 UTC): 2026-10-11 accepted, 2026-10-12 rejected with "The work date cannot be later than today."; `R-8 check: OK`, exit 0. Work-log count unchanged (nothing saved). |
+| `todaycheck` mutation | Manual, scratch DB | PASS | With `LimitsWorkDateToCompanyToday` temporarily reverted to `before_or_equal:today` (UTC), the company "today" was rejected and the stage printed `R-8 check: PROBLEM`, exit 1. The file was restored (`git checkout`). |
+| `unjoin` | Manual, scratch DB | PASS | `rows=1`; `verify` then listed only Boiler Upgrade in the picker. |
+| `revoke` / `exposure` | Manual, scratch DB | PASS | With tokens pre-created for both UAT29B accounts and a control user, `exposure` reported 1 each; `revoke` deleted only `uat29b.staff`'s (`api_tokens_revoked=1`); the control user's token was untouched. |
+| `rotate` | Manual, scratch DB | PASS | Exit 0; `600` file, 2 lines; tokens revoked; `exposure` then 0/0 for both. |
+| Refusals | Manual, scratch DB | PASS | `rotate` and `revoke` with `uat29b.staff` missing: exit 1, nothing on STDOUT. `seed` when the UAT29B staff record is linked to a non-UAT29B account: exit 1, nothing on STDOUT, data identical (snapshot). Unknown stage: exit 1. |
+| All-or-nothing `rotate` | Manual, scratch DB (injected failure) | PASS | A failure on the second account: exit 1, nothing on STDOUT, both password hashes and remember tokens unchanged, although STDERR had already printed `rotated …` for the first. |
+| Non-UAT29B data untouched | Manual, scratch DB | PASS | A hash of all non-UAT29B users, staff, projects, memberships, tasks, work logs and tokens was identical across `seed`, re-`seed`, `verify`, `todaycheck`, `unjoin`, `revoke`, `exposure`, `rotate` and the refusals. |
+| Runbook extraction path | Manual | PASS | The §5 `awk` command applied to the committed runbook reproduces the script byte-for-byte (same SHA-256). |
+| Credentials handling | — | — | Every scratch credentials file was `shred`ded; only email addresses and password lengths were ever printed. |
+| UAT | — | NOT RUN | UAT-29B-01…08 `NOT RUN`. |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*
