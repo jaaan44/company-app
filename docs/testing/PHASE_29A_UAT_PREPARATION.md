@@ -4,6 +4,8 @@
 
 **Status (as written):** UAT-29A-01…07 are `NOT RUN`. This runbook prepares the deployment, the APK and the data; it runs no scenario.
 
+> **Final status (2026-10-10):** the operator ran §2 (staging redeploy to `3632ce1`), §3 (UAT APK, SHA-256 `D6242D79…1460`, full provenance supplied) and §5 (UAT29A data). The product owner reported UAT-29A-01…07 **PASS**. **Phase 29A is formally closed.** The execution record is in `docs/testing/TEST_STATUS.md`, "Phase 29A — staging deployment, UAT data and physical-device UAT". Corrections learned in use: the §2 backup listing `ls -l /home/deploy/backups/ | tail -1` can show another directory instead of the dump — use `ls -l /home/deploy/backups/company-app-*.sql | tail -2`; and the §3 build step must be run (and shown) every time, because a stale `build\` output is otherwise indistinguishable. The sections below are kept as written. The UAT29A data stays on staging; any cleanup needs its own authorization.
+
 **Lessons carried over from Phases 27 and 28:**
 - **No password ever leaves the VPS terminal.**
   - Passwords go to a `0600` file, then into a password manager, and the file is shredded.

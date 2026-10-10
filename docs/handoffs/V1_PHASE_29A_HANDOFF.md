@@ -1,6 +1,6 @@
 # Phase 29A — Work: Tasks (Mobile) — Handoff
 
-**Status: implementation complete — pending PR review/CI, merge, staging deployment and product-owner UAT. Phase 29A is NOT formally closed.** Phase 29B (Work logs) and 29C (Projects & Clients) are not started and not authorized.
+**Status: COMPLETE — Phase 29A formally closed 2026-10-10.** Physical-device UAT-29A-01…07 all `PASS`; see the final addendum. The status line as first written was: *implementation complete — pending PR review/CI, merge, staging deployment and product-owner UAT. Phase 29A is NOT formally closed.* Each addendum below was true when it was written. 29B and 29C are not started.
 
 ## 1. Phase Identification
 
@@ -255,3 +255,33 @@ Then run UAT-29A-01…07 as listed in `docs/testing/UAT_LOG.md`.
 - **Rehearsal:** the script was rehearsed on scratch databases only, including its refusals, the all-or-nothing `rotate` and the runbook's own extraction path. Results are in `TEST_STATUS.md`. Its `verify` stage doubles as the first MySQL check of the new ordering.
 - **Changes from §14:** dedicated `uat29a.*` accounts (four, including the no-profile one) rather than reusing UAT27/UAT28 ones; and the `reassign`/`revoke` steps are script stages instead of ad hoc commands.
 - **Status:** nothing is deployed or seeded on staging. UAT-29A-01…07 remain `NOT RUN`. Phase 29A is not closed.
+
+## Addendum — Staging Deployment, UAT and Formal Closure (2026-10-10)
+
+*Operator- and product-owner-reported; this AI session had no VPS or device access. Full record: `docs/testing/TEST_STATUS.md`, "Phase 29A — staging deployment, UAT data and physical-device UAT".*
+
+- **Deployment:** staging runs `3632ce1e821ccaca205f19abf5196e3df54fd35b`.
+  - Fast-forward from `b6e85c5`; no migration (45 Ran); timezone `Asia/Manila`.
+  - Smoke tests: `/up` 200, `/login` 200, `/me/home` 401, `/me/tasks` 401, `/tasks` 401, `/me/profile` 401; only `127.0.0.1:8012` listening; MySQL healthy (no repeat of the Phase 28 network incident).
+  - Backup reported OK by the operator; file name and size not supplied (the runbook's listing command was wrong).
+- **UAT data:** script SHA-256 verified; `plan`, `seed` (4 accounts; the credentials file was `600` and then shredded), `verify` and `exposure` (no tokens or sessions) all as expected. `verify` was the first MySQL run of the new `/me/tasks` ordering, and it matched the plan exactly, with parity `29/2/1`.
+- **UAT APK:** built from `3632ce1`, 52,534,387 bytes, SHA-256 `D6242D79B42C0804291551823C7DE86A76BD13A310E33CF512D27427A2131460`, debug-signed; local checks 330/330 (tasks 95, home 66, network 29). Unlike Phase 28, the full provenance was supplied.
+- **UAT:** UAT-29A-01…07 all **`PASS`** (2026-10-10), reported by the product owner. No defects or observations were reported.
+- **Not supplied:** the backup file name and size, the `adb install` output, the `reassign`/`revoke` output lines, and the post-UAT `exposure` output. These are recorded as gaps, not invented.
+- **Closure:**
+  - **Implemented:** yes.
+  - **Tested automatically:** yes (backend 1,169, Flutter 330).
+  - **Manually verified on a device:** yes, by the product owner through UAT.
+  - **UAT:** `PASS`.
+  - **Deployed:** staging `3632ce1`.
+  - **Formally closed:** **yes, 2026-10-10.**
+  - No blocking defect is open.
+  - **Carried forward, non-blocking:**
+    - the detail's "Completed" date uses the device timezone (no UTC offset in the task responses);
+    - the Tasks screens' reuse of People widgets and Home formatting (move shared UI to `core/`, Phase 36);
+    - uncapped `per_page` and unescaped `q` on legacy endpoints (Phase 36);
+    - the Phase 28/27/26 carry-forwards;
+    - the untracked `uat27_data.php` in the staging checkout root, and the empty `company-app_company-app` network on the VPS;
+    - the UAT29A (and UAT28/UAT27) staging data, left in place.
+
+**Phase 29B — Work logs has not started.** It needs its detailed specification revision (spec §6) and explicit authorization (`CLAUDE.md` §8). It includes the R-8 work-log "today" UTC fix.

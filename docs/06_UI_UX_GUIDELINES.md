@@ -63,7 +63,7 @@ Conventions this phase establishes for later list screens:
 - **Search** waits about 300 ms after typing pauses, and only the latest search's results are ever shown.
 - **List density:** Material's standard comfortable density proved sufficient for a ~100-person directory, so no denser variant was introduced (see Spacing below).
 
-### Tasks — list, detail and the first write (implemented, Phase 29A — pending merge and UAT)
+### Tasks — list, detail and the first write (implemented, Phase 29A — complete, formally closed 2026-10-10)
 
 - **Tasks tab:**
   - An **Open | Done** `SegmentedButton` at the top; each segment keeps its own list, and Done loads the first time it is shown.
