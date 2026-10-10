@@ -1,6 +1,8 @@
 # Phase 29 — Work: Tasks, Work Logs, Projects & Clients (Mobile) — Specification
 
-**Status:** Revision 2, approved (R-1…R-9 as written, 2026-10-09; merged via PR #60). **29A: COMPLETE — FORMALLY CLOSED 2026-10-10.** Implementation merged (PR #61, `3632ce1e821ccaca205f19abf5196e3df54fd35b`) and deployed to staging; physical-device UAT-29A-01…07 all **PASS** (2026-10-10; `docs/testing/UAT_LOG.md`). The §5.4 table keeps its wording as specified; it is not the results record. **29B and 29C are not started**; each needs its own explicit authorization, and 29B its detailed revision first (`CLAUDE.md` §1/§8).
+**Status:** Revision 3 (2026-10-10): §6 specifies 29B — Work logs in full. **Decisions R-10…R-18 approved as written by the product owner (2026-10-10).** 29B is **not yet authorized for implementation**; each gate needs its own authorization. Everything outside §6 (the approved revision 2, R-1…R-9, and the 29A sections) is unchanged. **29A: COMPLETE — FORMALLY CLOSED 2026-10-10** (PR #61, `3632ce1`; UAT-29A-01…07 PASS). 29C is not started.
+
+*Previous status line (kept as written):* Revision 2, approved (R-1…R-9 as written, 2026-10-09; merged via PR #60). **29A: COMPLETE — FORMALLY CLOSED 2026-10-10.** Implementation merged (PR #61, `3632ce1e821ccaca205f19abf5196e3df54fd35b`) and deployed to staging; physical-device UAT-29A-01…07 all **PASS** (2026-10-10; `docs/testing/UAT_LOG.md`). The §5.4 table keeps its wording as specified; it is not the results record. **29B and 29C are not started**; each needs its own explicit authorization, and 29B its detailed revision first (`CLAUDE.md` §1/§8).
 
 *Status history (kept as written):* Revision 2, approved (R-1…R-9 as written, 2026-10-09; merged via PR #60). **29A implementation complete (Gates 1–4, 2026-10-09) — pending PR review/CI, merge, staging deployment and UAT; not formally closed.** See `docs/handoffs/V1_PHASE_29A_HANDOFF.md`. 29B and 29C each need their own explicit authorization (`CLAUDE.md` §1/§8).
 
@@ -160,15 +162,122 @@ The product owner approved every recommendation from revision 1 as written (2026
 | UAT-29A-06 | Offline: a status change fails clearly, the old status stays, and it works after reconnecting. After the task is reassigned to someone else server-side, saving shows the server's message. After token revocation, the app returns to Login. |
 | UAT-29A-07 | Dark mode and large text on the list and detail. |
 
-## 6. Sub-phase 29B — Work logs (outline; detailed in a revision before it starts)
+## 6. Sub-phase 29B — Work logs (revision 3: specified in full; R-10…R-18 approved 2026-10-10)
 
-- **Screens:**
-  - **My work logs:** More → "My work logs", grouped by date, newest first, paged.
-  - **Add:** from a task's detail ("Log work", task pre-filled) or from the list (choose one of my projects, or one of my independent assigned tasks).
-  - **Edit and delete:** for my own logs; date, duration and description only, matching the API. Deleting asks for confirmation.
-- **Form:** date (default company today, never later), duration in hours and minutes (1 minute to 24 hours), description (≤ 2000 characters). Server `422`s appear per field.
-- **Backend:** the R-8 company-timezone "today" fix, and a project/task picker source (likely `GET /me/tasks` plus `GET /projects`, membership-scoped).
-- UAT-29B-xx defined at that revision.
+*Revision 3 (2026-10-10) replaces revision 2's outline with a full specification, after read-only discovery on `main` at `c6c6812` (29A closed). The product owner approved R-10…R-18 as written (2026-10-10). Implementation needs its own authorization, gate by gate (`CLAUDE.md` §1/§8).*
+
+### 6.1 Current-state findings (read-only discovery)
+
+**The API already supports self-service work logs (Phase 12), with these details:**
+- `GET /api/v1/me/work-logs` (filters `project`, `task`, `from`, `to`; `per_page`, uncapped, default 50), `POST /me/work-logs`, `PATCH /me/work-logs/{public_id}`, `DELETE /me/work-logs/{public_id}` (`204`). No permission; `RequiresLinkedStaff`.
+- **A log references a task or a project, never both and never neither.** With a task, the project is derived from the task by the server.
+- **Eligibility (create only, never re-checked later):** the performer's Staff record is `active`; for a project or a project task, the performer is a **member of that project**; for an independent task, the performer is its **assignee**. Errors are `422` on `task_id`, `project_id` or `staff_id`.
+- **Fields:** `work_date` (required, a date, `before_or_equal:today`), `duration_minutes` (1–1440), `description` (required, ≤ 2000). **An update may change only those three;** `task_id`/`project_id`/`staff_id` are `prohibited`.
+- **Someone else's log:** `404`, not `403` (its existence is itself sensitive).
+- `WorkLogResource`: `public_id`, `staff`, `task {public_id, title}`, `project {public_id, name}`, `work_date`, `duration_minutes`, `description`, `created_by`, `created_at`, `updated_at`.
+- Work logs are not audit-logged and appear nowhere on `/me/home`.
+
+**Gaps and defects found:**
+1. **"Today" is UTC (R-8, confirmed).** All four work-log form requests — the self-service `StoreMyWorkLogRequest`/`UpdateMyWorkLogRequest` **and** the Administrator `StoreWorkLogRequest`/`UpdateWorkLogRequest` — use `before_or_equal:today` with `app.timezone = UTC`. From 00:00 to 07:59 Manila time, the Manila "today" is rejected as a future date.
+   - The existing test `test_work_date_cannot_be_in_the_future` uses `now()->addDay()` in UTC. Once the rule is in company time, that date can equal the Manila today (from 16:00 UTC), so the test must be rewritten against the company date or it becomes time-of-day dependent.
+2. **`GET /me/work-logs` has no unique tie-breaker:** it orders by `work_date DESC, created_at DESC`. Two logs created in the same second on the same date can be skipped or repeated across pages (the Phase 28 R-6 / 29A R-9 problem).
+3. **No company day in the list response.** The form's default and maximum date must be the company "today", which the device clock can't provide (the DEC-052 rule).
+4. **No linked Staff record → `403`** ("No staff record is linked to this account.") on every `/me/work-logs` call, unlike the newer `/me/*` endpoints, which return `200` with `null`.
+5. **Picker sources exist:**
+   - my assigned open tasks: `GET /me/tasks?state=open` (29A);
+   - my projects: `GET /projects?member=<own staff public_id>` (Phase 10 filter, tested). Staff are already limited to member projects; Managers and Administrators hold `projects.view`, so without `member` they would see every project, most of which they couldn't log against. `GET /projects` orders by `name` only (no tie-breaker) and does not filter by project status.
+
+**Mobile:** the write foundation from 29A (`ApiClient` POST/PATCH/DELETE, `ApiValidationException` with field errors, `204`) is ready. No form screen exists yet; the 06 guidelines already set the form conventions (`TextFormField`, inline per-field errors, submit disabled in flight, `AlertDialog` for destructive actions).
+
+### 6.2 Product decisions for 29B (approved as written, 2026-10-10)
+
+| # | Decision | Why | Not chosen |
+|---|---|---|---|
+| **R-10** | **Fix "today" in all four work-log requests**, self-service and Administrator, using the company date (`CompanyTimezone`). Error message: "The work date cannot be later than today." | One rule everywhere; the Administrator Backoffice has the same defect. | Self-service only (leaves the Admin bug). |
+| **R-11** | **Tie-breaker on `GET /me/work-logs`:** `work_date DESC, created_at DESC, id DESC`. | Stable paging; visible order unchanged. | Leave it. |
+| **R-12** | **Add `meta.company_day` `{date, timezone}` to `GET /me/work-logs`** (additive; the paginator's `meta` keeps its keys). | The form's default and maximum date come from the server, never the device clock (DEC-052). | Reuse Home's company day across features. |
+| **R-13** | **No-profile state:** keep the API's `403` unchanged. The app treats a `403` on `GET /me/work-logs` **that survived the `/auth/me` re-check** as "No staff profile is linked to this account." (that is the endpoint's only remaining `403`; no message text is parsed). | No contract change to a Phase 12 endpoint. | Change the list to `200` + `null` like `/me/tasks`. |
+| **R-14** | **"What was this for?" picker** offers (a) **my open assigned tasks** (`/me/tasks?state=open`), and (b) **my projects** (`/projects?member=<my staff public_id>`), hiding completed and cancelled projects in the app. **No new endpoint.** A task chosen shows its project automatically. | Covers every eligible case for normal use without new API; server eligibility stays authoritative (a `422` is shown as-is). | A new `GET /me/projects`; all tasks in my projects. |
+| **R-15** | **Entry points:** More → **"My work logs"** (list with an "Add" button), and **"Log work"** on a task's detail (task pre-filled; offered for any task that isn't cancelled). | Matches the outline; logging against a just-completed task is common. | List only; detail only. |
+| **R-16** | **No day totals in 29B.** Rows show each log's duration; dates are group headers only. | A day can be split across pages, so a client-side total could briefly be wrong; a correct total needs a server aggregate (a later phase). | Client-side totals per loaded day. |
+| **R-17** | **Date picker:** from 365 days ago up to the company today (an existing older log keeps its own date as the lower bound when edited). Duration as **hours + minutes** (0–24 h, 0–59 min; total 1 min–24 h). | Prevents impossible input up front; the API remains authoritative. | Any past date; minutes only. |
+| **R-18** | **Unsaved changes:** leaving a form with edits asks "Discard changes?"; **delete** asks "Delete this work log?" (the 06 destructive-action rule). No undo. | First real forms; avoids silent data loss. | No discard prompt. |
+
+**Kept from revision 2 and 29A:** saves are confirmed, never optimistic (R-7 carried to forms); nothing is retried automatically; a log's task/project can't be changed after creation (API rule; shown read-only when editing).
+
+### 6.3 Backend (Gate 1)
+
+- **R-10:** replace `before_or_equal:today` with the company date in `StoreMyWorkLogRequest`, `UpdateMyWorkLogRequest`, `StoreWorkLogRequest` and `UpdateWorkLogRequest`, with one shared message. `CompanyTimezone`/`OverdueTasks::todayInCompanyTimezone()` is the single definition of "today".
+- **R-11:** `->orderByDesc('id')` after `orderByDesc('created_at')` in `MyWorkLogController::myIndex`.
+- **R-12:** `meta.company_day: {date, timezone}` on `GET /me/work-logs` (via the resource collection's `additional`; the existing `data`, `links` and `meta` keys are unchanged).
+- **No other change:** eligibility, ownership (`404`), field rules, `per_page` (the app always sends 25), and the `403` without a profile all stay as they are.
+- **Tests:**
+  - **the R-8 regression:** at 00:30 Manila (16:30 UTC the previous day), logging for the Manila today succeeds and for the Manila tomorrow fails, on create and update, self-service and Administrator;
+  - the existing future-date test rewritten against the company date (no time-of-day dependence);
+  - the ORDER BY tie-breaker (SQL assertion, as in 29A, because SQLite hides it) and stable paging across identical `work_date`/`created_at`;
+  - `meta.company_day` present and correct around Manila midnight; the rest of the response shape unchanged;
+  - mutation checks as in 29A.
+
+### 6.4 Mobile data and state (Gate 2) — `lib/features/work_logs/`
+
+- **Models:** `WorkLog` (strict `WorkLogResource`), `MyWorkLogsPage` (with `companyDay`), the picker's target (task or project).
+- **`WorkLogsApiClient`:** `fetchMyWorkLogs(page)` (`per_page=25`), `create`, `update` (only date, duration, description), `delete`.
+- **Controllers:**
+  - a list controller (the 29A/28 paging, refresh and stale-response rules; no-profile per R-13; grouping by `work_date` across pages);
+  - a form controller (create/edit; confirmed single-flight save; `422` field errors mapped to the form's fields, with `task_id`/`project_id`/`staff_id` errors shown at the top of the form; offline keeps the entered values);
+  - a picker source (open assigned tasks + my non-closed projects, per R-14);
+  - a session-wide change record (as `TaskChanges`), so the list refreshes after a save or delete made elsewhere, e.g. from a task's detail.
+
+### 6.5 Mobile UI (Gate 3)
+
+- **My work logs** (`/more/work-logs`):
+  - date group headers ("Today", "Yesterday", then "Wed 7 Oct"; judged against `meta.company_day`), newest first;
+  - each row: the task title, or the project name when there's no task; the project under a task; the duration ("1 h 30 min", "45 min"); the description (2 lines);
+  - an **Add** button; paging, pull-to-refresh, the retry row;
+  - empty state "No work logged yet."; no-profile state "No staff profile is linked to this account.";
+  - tapping a row opens it for editing.
+- **Form** (`/more/work-logs/new`, `/more/work-logs/:publicId`, and from a task `/tasks/:publicId/log-work`):
+  - **What for** (picker, R-14; read-only when editing or when opened from a task);
+  - **Date** (date picker, R-17; default the company today);
+  - **Duration** (hours + minutes);
+  - **Description** (multi-line, with a 2000-character counter);
+  - **Save** (disabled while saving; a progress indicator); on success a `SnackBar` ("Work logged." / "Changes saved.") and back;
+  - **Delete** (edit only, with confirmation, R-18).
+- **Task detail:** a **"Log work"** button (not for cancelled tasks, R-15).
+- **More:** a third row, **"My work logs"** (R-8 of Phase 28: each phase adds its own rows).
+
+### 6.6 Data / authorization rules (29B)
+
+- Unchanged API authority: eligibility at creation, ownership (`404` for others' logs), field rules and immutability of task/project.
+- The app's restrictions (no closed projects in the picker, no logging against cancelled tasks, the 365-day picker range) are **presentation choices**, recorded as such, like Phase 28's R-1 and 29A's R-4.
+- **Known risk, accepted:** if the connection drops after the server saved a log but before the app received the reply, the app reports a failure and a retry creates a second log. There's no idempotency key in V1; the duplicate can be deleted. Recorded in the handoff.
+
+### 6.7 29B UAT scenarios (to be added to `UAT_LOG.md` at implementation; all `NOT RUN`)
+
+| ID | Scenario |
+|---|---|
+| UAT-29B-01 | More → My work logs lists my logs grouped by date, newest first, with durations and the task or project; paging and pull-to-refresh work. A user without a profile sees the no-profile state. |
+| UAT-29B-02 | Add a log from the list against one of my projects: the picker shows my open tasks and my non-closed projects only; the date defaults to the company today; the log appears under "Today". |
+| UAT-29B-03 | From a task's detail, "Log work" opens the form with that task fixed; the saved log shows the task and its project. A cancelled task offers no "Log work". |
+| UAT-29B-04 | Validation: a future date can't be picked; 0 minutes or more than 24 hours is refused; an empty description is refused; a server `422` (for example, no longer a project member) is shown on the form. |
+| UAT-29B-05 | Edit my log's date, duration and description (what-for is read-only); leaving with unsaved changes asks to discard; delete asks for confirmation and removes it. |
+| UAT-29B-06 | Company-time "today" (R-8): logging for today succeeds between 00:00 and 07:59 Manila. If UAT can't be run in that window, the runbook's verification stage checks it on staging by running the real validation with the clock set to 00:30 Manila (no record saved). |
+| UAT-29B-07 | Offline: saving fails clearly and keeps what was typed; it saves after reconnecting. After token revocation the app returns to Login. |
+| UAT-29B-08 | Dark mode and large text on the list and the form. |
+
+### 6.8 Definition of Done (29B)
+
+- §6.3–§6.5 implemented; backend tests, Flutter tests and all `CLAUDE.md` §5 commands pass locally and in CI.
+- No new dependency (the date picker is Flutter's own `showDatePicker`).
+- Docs: DEC-055 (the approved R-10…R-18), `02_ARCHITECTURE` (a work-logs part of §35), `04`/`05` (the `meta.company_day` addition and the "today" rule), `06` (form conventions as built), the handoff `V1_PHASE_29B_HANDOFF.md`; UAT-29B-01…08 recorded `NOT RUN`.
+- Merged only with product-owner approval; then a UAT29B runbook, staging deployment and UAT; then formal closure. The session **stops** after each step (`CLAUDE.md` §8).
+
+### 6.9 Implementation sequence for 29B (once authorized; gated like 29A)
+
+1. **Gate 1, backend:** R-10 (all four requests) with the 00:30 Manila regression, R-11 tie-breaker, R-12 `meta.company_day`, and their tests.
+2. **Gate 2, mobile data and state:** models, `WorkLogsApiClient`, list/form/picker controllers, the change record.
+3. **Gate 3, mobile UI:** the list, the form, "Log work" on task detail, the More row, routes.
+4. **Gate 4:** integration review (including real-API contract parity), docs, DEC entry, UAT rows, handoff, PR. Not merged without approval.
 
 ## 7. Sub-phase 29C — Projects & Clients (outline; read-only)
 
@@ -242,3 +351,5 @@ The product owner approved every recommendation from revision 1 as written (2026
   - **Home → task:** the My tasks tile goes to `/tasks`; a Today task row goes to `/tasks/:publicId` with Home's `company_day.date`, switching to the Tasks branch (back returns to the Tasks list).
   - **Known limitation:** "Completed" on the detail is shown in the device's timezone, because `/me/tasks` and `/tasks/{id}` give the company timezone's name but no offset. Due labels are unaffected (they use the server's company date).
   - The People screens' shared widgets (error view, info rows, section headers, padding) are reused rather than copied.
+- **Revision 3 (2026-10-10):** §6 (29B) rewritten from an outline into a full specification after read-only discovery on `main` at `c6c6812`: findings (§6.1, including the R-8 defect confirmed in all four work-log requests, a missing `/me/work-logs` tie-breaker, no company day in the list, and the `403` without a profile), proposed decisions R-10…R-18 (§6.2), backend, mobile, rules, UAT-29B-01…08, Definition of Done and gate sequence. No code, test, route or configuration was changed. Elsewhere only this note and the status line changed.
+- **Revision 3 approval (2026-10-10):** the product owner approved R-10…R-18 as written. Only the status line, the §6 heading and intro, the §6.2 and §6.9 headings, the §6.2 column labels and this note changed.

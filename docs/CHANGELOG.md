@@ -4,6 +4,13 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-10 — Phase 29 specification revision 3: 29B — Work logs specified (docs only; R-10…R-18 approved)
+- `docs/phases/V1_PHASE_29_DEFINITION.md` §6 rewritten from an outline into a full 29B specification after read-only discovery on `main` at `c6c6812`.
+- **Findings:** the work-log "today" rule is UTC in **all four** work-log requests (self-service and Administrator), confirming R-8; `GET /me/work-logs` has no unique tie-breaker; its response has no company day; it answers `403` without a linked profile; picker sources already exist (`/me/tasks`, `/projects?member=`).
+- **Proposed decisions R-10…R-18** (not yet approved): fix "today" in all four requests; a `/me/work-logs` tie-breaker; additive `meta.company_day`; the no-profile state without an API change; a picker of my open tasks and my non-closed projects (no new endpoint); entry points from More and from task detail; no day totals yet; picker and duration ranges; discard and delete confirmations.
+- UAT-29B-01…08, Definition of Done and a four-gate sequence defined. No code, test, route or configuration changed.
+- **Approved:** the product owner approved R-10…R-18 as written (2026-10-10). 29B implementation is not yet authorized.
+
 ### 2026-10-10 — Phase 29A formally closed: staging deployment and physical-device UAT passed (documentation only)
 - **Deployment (operator):** staging redeployed to `3632ce1` (PR #61). No migration (45 Ran); `Asia/Manila`; smoke tests `/up` 200, `/login` 200, `/me/home`, `/me/tasks`, `/tasks`, `/me/profile` all 401. Backup reported OK (name and size not supplied).
 - **UAT29A data:** script SHA-256 verified; `plan`/`seed`/`verify`/`exposure` as expected (4 accounts, 35 tasks dated for 2026-10-10; credentials in a `600` file, then shredded; no password recorded). `verify` was the first MySQL run of the new ordering: exact, with parity `29/2/1`.
