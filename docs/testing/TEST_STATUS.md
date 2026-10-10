@@ -919,4 +919,23 @@ Branch `claude/amazing-brahmagupta-dbsrjc`, from `main` at `496bd5c` (PR #64). R
 
 ---
 
+## Phase 29B — Gate 2 (mobile work-log data and state)
+
+Branch `claude/amazing-brahmagupta-dbsrjc`, on Gate 1 (`58e91ec`). Run in this AI sandbox with Flutter 3.47.2 / Dart 3.13.2.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `test/features/work_logs/work_log_models_test.dart` (15 tests) | Automated | PASS | Task, project and independent-task logs and their labels; missing description, a timestamp as `work_date`, a string duration, neither task nor project, a malformed task → `FormatException`. `/me/work-logs` paging and `meta.company_day`; missing or malformed company day rejected. Project statuses and `isClosed`. Target request fields. `formatDuration`; `isApiDate`. |
+| `test/features/work_logs/work_logs_api_client_test.dart` (13 tests) | Automated | PASS | Exact `/me/work-logs` path and `per_page`/`page`; the company day from `per_page=1`; a `403` keeps the session (one `/auth/me` re-check) and is `ApiForbiddenException`; bad shape → `ApiRequestException`. `POST` with `task_id` only or `project_id` only plus the three fields; a `422`'s field errors. `PATCH` with only date, duration and description (id encoded); `DELETE` 204; `404` as a request failure. Own staff id from `/me/profile` (null without a profile); my projects with `member=` over every page, and the page cap. |
+| `test/features/work_logs/my_work_logs_controller_test.dart` (13 tests) | Automated | PASS | First page with the company day; grouping by date, merging a date that spans pages; no duplicates; `403` → no-profile (session kept, no error); first-load error and recovery; failed refresh keeps the list; failed load more retried; a load more overtaken by a refresh dropped; concurrent loads share one request. Changes: a deletion leaves at once; a same-date edit replaces its row; a date change waits for the refresh; a new log marks stale and `refreshIfStale` refreshes once; dispose removes the listener. |
+| `test/features/work_logs/work_log_form_controller_test.dart` (30 tests) | Automated | PASS | Create: company day from `/me/work-logs`, default date not counted as an edit, my open tasks (with projects) and my projects with completed/cancelled hidden, `member=` and `state=open` sent; a given company day is used without a request; a fixed task loads nothing; edit fields and read-only target. No profile from a `403`, from `/me/tasks` `null`, or from `/me/profile` without staff; load error and recovery. Date bounds: 365 days back, an older edited log's own date, calendar arithmetic across a leap day. Checks with exact messages per field, at and beyond each limit; editing a field clears its error; nothing invalid is sent. Save: the exact `POST` body (trimmed text, total minutes) and the recorded change; edit sends only three fields; single-flight; server `422`s on fields and eligibility at the top; a `422` with no known field; offline/500/403 keep values and allow a retry; a `404` on edit records removal; a `401` ends the session. Delete: once and recorded; already gone counts as deleted; failure kept with a message; a new log can't be deleted. Dirty state across every field. |
+| Mutation checks | Manual (AI) | PASS | Each made temporarily and restored; all 13 caught: the list's and the form's `403` → no-profile mapping (2); grouping that never merges a date; a deletion not removed; closed projects not hidden; the edited log's own date ignored as the floor; the 24-hour limit; no new baseline after saving; eligibility errors not shown; description not trimmed; a `404` delete not counted as done; `member=` not sent; an extra field sent on `PATCH`. (A first attempt at the `403` mutant didn't compile and was redone with a valid substitution.) |
+| Full `flutter test` | Automated | PASS | 401/401: 330 after 29A plus these 71. No existing test changed. |
+| `dart format` / `flutter analyze` | Automated | PASS | No changes; no issues. |
+| `pubspec.yaml` / `pubspec.lock` | — | Unchanged | No new dependency. |
+| Backend | — | Not affected | No `apps/api` change in Gate 2. |
+| UAT | — | NOT RUN | UAT-29B-01…08 `NOT RUN` (no screens yet). |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*

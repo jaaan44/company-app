@@ -4,6 +4,15 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-10 — Phase 29B Gate 2: mobile work-log data and state
+- **`lib/features/work_logs/`**, data and state only (no screens or routes yet):
+  - `domain/work_log.dart`: strict `WorkLog` and `MyWorkLogsPage` (with `meta.company_day`, R-12), the picker's `TaskTarget`/`ProjectTarget`, `MemberProject` (closed = completed or cancelled), the API limits, and `formatDuration` ("1 h 30 min").
+  - `data/work_logs_api_client.dart`: `GET /me/work-logs` (25 per page), the company day from a one-row page, `POST` (task_id **or** project_id), `PATCH` (only date, duration, description), `DELETE` (204), own staff id from `/me/profile`, and my projects from `/projects?member=` (all pages, capped).
+  - `state/`: `MyWorkLogsController` (Phase 28/29A paging rules, grouping by date across pages, the no-profile state from the `403` per R-13), `WorkLogFormController` (create/edit, fixed target from a task, the R-14 picker, R-17 checks, confirmed single-flight save and delete, server `422`s on the right fields, dirty state for R-18) and `WorkLogChanges`.
+- Tests: 71 new (15 models, 13 API client, 13 list, 30 form). Full suite 401/401; format and analyze clean; `pubspec` unchanged. 13 mutation checks all caught.
+- Docs: the spec status and Gate 2 notes; `CURRENT_STATE.md`; `TEST_STATUS.md`; the UAT-29B notes.
+- No backend, dependency or configuration change. Gates 3–4 are not started.
+
 ### 2026-10-10 — Phase 29B Gate 1: company-time "today" for work logs, `/me/work-logs` tie-breaker and company day
 - **R-8/R-10:** `StoreMyWorkLogRequest`, `UpdateMyWorkLogRequest`, `StoreWorkLogRequest` and `UpdateWorkLogRequest` now limit `work_date` to the company today (`OverdueTasks::todayInCompanyTimezone()`, via the new `LimitsWorkDateToCompanyToday` trait) instead of the UTC date, with the message "The work date cannot be later than today." Logging for the Manila today now works from 00:00 to 07:59 local time.
 - **R-11:** `GET /api/v1/me/work-logs` orders `work_date DESC, created_at DESC, id DESC`. The visible order is unchanged.
