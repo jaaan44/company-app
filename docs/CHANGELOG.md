@@ -4,6 +4,15 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-10 — Phase 29B Gate 3: work-log screens, "Log work" and routes
+- **My work logs** (`lib/features/work_logs/presentation/my_work_logs_page.dart`, More → "My work logs"): logs grouped under "Today", "Yesterday" and then the date (judged against the company day); each row shows the task or project, the project under a task, the description and the duration; Phase 28 paging and retry row; pull-to-refresh; "No work logged yet."; the no-profile state without an Add button; an **Add** button. It refreshes after any confirmed save or delete, including from a task.
+- **Add/edit form** (`work_log_form_page.dart`): "What was this for?" (my open tasks, my open projects; read-only when editing or from a task), the date (default and maximum the company today, 365 days back), hours and minutes, the description with a counter, Save with progress; errors under each field and eligibility errors at the top; "Work logged." / "Changes saved." / "Work log deleted."; "Discard changes?" and "Delete this work log?" confirmations (R-18).
+- **"Log work"** on a task's detail (R-15; not for cancelled tasks) opens the form with the task fixed, at `/tasks/:publicId/log-work`.
+- **Router and app:** `/more/work-logs`, `/new`, `/:publicId`; `CompanyApp` owns a `WorkLogsApiClient` (injectable) and `WorkLogChanges`; More gains its third row.
+- Tests: 20 new screen tests (`work_logs_pages_test.dart`); the Phase 28 More test now expects three rows. Full suite 421/421; format and analyze clean; `pubspec` unchanged. 10 UI mutation checks: 9 caught at once; the tenth (future dates allowed in the picker) exposed a weak test, which was strengthened and then caught it.
+- Docs: the spec status and Gate 3 notes; `CURRENT_STATE.md`; `TEST_STATUS.md`; the UAT-29B notes.
+- No backend, dependency or configuration change. Gate 4 is not started.
+
 ### 2026-10-10 — Phase 29B Gate 2: mobile work-log data and state
 - **`lib/features/work_logs/`**, data and state only (no screens or routes yet):
   - `domain/work_log.dart`: strict `WorkLog` and `MyWorkLogsPage` (with `meta.company_day`, R-12), the picker's `TaskTarget`/`ProjectTarget`, `MemberProject` (closed = completed or cancelled), the API limits, and `formatDuration` ("1 h 30 min").

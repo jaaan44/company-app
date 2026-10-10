@@ -938,4 +938,22 @@ Branch `claude/amazing-brahmagupta-dbsrjc`, on Gate 1 (`58e91ec`). Run in this A
 
 ---
 
+## Phase 29B — Gate 3 (work-log screens, "Log work" and routes)
+
+Branch `claude/amazing-brahmagupta-dbsrjc`, on Gate 2 (`90dfb70`). Run in this AI sandbox with Flutter 3.47.2 / Dart 3.13.2.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `test/features/work_logs/work_logs_pages_test.dart` (20 tests) | Automated | PASS | Through the real `CompanyApp`, router and `ApiClient` against an in-memory work-log API. **List:** More → My work logs; "Today", "Yesterday", "Wed 7 Oct" headers in order; task/project/description/duration per row ("1 h 30 min", "30 min", "2 h"); empty state; no-profile (403) without Add and with the session kept; load error and Try again; paging with a failed page retried and a new date header. **Add:** the form defaults to "Sat 10 Oct 2026"; the picker shows open tasks and open projects, not a cancelled task or a completed project; a project log saves the exact body, shows "Work logged." and appears in the refreshed list; checks before sending (three messages, nothing sent; 25 hours refused); the date picker can't go past the company today (a disabled 11th leaves the date unchanged) and can pick the 9th; a server eligibility `422` shown; offline keeps the text and saves later; a `401` returns to Login. **Edit/delete:** values shown, target not choosable, only three fields sent, "Changes saved." and the row updated; leaving with changes asks — Keep editing stays, Discard leaves and sends nothing; leaving without changes doesn't ask; delete asks, Cancel sends nothing, Delete sends `DELETE`, shows "Work log deleted." and removes the row. **From a task:** "Log work" opens `/tasks/T1/log-work` with the task fixed and today's date, saves with `task_id`, returns to the task, and My work logs then lists it; a cancelled task has no "Log work". **Appearance:** light and dark at 200% text: list, form and picker without exceptions. |
+| `people_pages_test.dart` More test | Automated | PASS | **Changed:** More lists exactly three rows now — My profile, Staff directory and My work logs (Phase 28's R-8: each phase adds its own row). |
+| Mutation checks (UI) | Manual (AI) | PASS | Each made temporarily and restored. **Caught at once (9):** no tap on the More row; the discard check disabled; delete without confirmation; "Log work" shown for a cancelled task; the projects section removed from the picker; the list not refreshing after a change; the task not fixed when logging from it; "Yesterday" never shown; the success message changed. **Survived, then resolved (1):** allowing 30 future days in the date picker — the test chose the 11th and then the 9th, so the 11th never mattered; it now presses OK after the disabled 11th and checks the date is unchanged, and the mutant is caught. |
+| Full `flutter test` | Automated | PASS | 421/421: 401 after Gate 2 plus these 20. One existing test changed (above). |
+| `dart format` / `flutter analyze` | Automated | PASS | No changes; no issues. |
+| `pubspec.yaml` / `pubspec.lock` | — | Unchanged | No new dependency. |
+| Real device / emulator | — | Not run | No device in this sandbox. |
+| Backend | — | Not affected | No `apps/api` change in Gate 3. |
+| UAT | — | NOT RUN | UAT-29B-01…08 `NOT RUN` (not merged or deployed). |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*
