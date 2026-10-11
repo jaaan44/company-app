@@ -1,6 +1,8 @@
 # Phase 29 — Work: Tasks, Work Logs, Projects & Clients (Mobile) — Specification
 
-**Status:** **29B: COMPLETE — FORMALLY CLOSED 2026-10-10** (PR #65, `7e29ffe`; deployed to staging; UAT-29B-01…08 PASS). **29A: COMPLETE — FORMALLY CLOSED 2026-10-10.** 29C (Projects & Clients) is not started; it needs its detailed revision and explicit authorization (`CLAUDE.md` §1/§8).
+**Status:** **Revision 4 (2026-10-11): §7 specifies 29C — Projects & Clients in full; decisions R-19…R-27 are proposed and await the product owner's approval. Not authorized for implementation.**
+
+*Previous status line (kept as written):* **29B: COMPLETE — FORMALLY CLOSED 2026-10-10** (PR #65, `7e29ffe`; deployed to staging; UAT-29B-01…08 PASS). **29A: COMPLETE — FORMALLY CLOSED 2026-10-10.** 29C (Projects & Clients) is not started; it needs its detailed revision and explicit authorization (`CLAUDE.md` §1/§8).
 
 *Previous status line (kept as written):* Revision 3 (2026-10-10): §6 specifies 29B — Work logs in full. **Decisions R-10…R-18 approved as written by the product owner (2026-10-10).** **29B implementation complete and merged (PR #65, `7e29ffe`, 2026-10-10); UAT preparation runbook `docs/testing/PHASE_29B_UAT_PREPARATION.md` written — pending staging deployment and UAT; not formally closed.** See `docs/handoffs/V1_PHASE_29B_HANDOFF.md`. Everything outside §6 (the approved revision 2, R-1…R-9, and the 29A sections) is unchanged. **29A: COMPLETE — FORMALLY CLOSED 2026-10-10** (PR #61, `3632ce1`; UAT-29A-01…07 PASS). 29C is not started.
 
@@ -281,12 +283,101 @@ The product owner approved every recommendation from revision 1 as written (2026
 3. **Gate 3, mobile UI:** the list, the form, "Log work" on task detail, the More row, routes.
 4. **Gate 4:** integration review (including real-API contract parity), docs, DEC entry, UAT rows, handoff, PR. Not merged without approval.
 
-## 7. Sub-phase 29C — Projects & Clients (outline; read-only)
+## 7. Sub-phase 29C — Projects & Clients (revision 4: specified in full; R-19…R-27 proposed, awaiting approval)
 
-- **My projects:** More → "Projects". It shows member projects for Staff; the R-2-style choice of whether Managers and Administrators also see all is to be decided at its revision. Each has code, name, status, client, dates and `my_role`. The detail page has members (names linking to the Staff directory entry) and milestones.
-- **Clients:** More → "Clients". A company-wide list with search, and a detail page with contact details (Copy, as in Phase 28 R-3) and contacts.
-- **Links:** a task's project becomes a link.
-- No backend change is expected beyond optional tie-breakers. UAT-29C-xx is defined at that revision.
+*Revision 4 (2026-10-11) replaces the outline with a full specification, after read-only discovery on `main` at `5c7b40c` (29A and 29B closed). R-19…R-27 are **proposals** for the product owner's decision. Implementation needs its own authorization, gate by gate (`CLAUDE.md` §1/§8). 29C stays **read-only**: no create, edit or membership change from the app.*
+
+*Revision 2's outline, kept for reference:* My projects under More → "Projects" (member projects for Staff; Managers/Administrators to be decided), with code, name, status, client, dates and `my_role`, and a detail with members (linking to the Staff directory) and milestones; Clients under More → "Clients" (company-wide, with search; detail with contact details, Copy as in Phase 28 R-3, and contacts); a task's project becomes a link; no backend change beyond optional tie-breakers.
+
+### 7.1 Current-state findings (read-only discovery)
+
+**The API already serves every read 29C needs:**
+
+| Endpoint | Visibility (existing) | Filters | Order | Notes |
+|---|---|---|---|---|
+| `GET /projects` (Phase 10) | `projects.view` (Manager; Administrator via `Gate::before`) sees **all**; otherwise only **member** projects; no linked Staff and no `projects.view` → `403` | `status` (one value), `client`, `member`, `q` (name, code) | `name` | `ProjectResource`: code, name, description, status, `start_date`, `target_end_date`, `completed_date`, `client {public_id, name}`, `members_count`, `my_role`, `notes` |
+| `GET /projects/{id}` | same rule; not visible → `403` "You do not have access to view this project." | — | — | same resource |
+| `GET /projects/{id}/members` | same as the project | `role` | `created_at` | `staff {public_id, employee_number, display_name}`, `role` (`project_lead`, `member`) |
+| `GET /projects/{id}/milestones` (Phase 17) | same as the project | `status` | `due_date` | `title`, `due_date`, `status` (`pending`, `completed`, `cancelled`) |
+| `GET /clients`, `/clients/{id}` (Phase 8) | `clients.view`: Administrator, Manager **and Staff**, company-wide; **no linked Staff needed** | `status` (`active`, `inactive`), `q` (name, code) | `name` | code, name, status, email, phone, website, address fields, `notes`, `contacts_count` |
+| `GET /contacts?client=` | `clients.view` | `client`, `status`, `is_primary`, `q` | `last_name, first_name` | name, job title, email, phone, `is_primary`, status, `notes` |
+| `GET /staff/{id}` (Phase 7/28) | `staff.view` (all three roles); **any** status | — | — | the Staff directory detail screen already shows it |
+
+**Gaps and details found:**
+1. **No unique tie-breaker on any of the five lists** the app would page through: projects and clients by `name` (names aren't unique), contacts by `last_name, first_name`, members by `created_at`, milestones by `due_date`. The Phase 28 R-6 / 29A R-9 / 29B R-11 paging problem.
+2. **Project scope for Managers and Administrators:** without `member=`, `GET /projects` returns **every** project to them. The R-2-style choice is open (R-20).
+3. **`notes` fields** on projects, clients and contacts are exposed by the API to every reader. They read as internal remarks for the Administrator Backoffice; the app doesn't have to show them (R-24).
+4. **A task's project can be invisible to its assignee:** an assignee needn't be a member of the task's project (Phase 11). Opening that project from the task then gets a `403` (R-25).
+5. **Inactive clients and contacts:** the lists include them unless `status=active` is passed. A project can still point at an inactive client.
+6. **No company day** on the project endpoints, so the app can't label milestones "overdue" without the device clock (DEC-052). R-23 avoids it.
+7. **Carried forward, not touched:** `per_page` is uncapped and `q` wildcards are unescaped on these legacy endpoints (Phase 36); `ProjectResource.my_role` runs one query per row (bounded by the page size).
+
+**Mobile:** the Phase 28 paging, Copy (R-3) and detail patterns, and the Staff directory detail route `/more/directory/:publicId`, are reusable. The task detail shows the project name as plain text. More has three rows (My profile, Staff directory, My work logs).
+
+### 7.2 Proposed decisions for 29C (awaiting the product owner)
+
+| # | Proposal | Why | Not chosen |
+|---|---|---|---|
+| **R-19** | **Tie-breakers** (`->orderBy('id')` appended; visible order unchanged) on `GET /projects`, `/clients`, `/contacts`, `/projects/{id}/members` and `/projects/{id}/milestones`, each with a regression test. | Stable paging, as everywhere else in Phase 28/29. | Leave them. |
+| **R-20** | **Projects shows only projects I'm a member of, for every role** (`member=<my staff public_id>`), like R-2 for tasks. No "all projects" view in the app. Without a linked Staff record: "No staff profile is linked to this account." | Self-scoped and the same for everyone; company-wide project browsing stays in the Administrator Backoffice. | Managers/Administrators see all projects (the API default for them). |
+| **R-21** | **Projects list:** one list in name order, each row with name, code, client, a **status chip** and "Project lead" when `my_role` is lead; **search** (`q`, name or code); Phase 28 paging (25 per page). No status filter. | Small lists; the chip shows closed projects without hiding anything. | Open/closed segments (needs several queries or a new API parameter). |
+| **R-22** | **Project detail:** name, code, status, client (a link to the client), start / target end / completed dates, my role, description, **members** (lead(s) first, then members, in server order; each a link to the Staff directory detail) and **milestones** (date, title, status chip). Members and milestones each load **one page of 50**; beyond that, "Showing 50 of N". | Projects are small; one page keeps the detail simple and bounded. | Paging inside the detail. |
+| **R-23** | **Milestones show their date and status only — no "overdue" label.** | The project endpoints have no company day; the device clock isn't used for business dates (DEC-052). | Adding `company_day` to the milestone endpoint (a contract change for a label). |
+| **R-24** | **The app doesn't show `notes`** on projects, clients or contacts; it shows a project's `description`. Recorded as a presentation choice, **not** a security boundary (the API still returns notes to these readers). | Notes read as internal Backoffice remarks. | Showing them. |
+| **R-25** | **Links:** a task's project (task detail) and a project's client open their detail screens; member names open the Staff directory detail. A `403` on a project opened from a task shows "You don't have access to this project." (no sign-out, the 401/403 rule unchanged). | Navigation where the data already is; the `403` case is real (finding 4). | Showing the link only when membership is known (needs an extra call per task). |
+| **R-26** | **Clients:** More → "Clients", **active clients only** (`status=active`), with search and paging; the detail opens for **any** client (a project's client may be inactive, shown with an "Inactive" chip). Detail: code, name, email, phone, website and address, each with **Copy** (Phase 28 R-3; no `url_launcher`), then the client's **active contacts** (name, job title, "Primary" badge, email and phone with Copy), one page of 50. Clients need no Staff record (company-wide `clients.view`). | Mirrors the active-only Staff directory; no new dependency. | All clients in the list; tap-to-call/email. |
+| **R-27** | **More** gains two rows, in order: My profile, Staff directory, My work logs, **Projects**, **Clients**. No Home change. | Each phase adds its own rows (R-8). | A separate tab. |
+
+**Kept from 29A/29B:** no new permission; no automatic retries; the Phase 27 401/403 session rule; `per_page` 25 for lists.
+
+### 7.3 Backend (Gate 1)
+
+- R-19: append `->orderBy('id')` in `ProjectController::index`, `ClientController::index`, `ContactController::index`, `ProjectMembershipController::index` and `ProjectMilestoneController::index`. One regression test each (equal sort keys, two pages, no repeats or gaps).
+- Nothing else changes: no new endpoint, parameter, field, permission or migration.
+
+### 7.4 Mobile data and state (Gate 2) — `lib/features/projects/`, `lib/features/clients/`
+
+- Strict models: `ProjectSummary`/`ProjectDetail` (status enum, dates as `YYYY-MM-DD` strings, nullable client), `ProjectMember`, `ProjectMilestone`, `ClientSummary`/`ClientDetail`, `ClientContact`. Unknown enum values fail parsing (as in 29A).
+- `ProjectsApiClient`: my projects (`/me/profile` for the own staff public id, then `/projects?member=…&q=…`, 25 per page), project, members (50), milestones (50). `ClientsApiClient`: active clients (`status=active`, `q`, 25 per page), client, active contacts (`client=…&status=active`, 50).
+- Controllers in the Phase 28 style: paged list controllers with search (debounced, stale responses ignored), detail controllers loading the record and its sub-lists; no-profile, `403` and `404` states.
+
+### 7.5 Mobile UI (Gate 3)
+
+- `ProjectsPage` (`/more/projects`), `ProjectDetailPage` (`/more/projects/:publicId`), `ClientsPage` (`/more/clients`), `ClientDetailPage` (`/more/clients/:publicId`); routes from a task (`/tasks/:publicId/project/:projectPublicId` or a push of the More route — settled at Gate 3, keeping back navigation inside the current tab).
+- More rows (R-27); task detail project link (R-25).
+- Phase 28 widgets reused (section headers, info rows with Copy, error view, padding); status chips styled like the Tasks status chips.
+
+### 7.6 Data / authorization rules (29C)
+
+- No new permission. **Projects are self-scoped in the app for every role (R-20)**; the API's visibility rule stays authoritative (a non-member's `403`).
+- Clients and contacts are company-wide for every role, as the API already allows.
+- Hiding notes (R-24) and inactive clients/contacts in lists (R-26) are presentation choices, recorded as such.
+
+### 7.7 29C UAT scenarios (to be added to `UAT_LOG.md` at implementation; all `NOT RUN`)
+
+| ID | Scenario |
+|---|---|
+| UAT-29C-01 | More → Projects lists only projects I'm a member of, in name order, with status chips, client and "Project lead" where it applies; search and paging work. A user without a profile sees the no-profile state. |
+| UAT-29C-02 | A project's detail shows code, status, client, dates, my role, description, members (leads first) and milestones with their status; no notes. |
+| UAT-29C-03 | From a project: a member opens their Staff directory entry; the client opens the client detail. From a task: its project opens; a project I'm not a member of shows "You don't have access to this project." |
+| UAT-29C-04 | More → Clients lists active clients only, with search and paging. |
+| UAT-29C-05 | A client's detail shows its contact details with Copy, and its active contacts with "Primary" marked; an inactive client opened from a project shows "Inactive". |
+| UAT-29C-06 | As a Manager and as an Administrator, Projects still lists only my member projects (R-20). |
+| UAT-29C-07 | Offline, lists and details fail clearly with a retry; after token revocation the app returns to Login. |
+| UAT-29C-08 | Dark mode and large text on the four screens. |
+
+### 7.8 Definition of Done (29C)
+
+- §7.3–§7.5 implemented; backend and Flutter tests and every `CLAUDE.md` §5 command pass locally and in CI; no new dependency.
+- Docs (CURRENT_STATE, CHANGELOG, TEST_STATUS, UAT_LOG, `02_ARCHITECTURE`, `06_UI_UX_GUIDELINES`, a DEC entry for the approved R-x, `ROADMAP` for the end of Phase 29) and `docs/handoffs/V1_PHASE_29C_HANDOFF.md`; UAT-29C-01…08 recorded `NOT RUN`.
+- Merged only with product-owner approval; then staging, a UAT29C runbook, UAT and formal closure — which also closes **Phase 29** as a whole.
+
+### 7.9 Implementation sequence for 29C (once authorized; gated like 29A/29B)
+
+1. **Gate 1, backend:** the five tie-breakers and their tests.
+2. **Gate 2, mobile data and state:** models, API clients, controllers and their tests.
+3. **Gate 3, mobile UI:** the four screens, routes, More rows and the task-detail link.
+4. **Gate 4:** integration review, docs, DEC entry, UAT rows, handoff, PR. Do not merge without approval.
 
 ## 8. Data / Authorization Rules (summary, all sub-phases)
 
@@ -366,4 +457,4 @@ The product owner approved every recommendation from revision 1 as written (2026
   - **The form** uses a tappable "What was this for?" field that opens a bottom sheet (My open tasks, then My projects), a date field opening Flutter's `showDatePicker` limited to the R-17 range, two number fields (Hours, Minutes; digits only, two characters), and a multi-line description with a 2000-character counter. The SDK's `FilteringTextInputFormatter` is used; no dependency was added.
   - **Leaving:** `PopScope` asks "Discard changes?" (Keep editing / Discard) only when something changed; saving or deleting leaves without asking. Delete asks "Delete this work log?" (Cancel / Delete, in the error colour).
   - **More:** a third row, "My work logs". The Phase 28 test that More has exactly two rows was updated to three, as Phase 28's R-8 anticipated.
-
+- **Revision 4 (2026-10-11):** §7 (29C) rewritten from an outline into a full specification after read-only discovery on `main` at `5c7b40c`: findings (§7.1: no tie-breakers on the five lists, project scope for Managers/Administrators, exposed notes, a task's project possibly invisible to its assignee, inactive clients, no company day on milestones), proposed decisions R-19…R-27 (§7.2), backend, mobile, rules, UAT-29C-01…08, Definition of Done and gate sequence. No code, test, route or configuration was changed. Elsewhere only this note and the status line changed.

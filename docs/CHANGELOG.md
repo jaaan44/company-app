@@ -4,6 +4,12 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-11 — Phase 29 specification revision 4: 29C Projects & Clients specified (documentation only)
+- PR #67 merged (`5c7b40c`): Phase 29B formally closed.
+- `docs/phases/V1_PHASE_29_DEFINITION.md` §7 rewritten from an outline into a full 29C specification after read-only discovery: findings (no tie-breakers on the projects, clients, contacts, members and milestones lists; project scope for Managers/Administrators; exposed `notes`; a task's project may be invisible to its assignee; inactive clients; no company day for milestones), proposed decisions **R-19…R-27**, backend (tie-breakers only), mobile data/state and UI, rules, UAT-29C-01…08, Definition of Done and gates.
+- `CURRENT_STATE.md`: next is the approval of R-19…R-27.
+- No code, test, route, dependency or configuration change. Not authorized for implementation.
+
 ### 2026-10-10 — Phase 29B formally closed: staging deployment and physical-device UAT passed (documentation only)
 - **Deployment (operator):** staging redeployed to `7e29ffe` (PR #65). No migration (45 Ran); `Asia/Manila`; smoke tests `/up` 200, `/login` 200, `/me/home`, `/me/tasks`, `/me/work-logs`, `/projects` all 401. Backup `company-app-20261010-105229.sql`, 131,099 bytes.
 - **UAT:** UAT-29B-01…08 all `PASS` (2026-10-10), reported by the product owner.
