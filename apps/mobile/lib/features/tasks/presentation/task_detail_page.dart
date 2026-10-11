@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:mobile/features/home/presentation/home_formatting.dart';
 import 'package:mobile/features/people/presentation/people_widgets.dart';
+import 'package:mobile/features/projects/presentation/project_widgets.dart';
 import 'package:mobile/features/tasks/data/tasks_api_client.dart';
 import 'package:mobile/features/tasks/domain/task_item.dart';
 import 'package:mobile/features/tasks/presentation/task_widgets.dart';
@@ -185,9 +186,16 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
           value: _dueValue(task, companyDate),
         ),
         PeopleInfoRow(
+          key: const Key('task-project'),
           icon: Icons.folder_outlined,
           label: 'Project',
           value: task.project?.name ?? 'Independent task',
+          // Phase 29C (R-25): the project opens in the More tab, where its
+          // client and members link on; this tab keeps the task open.
+          onTap: switch (task.project) {
+            final project? => () => context.go(projectPath(project.publicId)),
+            null => null,
+          },
         ),
         PeopleInfoRow(
           icon: Icons.person_outline,

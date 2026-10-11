@@ -7,8 +7,10 @@ import 'package:mobile/core/network/api_client.dart';
 import 'package:mobile/features/auth/data/auth_api_client.dart';
 import 'package:mobile/features/auth/data/token_storage.dart';
 import 'package:mobile/features/auth/state/auth_controller.dart';
+import 'package:mobile/features/clients/data/clients_api_client.dart';
 import 'package:mobile/features/home/data/home_api_client.dart';
 import 'package:mobile/features/people/data/people_api_client.dart';
+import 'package:mobile/features/projects/data/projects_api_client.dart';
 import 'package:mobile/features/tasks/data/tasks_api_client.dart';
 import 'package:mobile/features/tasks/state/task_changes.dart';
 import 'package:mobile/features/work_logs/data/work_logs_api_client.dart';
@@ -29,7 +31,8 @@ import 'package:mobile/features/work_logs/state/work_log_changes.dart';
 /// a plain [ChangeNotifier] remains sufficient; see DEC-025.
 class CompanyApp extends StatefulWidget {
   /// [authController], [homeApiClient], [peopleApiClient],
-  /// [tasksApiClient] and [workLogsApiClient] are exposed
+  /// [tasksApiClient], [workLogsApiClient], [projectsApiClient] and
+  /// [clientsApiClient] are exposed
   /// for tests to inject fakes — production code always omits them and
   /// gets the real Sanctum-backed implementations below.
   const CompanyApp({
@@ -39,17 +42,23 @@ class CompanyApp extends StatefulWidget {
     PeopleApiClient? peopleApiClient,
     TasksApiClient? tasksApiClient,
     WorkLogsApiClient? workLogsApiClient,
+    ProjectsApiClient? projectsApiClient,
+    ClientsApiClient? clientsApiClient,
   }) : _injectedAuthController = authController,
        _injectedHomeApiClient = homeApiClient,
        _injectedPeopleApiClient = peopleApiClient,
        _injectedTasksApiClient = tasksApiClient,
-       _injectedWorkLogsApiClient = workLogsApiClient;
+       _injectedWorkLogsApiClient = workLogsApiClient,
+       _injectedProjectsApiClient = projectsApiClient,
+       _injectedClientsApiClient = clientsApiClient;
 
   final AuthController? _injectedAuthController;
   final HomeApiClient? _injectedHomeApiClient;
   final PeopleApiClient? _injectedPeopleApiClient;
   final TasksApiClient? _injectedTasksApiClient;
   final WorkLogsApiClient? _injectedWorkLogsApiClient;
+  final ProjectsApiClient? _injectedProjectsApiClient;
+  final ClientsApiClient? _injectedClientsApiClient;
 
   @override
   State<CompanyApp> createState() => _CompanyAppState();
@@ -87,6 +96,12 @@ class _CompanyAppState extends State<CompanyApp> {
   // refreshes after a log made from a task's detail.
   final WorkLogChanges _workLogChanges = WorkLogChanges();
 
+  late final ProjectsApiClient _projectsApiClient =
+      widget._injectedProjectsApiClient ?? ProjectsApiClient(_apiClient);
+
+  late final ClientsApiClient _clientsApiClient =
+      widget._injectedClientsApiClient ?? ClientsApiClient(_apiClient);
+
   late final GoRouter _router = buildAppRouter(
     _authController,
     homeApiClient: _homeApiClient,
@@ -95,6 +110,8 @@ class _CompanyAppState extends State<CompanyApp> {
     taskChanges: _taskChanges,
     workLogsApiClient: _workLogsApiClient,
     workLogChanges: _workLogChanges,
+    projectsApiClient: _projectsApiClient,
+    clientsApiClient: _clientsApiClient,
   );
 
   @override

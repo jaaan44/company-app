@@ -1054,4 +1054,21 @@ Branch `claude/amazing-brahmagupta-dbsrjc` after Gate 1 (`22de74d`). Flutter 3.4
 
 ---
 
+## Phase 29C — Gate 3 (projects and clients screens, routes, More rows, task link)
+
+Branch `claude/amazing-brahmagupta-dbsrjc` after Gate 2 (`77ef0de`).
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `test/features/projects/projects_pages_test.dart` (17) | Automated (widget, whole app) | PASS | Through `CompanyApp`, the router and the real `ApiClient`: Projects lists member projects (`member=<me>`) with "code · client", status chips and "Project lead"; no profile → message, no search, no `/projects` call; search and "No project matches"; empty message; paging loads page 2 once. Project detail: header, client, my role, dates, completed date only when set, description, members leads-first, "Showing 2 of 53" only when there are more, milestones with chips, no "overdue", no notes. Member → Staff directory entry; client → client detail. Task → project opens in the More tab, back goes to Projects, the Tasks tab still shows the task; an independent task's row is not a link; a hidden project → "You don't have access to this project." + Try again, session kept. Clients: active-only, search, row → detail; detail with email, phone, website, the joined address, `Contacts (57)`, "Primary", "Showing 2 of 57", no notes; Copy puts the website and a contact's email on the clipboard; an inactive client from a project → "Inactive" chip, three "Not set", no contacts note. Light and dark at 200% text on a 360×640 phone: all four screens, scrolled to their ends, with no layout exception. |
+| `people_pages_test.dart` More test | Automated | PASS | Updated: five rows (adds Projects, Clients). |
+| Mutation checks | Manual (AI) | PASS | 14, one at a time, each restored: the task's project not a link; a member or the client not a link; "Showing N of N" shown; the inactive chip inverted; search shown without a profile; Website not copyable; More's Projects row dead; the lead label hidden; the completed date always shown; an empty description shown; leads not first; the milestone chip or the Primary chip missing. **All 14 caught.** |
+| `flutter pub get` / `dart format` / `flutter analyze` | Automated | PASS | `pubspec` unchanged; 0 files changed; no issues. |
+| `flutter test` | Automated | PASS | 473/473 (456 + 17). By area: projects 52, work_logs 91, tasks 95, home 66, people 84, core/network 29. |
+| Backend | — | Not affected | No `apps/api` change in Gate 3. |
+| Real device | — | Not run | No device in this sandbox. |
+| UAT | — | NOT RUN | UAT-29C-01…08 not yet runnable. |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*
