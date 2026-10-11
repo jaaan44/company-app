@@ -998,4 +998,25 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`733d0fc`), confirmed up t
 
 ---
 
+## Phase 29B — staging deployment, UAT data and physical-device UAT (2026-10-10)
+
+*Operator- and product-owner-reported. This AI session had no VPS or device access; the outputs below were pasted by the operator, except where marked "not supplied".*
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Staging checkout | Operator, VPS | PASS | `git merge --ff-only` from `3632ce1` to `7e29ffe809c1282c4c9f7e177087cee02fe8410d` (fast-forward, 41 files); `git rev-parse HEAD` confirmed. `uat27_data.php` was no longer present. See the security incident row. |
+| Backup | Operator, VPS | PASS | `company-app-20261010-105229.sql`, 131,099 bytes, taken just before the rebuild. The runbook's `ls -l … \| tail -2` did not show it (name sort puts `company-app-2026…` before `company-app-pre-…`); `ls -lt /home/deploy/backups/company-app-*.sql \| head -3` did. |
+| Build and restart | Operator, VPS | PASS | `company-app-api:staging` rebuilt and `app` started; `company-app-nginx:staging` fully cached, `nginx` kept running; `mysql` untouched, healthy (up 28 h). |
+| `migrate:status` | Operator, VPS | PASS | All 45 Ran, none pending. |
+| Caches, timezone, listener | Operator, VPS | PASS | Config, routes and Blade cached; `scheduling.company_timezone` = `Asia/Manila`; only `127.0.0.1:8012` listening. |
+| Smoke tests (public HTTPS) | Operator, VPS | PASS | `/up` 200, `/login` 200, `/me/home` 401, `/me/tasks` 401, `/me/work-logs` 401, `/projects` 401. |
+| Security incident | Operator, VPS | **Open (rotation deferred)** | a stray untracked file in the staging checkout root (13,067 bytes, created 2026-10-10 00:59 UTC) whose **name contains a live UAT password** (the operator confirmed it matches a stored UAT password; the account set was not identified). The name appeared in an AI chat session, so the password is treated as exposed. The recommended `rotate` was **deferred by the product owner's decision** (2026-10-10); deleting the file with `shred` was recommended, but its deletion was not confirmed. The file name and the password are deliberately not recorded anywhere. |
+| UAT29B data (`plan`, `seed`, `verify`, `todaycheck`, `exposure`) | Operator, VPS | Not supplied | Run as part of the UAT preparation; outputs **not supplied**. UAT-29B-06's staging evidence (`todaycheck`) is therefore not recorded separately; the product owner reported UAT-29B-06 as passed. |
+| UAT APK | Operator, Windows | Not supplied | Built from `7e29ffe` and installed; checkout, test counts, size, SHA-256 and `adb install` output **not supplied**. |
+| UAT-29B-01…08 | Product owner, physical device | **PASS** | Reported as "all pass" on 2026-10-10. No per-scenario observations or defects were reported. |
+
+Staging now runs `7e29ffe`. The UAT29B data (2 accounts, staff `UAT29B-001`, projects `UAT29B-P1…P3`, 4 tasks, 30 planned logs plus any typed during UAT) stays in place, alongside the UAT29A, UAT28 and UAT27 data; any cleanup needs its own authorization.
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*

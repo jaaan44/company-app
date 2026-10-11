@@ -2,6 +2,8 @@
 
 *Operator runbook. No AI session has run anything in this file against the staging VPS or on the Windows build machine: this AI session cannot reach the VPS or build an APK. Every step marked **[Operator]** is pending until its output is recorded. The data script in §7 was rehearsed on a disposable scratch database only (see `docs/testing/TEST_STATUS.md`, "Phase 29B — UAT preparation").*
 
+> **Final status (2026-10-10):** the operator ran §2 (staging redeploy to `7e29ffe`), §3 and §5; the product owner reported UAT-29B-01…08 **PASS**. **Phase 29B is formally closed.** Record: `docs/testing/TEST_STATUS.md`, "Phase 29B — staging deployment, UAT data and physical-device UAT". Correction learned in use: the §2 backup listing must be `ls -lt /home/deploy/backups/company-app-*.sql | head -3` (the `| tail -2` form sorts by name and can miss the new dump). The sections below are kept as written. The UAT29B data stays on staging; any cleanup needs its own authorization.
+
 **Status (as written):** UAT-29B-01…08 are `NOT RUN`. This runbook prepares the deployment, the APK and the data; it runs no scenario.
 
 **How each operator step is written.** Every step says:

@@ -4,6 +4,14 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-10 — Phase 29B formally closed: staging deployment and physical-device UAT passed (documentation only)
+- **Deployment (operator):** staging redeployed to `7e29ffe` (PR #65). No migration (45 Ran); `Asia/Manila`; smoke tests `/up` 200, `/login` 200, `/me/home`, `/me/tasks`, `/me/work-logs`, `/projects` all 401. Backup `company-app-20261010-105229.sql`, 131,099 bytes.
+- **UAT:** UAT-29B-01…08 all `PASS` (2026-10-10), reported by the product owner.
+- **Not supplied (recorded as gaps):** the `seed`, `verify`, `todaycheck` and `exposure` outputs, the APK build output and its SHA-256, and the `adb install` output.
+- **Security incident (open, non-blocking):** a stray file name on the staging VPS contained a live UAT password and appeared in an AI chat; rotation deferred by the product owner. Neither the name nor the password is recorded.
+- Runbook correction: list backups with `ls -lt … | head -3`.
+- Docs: `CURRENT_STATE.md` (29B complete; next is 29C, not started), `ROADMAP.md`, spec status, handoff final addendum, runbook final status, `TEST_STATUS.md`, `UAT_LOG.md` (UAT-29B-01…08 PASS).
+
 ### 2026-10-10 — Phase 29B UAT preparation runbook (docs only)
 - PR #65 merged into `main` as `7e29ffe` (Backend CI and Mobile CI green on the merge commit).
 - New `docs/testing/PHASE_29B_UAT_PREPARATION.md`: staging redeploy from `3632ce1` to `7e29ffe` (no migration, no new route), the APK build and provenance (expected 421 / work_logs 91 / tasks 95 / home 66 / network 29) with `adb install`, the UAT29B data plan, data steps and per-scenario UAT notes. Each operator step gives where to run it, the exact commands, what it does, the expected output and what to paste back. The 29A corrections (backup listing, always build the APK) are included.
