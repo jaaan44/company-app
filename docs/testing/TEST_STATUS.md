@@ -1089,4 +1089,26 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`75a4af8`), confirmed up t
 
 ---
 
+## Phase 29C — UAT preparation (runbook and data script rehearsal, 2026-10-11)
+
+`docs/testing/PHASE_29C_UAT_PREPARATION.md`; script `uat29c_data.php` revision 1, SHA-256 `1c151c4d4c9fcc7b94918da4a4ed526ac5b9accaa2f415b570702b93a52a4a64`. Rehearsed in this AI sandbox on disposable scratch SQLite databases (all 45 migrations + `RolePermissionSeeder`, `SCHEDULING_COMPANY_TIMEZONE=Asia/Manila`, company day 2026-10-11) at `main` `c79ed90`, run as the runbook runs it (`php -- <stage> < script`), with a non-UAT control user, staff record, client, contact, project, membership, milestone, task and API token in place. Nothing touched staging. MySQL was not available here.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `plan` (read-only) | Manual, scratch DB | PASS | Company day; 4 accounts absent; 0 of 4 staff, 0 of 29 projects, 0 of 3 clients, 0 of 2 tasks; roles 3/3. |
+| `seed` | Manual, scratch DB | PASS | Exit 0; STDOUT to a `600` file with exactly 4 `email password` lines (20 characters); all status on STDERR. |
+| `seed` re-run | Manual, scratch DB | PASS | Exit 0, 0 bytes on STDOUT, "password unchanged" ×4. After drift (a project renamed, a planned member removed, Mia added to the hidden project), a re-run restored the plan exactly. |
+| `verify` (real controllers) | Manual, scratch DB | PASS | Staff: 28 member projects over 2 pages in name order, Boiler Upgrade `lead`; search "boiler" → 1; P01 client, `project_lead`, members 3/3, milestones 3/3; P04 milestones 50/52; P05 `403 You do not have access to view this project.`; the hidden task's project; active UAT29C clients Acme and Beta; Acme's active contacts Maria (primary) and Leo; Dormant inactive. Manager: only Boiler Upgrade; Admin: only Roof Repair (29 without `member=`). No-profile: no staff record. With Mia made a member of P05, `verify` printed `200 — UNEXPECTED` (the line was hardened during the rehearsal to handle that case). |
+| `revoke` / `exposure` | Manual, scratch DB | PASS | With tokens on staff and manager, `exposure` showed 1 each; `revoke` removed only staff's (`api_tokens_revoked=1`). |
+| `rotate` | Manual, scratch DB | PASS | Exit 0; `600` file, 4 lines; all tokens revoked; `exposure` then 0 for all four. |
+| Refusals | Manual, scratch DB | PASS | `rotate` with an account missing and `revoke` with `uat29c.staff` missing: exit 1, nothing on STDOUT. `seed` with a UAT29C staff record linked to a non-UAT29C account: exit 1, nothing on STDOUT, data identical. Unknown stage: exit 1. |
+| All-or-nothing `rotate` | Manual, scratch DB (injected failure) | PASS | A failure on the third account: exit 1, nothing on STDOUT, all four password hashes and remember tokens unchanged, although STDERR had printed `rotated …` twice. |
+| Non-UAT29C data untouched | Manual, scratch DB | PASS | A hash of every non-UAT29C user, staff, project, client, contact, membership, milestone, task and token was identical across all stages. |
+| Final script, end to end | Manual, fresh scratch DB | PASS | The final text (after the hardening) re-run on a new database: `plan`, `seed`, `verify`, `exposure` all exit 0, 4 credential lines, the expected `verify` output, non-UAT data unchanged. |
+| Runbook extraction path | Manual | PASS | The §5 `awk` command on the committed runbook reproduces the script byte-for-byte (same SHA-256). |
+| Credentials handling | — | — | Every scratch credentials file was `shred`ded; only email addresses and password lengths were printed. |
+| UAT | — | NOT RUN | UAT-29C-01…08 `NOT RUN`. |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*

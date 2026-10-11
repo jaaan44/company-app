@@ -4,6 +4,13 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-11 — Phase 29C UAT preparation runbook (docs only)
+- PR #69 merged into `main` as `c79ed90` (Backend CI and Mobile CI green on the PR head; merged tree identical).
+- New `docs/testing/PHASE_29C_UAT_PREPARATION.md`: staging redeploy from `7e29ffe` to `c79ed90` (no migration, no route) with the corrected backup listing; the APK build and provenance (expected 473 / projects 52 / people 84 / tasks 95) with `adb install`; the UAT29C data plan, data steps and per-scenario UAT notes. Each operator step gives where, the exact commands, what it does, the expected output and what to paste back. Passwords are pasted only into the app's sign-in field.
+- New operator script `uat29c_data.php` (embedded in §7, SHA-256 `1c151c4d4c9fcc7b94918da4a4ed526ac5b9accaa2f415b570702b93a52a4a64`): stages `plan`, `seed`, `verify`, `revoke`, `exposure`, `rotate`; 4 accounts, 29 projects (one hidden from Mia but holding her task), 52 milestones on one, 3 clients, 3 contacts. Rehearsed on scratch SQLite only, including the refusals, an all-or-nothing `rotate`, drift-then-reseed and the extraction path; one `verify` line hardened during the rehearsal.
+- Docs: the 29C handoff addendum, `CURRENT_STATE.md`, `TEST_STATUS.md` (rehearsal), the UAT-29C notes (still `NOT RUN`), spec status, `ROADMAP.md`.
+- No code change. Nothing deployed or seeded; 29C is not closed.
+
 ### 2026-10-11 — Phase 29C Gate 4: final integration review, handoff and implementation PR
 - Final gates on the complete branch: backend 1,183/1,183 with Pint, PHPStan level 5, `composer validate --strict` and `composer audit --locked` (no advisories); Flutter 473/473 with format and analyze clean and `pubspec` unchanged.
 - **Contract parity:** 19 real Laravel responses (Staff, Manager, no profile; every 29C endpoint, a `403` and a `404`) replayed through the production Flutter code: 6/6 (temporary tests, not committed). It confirmed that `member=` limits a Manager to 1 of 4 projects (R-20) and that members come lead first, then by join order.

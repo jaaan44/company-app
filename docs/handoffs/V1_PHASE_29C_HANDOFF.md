@@ -1,6 +1,6 @@
 # Phase 29C — Work: Projects & Clients (Mobile) — Handoff
 
-**Status: implementation complete — pending PR review/CI, merge, staging deployment and product-owner UAT. Phase 29C is NOT formally closed.** Its closure also closes Phase 29 as a whole. No later phase is started or authorized.
+**Status: implementation complete and merged (PR #69, `c79ed90`); UAT preparation runbook written — pending staging deployment and product-owner UAT. Phase 29C is NOT formally closed.** See the addendum at the end. Its closure also closes Phase 29 as a whole. No later phase is started or authorized.
 
 ## 1. Phase Identification
 
@@ -149,3 +149,17 @@ The next roadmap phase must not begin until 29C is closed and that phase is expl
 - **Awaiting UAT:** yes (UAT-29C-01…08 `NOT RUN`).
 - **Deployed:** no.
 - **Formally closed:** no.
+
+## Addendum — Merge and UAT Preparation Runbook (2026-10-11)
+
+- **Merged:** PR #69 merged into `main` as `c79ed90cac0263a7f7e452c0f7d0861d4adac380`, a standard merge commit with parents `e93b7f0` and `75c1b3f`. Backend CI and Mobile CI passed on the PR head before the merge, and the merged tree is identical to the reviewed head. This is the source for both the staging deployment and the final UAT APK.
+- **Runbook:** `docs/testing/PHASE_29C_UAT_PREPARATION.md`. Each step states where to run it, the exact commands, what it does, the expected output and what to paste back (never a password):
+  - §2: the staging redeploy from `7e29ffe` (no migration, no route; caches rebuilt), with the corrected backup listing (`ls -lt … | head -3`) and smoke tests for `/projects`, `/clients`, `/contacts`;
+  - §3: the APK build (always run) and provenance, expected counts 473 / projects 52 / people 84 / tasks 95, plus `adb install`;
+  - §4–§5: the UAT29C data plan and steps (extract and SHA, `plan`, `seed`, `verify`, `exposure`, a same-day re-`seed`);
+  - §6: per-scenario UAT notes, including the `revoke` stage for UAT-29C-07;
+  - §7: the script `uat29c_data.php`, SHA-256 `1c151c4d4c9fcc7b94918da4a4ed526ac5b9accaa2f415b570702b93a52a4a64`.
+- **Data:** four `uat29c.*` accounts (staff, manager, administrator, no profile), 29 projects (28 with Mia as a member over two pages; one, "UAT29C Hidden Site", holding her task but not her), 52 milestones on one project for "Showing 50 of 52", an active and an inactive client, and a primary, a plain and an inactive contact. Every record carries an internal `notes` value the app must never show.
+- **New lesson applied:** passwords are pasted only into the app's sign-in field, never into a terminal (the 29B stray-file incident).
+- **Rehearsal:** on scratch SQLite only, including the refusals, the all-or-nothing `rotate`, a drift-then-reseed check, a non-UAT data snapshot and the runbook's own extraction path. Results are in `TEST_STATUS.md`. Its `verify` stage is the first MySQL check of the R-19 order.
+- **Status:** nothing is deployed or seeded on staging. UAT-29C-01…08 remain `NOT RUN`. Phase 29C is not closed.
