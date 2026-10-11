@@ -4,6 +4,13 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-11 — Phase 29C Gate 2: mobile projects and clients data and state
+- `lib/features/projects/`: strict models (`Project`, statuses, roles, members, milestones, `leadsFirst`), `ProjectsApiClient` (my staff id from `/me/profile`; `/projects?member=<me>` 25 per page with search — R-20/R-21; project, members and milestones, one page of 50 — R-22), `MyProjectsController` (no-profile state) and `ProjectDetailController` (`403` → "You don't have access to this project.", session kept — R-25).
+- `lib/features/clients/`: strict models (`Client` with address lines, `ClientContact`), `ClientsApiClient` (active clients 25 per page with search; any client by id; active contacts, 50 — R-26), `ClientsController` and `ClientDetailController`.
+- Shared in `lib/core/`: `PagedResult<T>` and `PagedSearchController<T>` (the Phase 28 directory behaviour, generic, plus `noProfile`). The Phase 28 directory controller is unchanged.
+- `notes` is never read (R-24). Tests: 35 new (models 13, API clients 8, controllers 14); Flutter 456/456; format and analyze clean; `pubspec` unchanged. 12 mutation checks, all caught (one test strengthened on the way).
+- No screens, routes or backend change. Gate 3 is not started.
+
 ### 2026-10-11 — Phase 29C Gate 1: backend list tie-breakers (R-19)
 - `->orderBy('id')` appended to `GET /api/v1/projects`, `/clients`, `/contacts`, `/projects/{public_id}/members` and `/projects/{public_id}/milestones` (`index` in `ProjectController`, `ClientController`, `ContactController`, `ProjectMembershipController`, `ProjectMilestoneController`). Visible order unchanged; paging stable when sort keys repeat.
 - 5 new regression tests (equal keys over `per_page=1` pages, plus the ORDER BY pinned); each caught its removed tie-breaker in a mutation check. Backend 1,183/1,183; Pint, PHPStan level 5, `composer validate --strict`, `composer audit --locked` clean.

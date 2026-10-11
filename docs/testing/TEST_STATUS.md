@@ -1036,4 +1036,22 @@ Branch `claude/amazing-brahmagupta-dbsrjc`, from `main` at `e93b7f0` (PR #68). R
 
 ---
 
+## Phase 29C — Gate 2 (mobile projects and clients: data and state)
+
+Branch `claude/amazing-brahmagupta-dbsrjc` after Gate 1 (`22de74d`). Flutter 3.47.2 / Dart 3.13.2 at `/opt/flutter-sdk`.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `test/features/projects/project_models_test.dart` (13) | Automated | PASS | Every field; nulls kept; all project statuses with labels and closed flag; unknown status/role, a non-`YYYY-MM-DD` date and a missing name rejected; member and milestone parsing; `leadsFirst` keeps each group's order; client contact fields and `addressLines` (blank parts dropped); inactive client; contact nulls and a non-bool `is_primary` rejected; `PagedResult` pages and total. |
+| `test/features/projects/projects_api_clients_test.dart` (8) | Automated | PASS | `/me/profile` → staff id or null; `/projects` always `member=<me>`, `per_page=25`, `q` only when non-blank (R-20/R-21); project, members and milestones paths with an encoded id and `per_page=50&page=1` (R-22); `403` → `ApiForbiddenException` with the server message, session kept; bad shape → `ApiRequestException`; `/clients` always `status=active`, 25 per page; client by id (any status); `/contacts?client=…&status=active`, 50 (R-26); `404` status kept. |
+| `test/features/projects/projects_controllers_test.dart` (14) | Automated | PASS | `MyProjectsController`: profile read once, three pages appended, no page 4; no profile → `noProfile` without calling `/projects`, re-checked on retry; repeated rows shown once; debounced, trimmed search from page 1 (keystrokes 5 ms apart inside a 20 ms debounce); a slow older search dropped; failed refresh keeps the list; failed first load → message; failed "load more" kept and retried. `ClientsController`: active clients without a profile; `403` → "You don't have access to clients.", session kept. `ProjectDetailController`: three requests, leads first, totals; `403` → "You don't have access to this project.", session kept; `404` → "This project no longer exists."; one failing sub-list fails the screen. `ClientDetailController`: client and contacts with total; `404` message. Five consecutive runs of this file passed. |
+| Mutation checks | Manual (AI) | PASS | 12 made one at a time and restored: dropping `member=`; clients or contacts not active-only; no leads-first; a stale first page kept; no-profile shown as an empty list; no de-duplication; a failed refresh dropping the list; the `403` message lost; the profile re-read on every page; an unknown role accepted; no debounce. **All 12 caught** — after the debounce test was strengthened (the first version sent keystrokes synchronously and let a zero-delay timer survive) and one mutant redone (its first replacement hit a doc comment, not code). |
+| `flutter pub get` / `dart format` / `flutter analyze` | Automated | PASS | `pubspec` unchanged; 0 files changed; no issues. |
+| `flutter test` | Automated | PASS | 456/456 (421 + 35). |
+| Backend | — | Not affected | No `apps/api` change in Gate 2. |
+| Screens / device | — | Not yet | No screens or routes until Gate 3. |
+| UAT | — | NOT RUN | UAT-29C-01…08 not yet runnable. |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*
