@@ -4,6 +4,12 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-11 — Phase 29C Gate 4: final integration review, handoff and implementation PR
+- Final gates on the complete branch: backend 1,183/1,183 with Pint, PHPStan level 5, `composer validate --strict` and `composer audit --locked` (no advisories); Flutter 473/473 with format and analyze clean and `pubspec` unchanged.
+- **Contract parity:** 19 real Laravel responses (Staff, Manager, no profile; every 29C endpoint, a `403` and a `404`) replayed through the production Flutter code: 6/6 (temporary tests, not committed). It confirmed that `member=` limits a Manager to 1 of 4 projects (R-20) and that members come lead first, then by join order.
+- Docs: new `docs/handoffs/V1_PHASE_29C_HANDOFF.md`; DEC-056; `02_ARCHITECTURE.md` §37 (§36 marked closed); `05_SECURITY_MODEL.md` (Projects & Clients); `06_UI_UX_GUIDELINES.md` status; spec status; `ROADMAP.md`; UAT-29C-01…08 added as `NOT RUN`.
+- 29C is **not** closed, and nothing is deployed.
+
 ### 2026-10-11 — Phase 29C Gate 3: projects and clients screens and routes
 - **Projects** (More → Projects, `/more/projects`): member projects with search, paging, status chips, "code · client" and "Project lead"; no-profile and empty states. **Project detail** (`/more/projects/:publicId`): header with status, client (link), my role, dates, description, members leads-first (each opens the Staff directory entry) and milestones with status chips; "Showing 50 of N"; "You don't have access to this project."
 - **Clients** (More → Clients, `/more/clients`): active clients with search and paging. **Client detail** (`/more/clients/:publicId`): email, phone, website and address with Copy, an "Inactive" chip, active contacts with "Primary" and copyable email/phone.

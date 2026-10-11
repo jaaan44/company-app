@@ -1071,4 +1071,22 @@ Branch `claude/amazing-brahmagupta-dbsrjc` after Gate 2 (`77ef0de`).
 
 ---
 
+## Phase 29C — Gate 4 (final integration review)
+
+Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`75a4af8`), confirmed up to date with `main` (`e93b7f0`).
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `composer validate --strict` / `composer audit --locked` | Automated | PASS | Valid; no advisories. |
+| `vendor/bin/pint --test` / `vendor/bin/phpstan analyse` (level 5) | Automated | PASS | 0 errors. |
+| `php artisan test` | Automated | PASS | 1,183/1,183 (3,399 assertions). |
+| `flutter pub get` / `dart format` / `flutter analyze` | Automated | PASS | `pubspec` unchanged; 0 files to format; no issues. |
+| `flutter test` | Automated | PASS | 473/473. |
+| Contract parity (real API → app) | Manual (AI), temporary tests | PASS | A scratch Laravel test (with `RolePermissionSeeder`) recorded 19 real responses: a Staff member's `/me/profile`; `/projects?member=` (3 projects: a lead role, a completed project with an inactive client, one with no client) and with `q`; a project and a completed one (null code, description and target date); members (lead first, then by join order, total 3); milestones on the same date; a hidden project's `403`; `/clients?status=active` (two clients with the same non-ASCII name); an active and an inactive client; active contacts (an inactive one excluded, null job title); a missing client's `404`; a Manager's `member=` projects (1) versus all (4); a no-profile account. A scratch Flutter test replayed them through the production API clients and controllers: **6/6**. The first scratch run returned `403` for clients because test databases have no role permissions until `RolePermissionSeeder` runs (staging is seeded); fixed in the scratch test. Both files were deleted; nothing was committed. |
+| Real device / emulator | — | Not run | No device in this sandbox. |
+| MySQL | — | Not run | Plain-column ORDER BY; to be exercised at staging. |
+| UAT | — | NOT RUN | UAT-29C-01…08 `NOT RUN`. |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*

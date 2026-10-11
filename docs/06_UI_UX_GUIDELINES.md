@@ -92,7 +92,7 @@ Form conventions this phase establishes (extending 29A's write conventions):
 - **Save:** a full-width `FilledButton` that shows a small spinner and disables the form while saving; success is a `SnackBar` ("Work logged.", "Changes saved.", "Work log deleted.") and the form closes.
 - **Leaving:** with unsaved changes, "Discard changes?" (Keep editing / Discard); without changes, no prompt. **Deleting:** "Delete this work log?" (Cancel / Delete in the error colour) — the destructive-action rule.
 
-### Projects and Clients — read-only browsing (implemented, Phase 29C Gate 3 — pending Gate 4, merge and UAT)
+### Projects and Clients — read-only browsing (implemented, Phase 29C — pending merge and UAT)
 
 - **More** has five rows: My profile, Staff directory, My work logs, **Projects** ("Projects you're a member of"), **Clients** ("Company clients and contacts").
 - **Projects** (More → Projects): the Staff directory layout — a search field ("Search by name or code"), then rows with the name, "code · client", a **status chip** (Planned, Active, On hold, Completed, Cancelled) and "Project lead" in the primary colour when it applies. Empty: "You aren't a member of any projects yet."; no profile: "No staff profile is linked to this account." (no search field).

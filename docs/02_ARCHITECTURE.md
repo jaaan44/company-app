@@ -517,7 +517,7 @@ Internet → Cloudflare (proxied, Full (strict))
 
 **Not introduced:** task creation, editing beyond status, assignment or deletion; Cancelled in the app; work logs (29B); projects and clients (29C); offline queues; push; caching; a new dependency. See `docs/phases/V1_PHASE_29_DEFINITION.md` and `docs/handoffs/V1_PHASE_29A_HANDOFF.md`.
 
-## 36. Work — Work logs (Phase 29B — implemented, pending merge and UAT; DEC-055)
+## 36. Work — Work logs (Phase 29B — complete, formally closed 2026-10-10; DEC-055)
 
 **Backend:**
 - The Phase 12 self-service API (`/me/work-logs`) is reused unchanged in shape. Two behaviours changed:
@@ -537,3 +537,18 @@ Internet → Cloudflare (proxied, Full (strict))
 **Routing:** `/more/work-logs`, `/more/work-logs/new`, `/more/work-logs/:publicId` in the More branch; `/tasks/:publicId/log-work` in the Tasks branch (from "Log work" on a task's detail). The route `extra` (`WorkLogFormArgs`) carries the log, the fixed task and the company day.
 
 **Not introduced:** day totals, reports, logging for others, timers, approvals, attachments, offline queues, idempotency keys, a new dependency. See `docs/phases/V1_PHASE_29_DEFINITION.md` §6 and `docs/handoffs/V1_PHASE_29B_HANDOFF.md`.
+
+## 37. Work — Projects & Clients (Phase 29C — implemented, pending merge and UAT; DEC-056)
+
+**Backend:** the Phase 8/10/17 read APIs are reused unchanged in shape. The one change: `GET /projects`, `/clients`, `/contacts`, `/projects/{id}/members` and `/projects/{id}/milestones` end their order in `id` (R-19). No migration, route, field or permission change.
+
+**Mobile — `lib/features/projects/` and `lib/features/clients/` (`domain`, `data`, `state`, `presentation`):**
+- **`domain/`:** strict `Project` (status, role, dates as `YYYY-MM-DD`, client reference), `ProjectMember`, `ProjectMilestone`, `leadsFirst`; `Client` (with `addressLines`) and `ClientContact`. `notes` is never parsed.
+- **`data/`:** `ProjectsApiClient` (own staff id from `/me/profile`; `/projects?member=<me>` 25 per page with `q`; project, members and milestones, one page of 50); `ClientsApiClient` (`/clients?status=active` 25 per page with `q`; any client by id; `/contacts?client=…&status=active`, 50).
+- **`state/`:** `MyProjectsController` and `ClientsController` on the shared `PagedSearchController<T>`; `ProjectDetailController` and `ClientDetailController` on the Phase 28 `ResourceController`, loading their parts together with `Future.wait`.
+- **`presentation/`:** `ProjectsPage`, `ProjectDetailPage`, `ClientsPage`, `ClientDetailPage`, and `project_widgets.dart` (routes, status chips, "Showing N of M").
+- **Shared in `lib/core/`:** `network/paged_result.dart` (`PagedResult<T>` with `total`), `state/paged_search_controller.dart` (the Phase 28 directory behaviour, generic, plus `noProfile`) and `presentation/paged_search_list.dart` (the directory layout). The Phase 28 directory itself is unchanged.
+
+**Routing:** `/more/projects`, `/more/projects/:publicId`, `/more/clients`, `/more/clients/:publicId`, all in the More branch. The task detail's Project row `go`es to `/more/projects/<id>`, switching to the More tab (the Tasks tab keeps its stack); members open `/more/directory/<id>`.
+
+**Not introduced:** editing projects, clients or membership; an "all projects" view; overdue milestones; notes; tap-to-call; a new dependency. See `docs/phases/V1_PHASE_29_DEFINITION.md` §7 and `docs/handoffs/V1_PHASE_29C_HANDOFF.md`.

@@ -1,6 +1,8 @@
 # Phase 29 — Work: Tasks, Work Logs, Projects & Clients (Mobile) — Specification
 
-**Status:** **Revision 4 (2026-10-11): §7 specifies 29C — Projects & Clients in full. Decisions R-19…R-27 approved as written by the product owner (2026-10-11).** Implementation needs its own authorization, gate by gate.
+**Status:** **29C implementation complete (Gates 1–4, 2026-10-11) — pending PR review/CI, merge, staging deployment and UAT; not formally closed.** See `docs/handoffs/V1_PHASE_29C_HANDOFF.md`. Revision 4 (§7, R-19…R-27 approved as written 2026-10-11). 29A and 29B are formally closed.
+
+*Previous status line (kept as written):* **Revision 4 (2026-10-11): §7 specifies 29C — Projects & Clients in full. Decisions R-19…R-27 approved as written by the product owner (2026-10-11).** Implementation needs its own authorization, gate by gate.
 
 *Previous status line (kept as written):* **29B: COMPLETE — FORMALLY CLOSED 2026-10-10** (PR #65, `7e29ffe`; deployed to staging; UAT-29B-01…08 PASS). **29A: COMPLETE — FORMALLY CLOSED 2026-10-10.** 29C (Projects & Clients) is not started; it needs its detailed revision and explicit authorization (`CLAUDE.md` §1/§8).
 

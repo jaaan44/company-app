@@ -36,6 +36,10 @@ CSV export inherits the identical scoping as its JSON counterpart — no export 
 
 **Implemented as of Phase 29B Gate 1:** the work-log authorization model is unchanged — self-service needs a linked, active Staff record and project membership (or the assignee of an independent task) at creation; someone else's log is `404`; only date, duration and description can be edited; Administrator writes need `work-logs.manage`. The one behavioural change is the date ceiling, which is now the company "today" for everyone, so the rule no longer depends on the server's UTC clock. `meta.company_day` exposes only the company date and timezone name. The mobile app's narrower choices (no closed projects, no cancelled tasks, a 365-day picker) are presentation, not access control.
 
+## Projects & Clients (Phase 29C, DEC-056)
+
+**Implemented as of Phase 29C Gates 1–3:** no authorization change. Projects stay membership-scoped for Staff and fully visible to `projects.view` holders (Manager, Administrator); clients and contacts stay company-wide (`clients.view`). The mobile app narrows further — member projects only for every role, active clients and contacts in lists, no `notes` — and these are **presentation choices, not access control**: the API still returns notes and all visible projects to those readers. A project the reader can't see answers `403` (unchanged), which the app shows as "You don't have access to this project." without ending the session (the Phase 27 rule). The only backend change, `id` tie-breakers on five lists, changes no visibility.
+
 ## Authentication
 
 - **Implemented (DEC-022):** the Admin Backoffice authenticates via Laravel's session/secure-cookie `web` guard (Blade + Livewire login). The Flutter mobile app authenticates via Laravel Sanctum personal access tokens (`Authorization: Bearer <token>`) — bearer-token only, no cookie-based SPA/stateful authentication. No OAuth server, JWT infrastructure, or Passport.

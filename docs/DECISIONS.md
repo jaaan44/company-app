@@ -674,6 +674,20 @@ Internet → Cloudflare (proxied, SSL/TLS "Full (strict)")
 **Rationale:** One definition of "today" across Home, Tasks, reports and work logs; stable paging; no device-clock date logic; no change to the established Phase 12 contract beyond additive data.
 **Superseded/reaffirmed:** Refines Phase 12's `before_or_equal:today`. DEC-052 (company day) and DEC-054 (self-scoped `/me/tasks`) are reaffirmed. The `per_page` cap and `q` escaping on legacy endpoints remain Phase 36 items.
 
+### DEC-056 — Phase 29C: read-only Projects & Clients on mobile — member-only projects for every role, active-only client lists, and deterministic list order
+
+**Date:** 2026-10-11
+**Status:** ACCEPTED (approved with the Phase 29 specification revision 4, PR #68, R-19…R-27; implemented in Phase 29C Gates 1–3)
+**Context:** The Phase 8/10/17 read APIs already served projects, members, milestones, clients and contacts, but discovery (`docs/phases/V1_PHASE_29_DEFINITION.md` §7.1) found no unique tie-breaker on any of the five lists the app pages through, an open question about project scope for Managers and Administrators (who hold `projects.view` and so see every project), `notes` fields returned to every reader, and tasks whose project their assignee can't see.
+**Decision** (R-19…R-27, all approved as written):
+1. **Deterministic lists (R-19):** `->orderBy('id')` appended to `GET /projects` (`name`), `/clients` (`name`), `/contacts` (`last_name, first_name`), `/projects/{id}/members` (`created_at`) and `/projects/{id}/milestones` (`due_date`). Visible order unchanged. The only backend change.
+2. **Member-only projects for every role (R-20):** the app always sends `member=<my staff public_id>`; no "all projects" view on mobile. Without a linked Staff record: the no-profile state, and `/projects` is not called.
+3. **Presentation (R-21…R-24, R-26, R-27):** one name-ordered projects list with status chips and search; a project detail with members (leads first) and milestones, one page of 50 each with "Showing 50 of N"; no "overdue" on milestones (no company day on these endpoints, DEC-052); `notes` never shown; active-only client list and contacts, any client by id ("Inactive" chip), Copy for contact details (Phase 28 R-3); More gains Projects and Clients.
+4. **Links (R-25):** a task's project and a project's client open their detail; members open their Staff directory entry. A task's project opens in the **More** tab (as Home's task links open in Tasks); a `403` there is "You don't have access to this project." and never ends the session.
+**Rationale:** Self-scoped and the same for everyone, as with tasks (R-2) and work logs; stable paging; no new endpoint, field, permission or dependency.
+**Not a security boundary:** hiding `notes`, inactive clients/contacts in lists, and Managers'/Administrators' other projects are presentation choices. The API's existing visibility rules (membership-scoped projects for Staff, company-wide `clients.view`) stay authoritative and unchanged.
+**Superseded/reaffirmed:** DEC-052, DEC-053 (Copy, no `url_launcher`), DEC-054 and DEC-055 reaffirmed. The `per_page` cap and `q` escaping on legacy endpoints remain Phase 36 items.
+
 ---
 
 ## Template for Future Decisions
