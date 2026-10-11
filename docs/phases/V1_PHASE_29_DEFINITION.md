@@ -1,6 +1,6 @@
 # Phase 29 — Work: Tasks, Work Logs, Projects & Clients (Mobile) — Specification
 
-**Status:** **Revision 4 (2026-10-11): §7 specifies 29C — Projects & Clients in full; decisions R-19…R-27 are proposed and await the product owner's approval. Not authorized for implementation.**
+**Status:** **Revision 4 (2026-10-11): §7 specifies 29C — Projects & Clients in full. Decisions R-19…R-27 approved as written by the product owner (2026-10-11).** Implementation needs its own authorization, gate by gate.
 
 *Previous status line (kept as written):* **29B: COMPLETE — FORMALLY CLOSED 2026-10-10** (PR #65, `7e29ffe`; deployed to staging; UAT-29B-01…08 PASS). **29A: COMPLETE — FORMALLY CLOSED 2026-10-10.** 29C (Projects & Clients) is not started; it needs its detailed revision and explicit authorization (`CLAUDE.md` §1/§8).
 
@@ -283,9 +283,9 @@ The product owner approved every recommendation from revision 1 as written (2026
 3. **Gate 3, mobile UI:** the list, the form, "Log work" on task detail, the More row, routes.
 4. **Gate 4:** integration review (including real-API contract parity), docs, DEC entry, UAT rows, handoff, PR. Not merged without approval.
 
-## 7. Sub-phase 29C — Projects & Clients (revision 4: specified in full; R-19…R-27 proposed, awaiting approval)
+## 7. Sub-phase 29C — Projects & Clients (revision 4: specified in full; R-19…R-27 approved 2026-10-11)
 
-*Revision 4 (2026-10-11) replaces the outline with a full specification, after read-only discovery on `main` at `5c7b40c` (29A and 29B closed). R-19…R-27 are **proposals** for the product owner's decision. Implementation needs its own authorization, gate by gate (`CLAUDE.md` §1/§8). 29C stays **read-only**: no create, edit or membership change from the app.*
+*Revision 4 (2026-10-11) replaces the outline with a full specification, after read-only discovery on `main` at `5c7b40c` (29A and 29B closed). The product owner approved R-19…R-27 as written (2026-10-11). Implementation needs its own authorization, gate by gate (`CLAUDE.md` §1/§8). 29C stays **read-only**: no create, edit or membership change from the app.*
 
 *Revision 2's outline, kept for reference:* My projects under More → "Projects" (member projects for Staff; Managers/Administrators to be decided), with code, name, status, client, dates and `my_role`, and a detail with members (linking to the Staff directory) and milestones; Clients under More → "Clients" (company-wide, with search; detail with contact details, Copy as in Phase 28 R-3, and contacts); a task's project becomes a link; no backend change beyond optional tie-breakers.
 
@@ -314,9 +314,9 @@ The product owner approved every recommendation from revision 1 as written (2026
 
 **Mobile:** the Phase 28 paging, Copy (R-3) and detail patterns, and the Staff directory detail route `/more/directory/:publicId`, are reusable. The task detail shows the project name as plain text. More has three rows (My profile, Staff directory, My work logs).
 
-### 7.2 Proposed decisions for 29C (awaiting the product owner)
+### 7.2 Product decisions for 29C (approved as written, 2026-10-11)
 
-| # | Proposal | Why | Not chosen |
+| # | Decision | Why | Not chosen |
 |---|---|---|---|
 | **R-19** | **Tie-breakers** (`->orderBy('id')` appended; visible order unchanged) on `GET /projects`, `/clients`, `/contacts`, `/projects/{id}/members` and `/projects/{id}/milestones`, each with a regression test. | Stable paging, as everywhere else in Phase 28/29. | Leave them. |
 | **R-20** | **Projects shows only projects I'm a member of, for every role** (`member=<my staff public_id>`), like R-2 for tasks. No "all projects" view in the app. Without a linked Staff record: "No staff profile is linked to this account." | Self-scoped and the same for everyone; company-wide project browsing stays in the Administrator Backoffice. | Managers/Administrators see all projects (the API default for them). |
@@ -458,3 +458,4 @@ The product owner approved every recommendation from revision 1 as written (2026
   - **Leaving:** `PopScope` asks "Discard changes?" (Keep editing / Discard) only when something changed; saving or deleting leaves without asking. Delete asks "Delete this work log?" (Cancel / Delete, in the error colour).
   - **More:** a third row, "My work logs". The Phase 28 test that More has exactly two rows was updated to three, as Phase 28's R-8 anticipated.
 - **Revision 4 (2026-10-11):** §7 (29C) rewritten from an outline into a full specification after read-only discovery on `main` at `5c7b40c`: findings (§7.1: no tie-breakers on the five lists, project scope for Managers/Administrators, exposed notes, a task's project possibly invisible to its assignee, inactive clients, no company day on milestones), proposed decisions R-19…R-27 (§7.2), backend, mobile, rules, UAT-29C-01…08, Definition of Done and gate sequence. No code, test, route or configuration was changed. Elsewhere only this note and the status line changed.
+- **Revision 4 approval (2026-10-11):** the product owner approved R-19…R-27 as written. Only the status line, the §7 heading and intro, the §7.2 heading and column label and this note changed.
