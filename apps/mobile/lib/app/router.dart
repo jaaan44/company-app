@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:mobile/features/auth/presentation/login_page.dart';
+import 'package:mobile/features/clients/data/clients_api_client.dart';
+import 'package:mobile/features/clients/presentation/client_detail_page.dart';
+import 'package:mobile/features/clients/presentation/clients_page.dart';
 import 'package:mobile/features/auth/state/auth_controller.dart';
 import 'package:mobile/features/home/data/home_api_client.dart';
 import 'package:mobile/features/home/presentation/home_page.dart';
@@ -10,6 +13,9 @@ import 'package:mobile/features/people/presentation/more_page.dart';
 import 'package:mobile/features/people/presentation/my_profile_page.dart';
 import 'package:mobile/features/people/presentation/staff_detail_page.dart';
 import 'package:mobile/features/people/presentation/staff_directory_page.dart';
+import 'package:mobile/features/projects/data/projects_api_client.dart';
+import 'package:mobile/features/projects/presentation/project_detail_page.dart';
+import 'package:mobile/features/projects/presentation/projects_page.dart';
 import 'package:mobile/features/shell/presentation/app_shell.dart';
 import 'package:mobile/features/shell/presentation/placeholder_page.dart';
 import 'package:mobile/features/tasks/data/tasks_api_client.dart';
@@ -37,6 +43,8 @@ GoRouter buildAppRouter(
   required TaskChanges taskChanges,
   required WorkLogsApiClient workLogsApiClient,
   required WorkLogChanges workLogChanges,
+  required ProjectsApiClient projectsApiClient,
+  required ClientsApiClient clientsApiClient,
 }) {
   // The work-log form (Phase 29B) — the same page from My work logs and
   // from a task's detail; its route `extra` says which log or task.
@@ -166,6 +174,40 @@ GoRouter buildAppRouter(
                       GoRoute(
                         path: ':publicId',
                         builder: (context, state) => workLogForm(state),
+                      ),
+                    ],
+                  ),
+                  // Projects and Clients (Phase 29C): inside the More branch
+                  // too, so a project's client and members open here as
+                  // well — and a task's project link switches to this tab
+                  // (spec §7.5, R-25).
+                  GoRoute(
+                    path: 'projects',
+                    builder: (context, state) =>
+                        ProjectsPage(projectsApiClient: projectsApiClient),
+                    routes: [
+                      GoRoute(
+                        path: ':publicId',
+                        builder: (context, state) => ProjectDetailPage(
+                          key: ValueKey(state.pathParameters['publicId']),
+                          projectsApiClient: projectsApiClient,
+                          publicId: state.pathParameters['publicId']!,
+                        ),
+                      ),
+                    ],
+                  ),
+                  GoRoute(
+                    path: 'clients',
+                    builder: (context, state) =>
+                        ClientsPage(clientsApiClient: clientsApiClient),
+                    routes: [
+                      GoRoute(
+                        path: ':publicId',
+                        builder: (context, state) => ClientDetailPage(
+                          key: ValueKey(state.pathParameters['publicId']),
+                          clientsApiClient: clientsApiClient,
+                          publicId: state.pathParameters['publicId']!,
+                        ),
                       ),
                     ],
                   ),

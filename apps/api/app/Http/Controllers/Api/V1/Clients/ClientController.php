@@ -49,6 +49,9 @@ class ClientController extends Controller
                 });
             })
             ->orderBy('name')
+            // Unique tie-breaker (Phase 29C, R-19): names aren't unique, so
+            // equal names would otherwise page unpredictably.
+            ->orderBy('id')
             ->paginate($request->integer('per_page', 50));
 
         return ClientResource::collection($clients);

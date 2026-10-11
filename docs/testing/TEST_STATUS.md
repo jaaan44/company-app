@@ -1019,4 +1019,74 @@ Staging now runs `7e29ffe`. The UAT29B data (2 accounts, staff `UAT29B-001`, pro
 
 ---
 
+## Phase 29C — Gate 1 (backend: list tie-breakers, R-19)
+
+Branch `claude/amazing-brahmagupta-dbsrjc`, from `main` at `e93b7f0` (PR #68). Run in this AI sandbox (PHP 8.4, SQLite in-memory per `phpunit.xml`).
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| 5 new tie-breaker tests | Automated | PASS | `ProjectTest::test_identically_named_projects_page_stably`, `ClientTest::test_identically_named_clients_page_stably`, `ContactTest::test_identically_named_contacts_page_stably`, `ProjectMembershipTest::test_members_added_in_the_same_second_page_stably`, `ProjectMilestoneTest::test_milestones_due_on_the_same_date_page_stably`. Each: three rows with equal sort keys, `per_page=1` over three pages, each row exactly once in id order; the SQL contains the expected `order by …, "id" asc`. |
+| Mutation checks | Manual (AI) | PASS | Removing each of the five `->orderBy('id')` lines in turn made exactly its test fail (5/5); each file was restored. |
+| Full `php artisan test` | Automated | PASS | 1,183/1,183 (3,399 assertions): 1,178 plus these 5. No existing test changed. |
+| `composer validate --strict` / `composer audit --locked` | Automated | PASS | Valid; no advisories. |
+| `vendor/bin/pint --test` / `vendor/bin/phpstan analyse` (level 5) | Automated | PASS | 0 errors. |
+| MySQL | — | Not run | Plain-column ORDER BY; to be exercised at staging. |
+| Mobile | — | Not affected | No `apps/mobile` change in Gate 1. |
+| UAT | — | NOT RUN | UAT-29C-01…08 not yet runnable. |
+
+---
+
+## Phase 29C — Gate 2 (mobile projects and clients: data and state)
+
+Branch `claude/amazing-brahmagupta-dbsrjc` after Gate 1 (`22de74d`). Flutter 3.47.2 / Dart 3.13.2 at `/opt/flutter-sdk`.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `test/features/projects/project_models_test.dart` (13) | Automated | PASS | Every field; nulls kept; all project statuses with labels and closed flag; unknown status/role, a non-`YYYY-MM-DD` date and a missing name rejected; member and milestone parsing; `leadsFirst` keeps each group's order; client contact fields and `addressLines` (blank parts dropped); inactive client; contact nulls and a non-bool `is_primary` rejected; `PagedResult` pages and total. |
+| `test/features/projects/projects_api_clients_test.dart` (8) | Automated | PASS | `/me/profile` → staff id or null; `/projects` always `member=<me>`, `per_page=25`, `q` only when non-blank (R-20/R-21); project, members and milestones paths with an encoded id and `per_page=50&page=1` (R-22); `403` → `ApiForbiddenException` with the server message, session kept; bad shape → `ApiRequestException`; `/clients` always `status=active`, 25 per page; client by id (any status); `/contacts?client=…&status=active`, 50 (R-26); `404` status kept. |
+| `test/features/projects/projects_controllers_test.dart` (14) | Automated | PASS | `MyProjectsController`: profile read once, three pages appended, no page 4; no profile → `noProfile` without calling `/projects`, re-checked on retry; repeated rows shown once; debounced, trimmed search from page 1 (keystrokes 5 ms apart inside a 20 ms debounce); a slow older search dropped; failed refresh keeps the list; failed first load → message; failed "load more" kept and retried. `ClientsController`: active clients without a profile; `403` → "You don't have access to clients.", session kept. `ProjectDetailController`: three requests, leads first, totals; `403` → "You don't have access to this project.", session kept; `404` → "This project no longer exists."; one failing sub-list fails the screen. `ClientDetailController`: client and contacts with total; `404` message. Five consecutive runs of this file passed. |
+| Mutation checks | Manual (AI) | PASS | 12 made one at a time and restored: dropping `member=`; clients or contacts not active-only; no leads-first; a stale first page kept; no-profile shown as an empty list; no de-duplication; a failed refresh dropping the list; the `403` message lost; the profile re-read on every page; an unknown role accepted; no debounce. **All 12 caught** — after the debounce test was strengthened (the first version sent keystrokes synchronously and let a zero-delay timer survive) and one mutant redone (its first replacement hit a doc comment, not code). |
+| `flutter pub get` / `dart format` / `flutter analyze` | Automated | PASS | `pubspec` unchanged; 0 files changed; no issues. |
+| `flutter test` | Automated | PASS | 456/456 (421 + 35). |
+| Backend | — | Not affected | No `apps/api` change in Gate 2. |
+| Screens / device | — | Not yet | No screens or routes until Gate 3. |
+| UAT | — | NOT RUN | UAT-29C-01…08 not yet runnable. |
+
+---
+
+## Phase 29C — Gate 3 (projects and clients screens, routes, More rows, task link)
+
+Branch `claude/amazing-brahmagupta-dbsrjc` after Gate 2 (`77ef0de`).
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `test/features/projects/projects_pages_test.dart` (17) | Automated (widget, whole app) | PASS | Through `CompanyApp`, the router and the real `ApiClient`: Projects lists member projects (`member=<me>`) with "code · client", status chips and "Project lead"; no profile → message, no search, no `/projects` call; search and "No project matches"; empty message; paging loads page 2 once. Project detail: header, client, my role, dates, completed date only when set, description, members leads-first, "Showing 2 of 53" only when there are more, milestones with chips, no "overdue", no notes. Member → Staff directory entry; client → client detail. Task → project opens in the More tab, back goes to Projects, the Tasks tab still shows the task; an independent task's row is not a link; a hidden project → "You don't have access to this project." + Try again, session kept. Clients: active-only, search, row → detail; detail with email, phone, website, the joined address, `Contacts (57)`, "Primary", "Showing 2 of 57", no notes; Copy puts the website and a contact's email on the clipboard; an inactive client from a project → "Inactive" chip, three "Not set", no contacts note. Light and dark at 200% text on a 360×640 phone: all four screens, scrolled to their ends, with no layout exception. |
+| `people_pages_test.dart` More test | Automated | PASS | Updated: five rows (adds Projects, Clients). |
+| Mutation checks | Manual (AI) | PASS | 14, one at a time, each restored: the task's project not a link; a member or the client not a link; "Showing N of N" shown; the inactive chip inverted; search shown without a profile; Website not copyable; More's Projects row dead; the lead label hidden; the completed date always shown; an empty description shown; leads not first; the milestone chip or the Primary chip missing. **All 14 caught.** |
+| `flutter pub get` / `dart format` / `flutter analyze` | Automated | PASS | `pubspec` unchanged; 0 files changed; no issues. |
+| `flutter test` | Automated | PASS | 473/473 (456 + 17). By area: projects 52, work_logs 91, tasks 95, home 66, people 84, core/network 29. |
+| Backend | — | Not affected | No `apps/api` change in Gate 3. |
+| Real device | — | Not run | No device in this sandbox. |
+| UAT | — | NOT RUN | UAT-29C-01…08 not yet runnable. |
+
+---
+
+## Phase 29C — Gate 4 (final integration review)
+
+Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`75a4af8`), confirmed up to date with `main` (`e93b7f0`).
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `composer validate --strict` / `composer audit --locked` | Automated | PASS | Valid; no advisories. |
+| `vendor/bin/pint --test` / `vendor/bin/phpstan analyse` (level 5) | Automated | PASS | 0 errors. |
+| `php artisan test` | Automated | PASS | 1,183/1,183 (3,399 assertions). |
+| `flutter pub get` / `dart format` / `flutter analyze` | Automated | PASS | `pubspec` unchanged; 0 files to format; no issues. |
+| `flutter test` | Automated | PASS | 473/473. |
+| Contract parity (real API → app) | Manual (AI), temporary tests | PASS | A scratch Laravel test (with `RolePermissionSeeder`) recorded 19 real responses: a Staff member's `/me/profile`; `/projects?member=` (3 projects: a lead role, a completed project with an inactive client, one with no client) and with `q`; a project and a completed one (null code, description and target date); members (lead first, then by join order, total 3); milestones on the same date; a hidden project's `403`; `/clients?status=active` (two clients with the same non-ASCII name); an active and an inactive client; active contacts (an inactive one excluded, null job title); a missing client's `404`; a Manager's `member=` projects (1) versus all (4); a no-profile account. A scratch Flutter test replayed them through the production API clients and controllers: **6/6**. The first scratch run returned `403` for clients because test databases have no role permissions until `RolePermissionSeeder` runs (staging is seeded); fixed in the scratch test. Both files were deleted; nothing was committed. |
+| Real device / emulator | — | Not run | No device in this sandbox. |
+| MySQL | — | Not run | Plain-column ORDER BY; to be exercised at staging. |
+| UAT | — | NOT RUN | UAT-29C-01…08 `NOT RUN`. |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*

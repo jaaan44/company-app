@@ -4,6 +4,33 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-11 — Phase 29C Gate 4: final integration review, handoff and implementation PR
+- Final gates on the complete branch: backend 1,183/1,183 with Pint, PHPStan level 5, `composer validate --strict` and `composer audit --locked` (no advisories); Flutter 473/473 with format and analyze clean and `pubspec` unchanged.
+- **Contract parity:** 19 real Laravel responses (Staff, Manager, no profile; every 29C endpoint, a `403` and a `404`) replayed through the production Flutter code: 6/6 (temporary tests, not committed). It confirmed that `member=` limits a Manager to 1 of 4 projects (R-20) and that members come lead first, then by join order.
+- Docs: new `docs/handoffs/V1_PHASE_29C_HANDOFF.md`; DEC-056; `02_ARCHITECTURE.md` §37 (§36 marked closed); `05_SECURITY_MODEL.md` (Projects & Clients); `06_UI_UX_GUIDELINES.md` status; spec status; `ROADMAP.md`; UAT-29C-01…08 added as `NOT RUN`.
+- 29C is **not** closed, and nothing is deployed.
+
+### 2026-10-11 — Phase 29C Gate 3: projects and clients screens and routes
+- **Projects** (More → Projects, `/more/projects`): member projects with search, paging, status chips, "code · client" and "Project lead"; no-profile and empty states. **Project detail** (`/more/projects/:publicId`): header with status, client (link), my role, dates, description, members leads-first (each opens the Staff directory entry) and milestones with status chips; "Showing 50 of N"; "You don't have access to this project."
+- **Clients** (More → Clients, `/more/clients`): active clients with search and paging. **Client detail** (`/more/clients/:publicId`): email, phone, website and address with Copy, an "Inactive" chip, active contacts with "Primary" and copyable email/phone.
+- **Task detail:** the Project row opens the project in the More tab (R-25). More has five rows (R-27). `CompanyApp` injects the two new API clients.
+- Shared: `core/presentation/paged_search_list.dart`; status chips in `projects/presentation/project_widgets.dart`. Notes never shown.
+- Tests: 17 new whole-app widget tests; the More test updated to five rows. Flutter 473/473; format and analyze clean; `pubspec` unchanged. 14 UI mutation checks, all caught.
+- Docs: `06_UI_UX_GUIDELINES.md` (Projects and Clients; 29B marked closed), spec Gate 3 notes, `CURRENT_STATE.md`, `TEST_STATUS.md`. No backend change. Gate 4 is not started.
+
+### 2026-10-11 — Phase 29C Gate 2: mobile projects and clients data and state
+- `lib/features/projects/`: strict models (`Project`, statuses, roles, members, milestones, `leadsFirst`), `ProjectsApiClient` (my staff id from `/me/profile`; `/projects?member=<me>` 25 per page with search — R-20/R-21; project, members and milestones, one page of 50 — R-22), `MyProjectsController` (no-profile state) and `ProjectDetailController` (`403` → "You don't have access to this project.", session kept — R-25).
+- `lib/features/clients/`: strict models (`Client` with address lines, `ClientContact`), `ClientsApiClient` (active clients 25 per page with search; any client by id; active contacts, 50 — R-26), `ClientsController` and `ClientDetailController`.
+- Shared in `lib/core/`: `PagedResult<T>` and `PagedSearchController<T>` (the Phase 28 directory behaviour, generic, plus `noProfile`). The Phase 28 directory controller is unchanged.
+- `notes` is never read (R-24). Tests: 35 new (models 13, API clients 8, controllers 14); Flutter 456/456; format and analyze clean; `pubspec` unchanged. 12 mutation checks, all caught (one test strengthened on the way).
+- No screens, routes or backend change. Gate 3 is not started.
+
+### 2026-10-11 — Phase 29C Gate 1: backend list tie-breakers (R-19)
+- `->orderBy('id')` appended to `GET /api/v1/projects`, `/clients`, `/contacts`, `/projects/{public_id}/members` and `/projects/{public_id}/milestones` (`index` in `ProjectController`, `ClientController`, `ContactController`, `ProjectMembershipController`, `ProjectMilestoneController`). Visible order unchanged; paging stable when sort keys repeat.
+- 5 new regression tests (equal keys over `per_page=1` pages, plus the ORDER BY pinned); each caught its removed tie-breaker in a mutation check. Backend 1,183/1,183; Pint, PHPStan level 5, `composer validate --strict`, `composer audit --locked` clean.
+- Docs: `04_API_CONVENTIONS.md`, spec Gate 1 note, `CURRENT_STATE.md`, `TEST_STATUS.md`.
+- No new endpoint, field, permission, migration or mobile change. Gate 2 is not started.
+
 ### 2026-10-11 — Phase 29 specification revision 4: 29C Projects & Clients specified (documentation only)
 - PR #67 merged (`5c7b40c`): Phase 29B formally closed.
 - `docs/phases/V1_PHASE_29_DEFINITION.md` §7 rewritten from an outline into a full 29C specification after read-only discovery: findings (no tie-breakers on the projects, clients, contacts, members and milestones lists; project scope for Managers/Administrators; exposed `notes`; a task's project may be invisible to its assignee; inactive clients; no company day for milestones), proposed decisions **R-19…R-27**, backend (tie-breakers only), mobile data/state and UI, rules, UAT-29C-01…08, Definition of Done and gates.

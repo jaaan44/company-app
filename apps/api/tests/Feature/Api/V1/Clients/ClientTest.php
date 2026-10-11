@@ -10,6 +10,7 @@ use App\Models\Project;
 use App\Models\ServiceReport;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -245,5 +246,30 @@ class ClientTest extends TestCase
         $this->getJson("/api/v1/clients/{$client->public_id}")
             ->assertOk()
             ->assertJson(['data' => ['contacts_count' => 3]]);
+    }
+
+    // --- Phase 29C R-19: tie-breaker ------------------------------------------
+
+    public function test_identically_named_clients_page_stably(): void
+    {
+        $this->actingAsAdministrator();
+        $created = collect(range(1, 3))->map(fn () => Client::factory()->create(['name' => 'Same Name']));
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $paged = collect(range(1, 3))->map(
+            fn (int $page) => $this->getJson("/api/v1/clients?per_page=1&page={$page}")
+                ->assertOk()
+                ->assertJsonCount(1, 'data')
+                ->json('data.0.public_id'),
+        );
+        $queries = implode("\n", array_column(DB::getQueryLog(), 'query'));
+        DB::disableQueryLog();
+
+        // Equal sort keys: each row exactly once, in id order.
+        $this->assertSame($created->pluck('public_id')->all(), $paged->all());
+        // SQLite happens to return rowid order for equal keys, so pin the
+        // ORDER BY itself (MySQL makes no such promise).
+        $this->assertStringContainsString('order by "name" asc, "id" asc', $queries);
     }
 }

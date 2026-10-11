@@ -61,6 +61,9 @@ class ContactController extends Controller
             })
             ->orderBy('last_name')
             ->orderBy('first_name')
+            // Unique tie-breaker (Phase 29C, R-19): two contacts can share a
+            // name, which would otherwise page unpredictably.
+            ->orderBy('id')
             ->paginate($request->integer('per_page', 50));
 
         return ContactResource::collection($contacts);

@@ -4,7 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile/app/auth_scope.dart';
 
 /// The `More` tab (Phase 28, R-8): only the real secondary areas — My
-/// profile, Staff directory and (Phase 29B) My work logs. Later phases add
+/// profile, Staff directory, (Phase 29B) My work logs and (Phase 29C,
+/// R-27) Projects and Clients. Later phases add
 /// their own rows; there are no "coming soon" entries. Logout stays in the
 /// Home app bar.
 ///
@@ -44,6 +45,22 @@ class MorePage extends StatelessWidget {
             subtitle: const Text('Time you have logged'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.go('/more/work-logs'),
+          ),
+          ListTile(
+            key: const Key('more-projects'),
+            leading: const Icon(Icons.folder_outlined),
+            title: const Text('Projects'),
+            subtitle: const Text("Projects you're a member of"),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.go('/more/projects'),
+          ),
+          ListTile(
+            key: const Key('more-clients'),
+            leading: const Icon(Icons.business_outlined),
+            title: const Text('Clients'),
+            subtitle: const Text('Company clients and contacts'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.go('/more/clients'),
           ),
         ],
       ),

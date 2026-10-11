@@ -8,6 +8,7 @@ use App\Models\ProjectMembership;
 use App\Models\Staff;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -187,5 +188,34 @@ class ProjectMembershipTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJson(['data' => [['role' => 'project_lead']]]);
+    }
+
+    // --- Phase 29C R-19: tie-breaker ------------------------------------------
+
+    public function test_members_added_in_the_same_second_page_stably(): void
+    {
+        $this->actingAsAdministrator();
+        $project = Project::factory()->create();
+        $created = collect(range(1, 3))->map(fn () => ProjectMembership::factory()->create([
+            'project_id' => $project->id,
+            'created_at' => '2026-10-11 09:00:00',
+        ])->load('staff'));
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $paged = collect(range(1, 3))->map(
+            fn (int $page) => $this->getJson("/api/v1/projects/{$project->public_id}/members?per_page=1&page={$page}")
+                ->assertOk()
+                ->assertJsonCount(1, 'data')
+                ->json('data.0.staff.public_id'),
+        );
+        $queries = implode("\n", array_column(DB::getQueryLog(), 'query'));
+        DB::disableQueryLog();
+
+        // Equal sort keys: each row exactly once, in id order.
+        $this->assertSame($created->pluck('staff.public_id')->all(), $paged->all());
+        // SQLite happens to return rowid order for equal keys, so pin the
+        // ORDER BY itself (MySQL makes no such promise).
+        $this->assertStringContainsString('order by "created_at" asc, "id" asc', $queries);
     }
 }

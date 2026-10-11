@@ -79,7 +79,7 @@ Conventions this phase establishes for writes:
 - **No confirmation dialog for reversible changes:** a status change can be undone by choosing again, so it doesn't use the destructive-action `AlertDialog` (that convention stays for hard-to-reverse actions).
 - **After a change**, every other screen showing that data (lists, Home counts) refreshes quietly, so returning to it never shows stale state.
 
-### Work logs — list and the first full form (implemented, Phase 29B — pending merge and UAT)
+### Work logs — list and the first full form (implemented, Phase 29B — complete, formally closed 2026-10-10)
 
 - **My work logs** (More → "My work logs"): date group headers "Today", "Yesterday", then "Wed 7 Oct" (the year added when it isn't the company year), judged against the server's company day. Each row: the task title or project name, the project under a task, the description (two lines) and the duration on the right ("1 h 30 min", "45 min", "2 h"). An extended **Add** button; the list keeps space at its end so the button never covers the last row. Empty: "No work logged yet."; no profile: "No staff profile is linked to this account." (no Add button).
 - **Log work / Edit work log:** one column, in this order — **What was this for?**, **Date**, **Time spent** (Hours, Minutes), **What did you do?**, then **Save** (and **Delete** when editing). A task's detail offers **Log work** (not for cancelled tasks), opening the form with the task fixed.
@@ -91,6 +91,15 @@ Form conventions this phase establishes (extending 29A's write conventions):
 - **Errors:** each field's message directly under it, in the `error` role, announced (live region); errors that aren't about one field (eligibility, offline, a refusal) in an error-container banner at the top. Editing a field clears its error. Nothing is sent while any check fails.
 - **Save:** a full-width `FilledButton` that shows a small spinner and disables the form while saving; success is a `SnackBar` ("Work logged.", "Changes saved.", "Work log deleted.") and the form closes.
 - **Leaving:** with unsaved changes, "Discard changes?" (Keep editing / Discard); without changes, no prompt. **Deleting:** "Delete this work log?" (Cancel / Delete in the error colour) — the destructive-action rule.
+
+### Projects and Clients — read-only browsing (implemented, Phase 29C — pending merge and UAT)
+
+- **More** has five rows: My profile, Staff directory, My work logs, **Projects** ("Projects you're a member of"), **Clients** ("Company clients and contacts").
+- **Projects** (More → Projects): the Staff directory layout — a search field ("Search by name or code"), then rows with the name, "code · client", a **status chip** (Planned, Active, On hold, Completed, Cancelled) and "Project lead" in the primary colour when it applies. Empty: "You aren't a member of any projects yet."; no profile: "No staff profile is linked to this account." (no search field).
+- **Project detail:** a header (name, code, status chip), then labelled rows — Client (opens the client), My role, Start date, Target end date, Completed (only when set) — the description under its own header, **Members (N)** (leads first; each opens their Staff directory entry) and **Milestones** (title, date, status chip; never an "overdue" label). Lists that load only their first page end with "Showing 50 of N". A project you can't see: "You don't have access to this project." with Try again.
+- **Clients** (More → Clients): active clients, the same list layout (name, code). **Client detail:** a header (name, code, an "Inactive" chip when it is), Email, Phone, Website and Address, each with **Copy**; then **Contacts (N)** — each contact's name with a "Primary" chip, job title, and email/phone indented beneath with Copy.
+- **Status chips** share one style with the Tasks chip: a container colour per state, the label always written and announced ("Status: Active"); muted states (Cancelled, Inactive) are outlined.
+- **Links between areas:** a task's project opens in the **More** tab (the Tasks tab keeps the task); a project's client and members open within More. Notes are never shown.
 
 ## Admin Backoffice (Web) — Navigation
 
