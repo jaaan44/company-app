@@ -48,6 +48,9 @@ class ProjectMembershipController extends Controller
             ->with('staff')
             ->when($request->filled('role'), fn ($query) => $query->where('role', $request->string('role')))
             ->orderBy('created_at')
+            // Unique tie-breaker (Phase 29C, R-19): members added in the same
+            // second would otherwise page unpredictably.
+            ->orderBy('id')
             ->paginate($request->integer('per_page', 50));
 
         return ProjectMembershipResource::collection($memberships);

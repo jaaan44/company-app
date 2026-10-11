@@ -4,6 +4,12 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-11 — Phase 29C Gate 1: backend list tie-breakers (R-19)
+- `->orderBy('id')` appended to `GET /api/v1/projects`, `/clients`, `/contacts`, `/projects/{public_id}/members` and `/projects/{public_id}/milestones` (`index` in `ProjectController`, `ClientController`, `ContactController`, `ProjectMembershipController`, `ProjectMilestoneController`). Visible order unchanged; paging stable when sort keys repeat.
+- 5 new regression tests (equal keys over `per_page=1` pages, plus the ORDER BY pinned); each caught its removed tie-breaker in a mutation check. Backend 1,183/1,183; Pint, PHPStan level 5, `composer validate --strict`, `composer audit --locked` clean.
+- Docs: `04_API_CONVENTIONS.md`, spec Gate 1 note, `CURRENT_STATE.md`, `TEST_STATUS.md`.
+- No new endpoint, field, permission, migration or mobile change. Gate 2 is not started.
+
 ### 2026-10-11 — Phase 29 specification revision 4: 29C Projects & Clients specified (documentation only)
 - PR #67 merged (`5c7b40c`): Phase 29B formally closed.
 - `docs/phases/V1_PHASE_29_DEFINITION.md` §7 rewritten from an outline into a full 29C specification after read-only discovery: findings (no tie-breakers on the projects, clients, contacts, members and milestones lists; project scope for Managers/Administrators; exposed `notes`; a task's project may be invisible to its assignee; inactive clients; no company day for milestones), proposed decisions **R-19…R-27**, backend (tie-breakers only), mobile data/state and UI, rules, UAT-29C-01…08, Definition of Done and gates.

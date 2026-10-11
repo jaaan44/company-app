@@ -43,6 +43,9 @@ class ProjectMilestoneController extends Controller
             ->with('project')
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')))
             ->orderBy('due_date')
+            // Unique tie-breaker (Phase 29C, R-19): milestones due on the same
+            // date would otherwise page unpredictably.
+            ->orderBy('id')
             ->paginate($request->integer('per_page', 50));
 
         return ProjectMilestoneResource::collection($milestones);

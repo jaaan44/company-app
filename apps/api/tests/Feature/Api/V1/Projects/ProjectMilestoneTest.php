@@ -9,6 +9,7 @@ use App\Models\Staff;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -224,5 +225,34 @@ class ProjectMilestoneTest extends TestCase
         $milestone = ProjectMilestone::factory()->create();
 
         $this->deleteJson("/api/v1/projects/{$milestone->project->public_id}")->assertStatus(409);
+    }
+
+    // --- Phase 29C R-19: tie-breaker ------------------------------------------
+
+    public function test_milestones_due_on_the_same_date_page_stably(): void
+    {
+        $this->actingAsAdministrator();
+        $project = Project::factory()->create();
+        $created = collect(range(1, 3))->map(fn () => ProjectMilestone::factory()->create([
+            'project_id' => $project->id,
+            'due_date' => '2026-11-01',
+        ]));
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $paged = collect(range(1, 3))->map(
+            fn (int $page) => $this->getJson("/api/v1/projects/{$project->public_id}/milestones?per_page=1&page={$page}")
+                ->assertOk()
+                ->assertJsonCount(1, 'data')
+                ->json('data.0.public_id'),
+        );
+        $queries = implode("\n", array_column(DB::getQueryLog(), 'query'));
+        DB::disableQueryLog();
+
+        // Equal sort keys: each row exactly once, in id order.
+        $this->assertSame($created->pluck('public_id')->all(), $paged->all());
+        // SQLite happens to return rowid order for equal keys, so pin the
+        // ORDER BY itself (MySQL makes no such promise).
+        $this->assertStringContainsString('order by "due_date" asc, "id" asc', $queries);
     }
 }

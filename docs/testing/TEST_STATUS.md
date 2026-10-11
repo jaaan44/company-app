@@ -1019,4 +1019,21 @@ Staging now runs `7e29ffe`. The UAT29B data (2 accounts, staff `UAT29B-001`, pro
 
 ---
 
+## Phase 29C — Gate 1 (backend: list tie-breakers, R-19)
+
+Branch `claude/amazing-brahmagupta-dbsrjc`, from `main` at `e93b7f0` (PR #68). Run in this AI sandbox (PHP 8.4, SQLite in-memory per `phpunit.xml`).
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| 5 new tie-breaker tests | Automated | PASS | `ProjectTest::test_identically_named_projects_page_stably`, `ClientTest::test_identically_named_clients_page_stably`, `ContactTest::test_identically_named_contacts_page_stably`, `ProjectMembershipTest::test_members_added_in_the_same_second_page_stably`, `ProjectMilestoneTest::test_milestones_due_on_the_same_date_page_stably`. Each: three rows with equal sort keys, `per_page=1` over three pages, each row exactly once in id order; the SQL contains the expected `order by …, "id" asc`. |
+| Mutation checks | Manual (AI) | PASS | Removing each of the five `->orderBy('id')` lines in turn made exactly its test fail (5/5); each file was restored. |
+| Full `php artisan test` | Automated | PASS | 1,183/1,183 (3,399 assertions): 1,178 plus these 5. No existing test changed. |
+| `composer validate --strict` / `composer audit --locked` | Automated | PASS | Valid; no advisories. |
+| `vendor/bin/pint --test` / `vendor/bin/phpstan analyse` (level 5) | Automated | PASS | 0 errors. |
+| MySQL | — | Not run | Plain-column ORDER BY; to be exercised at staging. |
+| Mobile | — | Not affected | No `apps/mobile` change in Gate 1. |
+| UAT | — | NOT RUN | UAT-29C-01…08 not yet runnable. |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*
