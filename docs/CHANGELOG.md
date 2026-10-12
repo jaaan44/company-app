@@ -4,6 +4,12 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-12 — Phase 30A UAT preparation runbook
+- **PR #73 merged** as `0e7fce6` (CI green on the head).
+- New `docs/testing/PHASE_30A_UAT_PREPARATION.md`: staging redeploy from `c79ed90` (no migration; route cache rebuilt; `route:list` check), the UAT APK (513 / schedule 39), the UAT30A data plan and stages, per-scenario UAT notes, and the script `uat30a_data.php` (SHA-256 `50187156dbda9a3fa1f76f198b76c75c808e1522a0656731e9a1eb39ba13676b`).
+- Script rehearsed on scratch SQLite (plan, seed, re-seed, verify, drift and restore, revoke, exposure, rotate, refusals, an injected rotate failure, non-UAT data untouched). Nothing ran on staging.
+- Docs: `TEST_STATUS.md`, `UAT_LOG.md` (rows now point to the runbook; still `NOT RUN`), the 30A handoff addendum, `CURRENT_STATE.md`, `ROADMAP.md`.
+
 ### 2026-10-12 — Phase 30A Gate 4: integration review, DEC-057 and handoff
 - **Fix from the review:** the Schedule tab refreshes quietly after a task status change (`TaskChanges`, as Home), so a task completed from Schedule no longer stays listed. 1 new page test; Flutter 513/513.
 - Contract parity: real `/me/schedule` (padded first request, exact week, next week, a Manager, no profile), `/schedule-entries/{id}` (own, participant, hidden `404`) and `/me/home` responses replayed through the production app code — 5/5. Backend 1,206/1,206; Pint, PHPStan, composer validate/audit clean; `pubspec` unchanged.

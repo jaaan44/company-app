@@ -1,6 +1,6 @@
 # Phase 30A — Operations: Schedule (Mobile) — Handoff
 
-**Status: implementation complete — pending PR review/CI, merge, staging deployment and product-owner UAT.** No later step is started or authorized.
+**Status: implementation complete and merged (PR #73, `0e7fce6`); UAT preparation runbook written — pending staging deployment and product-owner UAT. Phase 30A is NOT formally closed.** See the addendum at the end. No later step is started or authorized.
 
 ## 1. Phase Identification
 
@@ -142,3 +142,16 @@ Nothing further begins until explicitly authorized (`CLAUDE.md` §8).
 - **Manually verified on a device:** no.
 - **Awaiting UAT:** yes (UAT-30A-01…08 `NOT RUN`).
 - **Deployed:** no.
+
+## Addendum — Merge and UAT Preparation Runbook (2026-10-12)
+
+- **Merged:** PR #73 merged into `main` as `0e7fce6afd243ecb27cec3123214cd8fbb8e1a20`, a standard merge commit. Backend CI and Mobile CI passed on the PR head (`ce062e8`) before the merge. This is the source for both the staging deployment and the final UAT APK.
+- **Runbook:** `docs/testing/PHASE_30A_UAT_PREPARATION.md`. Each step states where to run it, the exact commands, what it does, the expected output and what to paste back (never a password):
+  - §2: the staging redeploy from `c79ed90` (no migration; the route cache rebuilt for the new route; a `route:list` check), with the 29C backup correction (check `-- Dump completed`, never compare sizes) and smoke tests for `/me/schedule`, `/schedule` and `/schedule-entries`;
+  - §3: the APK build (always run) and provenance, expected counts 513 / schedule 39 / home 67 / tasks 95, no location permission, plus `adb install`;
+  - §4–§5: the UAT30A data plan and steps (extract and SHA, `plan`, `seed`, `verify`, `exposure`, a re-`seed` that re-dates everything);
+  - §6: per-scenario UAT notes, including the `revoke` stage for UAT-30A-07;
+  - §7: the script `uat30a_data.php`, SHA-256 `50187156dbda9a3fa1f76f198b76c75c808e1522a0656731e9a1eb39ba13676b`.
+- **Data:** four `uat30a.*` accounts (staff, manager, administrator, no profile) and a colleague without an account; Rosa and Noel report to Ben. Ten entries dated from the company day (a 07:00 Manila meeting, an overnight entry, a two-day all-day event before a timed one, next- and previous-week entries, a colleague's private entry, the manager's and admin's own), five tasks (one completed, one a report's), and three leave requests on an inactive `UAT30A Vacation leave` type (one pending, one a report's). `verify` prints each week as the app lays it out and checks it exactly for every role.
+- **Rehearsal:** on scratch SQLite only, including drift-then-reseed, refusals, the all-or-nothing `rotate`, a non-UAT data snapshot and the runbook's own extraction path. Results are in `TEST_STATUS.md`. Its `verify` stage is the first MySQL check of the 30A queries.
+- **Status:** nothing is deployed or seeded on staging. UAT-30A-01…08 remain `NOT RUN`. Phase 30A is not closed.
