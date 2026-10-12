@@ -1153,4 +1153,21 @@ Branch `claude/amazing-brahmagupta-dbsrjc`, from `main` at `84bd25f` (PR #72). R
 
 ---
 
+## Phase 30A — Gate 2 (mobile schedule data and state)
+
+Branch `claude/amazing-brahmagupta-dbsrjc` after Gate 1 (`b897cf0`). Flutter 3.47.2 / Dart 3.13.2 at `/opt/flutter-sdk`.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `test/features/schedule/schedule_models_test.dart` (10) | Automated | PASS | A full response (company day `+08:00`, range, entry with project and description, task with `task_status`, leave); `items: null` → no profile; an unknown source (`project_milestone`), a bad date, a bad instant, a missing title and a bad offset rejected; entry detail with creator and participants (none → empty). Manila day bounds (16:00 UTC the day before); company time; `shiftDate` across months and years; an 07:00 Manila meeting on its Manila day; a multi-day entry on every day it covers; a meeting until midnight not spilling over; all-day tasks on their own day in server order; a zero-length item at a day's start. |
+| `test/features/schedule/schedule_state_test.dart` (10) | Automated | PASS | Exact `/me/schedule` query; entry by encoded id; bad shape → `ApiRequestException`. **First load:** one padded request (device 13 Oct 22:00 → `2026-10-12`…`2026-10-20`), then the week from the server's 14 Oct; a device clock two weeks off → one exact follow-up for the company week. Next/previous/today move by exact weeks with the exact ranges asked. A slow overtaken week is ignored. A failed refresh keeps the week; a failed week change is an error with its message; Try again recovers. No profile → `noProfile`; `403` → "no access", session kept. Entry detail loads; `404` → "This item is no longer available." |
+| Mutation checks | Manual (AI) | PASS | 12, one at a time, each restored: end-inclusive overlap; the day-bounds sign; a stale first response kept; no exact follow-up; the padded guess without the day before; a failed refresh dropping the week; no profile shown as loaded; next week off by one; an unknown source accepted; the `404` message lost; the company-time sign; the last day dropped. **All 12 caught.** One test was rewritten before the run: its fake server delayed every request for a week, so the overtaking request hung too. |
+| `flutter pub get` / `dart format` / `flutter analyze` | Automated | PASS | `pubspec` unchanged; 0 files changed; no issues. |
+| `flutter test` | Automated | PASS | 493/493 (473 + 20). |
+| Backend | — | Not affected | No `apps/api` change in Gate 2. |
+| Screens / device | — | Not yet | No screens or routes until Gate 3. |
+| UAT | — | NOT RUN | UAT-30A-01…08 not yet runnable. |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*
