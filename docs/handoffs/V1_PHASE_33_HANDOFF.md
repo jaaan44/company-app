@@ -134,3 +134,13 @@ See §5.
 ## 16. Recommended Next Step
 
 The combined UAT runbook for 30B + 31–33 (DEC-059). After UAT and closure, the Laravel web frontend the product owner intends needs its own specification and authorization.
+
+## Addendum — Combined UAT preparation (2026-10-12)
+
+- PR #81 merged as `1d4f437` (CI green).
+- **Runbook written:** `docs/testing/COMBINED_UAT_PREPARATION.md` (deploy at `1d4f437`, host nginx `client_max_body_size 12m` in §3, APK with the widened permission gate, both data scripts, notes for UAT-31/32/33). It supersedes §2–§3 of the 30B runbook.
+- **Implemented:** the runbook and `uat3133_data.php` (in the runbook, SHA-256 `4c3263ddd8bb7131a69843a5e94dea7aa3ac301f9a3c1ec4bcdc5554842d32cc`).
+- **Tested automatically:** none new (docs only).
+- **Manually verified (AI):** the script on scratch SQLite: every stage, a re-seed, `send`, `reject`, `investigate`; the embedded text matches the rehearsed file byte for byte.
+- **Not run:** everything on the VPS and the build machine, including MySQL, the image rebuild and the host nginx change.
+- **Awaiting UAT:** UAT-30B-01…08, UAT-31/32/33-01…08, all `NOT RUN`.

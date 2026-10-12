@@ -4,6 +4,18 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-12 — Combined UAT preparation for 30B + 31–33 (runbook only)
+- **PR #81 (Phase 33) merged** as `1d4f437` (CI green).
+- **New `docs/testing/COMBINED_UAT_PREPARATION.md`** (DEC-059's single round):
+  - §2: one staging deploy `0e7fce6` → `1d4f437` (no migration), with in-container checks of the new upload limits and nine `401` smoke tests;
+  - §3: the shared host nginx's `client_max_body_size 12m` for the Company App site only, with a backup, a rollback and a 3 MB end-to-end `401` check;
+  - §4: one APK at `1d4f437`, with the permission gate widened to prove no camera or storage permission;
+  - §5–§6: the data plan and both scripts (30B's for the four accounts; the new `uat3133_data.php`, SHA-256 `4c3263dd…`, which makes no account or password);
+  - §7: per-scenario notes for 31–33.
+  It supersedes §2–§3 of `PHASE_30B_UAT_PREPARATION.md`.
+- `uat3133_data.php` was rehearsed on scratch SQLite only: every stage, an idempotent re-seed, and `send`, `reject` and `investigate`. The rehearsal moved the group chat's seeded messages ahead of the direct chat's so the Messages list shows the direct chat on top.
+- UAT_LOG notes for UAT-30B/31/32/33 point to the runbook; all remain `NOT RUN`.
+
 ### 2026-10-12 — Phase 33: Service & Incident Reports with photos (Mobile), Gates 1–4
 - **PR #80 (Phase 32) merged** as `09780b9` (CI green).
 - **Backend (Gate 1):** `service_date` limited by the company today, and `id` tie-breakers with `meta.company_day` on both report lists. 5 new tests; 1,253/1,253.
