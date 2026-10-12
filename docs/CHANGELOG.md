@@ -4,6 +4,21 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-12 — Phase 30 specification revision 2: 30B Status & Check-in
+- `docs/phases/V1_PHASE_30_DEFINITION.md` §6 rewritten from an outline into a full 30B specification after read-only discovery on `main` at `b57f2ef`.
+  - **Findings:** the Phase 9 status and check-in contract; no tie-breaker on the four history lists; no company day; the no-profile `403`; no location code on mobile; the `geolocator` package's versions, permissions and inert background service.
+  - **Proposed decisions R-13…R-22 (not yet approved):**
+    - My status in More;
+    - additive `id` tie-breakers and `meta.company_day`;
+    - status changes confirmed, never optimistic;
+    - `geolocator` 14.0.3 and `geolocator_android` 5.0.3 pinned exactly;
+    - `ACCESS_COARSE_LOCATION` and `ACCESS_FINE_LOCATION` only, with the plugin's background service removed from the manifest;
+    - an explicit, foreground-only check-in with an in-app explanation of who sees it, and clear location errors that send nothing;
+    - no map, and colleagues' statuses unchanged.
+  - UAT-30B-01…08, Definition of Done and the gate sequence are also specified. §8 gains the background-location and iOS exclusions.
+- No code, test, route, dependency or configuration change. `CURRENT_STATE.md` and `ROADMAP.md` updated.
+- **R-13…R-22 approved as written by the product owner (2026-10-12).** Next is 30B Gate 1 (needs its own authorization).
+
 ### 2026-10-12 — Phase 30A staging deployment, UAT and formal closure
 - PR #74 (runbook) merged as `ebf08b1`. Staging redeployed to `0e7fce6` (no migration; `/me/schedule` route cached); UAT30A data seeded and verified on MySQL exactly as rehearsed; UAT APK built from `0e7fce6` (SHA-256 `7EAB7F9F353023284F24D6039D4B368FC34B3EEBFC6F1D8A45527223DEF331B7`, 513/513).
 - **UAT-30A-01…08 `PASS`**, reported by the product owner. **Phase 30A formally closed.** Gaps recorded, not invented: the `adb install`, `revoke` and post-UAT `exposure` outputs.

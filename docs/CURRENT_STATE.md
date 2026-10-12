@@ -3,10 +3,10 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** **None in progress.** Phase 30A — Schedule (Mobile) is **formally closed (2026-10-12)**: merged (PR #73, `0e7fce6`), deployed to staging, UAT-30A-01…08 `PASS` (product owner). Phase 30 as a whole stays open until 30B closes.
+**Current phase:** **Phase 30B — Status & Check-in (Mobile): specification revision 2 approved (2026-10-12; R-13…R-22 as written).** `docs/phases/V1_PHASE_30_DEFINITION.md` §6. Implementation not started. Phase 30A is formally closed (2026-10-12).
 **Phase status:** Staging is **deployed and reachable over HTTPS** at `https://company-staging.storm-ark.com` (infrastructure verified by the operator; **real-device UAT passed**, Gate 2F, 2026-09-23). Live deployment refined the Gate 1 model: the verified path is Internet → Cloudflare (proxied, Full (strict)) → **shared** DigitalOcean Cloud Firewall (inbound 80/443 Cloudflare-scoped) → **shared** host Nginx (TLS, Let's Encrypt cert `company-staging.storm-ark.com`, HTTP → HTTPS redirect) → `127.0.0.1:8012` → Company App Docker nginx → Laravel (`APP_URL` HTTPS, `SESSION_SECURE_COOKIE=true`, `trustProxies(at: '*')`). Recorded as **DEC-051** (refines DEC-050). See `docs/DEPLOYMENT_STAGING.md` §13/§7a and the Phase 26 handoff addendum.
 **Last completed phase:** Phase 30A — Schedule (Mobile), formally closed 2026-10-12 (PRs #72–#74): self-scoped `GET /me/schedule`, company days for `/schedule`, the Schedule tab and entry detail. Before it, Phase 29 (closed 2026-10-12). **Open, non-blocking:** the deferred UAT password rotation from 29B (see the 29B handoff).
-**Next planned phase:** **Phase 30B — Status & Check-in (Mobile)**: its detailed specification revision first (R-1, R-11, R-12: My status, an explicit foreground-only check-in, the location package and permission) — **needs explicit authorization.** Per `CLAUDE.md` §8, nothing begins automatically.
+**Next planned phase:** 30B Gate 1 (backend: `id` tie-breakers on the four status/check-in history lists and `meta.company_day` on `/me/status` and `/me/check-ins`), then Gates 2–4 — each **needs its own explicit authorization.** Per `CLAUDE.md` §8, nothing begins automatically.
 
 ## Current Objective
 
