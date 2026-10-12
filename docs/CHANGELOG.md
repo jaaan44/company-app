@@ -4,6 +4,32 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-12 — Phase 31: Leave (Mobile), Gates 1–4
+- **Process (DEC-059):** Phases 31–33 run under one blanket authorization: AI-approved spec decisions, gates without stopping, merge on green CI, one combined UAT round at the end.
+- **Backend (Gate 1):**
+  - balances default to the company year;
+  - approved leave can't be self-cancelled from 00:00 company time on its first day;
+  - `id` tie-breakers on both request lists;
+  - `meta.company_day` on `/me/leave-requests`;
+  - new `GET /me/team-leave-requests` (direct reports only; `can_review: false` without the permission);
+  - `App\Support\CompanyDay`.
+  19 new tests; 1,240/1,240.
+- **Mobile (Gates 2–3):**
+  - More → **Leave** (balances, my requests, Request leave, Team requests);
+  - the Request leave form;
+  - a request's detail with Cancel, and a team request with Approve and Reject;
+  - Schedule reloads after leave changes;
+  - `PagedSearchController.restart()`.
+  79 new tests; 656/656.
+- **Gate 4:**
+  - contract parity over 16 real responses, 3/3; an insufficient balance is a `422` (spec wording corrected);
+  - status chips moved beneath the row text after the 200% test found squeezed rows.
+- **Docs:**
+  - DEC-059 and DEC-060;
+  - 02 §40 (and §39 marked merged), 04, 05 and 06 (and 30B's stale headings);
+  - UAT-31-01…08 `NOT RUN`;
+  - TEST_STATUS, ROADMAP, CURRENT_STATE, and the handoff.
+
 ### 2026-10-12 — Phase 30B UAT preparation runbook
 - **PR #77 merged** as `4a85918` (CI green on the head).
 - New `docs/testing/PHASE_30B_UAT_PREPARATION.md`:

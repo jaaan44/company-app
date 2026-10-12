@@ -122,16 +122,16 @@ void main() {
   tearDownAll(() => WidgetController.hitTestWarningShouldBeFatal = false);
 
   group('More (R-8)', () {
-    testWidgets('lists exactly My profile, My status, Staff directory, My '
-        'work logs, Projects and Clients', (tester) async {
+    testWidgets('lists exactly My profile, My status, Leave, Staff '
+        'directory, My work logs, Projects and Clients', (tester) async {
       await pumpApp(tester);
       await openMore(tester);
 
       expect(find.byType(MorePage), findsOneWidget);
       // Phase 29B adds My work logs, Phase 29C Projects and Clients, and
-      // Phase 30B My status (each phase adds its own row, R-8 / R-27 /
-      // R-13).
-      expect(find.byType(ListTile), findsNWidgets(6));
+      // Phase 30B My status and Phase 31 Leave (each phase adds its own
+      // row, R-8 / R-27 / R-13 / R-1).
+      expect(find.byType(ListTile), findsNWidgets(7));
       // R-13: the subtitle is my current status.
       expect(
         find.descendant(
@@ -143,6 +143,8 @@ void main() {
       expect(find.text('My profile'), findsOneWidget);
       // The signed-in account's name, known without a request.
       expect(find.text('Ada Lovelace'), findsOneWidget);
+      expect(find.text('Leave'), findsOneWidget);
+      expect(find.text('Balances and requests'), findsOneWidget);
       expect(find.text('Staff directory'), findsOneWidget);
       expect(find.text('My work logs'), findsOneWidget);
       expect(find.text('Projects'), findsOneWidget);

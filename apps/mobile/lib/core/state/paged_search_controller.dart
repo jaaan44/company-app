@@ -113,6 +113,17 @@ abstract class PagedSearchController<T> extends ChangeNotifier {
     return _fetchFirstPage();
   }
 
+  /// Reloads from the first page for changed criteria other than the
+  /// search text (e.g. a filter, Phase 31): unlike [load] it never joins a
+  /// first-page request in flight, whose response — for the old criteria —
+  /// is then dropped as stale.
+  @protected
+  Future<void> restart() {
+    _firstPageInFlight = null;
+
+    return load();
+  }
+
   /// Search text changed. Setting the query already shown does nothing.
   void setQuery(String text) {
     _debounceTimer?.cancel();

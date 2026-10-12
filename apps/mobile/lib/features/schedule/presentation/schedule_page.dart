@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:mobile/features/leave/state/leave_changes.dart';
 import 'package:mobile/features/people/presentation/people_widgets.dart';
 import 'package:mobile/features/schedule/data/schedule_api_client.dart';
 import 'package:mobile/features/schedule/domain/schedule.dart';
@@ -20,17 +21,21 @@ import 'package:mobile/features/tasks/state/task_changes.dart';
 ///
 /// Loads once (the shell keeps the branch mounted); refreshes on pull, and
 /// quietly after a confirmed task status change ([taskChanges]) — as Home
-/// does — so a task completed from here is gone when the tab shows again.
+/// does — so a task completed from here is gone when the tab shows again;
+/// and after a confirmed leave change ([leaveChanges], Phase 31 R-11), so
+/// approved leave appears without a manual refresh.
 class SchedulePage extends StatefulWidget {
   const SchedulePage({
     super.key,
     required this.scheduleApiClient,
     this.taskChanges,
+    this.leaveChanges,
     this.clock,
   });
 
   final ScheduleApiClient scheduleApiClient;
   final TaskChanges? taskChanges;
+  final LeaveChanges? leaveChanges;
 
   /// The device clock, for tests (only used to guess the first range).
   final DateTime Function()? clock;
@@ -50,15 +55,18 @@ class _SchedulePageState extends State<SchedulePage> {
     super.initState();
     _controller.load();
     widget.taskChanges?.addListener(_onTaskChange);
+    widget.leaveChanges?.addListener(_onTaskChange);
   }
 
   @override
   void dispose() {
     widget.taskChanges?.removeListener(_onTaskChange);
+    widget.leaveChanges?.removeListener(_onTaskChange);
     _controller.dispose();
     super.dispose();
   }
 
+  /// A confirmed task or leave change.
   void _onTaskChange() {
     if (_controller.status == ScheduleStatus.loaded) {
       _controller.refresh();
