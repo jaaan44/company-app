@@ -1,6 +1,6 @@
 # Phase 30 — Operations: Schedule & Check-in (Mobile) — Specification
 
-**Status:** Revision 1 (2026-10-12), **approved: R-1…R-12 approved as written by the product owner (2026-10-12).** Implementation needs its own authorization, sub-phase by sub-phase and gate by gate (`CLAUDE.md` §1/§8); 30B also needs its own detailed revision first. **30A implemented (Gates 1–4) and merged (PR #73, `0e7fce6`, 2026-10-12); UAT runbook `docs/testing/PHASE_30A_UAT_PREPARATION.md`** — see `docs/handoffs/V1_PHASE_30A_HANDOFF.md`.
+**Status:** Revision 1 (2026-10-12), **approved: R-1…R-12 approved as written by the product owner (2026-10-12).** Implementation needs its own authorization, sub-phase by sub-phase and gate by gate (`CLAUDE.md` §1/§8); 30B also needs its own detailed revision first. **30A complete — formally closed 2026-10-12** (merged PR #73, `0e7fce6`; staging deployed; UAT-30A-01…08 `PASS`) — see `docs/handoffs/V1_PHASE_30A_HANDOFF.md`. 30B not started.
 
 *Previous status line (kept as written):* DRAFT, revision 1 (2026-10-12). Proposed decisions R-1…R-12 await the product owner's approval. **Not authorized for implementation**; each sub-phase's gates need explicit authorization (`CLAUDE.md` §1/§8). No application, test, migration, route, dependency or configuration change has been made.
 

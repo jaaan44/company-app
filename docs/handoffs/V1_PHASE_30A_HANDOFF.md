@@ -1,6 +1,6 @@
 # Phase 30A — Operations: Schedule (Mobile) — Handoff
 
-**Status: implementation complete and merged (PR #73, `0e7fce6`); UAT preparation runbook written — pending staging deployment and product-owner UAT. Phase 30A is NOT formally closed.** See the addendum at the end. No later step is started or authorized.
+**Status: COMPLETE — Phase 30A formally closed 2026-10-12.** Physical-device UAT-30A-01…08 all `PASS`; see the final addendum. Earlier status lines: *implementation complete — pending PR review/CI, merge, staging deployment and product-owner UAT*, then *merged (PR #73) and UAT runbook written*. Each addendum below was true when it was written. Phase 30B is not started or authorized.
 
 ## 1. Phase Identification
 
@@ -155,3 +155,21 @@ Nothing further begins until explicitly authorized (`CLAUDE.md` §8).
 - **Data:** four `uat30a.*` accounts (staff, manager, administrator, no profile) and a colleague without an account; Rosa and Noel report to Ben. Ten entries dated from the company day (a 07:00 Manila meeting, an overnight entry, a two-day all-day event before a timed one, next- and previous-week entries, a colleague's private entry, the manager's and admin's own), five tasks (one completed, one a report's), and three leave requests on an inactive `UAT30A Vacation leave` type (one pending, one a report's). `verify` prints each week as the app lays it out and checks it exactly for every role.
 - **Rehearsal:** on scratch SQLite only, including drift-then-reseed, refusals, the all-or-nothing `rotate`, a non-UAT data snapshot and the runbook's own extraction path. Results are in `TEST_STATUS.md`. Its `verify` stage is the first MySQL check of the 30A queries.
 - **Status:** nothing is deployed or seeded on staging. UAT-30A-01…08 remain `NOT RUN`. Phase 30A is not closed.
+
+## Addendum — Staging Deployment, UAT and Formal Closure (2026-10-12)
+
+*Operator- and product-owner-reported; this AI session had no VPS or device access. Full record: `docs/testing/TEST_STATUS.md`, "Phase 30A — staging deployment, UAT data and physical-device UAT".*
+
+- **Runbook merged:** PR #74 (`ebf08b1`).
+- **Deployment:** staging runs `0e7fce6afd243ecb27cec3123214cd8fbb8e1a20` (fast-forward from `c79ed90`); 45 Ran, none pending; the new `GET api/v1/me/schedule` route cached; `Asia/Manila`; only `127.0.0.1:8012`; MySQL healthy. Smoke tests `/up` 200, `/login` 200, `/me/home`, `/me/schedule`, `/schedule`, `/schedule-entries` 401. Backup `company-app-20261012-042648.sql` (137,569 bytes, `-- Dump completed`).
+- **UAT data:** script SHA-256 verified; `plan`, `seed`, `verify`, `exposure` exactly as rehearsed. `verify` was the first MySQL run of the 30A queries (company-day bounds, `whereDate`, the total order) and matched.
+- **UAT APK:** built from `0e7fce6`, 54,026,667 bytes, SHA-256 `7EAB7F9F353023284F24D6039D4B368FC34B3EEBFC6F1D8A45527223DEF331B7`, debug-signed, no location permission; 513/513 locally (schedule 39, home 67, tasks 95).
+- **UAT:** UAT-30A-01…08 all **`PASS`**, reported by the product owner (2026-10-12). No defects or observations were reported.
+- **Not supplied:** the `adb devices`/`adb install` output, the UAT-30A-07 `revoke` output line, and the post-UAT `exposure` output. Recorded as gaps, not invented.
+- **Closure:**
+  - **Implemented:** yes. **Tested automatically:** yes (backend 1,206, Flutter 513). **Manually verified on a device:** yes, by the product owner through UAT. **UAT:** `PASS`. **Deployed:** staging `0e7fce6`.
+  - **Formally closed:** **yes, 2026-10-12 — Phase 30A.** Phase 30 as a whole stays open until 30B closes.
+  - No blocking defect is open.
+  - **Carried forward, non-blocking:** the §13 items (the single-offset DST limitation; device time on a restored deep link; no automatic midnight roll-over); Phase 36 candidates (`per_page`/`q` hardening, `/schedule`'s in-memory aggregation); debug signing (Phase 38); the deferred UAT password rotation from 29B; the UAT27–UAT30A staging data.
+
+**Phase 30B — Status & Check-in** is next. Per R-1 it needs its own detailed specification revision (the location package and permissions, R-11/R-12) approved before any implementation, and explicit authorization (`CLAUDE.md` §8).

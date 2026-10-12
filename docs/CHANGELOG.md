@@ -4,6 +4,11 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-12 — Phase 30A staging deployment, UAT and formal closure
+- PR #74 (runbook) merged as `ebf08b1`. Staging redeployed to `0e7fce6` (no migration; `/me/schedule` route cached); UAT30A data seeded and verified on MySQL exactly as rehearsed; UAT APK built from `0e7fce6` (SHA-256 `7EAB7F9F353023284F24D6039D4B368FC34B3EEBFC6F1D8A45527223DEF331B7`, 513/513).
+- **UAT-30A-01…08 `PASS`**, reported by the product owner. **Phase 30A formally closed.** Gaps recorded, not invented: the `adb install`, `revoke` and post-UAT `exposure` outputs.
+- Docs: `UAT_LOG.md`, `TEST_STATUS.md`, the 30A handoff closure addendum, the runbook's final status, `CURRENT_STATE.md`, `ROADMAP.md`, spec status. Next: the 30B specification revision (needs authorization).
+
 ### 2026-10-12 — Phase 30A UAT preparation runbook
 - **PR #73 merged** as `0e7fce6` (CI green on the head).
 - New `docs/testing/PHASE_30A_UAT_PREPARATION.md`: staging redeploy from `c79ed90` (no migration; route cache rebuilt; `route:list` check), the UAT APK (513 / schedule 39), the UAT30A data plan and stages, per-scenario UAT notes, and the script `uat30a_data.php` (SHA-256 `50187156dbda9a3fa1f76f198b76c75c808e1522a0656731e9a1eb39ba13676b`).
