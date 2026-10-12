@@ -16,6 +16,10 @@ import 'package:mobile/features/people/presentation/staff_directory_page.dart';
 import 'package:mobile/features/projects/data/projects_api_client.dart';
 import 'package:mobile/features/projects/presentation/project_detail_page.dart';
 import 'package:mobile/features/projects/presentation/projects_page.dart';
+import 'package:mobile/features/schedule/data/schedule_api_client.dart';
+import 'package:mobile/features/schedule/presentation/schedule_entry_page.dart';
+import 'package:mobile/features/schedule/presentation/schedule_page.dart';
+import 'package:mobile/features/schedule/presentation/schedule_widgets.dart';
 import 'package:mobile/features/shell/presentation/app_shell.dart';
 import 'package:mobile/features/shell/presentation/placeholder_page.dart';
 import 'package:mobile/features/tasks/data/tasks_api_client.dart';
@@ -45,6 +49,7 @@ GoRouter buildAppRouter(
   required WorkLogChanges workLogChanges,
   required ProjectsApiClient projectsApiClient,
   required ClientsApiClient clientsApiClient,
+  required ScheduleApiClient scheduleApiClient,
 }) {
   // The work-log form (Phase 29B) — the same page from My work logs and
   // from a task's detail; its route `extra` says which log or task.
@@ -131,9 +136,26 @@ GoRouter buildAppRouter(
           ),
           StatefulShellBranch(
             routes: [
+              // Schedule (Phase 30A): the week agenda, and a read-only entry
+              // detail inside the same branch — Home's meeting rows switch
+              // to this tab (R-10), as its task rows switch to Tasks.
               GoRoute(
                 path: '/schedule',
-                builder: (context, state) => const SchedulePlaceholderPage(),
+                builder: (context, state) =>
+                    SchedulePage(scheduleApiClient: scheduleApiClient),
+                routes: [
+                  GoRoute(
+                    path: 'entries/:publicId',
+                    builder: (context, state) => ScheduleEntryPage(
+                      key: ValueKey(state.pathParameters['publicId']),
+                      scheduleApiClient: scheduleApiClient,
+                      publicId: state.pathParameters['publicId']!,
+                      args: state.extra is ScheduleEntryArgs
+                          ? state.extra! as ScheduleEntryArgs
+                          : null,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

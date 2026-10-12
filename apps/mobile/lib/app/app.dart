@@ -11,6 +11,7 @@ import 'package:mobile/features/clients/data/clients_api_client.dart';
 import 'package:mobile/features/home/data/home_api_client.dart';
 import 'package:mobile/features/people/data/people_api_client.dart';
 import 'package:mobile/features/projects/data/projects_api_client.dart';
+import 'package:mobile/features/schedule/data/schedule_api_client.dart';
 import 'package:mobile/features/tasks/data/tasks_api_client.dart';
 import 'package:mobile/features/tasks/state/task_changes.dart';
 import 'package:mobile/features/work_logs/data/work_logs_api_client.dart';
@@ -31,8 +32,8 @@ import 'package:mobile/features/work_logs/state/work_log_changes.dart';
 /// a plain [ChangeNotifier] remains sufficient; see DEC-025.
 class CompanyApp extends StatefulWidget {
   /// [authController], [homeApiClient], [peopleApiClient],
-  /// [tasksApiClient], [workLogsApiClient], [projectsApiClient] and
-  /// [clientsApiClient] are exposed
+  /// [tasksApiClient], [workLogsApiClient], [projectsApiClient],
+  /// [clientsApiClient] and [scheduleApiClient] are exposed
   /// for tests to inject fakes — production code always omits them and
   /// gets the real Sanctum-backed implementations below.
   const CompanyApp({
@@ -44,13 +45,15 @@ class CompanyApp extends StatefulWidget {
     WorkLogsApiClient? workLogsApiClient,
     ProjectsApiClient? projectsApiClient,
     ClientsApiClient? clientsApiClient,
+    ScheduleApiClient? scheduleApiClient,
   }) : _injectedAuthController = authController,
        _injectedHomeApiClient = homeApiClient,
        _injectedPeopleApiClient = peopleApiClient,
        _injectedTasksApiClient = tasksApiClient,
        _injectedWorkLogsApiClient = workLogsApiClient,
        _injectedProjectsApiClient = projectsApiClient,
-       _injectedClientsApiClient = clientsApiClient;
+       _injectedClientsApiClient = clientsApiClient,
+       _injectedScheduleApiClient = scheduleApiClient;
 
   final AuthController? _injectedAuthController;
   final HomeApiClient? _injectedHomeApiClient;
@@ -59,6 +62,7 @@ class CompanyApp extends StatefulWidget {
   final WorkLogsApiClient? _injectedWorkLogsApiClient;
   final ProjectsApiClient? _injectedProjectsApiClient;
   final ClientsApiClient? _injectedClientsApiClient;
+  final ScheduleApiClient? _injectedScheduleApiClient;
 
   @override
   State<CompanyApp> createState() => _CompanyAppState();
@@ -102,6 +106,9 @@ class _CompanyAppState extends State<CompanyApp> {
   late final ClientsApiClient _clientsApiClient =
       widget._injectedClientsApiClient ?? ClientsApiClient(_apiClient);
 
+  late final ScheduleApiClient _scheduleApiClient =
+      widget._injectedScheduleApiClient ?? ScheduleApiClient(_apiClient);
+
   late final GoRouter _router = buildAppRouter(
     _authController,
     homeApiClient: _homeApiClient,
@@ -112,6 +119,7 @@ class _CompanyAppState extends State<CompanyApp> {
     workLogChanges: _workLogChanges,
     projectsApiClient: _projectsApiClient,
     clientsApiClient: _clientsApiClient,
+    scheduleApiClient: _scheduleApiClient,
   );
 
   @override

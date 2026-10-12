@@ -242,6 +242,40 @@ void main() {
       expect(c.status, ScheduleStatus.loaded);
     });
 
+    test(
+      'Try again reloads the week that failed, not the one shown before',
+      () async {
+        answer(server());
+        final c = controller(DateTime(2026, 10, 14, 9));
+        addTearDown(c.dispose);
+        await c.load();
+
+        answer((url) async => throw const NetworkFailure());
+        await c.nextWeek();
+        expect(c.status, ScheduleStatus.error);
+
+        answer(server());
+        requests.clear();
+        await c.retry();
+        expect(asked(), [
+          {'from': '2026-10-21', 'to': '2026-10-27'},
+        ]);
+        expect(c.weekStart, '2026-10-21');
+        expect(c.status, ScheduleStatus.loaded);
+
+        // A failed first load retries the company today's week.
+        final first = controller(DateTime(2026, 10, 14, 9));
+        addTearDown(first.dispose);
+        answer((url) async => throw const NetworkFailure());
+        await first.load();
+        answer(server());
+        requests.clear();
+        await first.retry();
+        expect(first.weekStart, '2026-10-14');
+        expect(first.status, ScheduleStatus.loaded);
+      },
+    );
+
     test('no linked profile is the noProfile state', () async {
       answer(server(noProfile: true));
       final c = controller(DateTime(2026, 10, 14, 9));

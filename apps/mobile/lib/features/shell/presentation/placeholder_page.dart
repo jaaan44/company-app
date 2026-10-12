@@ -26,18 +26,6 @@ class PlaceholderPage extends StatelessWidget {
   }
 }
 
-class SchedulePlaceholderPage extends StatelessWidget {
-  const SchedulePlaceholderPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const PlaceholderPage(
-      title: 'Schedule',
-      message: 'Schedule — coming soon',
-    );
-  }
-}
-
 class MessagesPlaceholderPage extends StatelessWidget {
   const MessagesPlaceholderPage({super.key});
 

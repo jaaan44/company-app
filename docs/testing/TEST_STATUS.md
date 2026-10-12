@@ -1168,6 +1168,23 @@ Branch `claude/amazing-brahmagupta-dbsrjc` after Gate 1 (`b897cf0`). Flutter 3.4
 | Screens / device | — | Not yet | No screens or routes until Gate 3. |
 | UAT | — | NOT RUN | UAT-30A-01…08 not yet runnable. |
 
+## Phase 30A — Gate 3 (Schedule tab, entry detail, routes, Home entry links)
+
+Branch `claude/amazing-brahmagupta-dbsrjc` after Gate 2 (`4dab362`). Flutter 3.47.2 / Dart 3.13.2 at `/opt/flutter-sdk`.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `test/features/schedule/schedule_pages_test.dart` (17) | Automated | PASS | Whole app against an in-memory `/me/schedule` (company today Wed 14 Oct, Manila). **Agenda:** "14 – 20 Oct"; seven day headers (Today, Tomorrow, Fri 16 Oct…); "09:00 – 10:00 · Client visit · Plant Room" before "All day · Task · To do"; leave on 16 and 17 Oct only; four "Nothing scheduled." days. **Weeks:** Next → exact `2026-10-21`…`27`, an overnight entry on both days ("23:00 – until Tue 27 Oct", "From Mon 26 Oct – 01:00"); Today disabled on the current week; Previous → "Yesterday"; "30 Sep – 6 Oct". Pull to refresh reloads the shown week; a failed refresh keeps it with a SnackBar. **States:** no profile; first-load failure → Try again; a failed Next week → Try again reloads that week; `401` → Login. **Navigation:** task → Tasks tab detail; leave has no tap and no chevron; entry → `/schedule/entries/E-night` in tab 2 with company time ("Wed 14 Oct · 09:00 – 10:30"), project, organizer, People (1), description, no buttons; Back keeps the week with no new request; no people / blank description / no project; `404` → "This item is no longer available." and Try again; deep link → "(device time)". **Appearance:** light and dark at 200% text on a 320×568 phone (agenda and detail); tap-target and label guidelines. |
+| `test/features/home/home_page_test.dart` | Automated | PASS | Updated: Today entry rows are tappable (one chevron per row); the "navigates nowhere" list loses the entry row. New: a Today entry row opens `/schedule/entries/01ENTRY0000000000000000001` in the Schedule tab in company time; Back shows the agenda. |
+| `test/app/router_test.dart` | Automated | PASS | Updated: the Schedule destination renders `SchedulePage`, not the placeholder. |
+| `test/features/schedule/schedule_state_test.dart` (+1) | Automated | PASS | `retry()` after a failed Next week asks for `2026-10-21`…`27`; after a failed first load, the company today's week. |
+| Mutation checks | Manual (AI) | PASS | 20, one at a time, each restored: Tomorrow/Yesterday labels; same-month week label; "From …"/"until …"; "All day"; the task status label; Today never disabled; leave tappable; project dropped; empty-day text dropped; entry args dropped (Schedule and Home); Try again → `load`; `retry` week not recorded; "(device time)" dropped; company time ignored; no-people text dropped; blank description shown. **19 caught; 1 equivalent:** `push` → `go` for the entry route (both keep `/schedule` under the detail). |
+| `flutter pub get` / `dart format` / `flutter analyze` | Automated | PASS | `pubspec` unchanged; 0 files changed; no issues. |
+| `flutter test` | Automated | PASS | 512/512 (493 + 19). |
+| Backend | — | Not affected | No `apps/api` change in Gate 3. |
+| Device | — | Not yet | Not run on a device; that is UAT. |
+| UAT | — | NOT RUN | UAT-30A-01…08 runnable after merge and staging (Gate 4, then a runbook). |
+
 ---
 
 *(Future phases append their own section above this line, oldest first.)*

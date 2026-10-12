@@ -4,6 +4,13 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-12 — Phase 30A Gate 3: the Schedule tab and the entry detail
+- **Schedule tab** (`SchedulePage`, replacing the placeholder): seven company days from today ("Today", "Tomorrow", "Fri 16 Oct"), my meetings in company time, tasks due and approved leave in server order, multi-day items on each day, "Nothing scheduled." for empty days; Previous week / Next week / Today; pull to refresh; no-profile and error states. Read-only: a task opens in the Tasks tab, a meeting opens its detail, leave isn't tappable.
+- **Entry detail** (`/schedule/entries/:publicId`): title, type, when (company time), project, organizer, people and description. **Home:** Today's meeting rows now open it in the Schedule tab.
+- Fix to Gate 2's controller: "Try again" after a failed week change reloads that week (`retry()`), not the week shown before.
+- Tests: 19 new (pages 17, Home 1, state 1) and 3 updated (router, Home interactivity); Flutter 512/512; format and analyze clean; `pubspec` unchanged. 20 mutation checks: 19 caught, 1 equivalent (`push` vs `go` for the entry route).
+- Docs: spec Gate 3 notes, `06_UI_UX_GUIDELINES.md`, `CURRENT_STATE.md`, `TEST_STATUS.md`. No backend change. Gate 4 is not started.
+
 ### 2026-10-12 — Phase 30A Gate 2: mobile schedule data and state
 - `lib/features/schedule/`: strict models for `GET /me/schedule` and `GET /schedule-entries/{id}`; company-day bounds and grouping (multi-day items on every day they cover, end-exclusive at midnight, server order kept); `ScheduleApiClient`; `MyScheduleController` (a seven-day window from the company today — learnt from the server with one padded first request, never the device clock — next/previous/today, refresh, stale responses dropped, no-profile and error states); `ScheduleEntryController` (`404` → "This item is no longer available.").
 - Tests: 20 new (models 10, API client and controllers 10); Flutter 493/493; format and analyze clean; `pubspec` unchanged. 12 mutation checks, all caught.

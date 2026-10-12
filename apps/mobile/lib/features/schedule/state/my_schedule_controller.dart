@@ -38,6 +38,10 @@ class MyScheduleController extends ChangeNotifier {
   String? _errorMessage;
   bool _isRefreshing = false;
   int _generation = 0;
+
+  /// The week the last full (non-refresh) load asked for: null for the
+  /// company today's week. What [retry] reloads.
+  String? _requestedStart;
   bool _disposed = false;
 
   ScheduleStatus get status => _status;
@@ -57,8 +61,12 @@ class MyScheduleController extends ChangeNotifier {
   bool get isCurrentWeek =>
       _companyDay != null && _weekStart == _companyDay!.date;
 
-  /// Initial load and "Try again": the week starting on the company today.
+  /// Initial load: the week starting on the company today.
   Future<void> load() => _loadWeek(null, keepContent: false);
+
+  /// "Try again" after an error: the week that failed to load (Next week
+  /// that failed retries next week, not the week shown before it).
+  Future<void> retry() => _loadWeek(_requestedStart, keepContent: false);
 
   /// Pull-to-refresh: reloads the shown week, keeping it on screen.
   /// Returns false when the refresh failed and earlier content is kept.
@@ -89,6 +97,9 @@ class MyScheduleController extends ChangeNotifier {
   /// today (learnt from the response).
   Future<bool> _loadWeek(String? start, {required bool keepContent}) async {
     final generation = ++_generation;
+    if (!keepContent) {
+      _requestedStart = start;
+    }
     if (!keepContent) {
       _status = ScheduleStatus.loading;
       _errorMessage = null;
