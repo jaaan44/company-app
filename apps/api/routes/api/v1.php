@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\Leave\LeaveBalanceController;
 use App\Http\Controllers\Api\V1\Leave\LeaveRequestController;
 use App\Http\Controllers\Api\V1\Leave\LeaveTypeController;
 use App\Http\Controllers\Api\V1\Leave\MyLeaveRequestController;
+use App\Http\Controllers\Api\V1\Leave\MyTeamLeaveRequestController;
 use App\Http\Controllers\Api\V1\Messaging\ConversationController;
 use App\Http\Controllers\Api\V1\Messaging\ConversationMemberController;
 use App\Http\Controllers\Api\V1\Messaging\MessageController;
@@ -346,6 +347,11 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
     Route::post('me/leave-requests/{leaveRequest:public_id}/cancel', [MyLeaveRequestController::class, 'myCancel'])->name('me.leave-requests.cancel');
 
     Route::get('me/leave-balances', [LeaveBalanceController::class, 'myIndex'])->name('me.leave-balances.index');
+
+    // Phase 31 (R-3): the caller's direct reports' requests, for the
+    // mobile app's Team requests. Needs `leave-requests.view`, checked in
+    // the controller after the linked-Staff check (the `/me` 403 first).
+    Route::get('me/team-leave-requests', [MyTeamLeaveRequestController::class, 'index'])->name('me.team-leave-requests.index');
 
     Route::get('leave-requests', [LeaveRequestController::class, 'index'])->name('leave-requests.index');
     Route::get('leave-requests/{leaveRequest:public_id}', [LeaveRequestController::class, 'show'])->name('leave-requests.show');

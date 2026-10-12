@@ -12,6 +12,8 @@ use App\Http\Requests\Leave\StoreMyLeaveRequestRequest;
 use App\Http\Resources\LeaveRequestResource;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
+use App\Support\CompanyDay;
+use App\Support\Reporting\OverdueTasks;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -55,9 +57,15 @@ class MyLeaveRequestController extends Controller
             ->when($request->filled('from'), fn ($query) => $query->whereDate('end_date', '>=', $request->date('from')))
             ->when($request->filled('to'), fn ($query) => $query->whereDate('start_date', '<=', $request->date('to')))
             ->orderByDesc('start_date')
+            // Unique tie-breaker (Phase 31, R-2c): requests starting the
+            // same day otherwise have no defined order across pages.
+            ->orderByDesc('id')
             ->paginate($request->integer('per_page', 50));
 
-        return LeaveRequestResource::collection($leaveRequests);
+        // The company day (Phase 31, R-2d) — additive: the paginator's own
+        // `meta` keys are unchanged.
+        return LeaveRequestResource::collection($leaveRequests)
+            ->additional(['meta' => ['company_day' => CompanyDay::meta()]]);
     }
 
     public function myStore(StoreMyLeaveRequestRequest $request): JsonResponse
@@ -125,8 +133,9 @@ class MyLeaveRequestController extends Controller
 
     /**
      * Pending: cancellable at any time. Approved: cancellable only while
-     * start_date is still in the future — the leave has not started
-     * (docs/phases/V1_PHASE_13_DEFINITION.md's Cancellation).
+     * start_date is still after the company today — the leave has not
+     * started (docs/phases/V1_PHASE_13_DEFINITION.md's Cancellation;
+     * Phase 31 R-2b).
      */
     public function myCancel(CancelLeaveRequestRequest $request, LeaveRequest $leaveRequest): LeaveRequestResource
     {
@@ -136,7 +145,11 @@ class MyLeaveRequestController extends Controller
         DB::transaction(function () use ($request, $leaveRequest) {
             $leaveRequest->refresh();
 
-            if ($leaveRequest->status === LeaveRequestStatus::Approved && $leaveRequest->start_date->isPast()) {
+            // "Started" is judged against the company day (Phase 31, R-2b):
+            // the leave's first day counts as started from 00:00 company
+            // time, not from UTC midnight (DEC-052).
+            if ($leaveRequest->status === LeaveRequestStatus::Approved
+                && $leaveRequest->start_date->toDateString() <= OverdueTasks::todayInCompanyTimezone()) {
                 abort(409, 'This leave request has already started and can no longer be self-cancelled.');
             }
 

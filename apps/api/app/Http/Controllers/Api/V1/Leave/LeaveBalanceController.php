@@ -11,6 +11,7 @@ use App\Http\Resources\LeaveBalanceResource;
 use App\Models\LeaveBalance;
 use App\Models\LeaveType;
 use App\Models\Staff;
+use App\Support\CompanyDay;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
@@ -73,7 +74,10 @@ class LeaveBalanceController extends Controller
             'year' => ['sometimes', 'integer', 'min:2000', 'max:2100'],
         ]);
 
-        $year = $request->integer('year', (int) date('Y'));
+        // The company year by default (Phase 31, R-2a; DEC-052), not the
+        // server's: on 1 January before 08:00 Manila the UTC year is still
+        // the old one.
+        $year = $request->integer('year', CompanyDay::year());
 
         $rows = LeaveType::query()
             ->where('status', LeaveTypeStatus::Active)

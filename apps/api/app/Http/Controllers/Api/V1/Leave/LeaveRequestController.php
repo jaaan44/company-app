@@ -64,6 +64,8 @@ class LeaveRequestController extends Controller
             ->when($request->filled('from'), fn ($query) => $query->whereDate('end_date', '>=', $request->date('from')))
             ->when($request->filled('to'), fn ($query) => $query->whereDate('start_date', '<=', $request->date('to')))
             ->orderByDesc('start_date')
+            // Unique tie-breaker (Phase 31, R-2c).
+            ->orderByDesc('id')
             ->paginate($request->integer('per_page', 50));
 
         return LeaveRequestResource::collection($leaveRequests);
