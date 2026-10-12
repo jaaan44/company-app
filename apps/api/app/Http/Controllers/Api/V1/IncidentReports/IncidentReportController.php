@@ -24,6 +24,7 @@ use App\Models\Project;
 use App\Models\Staff;
 use App\Models\Task;
 use App\Services\Attachments\AttachmentStorage;
+use App\Support\CompanyDay;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -97,9 +98,12 @@ class IncidentReportController extends Controller
             ->when($request->filled('to'), fn ($query) => $query->where('occurred_at', '<=', $request->date('to')))
             ->orderByDesc('occurred_at')
             ->orderByDesc('created_at')
+            // Unique tie-breaker (Phase 33, R-2b).
+            ->orderByDesc('id')
             ->paginate($request->integer('per_page', 50));
 
-        return IncidentReportResource::collection($reports);
+        return IncidentReportResource::collection($reports)
+            ->additional(['meta' => ['company_day' => CompanyDay::meta()]]);
     }
 
     public function show(Request $request, IncidentReport $incidentReport): IncidentReportResource
