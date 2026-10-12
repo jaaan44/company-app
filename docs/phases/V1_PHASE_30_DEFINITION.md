@@ -1,6 +1,8 @@
 # Phase 30 — Operations: Schedule & Check-in (Mobile) — Specification
 
-**Status:** DRAFT, revision 1 (2026-10-12). Proposed decisions R-1…R-12 await the product owner's approval. **Not authorized for implementation**; each sub-phase's gates need explicit authorization (`CLAUDE.md` §1/§8). No application, test, migration, route, dependency or configuration change has been made.
+**Status:** Revision 1 (2026-10-12), **approved: R-1…R-12 approved as written by the product owner (2026-10-12).** Implementation needs its own authorization, sub-phase by sub-phase and gate by gate (`CLAUDE.md` §1/§8); 30B also needs its own detailed revision first.
+
+*Previous status line (kept as written):* DRAFT, revision 1 (2026-10-12). Proposed decisions R-1…R-12 await the product owner's approval. **Not authorized for implementation**; each sub-phase's gates need explicit authorization (`CLAUDE.md` §1/§8). No application, test, migration, route, dependency or configuration change has been made.
 
 **Depends on:**
 - Phase 25: the shell, with a `Schedule` tab placeholder.
@@ -55,9 +57,9 @@ Let an employee see what's on their plate day by day — their own appointments,
 - No location capability: no geolocation package, no `ACCESS_FINE_LOCATION`/`ACCESS_COARSE_LOCATION` in the manifest. **A check-in from the app needs a new dependency and a runtime permission** — the first dependency since Phase 25.
 - Home's Today rows for **tasks** link to the task (29A, R-6); Today rows for **schedule entries** are not interactive ("until their screens exist").
 
-## 4. Proposed Decisions (awaiting the product owner)
+## 4. Product Decisions (approved as written, 2026-10-12)
 
-| # | Proposal | Why | Not chosen |
+| # | Decision | Why | Not chosen |
 |---|---|---|---|
 | **R-1** | **Split into two sub-phases**, each with its own gates, PR, staging deploy and UAT: **30A Schedule** (specified in full in §5) and **30B Status & Check-in** (outlined in §6; specified in its own revision before it starts). | Schedule is self-contained and needs no new dependency; check-in brings the first new dependency and a location permission, which deserve their own review. | One phase. |
 | **R-2** | **A new self-scoped `GET /api/v1/me/schedule?from=YYYY-MM-DD&to=YYYY-MM-DD`** returning only **my** items: Schedule Entries I created or participate in, **my open assigned tasks** with a due date in the range, and **my approved leave**. Same for every role (no `tasks.view`/`projects.view`/Administrator widening). | One personal agenda, the DEC-052 "Today" definition extended to a range; the 29A/29C self-scope rule. | Reusing `/schedule` (visibility-scoped; a Manager would see the company). |
@@ -159,3 +161,4 @@ Let an employee see what's on their plate day by day — their own appointments,
 
 - **This document is a specification, not an authorization.**
 - Revision 1 (2026-10-12): read-only discovery on `main` at `2d8ae92`; findings §3; proposed decisions R-1…R-12 (§4); 30A specified in full (§5); 30B outlined (§6). No code, test, route, dependency or configuration was changed.
+- **Revision 1 approval (2026-10-12):** the product owner approved R-1…R-12 as written. Only the status line, the §4 heading and column label and this note changed.
