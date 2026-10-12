@@ -620,3 +620,33 @@ No migration, permission or resource change.
 - `CompanyApp` injects `LeaveApiClient`.
 
 **Not introduced:** leave notifications, attachments, half days, company-wide approvals on mobile, any dependency. See `docs/phases/V1_PHASE_31_DEFINITION.md` and `docs/handoffs/V1_PHASE_31_HANDOFF.md`.
+
+## 41. Communication on mobile — Messages, Notifications, Announcements (Phase 32 — implemented, awaiting the combined UAT round; DEC-061)
+
+**Backend:**
+- `ConversationController` (index with `id` tie-breaker and `meta.company_day`; `WITH_RELATIONS` includes `latestMessage.sender` everywhere; `markRead` also reads the caller's `message_received` notifications for that conversation in one transaction);
+- `ConversationResource.last_message`;
+- `MessageController::index`, `NotificationController::myIndex` and `MyAnnouncementController::myIndex` add `meta.company_day`, and the latter two an `id` tie-breaker;
+- `ProjectConversationController` loads `latestMessage.sender`.
+
+No migration, route or permission change.
+
+**Mobile:**
+- **`lib/features/messages/`:**
+  - `Conversation`, `ChatMessage` and `ChatPage<T>`;
+  - `MessagesApiClient`;
+  - `ConversationsController` (paged; learns my Staff id from `/me/profile`);
+  - `ChatController` (newest page first, load older, `poll()` with catch-up of up to five extra pages, single-flight `send`);
+  - `ConversationsPage`, `ChatPage` (a reversed list; a 15 s `Timer` guarded by `ModalRoute.isCurrent` and `AppLifecycleListener`), `NewMessagePage` (reuses `StaffDirectoryController`) and `messages_widgets.dart`.
+- **`lib/features/notifications/`:** `AppNotification`, `NotificationsApiClient`, `NotificationsController` (with `markRead` and `markAllRead`), `NotificationsPage`, and `InboxChanges`.
+- **`lib/features/announcements/`:** `Announcement`, `AnnouncementsApiClient`, `AnnouncementsController` and `AnnouncementController` (acknowledge), and `announcements_pages.dart`.
+- **Core:** `PagedSearchController.replaceItem()`.
+- **Removed:** the Phase 25 `placeholder_page.dart`; no placeholder tab remains.
+
+**Routing:**
+- `/messages`, `/messages/new` and `/messages/:publicId` in the Messages branch;
+- `notifications`, `announcements` and `announcements/:publicId` under **both** `/home` and `/more`, so Back stays in that tab;
+- a message notification `go`es to the chat in the Messages tab;
+- `CompanyApp` injects the three clients and owns `InboxChanges`, which `HomePage` listens to.
+
+**Not introduced:** push (FCM), websockets, background work, attachments in messages, any dependency. See `docs/phases/V1_PHASE_32_DEFINITION.md` and `docs/handoffs/V1_PHASE_32_HANDOFF.md`.

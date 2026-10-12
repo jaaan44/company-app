@@ -4,6 +4,30 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-12 — Phase 32: Messages, Notifications & Announcements (Mobile), Gates 1–4
+- **PR #79 (Phase 31) merged** as `35fd7a1` (CI green).
+- **Backend (Gate 1):**
+  - `id` tie-breakers and `meta.company_day` on `/me/announcements`, `/me/notifications` and `/conversations`, and `company_day` on messages;
+  - `last_message` on every conversation;
+  - reading a chat also reads my message notifications for it (`notifications_marked_read`).
+  8 new tests; 1,248/1,248.
+- **Mobile (Gates 2–3):**
+  - the Messages tab (it replaces the last placeholder): conversations, a chat with day separators, Load earlier, 15 s polling while shown, and a confirmed send;
+  - New message to a colleague;
+  - the Notifications inbox (mark read and open the source; Mark all read) and the Announcements feed and detail (Acknowledge), from Home and More;
+  - Home's tiles and announcements are tappable;
+  - `InboxChanges` and `PagedSearchController.replaceItem()`.
+  47 new tests (state 26, pages 21; Home and More tests updated); 704/704.
+- **Gate 4:**
+  - contract parity over 17 real responses, 2/2;
+  - Mark all read became an icon button (an app-bar overflow at 200% text);
+  - test fixes found two chat-controller bugs before commit: a read call on every open, and out-of-order catch-up pages.
+- **Docs:**
+  - DEC-061;
+  - 02 §41, 04, 05 and 06;
+  - UAT-32-01…08 `NOT RUN`;
+  - TEST_STATUS, ROADMAP, CURRENT_STATE, and the handoff.
+
 ### 2026-10-12 — Phase 31: Leave (Mobile), Gates 1–4
 - **Process (DEC-059):** Phases 31–33 run under one blanket authorization: AI-approved spec decisions, gates without stopping, merge on green CI, one combined UAT round at the end.
 - **Backend (Gate 1):**

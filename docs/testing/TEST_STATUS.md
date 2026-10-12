@@ -1346,6 +1346,21 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | MySQL / real device | — | Not run | Combined UAT round. |
 | UAT | — | NOT RUN | UAT-31-01…08 `NOT RUN`. |
 
+## Phase 32 — Messages, Notifications & Announcements (Mobile), Gates 1–4 (2026-10-12, DEC-059)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Backend tests (Gate 1) | Automated | PASS | 8 new (`CommunicationMobileTest`): `last_message` (incl. `null`) and `company_day`; no extra message query per conversation (1 vs 3 chats); tie-breakers pinned in SQL on all three lists; reading a chat reads only my notifications for it (other chats, the announcement and another member's untouched), idempotent; a non-member's read is `404` and marks nothing; notifications page across pages. |
+| Backend mutation checks | Manual (AI) | PASS | 9 of 9 caught (each tie-breaker, the notification scope by user and by conversation, unread-only, eager loading, both metas). |
+| Mobile tests (Gates 2–3) | Automated | PASS | `inbox_state_test` 26 (models, conversations, chat paging, polling with catch-up, send, notifications, announcements) and `inbox_pages_test` 21 (Messages, chat, polling at 15 s and stopping when closed, Load earlier, group senders, New message incl. reuse, Notifications to chat or announcement, Mark all read, without profile, Announcements and Acknowledge, dark and 200% text on 320×568, tap-target and label guidelines). Home and More tests updated for R-8. |
+| Mobile mutation checks | Manual (AI) | PASS | 8 of 8 caught. |
+| Contract parity (real API → app) | Manual (AI), temporary tests | PASS | 17 real responses (Asia/Manila; non-ASCII names and body) through the production models and client, 2/2; scratch tests deleted. |
+| `composer validate --strict` / `composer audit --locked` / Pint / PHPStan | Automated | PASS | Clean. |
+| `php artisan test` | Automated | PASS | 1,248/1,248. |
+| `dart format` / `flutter analyze` / `flutter test` | Automated | PASS | 0 changed; no issues; 704/704. |
+| MySQL / real device | — | Not run | Combined UAT round. |
+| UAT | — | NOT RUN | UAT-32-01…08 `NOT RUN`. |
+
 ---
 
 *(Future phases append their own section above this line, oldest first.)*

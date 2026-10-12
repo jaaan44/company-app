@@ -176,6 +176,12 @@ CSV export inherits the identical scoping as its JSON counterpart — no export 
 
 ## Messaging Privacy
 
+**Phase 32 (DEC-061):** no change to who sees what.
+- `last_message` is part of a conversation the caller is already a member of.
+- Reading a conversation marks only **the caller's own** `message_received` notifications for **that** conversation, and only after the membership check (`404` first).
+- The app polls an open chat every 15 s only in the foreground; nothing runs in the background.
+- No push service, so no device tokens are stored anywhere.
+
 - **Implemented as of Phase 16 (DEC-039):** direct and group conversations/messages are visible only to their current participants; project conversations are visible only to current Project members. This is now real, tested code, not merely a stated intention: `App\Http\Controllers\Api\V1\Messaging\Concerns\AuthorizesConversationAccess` never calls `$user->can(...)`, so there is **no general "admin can read all messages" default** — Administrator's centralized `Gate::before` override is never invoked for any Messaging endpoint, and a conversation/message outside the requester's own current membership is `404` for Administrator exactly as it is for anyone else. No administrative/investigation capability of any kind was built in V1 — per this section's own original guidance, that remains a deliberate future decision (requiring its own permission and, ideally, real audit logging — the general Audit Log itself is implemented as of Phase 21, but Messaging deliberately was not retrofitted into it, since doing so would be exactly the kind of speculative, undemonstrated-need capability this section has always guarded against; a genuine Messaging moderation/investigation feature remains a separate, future, explicitly-scoped decision) rather than an incidental side effect of admin access elsewhere, or something built speculatively now.
 
 ## Scheduler Privacy

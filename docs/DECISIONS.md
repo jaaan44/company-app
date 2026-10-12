@@ -793,6 +793,42 @@ Internet → Cloudflare (proxied, SSL/TLS "Full (strict)")
 
 ---
 
+### DEC-061 — Phase 32: Messages, Notifications and Announcements on mobile — last message on conversations, reading a chat reads its notifications, polling only while a chat is shown
+
+**Date:** 2026-10-12
+**Status:** ACCEPTED (Phase 32 specification R-1…R-12, approved under DEC-059; implemented in Phase 32 Gates 1–3)
+**Context:**
+- Phases 14–16 (DEC-037/038/039) built announcements, notifications and messaging in the API. The mobile Messages tab was a placeholder.
+- The conversation list carried no last message.
+- Every sent message creates one `message_received` notification per other member, which stayed unread after the chat itself was read.
+- Three lists had no unique tie-breaker.
+**Decision:**
+1. **Backend (R-2):**
+   - `id` tie-breakers on `/me/announcements`, `/me/notifications` and `/conversations`;
+   - `meta.company_day` on those three and on `/conversations/{id}/messages`;
+   - `last_message` (or `null`) on every conversation response, eager-loaded;
+   - `POST /conversations/{id}/read` also marks **the caller's own** unread `message_received` notifications for that conversation read, and reports `notifications_marked_read`.
+2. **Mobile (R-3…R-8):**
+   - **The Messages tab:** conversations newest first, with the last message, its time and an unread badge, plus New message to a colleague (find-or-create a direct chat).
+   - **A chat:** oldest to newest, Load earlier messages, a confirmed single send, and marked read on open and on new messages.
+   - **The Notifications inbox:** tap to mark read and open the source; Mark all read.
+   - **The Announcements feed and detail:** Acknowledge, confirmed.
+   - **Home:** the tiles and announcements open these screens.
+3. **Freshness (R-5):** an open chat checks for new messages every 15 s, only while it is the screen shown and the app is in the foreground. There are no push notifications, websockets or background work.
+4. **An `InboxChanges` notifier (R-11)** reloads Home, Messages, Notifications and Announcements.
+5. **Not in Phase 32 (R-10):** push, attachments, editing or deleting messages, group creation and member management, starting project chats, announcement management, and read receipts.
+**Rationale:** The everyday communication surfaces on the phone with no new infrastructure or dependency; the notification count stays honest once a chat is read.
+**Not a security boundary change:**
+- Membership-only messaging visibility (DEC-039) is unchanged; Administrators still have no read-all.
+- The read change touches only the caller's own notifications for a conversation they belong to (non-members get `404` before anything is marked).
+- Announcement audiences are unchanged.
+**Superseded/reaffirmed:**
+- **Amended:** DEC-039 (the read side effect and `last_message`).
+- **Reaffirmed:** DEC-037, DEC-038, DEC-052.
+- **Superseded:** Phase 27 R-1's "announcement and count items are not tappable" (by R-8).
+
+---
+
 ## Template for Future Decisions
 
 ```

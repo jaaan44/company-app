@@ -1,6 +1,6 @@
 # Phase 32 — Communication: Announcements, Notifications & Messages (Mobile) — Specification
 
-**Status:** Revision 1 (2026-10-12). **Decisions R-1…R-12 approved under the product owner's blanket authorization (DEC-059).** Implementation is authorized through Gate 4; merged on green CI; UAT in the combined round.
+**Status:** Revision 1 (2026-10-12); **implemented, Gates 1–4** (handoff `docs/handoffs/V1_PHASE_32_HANDOFF.md`, DEC-061), awaiting the combined UAT round. **Decisions R-1…R-12 approved under the product owner's blanket authorization (DEC-059).** Implementation is authorized through Gate 4; merged on green CI; UAT in the combined round.
 
 **Depends on:**
 - Phase 14 (Announcements, DEC-037), Phase 15 (Notifications, DEC-038) and Phase 16 (Messaging, DEC-039).
@@ -70,3 +70,4 @@ Everything in R-10, plus a Messages tab badge, sound and vibration, search in me
 ## Notes
 
 - **Revision 1 (2026-10-12):** discovery on `main` after Phase 31; R-1…R-12 recorded as approved under DEC-059.
+- **Gate 4 (2026-10-12):** Mark all read became an icon button with a tooltip (the text button overflowed the app bar at 200% text on 320 px). Contract parity confirmed the real self-chat refusal is a `422` on `staff_id`.

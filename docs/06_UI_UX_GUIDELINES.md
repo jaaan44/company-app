@@ -130,6 +130,32 @@ Form conventions this phase establishes (extending 29A's write conventions):
 - **All check-ins / All status changes:** the paged list (20 a page) without a search field.
 - Verified by widget tests in light and dark mode at 200% text on a 320×568 phone, plus tap-target and label guidelines. Not yet on a device.
 
+### Messages, Notifications and Announcements (implemented, Phase 32 — awaiting the combined UAT round)
+
+- **Messages tab** (no longer a placeholder):
+  - each row shows an icon (person, group or folder), the name (the other person, the group or the project), the last message ("You: …" for mine, "Grace: …" in a group), its time ("09:12", "Yesterday", "Mon 12 Oct" in company time) and an unread **badge** (announced "2 unread"); unread rows are bold;
+  - empty: "No conversations yet."; **New message** is a floating button;
+  - no profile: "No staff profile is linked to this account."
+- **A chat:**
+  - the title is the conversation's name;
+  - messages run oldest to newest, the newest at the bottom, under day separators (Today, Yesterday, "Mon 12 Oct");
+  - my bubbles sit on the right in the primary container colour; others' on the left, with the sender's name in group and project chats; each bubble shows its time;
+  - **Load earlier messages** at the top; "No messages yet. Say hello." when empty;
+  - the composer: a field (1–4000) and a **Send** icon button (with tooltip) showing progress while sending; on failure, "Couldn't send. Try again." with the text kept;
+  - Back is held while sending; new messages appear within about 15 s while the chat is open.
+- **New message:** a search field and colleagues (never myself), each with their position. A tap opens our chat, reused if it exists; Back returns to Messages, not the picker.
+- **Notifications** (from Home's tile or More):
+  - newest first; unread ones bold with a dot (announced "Unread"); each shows title, message and time;
+  - a tap marks it read and opens the announcement (in the same tab) or the chat (in the Messages tab);
+  - **Mark all read** is an icon button in the app bar (a text button didn't fit beside the title at 200% text), disabled when nothing is unread.
+- **Announcements** (from Home or More): newest first; unacknowledged ones bold with a **New** chip. The detail shows the title, "Ada Admin · 13 Oct 2026 10:00" (company time), the body as selectable plain text, and **Acknowledge** → "Acknowledged on …".
+- **Home (refines Phase 27 R-1):**
+  - the Messages tile opens the Messages tab and the Notifications tile the inbox;
+  - each latest announcement opens its detail (with a chevron), plus **All announcements**;
+  - the counts refresh after any change.
+- **More** gains **Announcements** and **Notifications** (nine rows).
+- Verified by widget tests in light and dark mode at 200% text on a 320×568 phone, plus tap-target and label guidelines. Not yet on a device.
+
 ### Leave (implemented, Phase 31 — awaiting the combined UAT round)
 
 - **More** gains a seventh row, **Leave** ("Balances and requests"), after My status.
