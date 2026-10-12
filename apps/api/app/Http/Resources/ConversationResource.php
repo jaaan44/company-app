@@ -40,6 +40,16 @@ class ConversationResource extends JsonResource
             ]),
             'members' => ConversationMemberResource::collection($this->members),
             'unread_count' => $myMembership?->unreadCount(),
+            // Phase 32 (R-2c): the latest message, for the inbox row.
+            'last_message' => $this->latestMessage === null ? null : [
+                'public_id' => $this->latestMessage->public_id,
+                'body' => $this->latestMessage->body,
+                'sender' => [
+                    'public_id' => $this->latestMessage->sender->public_id,
+                    'name' => $this->latestMessage->sender->displayName(),
+                ],
+                'created_at' => $this->latestMessage->created_at?->toIso8601String(),
+            ],
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }

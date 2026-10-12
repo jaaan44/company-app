@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Messaging\StoreMessageRequest;
 use App\Http\Resources\MessageResource;
 use App\Models\Conversation;
+use App\Support\CompanyDay;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -37,7 +38,9 @@ class MessageController extends Controller
             ->orderByDesc('id')
             ->paginate($request->integer('per_page', 50));
 
-        return MessageResource::collection($messages);
+        // The company day (Phase 32, R-2b), for day separators and times.
+        return MessageResource::collection($messages)
+            ->additional(['meta' => ['company_day' => CompanyDay::meta()]]);
     }
 
     /**
