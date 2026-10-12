@@ -1380,3 +1380,14 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 ---
 
 *(Future phases append their own section above this line, oldest first.)*
+
+## Combined UAT preparation — 30B + 31–33 (2026-10-12, DEC-059)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `uat3133_data.php` rehearsal | Manual (AI), scratch SQLite | PASS | Fresh database (migrations, base seed, 30B `seed`): `plan` shows four accounts and zero UAT31/32/33 data; `seed` and `verify` print exactly the runbook's §6 step 2 lines (balance 10 of 15, 2 used, 3 pending; Ben's team 3 pending, soonest first; direct chat first with 2 unread; 3 unread notifications; 4 service reports with 1 PDF; 2 incidents). A re-seed is idempotent; `send` 201, `reject` 200, `investigate` 200. Records made through the app survive a re-seed. |
+| Embedded script integrity | Manual (AI) | PASS | The `php` block extracted with the runbook's own `awk` matches the rehearsed file byte for byte; SHA-256 `4c3263dd…` recorded in §8. |
+| UI strings cited in §7 | Manual (AI) | PASS | Every button and message the notes quote exists in `apps/mobile/lib`. |
+| Staging deploy, host nginx, MySQL, APK, device | — | Not run | Operator steps §2–§6. |
+| UAT | — | NOT RUN | UAT-30B-01…08, UAT-31/32/33-01…08. |
+

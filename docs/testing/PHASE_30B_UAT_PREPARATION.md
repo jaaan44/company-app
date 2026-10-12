@@ -1,5 +1,7 @@
 # Phase 30B — UAT Preparation (Deployment, APK + Staging Data)
 
+> **Superseded in part (2026-10-12, DEC-059):** UAT for 30B runs in the combined round. Deploy and build from `docs/testing/COMBINED_UAT_PREPARATION.md` §2–§4 (target `1d4f437`), **not** from §2–§3 here. This file's data script (§7), its stages and its scenario notes (§6) still apply, as that runbook says.
+
 *Operator runbook. No AI session has run anything in this file against the staging VPS or on the Windows build machine: this AI session cannot reach the VPS or build an APK. Every step marked **[Operator]** is pending until its output is recorded. The data script in §7 was rehearsed on a disposable scratch database only (see `docs/testing/TEST_STATUS.md`, "Phase 30B — UAT preparation").*
 
 **Status:** UAT-30B-01…08 are `NOT RUN`. This runbook prepares the deployment, the APK and the data; it runs no scenario. When 30B closes, **Phase 30 closes with it**.
