@@ -2,6 +2,8 @@
 
 *Operator runbook. No AI session has run anything in this file against the staging VPS or on the Windows build machine: this AI session cannot reach the VPS or build an APK. Every step marked **[Operator]** is pending until its output is recorded. The data script in §7 was rehearsed on disposable scratch databases only (see `docs/testing/TEST_STATUS.md`, "Phase 29C — UAT preparation").*
 
+> **Final status (2026-10-12):** the operator ran §2 (staging redeploy to `c79ed90`), §3 (UAT APK, SHA-256 `A363627B…7128`) and §5 (UAT29C data); the product owner reported UAT-29C-01…08 **PASS**. **Phase 29C — and Phase 29 — are formally closed.** Record: `docs/testing/TEST_STATUS.md`, "Phase 29C — staging deployment, UAT data and physical-device UAT". Correction learned in use: §2's "larger than 131,099 bytes" was wrong — a new dump can be smaller when expired `sessions` are gone; check `-- Dump completed`, the table count and per-table sizes instead. The sections below are kept as written. The UAT29C data stays on staging; any cleanup needs its own authorization.
+
 **Status (as written):** UAT-29C-01…08 are `NOT RUN`. This runbook prepares the deployment, the APK and the data; it runs no scenario. When 29C closes, **Phase 29 closes with it**.
 
 **How each operator step is written.** Every step says:

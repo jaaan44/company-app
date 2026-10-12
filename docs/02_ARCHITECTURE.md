@@ -538,7 +538,7 @@ Internet → Cloudflare (proxied, Full (strict))
 
 **Not introduced:** day totals, reports, logging for others, timers, approvals, attachments, offline queues, idempotency keys, a new dependency. See `docs/phases/V1_PHASE_29_DEFINITION.md` §6 and `docs/handoffs/V1_PHASE_29B_HANDOFF.md`.
 
-## 37. Work — Projects & Clients (Phase 29C — implemented, pending merge and UAT; DEC-056)
+## 37. Work — Projects & Clients (Phase 29C — complete, formally closed 2026-10-12; DEC-056)
 
 **Backend:** the Phase 8/10/17 read APIs are reused unchanged in shape. The one change: `GET /projects`, `/clients`, `/contacts`, `/projects/{id}/members` and `/projects/{id}/milestones` end their order in `id` (R-19). No migration, route, field or permission change.
 

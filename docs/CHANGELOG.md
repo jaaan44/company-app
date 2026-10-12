@@ -4,6 +4,14 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-12 — Phase 29C formally closed, and with it Phase 29 (documentation only)
+- **Deployment (operator):** staging redeployed to `c79ed90` (PR #69). No migration (45 Ran); `Asia/Manila`; smoke tests `/up` 200, `/login` 200, `/me/home`, `/projects`, `/clients`, `/contacts` 401. Backup `company-app-20261011-044606.sql` (112,221 bytes, complete; smaller only through expired `sessions`).
+- **UAT29C data:** script SHA-256 verified; `plan`/`seed`/`verify`/`exposure` exactly as rehearsed; `verify` was the first MySQL run of the R-19 order.
+- **UAT APK:** from `c79ed90`, 53,993,735 bytes, SHA-256 `A363627B…7128`; 473/473 locally (projects 52).
+- **UAT:** UAT-29C-01…08 all `PASS` (2026-10-12), reported by the product owner.
+- **Not supplied (recorded as gaps):** the `adb devices`/`adb install` output, the `apksigner` signer line, confirmation that the credentials file was shredded, the UAT-29C-07 `revoke` output line, and the post-UAT `exposure` output.
+- Docs: `CURRENT_STATE.md` (Phase 29 complete; 29B and 29C added under Completed; next is Phase 30, not started), `ROADMAP.md`, spec status, handoff final addendum, runbook final status and backup-size correction, `02_ARCHITECTURE.md` §37 and `06_UI_UX_GUIDELINES.md` labels, `TEST_STATUS.md`, `UAT_LOG.md`.
+
 ### 2026-10-11 — Phase 29C UAT preparation runbook (docs only)
 - PR #69 merged into `main` as `c79ed90` (Backend CI and Mobile CI green on the PR head; merged tree identical).
 - New `docs/testing/PHASE_29C_UAT_PREPARATION.md`: staging redeploy from `7e29ffe` to `c79ed90` (no migration, no route) with the corrected backup listing; the APK build and provenance (expected 473 / projects 52 / people 84 / tasks 95) with `adb install`; the UAT29C data plan, data steps and per-scenario UAT notes. Each operator step gives where, the exact commands, what it does, the expected output and what to paste back. Passwords are pasted only into the app's sign-in field.
