@@ -1,5 +1,12 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Phase 30B (R-18): location only for an explicit, foreground
+         check-in. Coarse and fine together, so Android 12+ users can
+         choose Approximate. Never ACCESS_BACKGROUND_LOCATION and never a
+         FOREGROUND_SERVICE permission (DEC-005). -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <application
         android:label="mobile"
         android:name="${applicationName}"
@@ -31,6 +38,12 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Phase 30B (R-18): geolocator_android declares a background
+             location service for position streams; the app never uses one,
+             so it is removed from the merged manifest. -->
+        <service
+            android:name="com.baseflow.geolocator.GeolocatorLocationService"
+            tools:node="remove" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

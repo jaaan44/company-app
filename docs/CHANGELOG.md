@@ -4,6 +4,18 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-12 — Phase 30B Gate 2: mobile status, check-in and location groundwork
+- **First new dependency since Phase 25 (R-17):** `geolocator` 14.0.3 and `geolocator_android` 5.0.3, pinned exactly. `pubspec.lock` gains 16 packages and changes none. `geolocator_platform_interface` resolved to 4.4.0 (about two weeks old; pure Dart additions) and is recorded for review.
+- **`AndroidManifest.xml` (R-18):** `ACCESS_COARSE_LOCATION` and `ACCESS_FINE_LOCATION`; the plugin's background `GeolocatorLocationService` removed (`tools:node="remove"`). The merged manifest isn't verified here (no Android SDK).
+- `lib/features/my_status/`:
+  - strict models; `MyStatusApiClient`;
+  - a `LocationService` interface whose only implementation is the one file that imports `geolocator`;
+  - `MyStatusController` (current status and the 5 newest of each, confirmed never-optimistic status changes, no profile on `403`);
+  - paged All status changes / All check-ins;
+  - `CheckInFlowController`: explanation before the prompt; one position with a 30 s timeout; the R-20 messages; a fix older than 2 minutes read again; one `POST` with no status and no queue.
+- Tests: 40 new (models 11, client and controllers 29), against a fake device. Flutter 553/553; format and analyze clean. 17 mutation checks all caught, after one test that passed vacuously was fixed.
+- Docs: spec Gate 2 notes, `CURRENT_STATE.md`, `TEST_STATUS.md`. No screens, routes or backend change. Gate 3 is not started.
+
 ### 2026-10-12 — Phase 30B Gate 1: status and check-in history order and company day
 - `GET /me/status`, `/me/check-ins`, `/staff/{id}/status` and `/staff/{id}/check-ins` now end their order in `id` (R-14). Visible order is unchanged; same-second rows page stably.
 - `GET /me/status` and `/me/check-ins` add `meta.company_day {date, timezone, utc_offset}`. The paginator's `meta`, the items, validation, the no-profile `403` and all scoping are unchanged.

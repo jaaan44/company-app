@@ -1258,6 +1258,23 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at `main` `13a37c1` (PR #76 merge).
 | MySQL | — | Not run | The `ORDER BY` is plain columns; to be exercised at staging. |
 | UAT | — | NOT RUN | UAT-30B-01…08 are defined in the spec; not yet runnable. |
 
+## Phase 30B — Gate 2 (mobile status, check-in and location groundwork)
+
+Branch `claude/amazing-brahmagupta-dbsrjc` after Gate 1 (`99ef67c`). Flutter 3.47.2 / Dart 3.13.2 at `/opt/flutter-sdk`.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `flutter pub get` | Automated | PASS | `geolocator` 14.0.3 and `geolocator_android` 5.0.3 exact. 16 packages added, no existing version changed: `dbus` 0.7.15, `fixnum` 1.1.1, `geoclue` 0.1.1, `geolocator` 14.0.3, `geolocator_android` 5.0.3, `geolocator_apple` 2.3.14, `geolocator_linux` 0.2.6, `geolocator_platform_interface` 4.4.0, `geolocator_web` 4.1.4, `geolocator_windows` 0.2.5, `gsettings` 0.2.8, `package_info_plus` 10.2.2, `package_info_plus_platform_interface` 4.1.0, `petitparser` 7.0.2, `uuid` 4.6.0, `xml` 7.0.1. |
+| `test/features/my_status/my_status_models_test.dart` (11) | Automated | PASS | The five statuses, their labels and the Off duty hint; unknown values kept, non-strings rejected. Status times as UTC. Check-ins with integer coordinates and nulls; a missing id, coordinate or time, or a string coordinate, rejected. Pages with paging and the company day; a page without `company_day` rejected. `CheckInDraft`: exact body (rounded accuracy, trimmed text, no `status`), blank text sent as null, accuracy clamped to 100,000 and floored at 0. The limits mirror the API. **Only `location_service.dart` imports `geolocator`** (a scan of `lib/`). |
+| `test/features/my_status/my_status_state_test.dart` (29) | Automated | PASS | **Client:** exact paths and paging; exact `POST` bodies; never sends the unknown status; a bad shape is an `ApiRequestException`; a `403` keeps the session. **`MyStatusController`:** current status and the 5 newest of each with the company day (`per_page=5`); no status ever set; `403` → no profile; a load error message, and a failed refresh that keeps the content; **a change shows only after `201`** (in flight: old status shown, a second change refused), then on top, capped at 5; failures (network, `422`) keep the old status with a message, and a retry clears it; a refresh overtaken by a confirmed change is dropped; a confirmed check-in goes on top. **Lists:** All check-ins pages 20 + 3 without repeats, with the company day; All status changes pages; a `403` → no profile. **Check-in flow (fake device):** already granted → one read (30 s), no prompt; not granted → explanation first, prompt only on Continue; denied, and denied for good → message, nothing read or sent, Open app settings; location off → message, nothing asked or read, Open location settings; timeout → message, and Try again reads again; location lost mid-read; Send → exactly one `POST` with place and note and no status; a fix of exactly 2 minutes is still used, older is re-read and the new position sent; a stale fix that can't be re-read sends nothing; offline at Send → form kept with message, then success; `422` message; `403` → no profile with the session kept; a double tap posts once; Start ignored while reading. |
+| Mutation checks | Manual (AI) | PASS | 17, one at a time, each restored. Flow: explanation skipped; the 2-minute boundary; no re-read; no location-off check; double send; timeout 60 s; Start while busy. Domain: label not trimmed; a status snapshot added; unknown statuses rejected. Controller: no cap at 5; two changes at once; no generation bump after a change; `403` as an error. Lists: `403` not mapped. Client: unknown status sent. **All 17 caught.** One survived at first: the "refresh overtaken by a change" test answered both GETs with a status body, so the check-ins parse failed and the test passed vacuously. Fixed to answer each path. |
+| `dart format` / `flutter analyze` | Automated | PASS | 0 files changed; no issues. |
+| `flutter test` | Automated | PASS | 553/553 (513 + 40). |
+| Merged Android manifest | — | **Not run** | No Android SDK in this sandbox. To be checked from a release build (`aapt2 dump badging`): exactly `INTERNET`, `ACCESS_COARSE_LOCATION`, `ACCESS_FINE_LOCATION` (and the AndroidX `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`), and no `GeolocatorLocationService`. |
+| Real device location | — | Not run | `GeolocatorLocationService` is untested here by design (a thin adapter); it is exercised in UAT on a physical Android device. |
+| Backend | — | Not affected | No `apps/api` change in Gate 2. |
+| UAT | — | NOT RUN | UAT-30B-01…08 not yet runnable. |
+
 ---
 
 *(Future phases append their own section above this line, oldest first.)*
