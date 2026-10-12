@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\ServiceReports;
 
+use App\Http\Requests\ServiceReports\Concerns\LimitsServiceDateToCompanyToday;
 use App\Http\Requests\ServiceReports\Concerns\ResolvesServiceReportReferences;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -18,6 +19,7 @@ use Illuminate\Validation\Rule;
  */
 class StoreServiceReportRequest extends FormRequest
 {
+    use LimitsServiceDateToCompanyToday;
     use ResolvesServiceReportReferences;
 
     public function authorize(): bool
@@ -41,7 +43,7 @@ class StoreServiceReportRequest extends FormRequest
             // controller is where "who is the requester" is known).
             'creator_staff_id' => ['sometimes', 'string', Rule::exists('staff', 'public_id')],
 
-            'service_date' => ['required', 'date', 'before_or_equal:today'],
+            'service_date' => ['required', ...$this->serviceDateRules()],
             'work_performed' => ['required', 'string', 'max:10000'],
             'findings' => ['nullable', 'string', 'max:5000'],
             'recommendations' => ['nullable', 'string', 'max:5000'],

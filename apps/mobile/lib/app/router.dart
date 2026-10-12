@@ -39,6 +39,14 @@ import 'package:mobile/features/my_status/presentation/history_pages.dart';
 import 'package:mobile/features/my_status/presentation/my_status_page.dart';
 import 'package:mobile/features/people/presentation/staff_directory_page.dart';
 import 'package:mobile/features/projects/data/projects_api_client.dart';
+import 'package:mobile/features/reports/data/photo_source.dart';
+import 'package:mobile/features/reports/data/reports_api_client.dart';
+import 'package:mobile/features/reports/domain/report.dart';
+import 'package:mobile/features/reports/presentation/report_detail_pages.dart';
+import 'package:mobile/features/reports/presentation/report_form_pages.dart';
+import 'package:mobile/features/reports/presentation/report_widgets.dart';
+import 'package:mobile/features/reports/presentation/reports_page.dart';
+import 'package:mobile/features/reports/state/report_changes.dart';
 import 'package:mobile/features/projects/presentation/project_detail_page.dart';
 import 'package:mobile/features/projects/presentation/projects_page.dart';
 import 'package:mobile/features/schedule/data/schedule_api_client.dart';
@@ -82,7 +90,39 @@ GoRouter buildAppRouter(
   required NotificationsApiClient notificationsApiClient,
   required AnnouncementsApiClient announcementsApiClient,
   required InboxChanges inboxChanges,
+  required ReportsApiClient reportsApiClient,
+  required PhotoSource photoSource,
+  required ReportChanges reportChanges,
 }) {
+  ReportArgs<T>? reportArgs<T>(GoRouterState state) =>
+      state.extra is ReportArgs<T> ? state.extra! as ReportArgs<T> : null;
+
+  // Reports (Phase 33): the forms are the same page for new and edit.
+  Widget serviceForm(GoRouterState state) => ServiceReportFormPage(
+    reportsApiClient: reportsApiClient,
+    clientsApiClient: clientsApiClient,
+    projectsApiClient: projectsApiClient,
+    reportChanges: reportChanges,
+    args:
+        reportArgs<ServiceReport>(state) ??
+        (state.extra is ReportArgs<Never>
+            ? ReportArgs<ServiceReport>(
+                companyDay: (state.extra! as ReportArgs<Never>).companyDay,
+              )
+            : null),
+  );
+  Widget incidentForm(GoRouterState state) => IncidentFormPage(
+    reportsApiClient: reportsApiClient,
+    reportChanges: reportChanges,
+    args:
+        reportArgs<IncidentReport>(state) ??
+        (state.extra is ReportArgs<Never>
+            ? ReportArgs<IncidentReport>(
+                companyDay: (state.extra! as ReportArgs<Never>).companyDay,
+              )
+            : null),
+  );
+
   // Notifications and Announcements (Phase 32) open from Home and from
   // More: the same pages under each tab, so Back stays in that tab.
   List<RouteBase> inboxRoutes(String base) => [
@@ -291,6 +331,59 @@ GoRouter buildAppRouter(
                     MorePage(myStatusApiClient: myStatusApiClient),
                 routes: [
                   ...inboxRoutes('/more'),
+                  // Reports (Phase 33, R-1): the lists, the forms and the
+                  // details, in the More branch; `new` before the ids.
+                  GoRoute(
+                    path: 'reports',
+                    builder: (context, state) => ReportsPage(
+                      reportsApiClient: reportsApiClient,
+                      reportChanges: reportChanges,
+                    ),
+                    routes: [
+                      GoRoute(
+                        path: 'service/new',
+                        builder: (context, state) => serviceForm(state),
+                      ),
+                      GoRoute(
+                        path: 'service/:publicId',
+                        builder: (context, state) => ServiceReportPage(
+                          key: ValueKey(state.pathParameters['publicId']),
+                          reportsApiClient: reportsApiClient,
+                          reportChanges: reportChanges,
+                          photoSource: photoSource,
+                          publicId: state.pathParameters['publicId']!,
+                          args: reportArgs<ServiceReport>(state),
+                        ),
+                        routes: [
+                          GoRoute(
+                            path: 'edit',
+                            builder: (context, state) => serviceForm(state),
+                          ),
+                        ],
+                      ),
+                      GoRoute(
+                        path: 'incidents/new',
+                        builder: (context, state) => incidentForm(state),
+                      ),
+                      GoRoute(
+                        path: 'incidents/:publicId',
+                        builder: (context, state) => IncidentPage(
+                          key: ValueKey(state.pathParameters['publicId']),
+                          reportsApiClient: reportsApiClient,
+                          reportChanges: reportChanges,
+                          photoSource: photoSource,
+                          publicId: state.pathParameters['publicId']!,
+                          args: reportArgs<IncidentReport>(state),
+                        ),
+                        routes: [
+                          GoRoute(
+                            path: 'edit',
+                            builder: (context, state) => incidentForm(state),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                   // My status (Phase 30B, R-13): the screen, its two "All"
                   // lists and the check-in flow, all in the More branch.
                   GoRoute(

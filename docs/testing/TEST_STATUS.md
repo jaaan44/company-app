@@ -1361,6 +1361,22 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | MySQL / real device | — | Not run | Combined UAT round. |
 | UAT | — | NOT RUN | UAT-32-01…08 `NOT RUN`. |
 
+## Phase 33 — Service & Incident Reports (Mobile), Gates 1–4 (2026-10-12, DEC-059)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Backend tests (Gate 1) | Automated | PASS | 5 new (`ReportsMobileTest`): today allowed at 00:30 Manila, tomorrow refused at 23:30, update the same; both lists with `company_day` and tie-breakers pinned in SQL. |
+| Backend mutation checks | Manual (AI) | PASS | 3 of 3 caught. |
+| Mobile tests (Gates 2–3) | Automated | PASS | `api_client_files_test` 7 (multipart and bytes: token, 401, 403 re-check once, 422, network once, 404/500); `reports_state_test` 21 (models, the single `image_picker` importer, lists, both forms, photos — cancelled, oversized, picker failure, 422, 409 reload — submit, return, delete, someone else's report, an incident); `reports_pages_test` 15 (lists, no profile, new draft end to end, photo take/view/remove, submit, edit, delete, rejected → return, PDF and offline upload, read-only, incident report/photo/edit, under investigation, dark and 200% text on 320×568, tap-target and label guidelines). |
+| Mobile mutation checks | Manual (AI) | PASS | 8 mutations: 7 caught; the form's base `isSaving` guard is equivalent (`submit()` already checks it). |
+| Contract parity (real API → app) | Manual (AI), temporary tests | PASS | 15 real responses plus a real PNG upload and its streamed download (bytes match) parsed by the production models, 1/1; scratch tests deleted. Not covered: Laravel parsing the exact multipart bytes Dart sends (standard `http.MultipartRequest`); exercised in UAT-33-03. |
+| `composer validate` / `audit` / Pint / PHPStan / `php artisan test` | Automated | PASS | Clean; 1,253/1,253. |
+| `dart format` / `flutter analyze` / `flutter test` | Automated | PASS | 0 changed; no issues; 748/748 (incl. the `413` message test added for the upload-limit fix). |
+| Upload limits (nginx 12m, PHP 12M/13M) | — | Not run | No Docker daemon here; verified by the combined round's rebuild and UAT-33-03. The host nginx needs the same limit (runbook step). |
+| Merged Android manifest / APK | — | Not run | `dl.google.com` is denied here; the UAT APK step's permission gate must show the 30B list unchanged. |
+| MySQL / real device | — | Not run | Combined UAT round. |
+| UAT | — | NOT RUN | UAT-33-01…08 `NOT RUN`. |
+
 ---
 
 *(Future phases append their own section above this line, oldest first.)*

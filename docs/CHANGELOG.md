@@ -4,6 +4,24 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-12 — Phase 33: Service & Incident Reports with photos (Mobile), Gates 1–4
+- **PR #80 (Phase 32) merged** as `09780b9` (CI green).
+- **Backend (Gate 1):** `service_date` limited by the company today, and `id` tie-breakers with `meta.company_day` on both report lists. 5 new tests; 1,253/1,253.
+- **Mobile (Gates 2–3):**
+  - `image_picker` 1.2.3 and `image_picker_android` 0.8.13+23 (plus `image_picker_platform_interface` 2.11.1), pinned; one `PhotoSource` adapter; no Android permission;
+  - `ApiClient.postMultipart`/`getBytes`;
+  - More → Reports: service reports (draft, edit, photos, submit, delete, return to draft) and incidents (report, edit, photos while reported), with full-screen photos from memory.
+  43 new tests (files 7, state 21, pages 15); 747/747.
+- **Gate 4:**
+  - contract parity over 15 real responses plus a real upload and download, 1/1;
+  - New moved to the app bar after two layouts failed at 200% text;
+  - **upload limits:** nginx `client_max_body_size 12m` and PHP `upload_max_filesize 12M`/`post_max_size 13M` (`docker/php/conf.d/uploads.ini`). The defaults (1 MB, 2M/8M) would have refused most photos and Phase 18/19 uploads over 1 MB. The app shows "This photo is too large to upload." for a `413`. Flutter 748/748. The shared host nginx needs the same limit (a runbook step).
+- **Docs:**
+  - DEC-062;
+  - 02 §42, 04, 05 (file uploads) and 06;
+  - UAT-33-01…08 `NOT RUN`;
+  - TEST_STATUS, ROADMAP, CURRENT_STATE, and the handoff.
+
 ### 2026-10-12 — Phase 32: Messages, Notifications & Announcements (Mobile), Gates 1–4
 - **PR #79 (Phase 31) merged** as `35fd7a1` (CI green).
 - **Backend (Gate 1):**

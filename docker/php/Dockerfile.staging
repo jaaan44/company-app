@@ -70,4 +70,8 @@ RUN composer dump-autoload --no-dev --optimize \
 RUN chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R u+rwX,g+rwX storage bootstrap/cache
 
+# Upload limits for report attachments (10 MB in the API; Phase 33 found
+# PHP's 2M/8M defaults in the way). See docker/php/conf.d/uploads.ini.
+COPY docker/php/conf.d/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
+
 CMD ["php-fpm"]

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\ServiceReports;
 
+use App\Http\Requests\ServiceReports\Concerns\LimitsServiceDateToCompanyToday;
 use App\Http\Requests\ServiceReports\Concerns\ResolvesServiceReportReferences;
 use App\Models\ServiceReport;
 use Illuminate\Contracts\Validation\Validator;
@@ -29,6 +30,7 @@ use Illuminate\Validation\Rule;
  */
 class UpdateServiceReportRequest extends FormRequest
 {
+    use LimitsServiceDateToCompanyToday;
     use ResolvesServiceReportReferences;
 
     public function authorize(): bool
@@ -46,7 +48,7 @@ class UpdateServiceReportRequest extends FormRequest
             'project_id' => ['sometimes', 'nullable', 'string', Rule::exists('projects', 'public_id')],
             'task_id' => ['sometimes', 'nullable', 'string', Rule::exists('tasks', 'public_id')],
 
-            'service_date' => ['sometimes', 'date', 'before_or_equal:today'],
+            'service_date' => ['sometimes', ...$this->serviceDateRules()],
             'work_performed' => ['sometimes', 'string', 'max:10000'],
             'findings' => ['sometimes', 'nullable', 'string', 'max:5000'],
             'recommendations' => ['sometimes', 'nullable', 'string', 'max:5000'],

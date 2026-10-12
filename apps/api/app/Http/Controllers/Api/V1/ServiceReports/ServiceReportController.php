@@ -21,6 +21,7 @@ use App\Models\ServiceReport;
 use App\Models\Staff;
 use App\Models\Task;
 use App\Services\Attachments\AttachmentStorage;
+use App\Support\CompanyDay;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -82,9 +83,12 @@ class ServiceReportController extends Controller
             ->when($request->filled('to'), fn ($query) => $query->whereDate('service_date', '<=', $request->date('to')))
             ->orderByDesc('service_date')
             ->orderByDesc('created_at')
+            // Unique tie-breaker (Phase 33, R-2b).
+            ->orderByDesc('id')
             ->paginate($request->integer('per_page', 50));
 
-        return ServiceReportResource::collection($reports);
+        return ServiceReportResource::collection($reports)
+            ->additional(['meta' => ['company_day' => CompanyDay::meta()]]);
     }
 
     public function show(Request $request, ServiceReport $serviceReport): ServiceReportResource

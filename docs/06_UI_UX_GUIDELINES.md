@@ -130,6 +130,36 @@ Form conventions this phase establishes (extending 29A's write conventions):
 - **All check-ins / All status changes:** the paged list (20 a page) without a search field.
 - Verified by widget tests in light and dark mode at 200% text on a 320×568 phone, plus tap-target and label guidelines. Not yet on a device.
 
+### Reports (implemented, Phase 33 — awaiting the combined UAT round)
+
+- **More** gains **Reports** ("Service and incident reports"), ten rows in all.
+- **Reports:**
+  - a segmented control, **Service reports** · **Incidents**, and an **add** icon in the app bar with the tooltip "New service report" or "Report an incident". A floating button, then a full-width button, both covered or squeezed the rows at 200% text;
+  - service rows show the client, then "Tue 13 Oct 2026 · Plant Room", then a status chip (Draft neutral, Submitted secondary, Reviewed tertiary, Rejected error);
+  - incident rows show the type, "Wed 14 Oct 2026 09:30 · Loading bay" (company time), then the severity chip (High and Critical in the error colour) and the status chip.
+- **New service report:**
+  - **Client** (a searchable sheet), then **Project (optional)**: my open projects for that client, or "No project";
+  - **Service date**: default "Wed 14 Oct 2026 (today)", no later than the company today;
+  - **Work performed** (required), Findings, Recommendations, Follow-up actions and Site representative;
+  - **Save draft**, explained by "It's saved as a draft. You can add photos, then submit it for review.";
+  - the new draft opens in place of the form; Back returns to the list.
+- **Report an incident:**
+  - **Type of incident** (a sheet), Severity (chips; Medium by default), **Date** and **Time** in company time (or "(device time)");
+  - Location, **What happened** (required), Immediate action taken, People involved, Witness notes;
+  - **Report incident**.
+- **Details:**
+  - a header (the client or type, the date or time, by whom, assigned to) with chips, then each text under its own heading (selectable);
+  - **Photos and files (N)**: a photo opens full screen (zoomable; a close button); a PDF reads "1.5 MB · Open it on the web";
+  - **Take photo** / **Choose photo**, with "Uploading photo…" while sending;
+  - **History**: "Rejected by Grace Hopper · Wed 14 Oct 2026 10:00", with the note beneath.
+- **Actions, each confirmed:**
+  - my draft: **Submit** ("Your manager will review it. You can't edit it after submitting."), **Edit**, **Delete draft**;
+  - my rejected report: **Return to draft**;
+  - my reported incident: **Edit**;
+  - photos: remove (trash icon with a tooltip).
+  Refusals show in an error banner in the server's words. Back is held while an action is sending.
+- Verified by widget tests in light and dark mode at 200% text on a 320×568 phone, plus tap-target and label guidelines. Not yet on a device.
+
 ### Messages, Notifications and Announcements (implemented, Phase 32 — awaiting the combined UAT round)
 
 - **Messages tab** (no longer a placeholder):
