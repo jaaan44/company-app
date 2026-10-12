@@ -7,9 +7,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StaffOperations\StoreOperationalStatusRequest;
 use App\Http\Resources\OperationalStatusResource;
 use App\Models\Staff;
+use App\Support\CompanyTimezone;
+use App\Support\Reporting\OverdueTasks;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Carbon;
 
 /**
  * Operational status (Phase 9) — a Staff member's current work status
@@ -34,7 +37,8 @@ class OperationalStatusController extends Controller
 
     public function myIndex(Request $request): AnonymousResourceCollection
     {
-        return $this->historyFor($this->resolveAuthenticatedStaff($request), $request);
+        return $this->historyFor($this->resolveAuthenticatedStaff($request), $request)
+            ->additional(['meta' => ['company_day' => $this->companyDay()]]);
     }
 
     public function myStore(StoreOperationalStatusRequest $request): JsonResponse
@@ -57,6 +61,10 @@ class OperationalStatusController extends Controller
         return OperationalStatusResource::collection(
             $staff->operationalStatuses()
                 ->latest()
+                // Unique tie-breaker (Phase 30B, R-14): rows created in the
+                // same second otherwise have no defined order, so a paged
+                // client could see one twice or never.
+                ->orderByDesc('id')
                 ->paginate($request->integer('per_page', 20))
         );
     }
@@ -71,5 +79,24 @@ class OperationalStatusController extends Controller
         return (new OperationalStatusResource($entry))
             ->response()
             ->setStatusCode(201);
+    }
+
+    /**
+     * The company day (Phase 30B, R-14) — additive: the paginator's own
+     * `meta` keys are unchanged. Clients show times in company time with
+     * `utc_offset` and judge "today" from `date`, never from the device
+     * clock (DEC-052).
+     *
+     * @return array{date: string, timezone: string, utc_offset: string}
+     */
+    private function companyDay(): array
+    {
+        $today = OverdueTasks::todayInCompanyTimezone();
+
+        return [
+            'date' => $today,
+            'timezone' => CompanyTimezone::value(),
+            'utc_offset' => Carbon::parse($today, CompanyTimezone::value())->startOfDay()->format('P'),
+        ];
     }
 }

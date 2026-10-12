@@ -4,6 +4,12 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-12 — Phase 30B Gate 1: status and check-in history order and company day
+- `GET /me/status`, `/me/check-ins`, `/staff/{id}/status` and `/staff/{id}/check-ins` now end their order in `id` (R-14). Visible order is unchanged; same-second rows page stably.
+- `GET /me/status` and `/me/check-ins` add `meta.company_day {date, timezone, utc_offset}`. The paginator's `meta`, the items, validation, the no-profile `403` and all scoping are unchanged.
+- Tests: 15 new (`StatusCheckInHistoryTest`), including one that pins the SQL `ORDER BY`, because SQLite returns same-second rows newest-first even without the tie-breaker. Mutation checks: 10, 9 caught, 1 equivalent. Backend 1,221/1,221; Pint, PHPStan level 5, composer validate/audit clean.
+- Docs: spec Gate 1 notes, `04_API_CONVENTIONS.md`, `CURRENT_STATE.md`, `TEST_STATUS.md`. No migration, permission, dependency or mobile change. Gate 2 is not started.
+
 ### 2026-10-12 — Phase 30 specification revision 2: 30B Status & Check-in
 - `docs/phases/V1_PHASE_30_DEFINITION.md` §6 rewritten from an outline into a full 30B specification after read-only discovery on `main` at `b57f2ef`.
   - **Findings:** the Phase 9 status and check-in contract; no tie-breaker on the four history lists; no company day; the no-profile `403`; no location code on mobile; the `geolocator` package's versions, permissions and inert background service.

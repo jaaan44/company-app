@@ -1242,6 +1242,22 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`9e964ec`), confirmed up t
 
 Staging now runs `0e7fce6`. The UAT30A data (4 accounts, 4 staff records, 1 project, 10 entries, 5 tasks, an inactive leave type, 3 leave requests) stays in place alongside the UAT29C, UAT29B, UAT29A, UAT28 and UAT27 data; any cleanup needs its own authorization.
 
+## Phase 30B — Gate 1 (backend: history order and company day)
+
+Branch `claude/amazing-brahmagupta-dbsrjc` at `main` `13a37c1` (PR #76 merge).
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `tests/Feature/Api/V1/StaffOperations/StatusCheckInHistoryTest.php` (15) | Automated | PASS | **Order:** five same-second rows page (2 a page) newest id first, with no repeats, on `/me/status`, `/me/check-ins`, a colleague's `/staff/{id}/status` and a Manager's direct report's `/staff/{id}/check-ins`; a later `created_at` still beats a higher id; the SQL `ORDER BY` is `"created_at" desc, "id" desc` on all four. **Company day:** `{2026-10-14, Asia/Manila, +08:00}` on both self-service lists with the paginator `meta` and `links` intact; 07:00 Manila (23:00 UTC the day before) and 23:30 Manila both give the Manila date; present on an empty history; absent on `/staff/…`. **Unchanged:** exact item keys on both lists; the no-profile `403` and its message on all four self-service calls; check-in validation (missing latitude, out-of-range longitude, accuracy −1 and 100,001, label 101, note 501, an unknown status → `422`; the limits themselves accepted); a status snapshot on a check-in doesn't change my status; a Manager can't see a non-report's check-ins. |
+| Existing `CheckInTest`, `OperationalStatusTest` (28) | Automated | PASS | Unchanged and passing. |
+| Mutation checks | Manual (AI) | PASS | 10, one at a time, each restored: tie-breaker removed (status, check-ins), reversed (status); `meta` dropped (status, check-ins); the date from UTC (status, check-ins); `timezone` `UTC`; `startOfDay()` removed from the offset. **9 caught; 1 equivalent:** parsing a bare date already gives the start of the day. The two tie-breaker removals **survived at first**: SQLite returns same-second rows newest-first anyway. The SQL `ORDER BY` test was added, and both are now caught. |
+| `composer validate --strict` / `composer audit --locked` | Automated | PASS | Valid; no advisories. |
+| `vendor/bin/pint --test` / `vendor/bin/phpstan analyse` (level 5) | Automated | PASS | 0 errors. |
+| `php artisan test` | Automated | PASS | 1,221/1,221 (3,578 assertions); 1,206 + 15. |
+| Flutter | — | Not affected | No `apps/mobile` change in Gate 1. |
+| MySQL | — | Not run | The `ORDER BY` is plain columns; to be exercised at staging. |
+| UAT | — | NOT RUN | UAT-30B-01…08 are defined in the spec; not yet runnable. |
+
 ---
 
 *(Future phases append their own section above this line, oldest first.)*
