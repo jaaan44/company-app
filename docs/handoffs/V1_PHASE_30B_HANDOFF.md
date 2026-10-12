@@ -1,6 +1,6 @@
 # Phase 30B — Operations: Status & Check-in (Mobile) — Handoff
 
-**Status: implementation complete — pending PR review/CI, merge, staging deployment and product-owner UAT.** No later step is started or authorized. When 30B closes, **Phase 30 closes with it**.
+**Status: implementation complete and merged (PR #77, `4a85918`); UAT preparation runbook written — pending staging deployment and product-owner UAT. Phase 30B is NOT formally closed.** See the addendum at the end. When 30B closes, **Phase 30 closes with it**.
 
 ## 1. Phase Identification
 
@@ -174,3 +174,20 @@ Nothing further begins until explicitly authorized (`CLAUDE.md` §8).
 - **Manually verified on a device:** no.
 - **Awaiting UAT:** yes (UAT-30B-01…08 `NOT RUN`).
 - **Deployed:** no.
+
+## Addendum — Merge and UAT Preparation Runbook (2026-10-12)
+
+- **Merged:** PR #77 merged into `main` as `4a85918cc36bc5631636168f1443f95109ab0b1c`, a standard merge commit. Backend CI and Mobile CI passed on the PR head (`1180e39`) before the merge. This is the source for both the staging deployment and the final UAT APK.
+- **Runbook:** `docs/testing/PHASE_30B_UAT_PREPARATION.md`:
+  - §2: the staging redeploy from `0e7fce6` (no migration; caches rebuilt) with smoke tests for `/me/status` and `/me/check-ins`.
+  - §3: the APK build (always run), expected counts 577 / my_status 64 / people 84 / home 67, and the **hard permission gate**. `aapt2 dump badging` must list exactly `INTERNET`, `ACCESS_COARSE_LOCATION`, `ACCESS_FINE_LOCATION` and the AndroidX `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`, and an `xmltree` search for `GeolocatorLocationService`, background location and foreground service must print nothing. It also checks for Android 12+.
+  - §4–§5: the UAT30B data plan and stages.
+  - §6: per-scenario UAT notes, including how to reset the app's location permission between attempts.
+  - §7: the script `uat30b_data.php`, SHA-256 `b020d7171a826f0de1243ec474aecfa9bd7d50676834973bea37ff8ced4e0f6f`.
+- **Data:**
+  - four `uat30b.*` accounts: staff (Lia), her manager (Ben), a colleague who isn't her manager (Kai), and no profile;
+  - Lia's status history is replaced on every seed: 22 changes, two in the same second, ending one hour before the run with Available;
+  - 22 seeded check-ins, re-dated on each seed; check-ins made in the app are never touched.
+  - `verify` shows what Lia, Ben, Kai and the no-profile account each get, and lists every check-in made in the app.
+- **Rehearsal:** on scratch SQLite only, including a check-in made through the real controller with the app's exact body, drift then re-seed, the refusals, the all-or-nothing `rotate` and a non-UAT data snapshot. Results are in `TEST_STATUS.md`.
+- **Status:** nothing is deployed or seeded on staging. UAT-30B-01…08 remain `NOT RUN`. Phase 30B is not closed.

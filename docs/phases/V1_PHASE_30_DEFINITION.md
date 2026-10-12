@@ -1,6 +1,6 @@
 # Phase 30 — Operations: Schedule & Check-in (Mobile) — Specification
 
-**Status:** Revision 2 (2026-10-12), **approved: R-13…R-22 approved as written by the product owner (2026-10-12)** (R-1…R-12 approved with revision 1). 30B implementation needs its own authorization, gate by gate (`CLAUDE.md` §1/§8). **30A complete — formally closed 2026-10-12** (PR #73, `0e7fce6`; UAT-30A-01…08 `PASS`). **30B implemented (Gates 1–4, 2026-10-12); PR open, not merged** — see `docs/handoffs/V1_PHASE_30B_HANDOFF.md`.
+**Status:** Revision 2 (2026-10-12), **approved: R-13…R-22 approved as written by the product owner (2026-10-12)** (R-1…R-12 approved with revision 1). 30B implementation needs its own authorization, gate by gate (`CLAUDE.md` §1/§8). **30A complete — formally closed 2026-10-12** (PR #73, `0e7fce6`; UAT-30A-01…08 `PASS`). **30B implemented (Gates 1–4) and merged (PR #77, `4a85918`, 2026-10-12); UAT runbook `docs/testing/PHASE_30B_UAT_PREPARATION.md`** — see `docs/handoffs/V1_PHASE_30B_HANDOFF.md`.
 
 *Previous status line (kept as written):* **DRAFT, revision 2 (2026-10-12): §6 specifies 30B — Status & Check-in in full. Proposed decisions R-13…R-22 await the product owner's approval.** 30B is **not authorized for implementation**; each gate needs explicit authorization (`CLAUDE.md` §1/§8). Everything outside §6 (revision 1: R-1…R-12 approved, and the 30A sections) is unchanged, apart from §8's location line and the notes. **30A complete — formally closed 2026-10-12** (PR #73, `0e7fce6`; UAT-30A-01…08 `PASS`).
 
