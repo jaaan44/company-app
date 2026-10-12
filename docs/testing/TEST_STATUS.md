@@ -1134,4 +1134,23 @@ Staging now runs `c79ed90`. The UAT29C data (4 accounts, 4 staff records, 29 pro
 
 ---
 
+## Phase 30A — Gate 1 (backend: `GET /me/schedule` and `/schedule` company days)
+
+Branch `claude/amazing-brahmagupta-dbsrjc`, from `main` at `84bd25f` (PR #72). Run in this AI sandbox (PHP 8.4, SQLite in-memory per `phpunit.xml`).
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `tests/Feature/Api/V1/Scheduling/MyScheduleTest.php` (19) | Automated | PASS | Asia/Manila, company day 2026-10-14. Shape (`company_day` with `+08:00`, `range`, every item field); tasks and leave as all-day items on their Manila days (leave titled with its type); entries I create or join in, project-only and others' out; only my open assigned tasks (blocked in; completed, cancelled, unassigned, undated, others' out); only my approved leave; milestones never. **Self-scope:** a Manager (tasks.view, projects.view, with the colleague as a direct report) and an Administrator see nothing of a colleague's; a Project Lead sees only their own task; extra parameters can't change the subject. **Boundaries:** 07:00 Manila (23:00 UTC the day before) on its Manila day; 23:30 Manila on its day; overnight and multi-day entries over the range edges; tasks and leave on and outside the edges. **Order:** all-day before timed, entries → tasks → leave at one start, titles byte-wise ("10" before "9"), `public_id` for equal items. **Validation:** required, `Y-m-d` only, `to ≥ from`, 31 days allowed and 32 refused with the message. No profile → `items: null`; unauthenticated → 401. **Query count** equal for 3 and 18 items. |
+| `tests/Feature/Api/V1/Scheduling/ScheduleCompanyDayTest.php` (4) | Automated | PASS | `/schedule` in Asia/Manila: a 07:00 Manila entry on its Manila day (not the previous one); a 23:30 Manila entry on its day; tasks, milestones and leave on their company dates; a datetime `from` means its date. **Shown to be necessary:** against the old controller (stashed), 2 of the 4 failed. |
+| Mutation checks | Manual (AI) | PASS | 12 on `MyScheduleController`, each restored: no participant clause; closed tasks included; any leave status; UTC range start; UTC range end; all-day not first; no `public_id` tie-break; numeric title comparison; no range limit; entry project N+1; no-profile as an empty list; leave ranked with entries. **All 12 caught** — after two tests were strengthened (equal items now created with the larger `public_id` first; numeric titles "9"/"10"). |
+| Existing tests | Automated | PASS | `ScheduleAggregationTest`, `ScheduleEntryTest` and the Home tests unchanged and passing (they run in UTC). |
+| Full `php artisan test` | Automated | PASS | 1,206/1,206 (3,486 assertions): 1,183 + 23. |
+| `composer validate --strict` / `composer audit --locked` | Automated | PASS | Valid; no advisories. |
+| `vendor/bin/pint --test` / `vendor/bin/phpstan analyse` (level 5) | Automated | PASS | 0 errors (PHPStan flagged a needless null-safe on the leave type — a required, restrict-on-delete reference — fixed). |
+| MySQL | — | Not run | Instant comparisons and `whereDate` on date columns; to be exercised at staging. |
+| Mobile | — | Not affected | No `apps/mobile` change in Gate 1. |
+| UAT | — | NOT RUN | UAT-30A-01…08 not yet runnable. |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*

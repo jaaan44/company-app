@@ -162,3 +162,11 @@ Let an employee see what's on their plate day by day — their own appointments,
 - **This document is a specification, not an authorization.**
 - Revision 1 (2026-10-12): read-only discovery on `main` at `2d8ae92`; findings §3; proposed decisions R-1…R-12 (§4); 30A specified in full (§5); 30B outlined (§6). No code, test, route, dependency or configuration was changed.
 - **Revision 1 approval (2026-10-12):** the product owner approved R-1…R-12 as written. Only the status line, the §4 heading and column label and this note changed.
+- **30A Gate 1 implementation notes (2026-10-12):**
+  - `App\Http\Controllers\Api\V1\Scheduling\MyScheduleController`, route `me.schedule.index` (`GET /api/v1/me/schedule`).
+  - **Response shape (R-4 and R-7 reconciled):** `data: {company_day: {date, timezone, utc_offset}, range: {from, to}, items}` — the company day sits in `data`, as R-7's `/me/tasks` pattern says, rather than in `meta` (R-4's wording); there is no `meta` because nothing is paginated. `items` is `null` without a linked Staff record.
+  - **Items:** the `ScheduleItemResource` fields (`source_type`, `public_id`, `title`, `description`, `activity_type`, `status`, `starts_at`, `ends_at`, `is_all_day`, `project`) plus `task_status` (Home's field). **Leave is titled with its leave type's name** (for example "Vacation leave") instead of `/schedule`'s generic "Leave": it is the person's own record.
+  - **Range:** `from`/`to` must be `Y-m-d`; at most 31 days inclusive ("The range can be at most 31 days." on `to`). Entries overlap `[startOfDayUtc(from), endOfDayUtc(to)]` on their UTC instants; tasks and leave compare their dates with the company dates.
+  - **`GET /schedule` (R-5):** `from`/`to` are reduced to their dates, entries compared on instants against those company days' UTC bounds, and the date-only sources (tasks, leave, milestones) compared with the company dates. Before the fix, an entry at 07:00 Manila was missing from its day (shown by the new regression test failing against the old controller); a datetime `from` still means its date.
+  - Six data queries per request whatever the number of items (entries, tasks and leave, each with one eager load).
+

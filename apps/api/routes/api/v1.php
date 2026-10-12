@@ -34,6 +34,7 @@ use App\Http\Controllers\Api\V1\Reports\ServiceReportReportController;
 use App\Http\Controllers\Api\V1\Reports\StaffDirectoryReportController;
 use App\Http\Controllers\Api\V1\Reports\TaskReportController;
 use App\Http\Controllers\Api\V1\Reports\WorkLogReportController;
+use App\Http\Controllers\Api\V1\Scheduling\MyScheduleController;
 use App\Http\Controllers\Api\V1\Scheduling\ScheduleController;
 use App\Http\Controllers\Api\V1\Scheduling\ScheduleEntryController;
 use App\Http\Controllers\Api\V1\ServiceReports\ServiceReportAttachmentController;
@@ -470,6 +471,10 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
 // permission that would expose private entries.
 Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
     Route::get('schedule', [ScheduleController::class, 'index'])->name('schedule.index');
+
+    // My schedule (Phase 30A, R-2): always the requester's own items,
+    // never widened by any role; no permission (the /me/tasks pattern).
+    Route::get('me/schedule', [MyScheduleController::class, 'index'])->name('me.schedule.index');
 
     Route::get('schedule-entries', [ScheduleEntryController::class, 'index'])->name('schedule-entries.index');
     Route::post('schedule-entries', [ScheduleEntryController::class, 'store'])->name('schedule-entries.store');

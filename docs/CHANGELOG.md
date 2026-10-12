@@ -4,6 +4,12 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-12 — Phase 30A Gate 1: `GET /me/schedule` and company days for `/schedule`
+- **New `GET /api/v1/me/schedule?from&to`** (`MyScheduleController`): my Schedule Entries (creator or participant), my open assigned tasks due in the range and my approved leave (titled with its type) over at most 31 company days; never milestones, never widened by any role (R-2/R-3); company-day boundaries (R-4); one unpaginated response in a total order (R-6); `items: null` without a linked Staff record (R-7); constant query count.
+- **`GET /schedule`** (R-5, the Phase 27 R-7 item): `from`/`to` are company days — entries compared on their UTC instants, tasks, leave and milestones on their dates. An entry between 00:00 and 07:59 Manila is no longer reported on the previous day.
+- Tests: 23 new (19 + 4); the `/schedule` regression shown to fail against the old controller; 12 mutation checks all caught after strengthening two tests. Backend 1,206/1,206; Pint, PHPStan level 5, composer validate/audit clean.
+- Docs: spec Gate 1 notes (the `company_day` placement reconciled with R-7; leave titles), `04_API_CONVENTIONS.md`, `CURRENT_STATE.md`, `TEST_STATUS.md`. No migration, permission, dependency or mobile change. Gate 2 is not started.
+
 ### 2026-10-12 — Phase 30 specification, revision 1 (documentation only)
 - PR #71 merged (`2d8ae92`): Phase 29 formally closed.
 - New `docs/phases/V1_PHASE_30_DEFINITION.md` after read-only discovery on `main` at `2d8ae92`. Findings: `GET /schedule` uses UTC day boundaries (the Phase 27 R-7 item, confirmed: items between 00:00 and 07:59 Manila land on the previous day), is visibility-scoped rather than self-scoped (a Manager would see the company's tasks and milestones), has no unique order, does its filtering in memory with a per-entry participant query, and gives no company day; check-ins require device coordinates, so mobile check-in needs the first new dependency since Phase 25 and a location permission.
