@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -104,15 +105,100 @@ class ApiClient {
     await _send('DELETE', path, allowAnyBody: true);
   }
 
-  /// Sends one request and applies the shared response rules. Returns the
-  /// decoded JSON object body, or null for a 204 (or, with [allowAnyBody],
-  /// for any successful body that is not a JSON object).
+  /// POSTs one file as `multipart/form-data` (Phase 33, R-9): [bytes]
+  /// under [field] with [filename], plus [fields]. The server decides the
+  /// type from the content itself, so none is declared. Same session
+  /// rules; sent once, never retried. Returns the decoded JSON object body.
+  Future<Map<String, dynamic>?> postMultipart(
+    String path, {
+    required String field,
+    required List<int> bytes,
+    required String filename,
+    Map<String, String> fields = const {},
+  }) async {
+    final response = await _exchange(path, (token) {
+      final request = http.MultipartRequest('POST', Uri.parse('$_baseUrl$path'))
+        ..headers.addAll(_headers(token))
+        ..fields.addAll(fields)
+        ..files.add(
+          http.MultipartFile.fromBytes(field, bytes, filename: filename),
+        );
+
+      return request;
+    });
+
+    return _jsonResult(response, allowAnyBody: false);
+  }
+
+  /// GETs [path] as bytes (Phase 33, R-9: an authorized attachment
+  /// download). Same session rules. The bytes stay in memory; nothing is
+  /// written to the device.
+  Future<Uint8List> getBytes(String path) async {
+    final response = await _exchange(
+      path,
+      (token) =>
+          http.Request('GET', Uri.parse('$_baseUrl$path'))
+            ..headers.addAll(_headers(token, accept: '*/*')),
+    );
+
+    return response.bodyBytes;
+  }
+
+  Map<String, String> _headers(
+    String token, {
+    String accept = 'application/json',
+  }) => {'Accept': accept, 'Authorization': 'Bearer $token'};
+
+  /// Sends one JSON request and applies the shared response rules. Returns
+  /// the decoded JSON object body, or null for a 204 (or, with
+  /// [allowAnyBody], for any successful body that is not a JSON object).
   Future<Map<String, dynamic>?> _send(
     String method,
     String path, {
     Map<String, dynamic>? body,
     bool allowAnyBody = false,
   }) async {
+    final response = await _exchange(path, (token) {
+      final request = http.Request(method, Uri.parse('$_baseUrl$path'))
+        ..headers.addAll(_headers(token));
+      if (body != null) {
+        request.headers['Content-Type'] = 'application/json';
+        request.body = jsonEncode(body);
+      }
+
+      return request;
+    });
+
+    return _jsonResult(response, allowAnyBody: allowAnyBody);
+  }
+
+  Map<String, dynamic>? _jsonResult(
+    http.Response response, {
+    required bool allowAnyBody,
+  }) {
+    final status = response.statusCode;
+    if (status == 204) {
+      return null;
+    }
+
+    final decoded = _tryDecode(response);
+    if (decoded == null && !allowAnyBody) {
+      throw ApiRequestException(
+        'Something went wrong. Please try again.',
+        statusCode: status,
+      );
+    }
+
+    return decoded;
+  }
+
+  /// Sends the request [build] makes with the current token, once, and
+  /// applies every shared rule (401, 403 re-check, 422, 5xx, other).
+  /// Returns the successful (2xx) response.
+  Future<http.Response> _exchange(
+    String path,
+    http.BaseRequest Function(String token) build,
+  ) async {
     final token = _session.currentToken;
 
     if (token == null) {
@@ -122,17 +208,8 @@ class ApiClient {
 
     final http.Response response;
     try {
-      final request = http.Request(method, Uri.parse('$_baseUrl$path'))
-        ..headers.addAll({
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        });
-      if (body != null) {
-        request.headers['Content-Type'] = 'application/json';
-        request.body = jsonEncode(body);
-      }
       response = await http.Response.fromStream(
-        await _httpClient.send(request),
+        await _httpClient.send(build(token)),
       );
     } on Exception {
       throw const ApiNetworkException();
@@ -141,19 +218,7 @@ class ApiClient {
     final status = response.statusCode;
 
     if (status >= 200 && status < 300) {
-      if (status == 204) {
-        return null;
-      }
-
-      final decoded = _tryDecode(response);
-      if (decoded == null && !allowAnyBody) {
-        throw ApiRequestException(
-          'Something went wrong. Please try again.',
-          statusCode: status,
-        );
-      }
-
-      return decoded;
+      return response;
     }
 
     if (status == 401) {
