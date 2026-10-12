@@ -829,6 +829,42 @@ Internet → Cloudflare (proxied, SSL/TLS "Full (strict)")
 
 ---
 
+### DEC-062 — Phase 33: Service and incident reports on mobile — photos through image_picker, the app's first upload and download, and the company today for service dates
+
+**Date:** 2026-10-12
+**Status:** ACCEPTED (Phase 33 specification R-1…R-13, approved under DEC-059; implemented in Phase 33 Gates 1–3). **Sensitive (flagged): a new dependency and file transfer.**
+**Context:**
+- Phases 18 and 19 (DEC-041/042) built service reports, incident reports and private attachments (JPEG/PNG/PDF, 10 MB, content-sniffed, authorized download only).
+- The mobile app had no reports and could send JSON only.
+- `service_date` was limited by `before_or_equal:today`, the UTC date, so between 00:00 and 07:59 Manila the company's own today was refused.
+**Decision:**
+1. **Backend (R-2):**
+   - `service_date` no later than the **company** today, on create and update (`422` "The service date cannot be later than today."), the Phase 29B work-date rule;
+   - `id` tie-breakers and `meta.company_day` on `/service-reports` and `/incident-reports`.
+2. **Mobile (R-1, R-3…R-7, R-10, R-11):**
+   - More → Reports: service reports and incidents, the reports I can see;
+   - a new service report (a client, an optional project of mine for that client, a date no later than the company today, the texts) saved as a draft;
+   - on my draft: edit, photos, submit, delete; on my rejected report: return to draft;
+   - report an incident (type, severity, time, location, texts); while it is mine and still reported: edit and photos;
+   - photos open full screen from memory, never saved to the device; PDFs are listed with "Open it on the web".
+   - Review, rejection and the investigation workflow stay on the web.
+3. **Package (R-8):**
+   - `image_picker` 1.2.3 and `image_picker_android` 0.8.13+23, plus `image_picker_platform_interface` 2.11.1 (a newer, days-old 2.11.2 was available), all pinned exactly;
+   - only `pickImage` is used: the system camera app or Android's photo picker, scaled to ≤2560 px at quality 85;
+   - one `PhotoSource` adapter is the only importer (a test enforces it);
+   - the plugin's manifest adds only a private `FileProvider` and the photo-picker backport metadata: **no permission**.
+4. **`ApiClient.postMultipart` and `getBytes` (R-9)** follow every existing session rule. The server sniffs the type, so none is declared.
+**Rationale:** Field evidence from the phone with the least privilege and no document system on the device; the API stays authoritative.
+**Not a security boundary change:**
+- The report visibility and authority rules (DEC-041/042) are unchanged.
+- Uploads go through the existing validated endpoint; downloads through the existing authorized route.
+- The R-2 change only corrects which day "today" is.
+**Superseded/reaffirmed:**
+- **Amended:** DEC-041 (the company today for `service_date`).
+- **Reaffirmed:** DEC-042 and DEC-052.
+
+---
+
 ## Template for Future Decisions
 
 ```

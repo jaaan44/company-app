@@ -1,6 +1,6 @@
 # Phase 33 — Field Reporting: Service Reports, Incident Reports & Attachments (Mobile) — Specification
 
-**Status:** Revision 1 (2026-10-12). **Decisions R-1…R-13 approved under the product owner's blanket authorization (DEC-059).** Implementation is authorized through Gate 4; merged on green CI; UAT in the combined round. **Flagged as sensitive:** a new runtime dependency (`image_picker`), the app's first file upload, and its first binary download (R-8, R-9). The shipped permission list is a hard gate in the UAT APK step.
+**Status:** Revision 1 (2026-10-12); **implemented, Gates 1–4** (handoff `docs/handoffs/V1_PHASE_33_HANDOFF.md`, DEC-062), awaiting the combined UAT round. **Decisions R-1…R-13 approved under the product owner's blanket authorization (DEC-059).** Implementation is authorized through Gate 4; merged on green CI; UAT in the combined round. **Flagged as sensitive:** a new runtime dependency (`image_picker`), the app's first file upload, and its first binary download (R-8, R-9). The shipped permission list is a hard gate in the UAT APK step.
 
 **Depends on:**
 - Phase 18 (Service Reports, DEC-041) and Phase 19 (Incident Reports, DEC-042), sharing the attachment infrastructure (private disk, JPEG/PNG/PDF, 10 MB, authorized download only).
@@ -71,3 +71,5 @@ Everything in R-12, plus a Home tile for reports, notifications about report dec
 ## Notes
 
 - **Revision 1 (2026-10-12):** discovery on `main` after Phase 32; R-1…R-13 recorded as approved under DEC-059.
+- **Gate 2:** `image_picker_platform_interface` pinned to 2.11.1 (its 2.11.2 was days old). The multipart type is not declared because the server sniffs the content.
+- **Gate 3:** **New** is an app-bar add icon. A floating button covered rows at 200% text, and a full-width one squeezed them.

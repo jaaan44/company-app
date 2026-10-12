@@ -650,3 +650,32 @@ No migration, route or permission change.
 - `CompanyApp` injects the three clients and owns `InboxChanges`, which `HomePage` listens to.
 
 **Not introduced:** push (FCM), websockets, background work, attachments in messages, any dependency. See `docs/phases/V1_PHASE_32_DEFINITION.md` and `docs/handoffs/V1_PHASE_32_HANDOFF.md`.
+
+## 42. Field reporting on mobile — Service reports, incidents, photos (Phase 33 — implemented, awaiting the combined UAT round; DEC-062)
+
+**Backend:**
+- `App\Http\Requests\ServiceReports\Concerns\LimitsServiceDateToCompanyToday` (used by `Store` and `UpdateServiceReportRequest`);
+- `ServiceReportController::index` and `IncidentReportController::index` add an `id` tie-breaker and `meta.company_day`.
+
+No migration, route or permission change.
+
+**Mobile:**
+- **`lib/core/network/api_client.dart`:** the shared request path is now `_exchange` (token, 401, the 403 re-check, 422, 5xx, network). `postMultipart` (one file plus fields) and `getBytes` use it alongside the JSON methods.
+- **`lib/features/reports/`:**
+  - `domain/report.dart` (`ServiceReport`, `IncidentReport`, `ReportAttachment`, history, the drafts, `ReportListPage`, the limits);
+  - `data/reports_api_client.dart`;
+  - `data/photo_source.dart`: the `PhotoSource` interface and `ImagePickerPhotoSource`, the **only** `image_picker` importer;
+  - `state/`: `ServiceReportsController`/`IncidentsController` (paged); the form controllers (the service form reads up to five pages of my projects and filters them by client); `ReportDetailController` with `ServiceReportController`/`IncidentController` (actions and photos, re-reading the report after each confirmed change); `ReportChanges`;
+  - `presentation/`: `ReportsPage`, the forms, the details and `report_widgets.dart` (paths, args, labels, chips, `PhotoViewerPage`).
+- **Reused:** `ClientsController` for the client picker and `ProjectsApiClient` for projects.
+
+**Routing:**
+- `/more/reports`;
+- `service/new`, `service/:id` and `service/:id/edit`;
+- `incidents/new`, `incidents/:id` and `incidents/:id/edit`, in the More branch;
+- the photo viewer is a full-screen `MaterialPageRoute`;
+- `CompanyApp` injects `ReportsApiClient` and `PhotoSource`, and owns `ReportChanges`.
+
+**Android:** no manifest change in the app. The merged manifest adds the plugin's `FileProvider`. Checked in the UAT APK step.
+
+**Not introduced:** PDF upload or viewing, review or investigation actions, offline drafts, any other dependency. See `docs/phases/V1_PHASE_33_DEFINITION.md` and `docs/handoffs/V1_PHASE_33_HANDOFF.md`.

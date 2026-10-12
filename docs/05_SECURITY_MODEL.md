@@ -133,6 +133,12 @@ CSV export inherits the identical scoping as its JSON counterpart — no export 
 
 ## File Uploads
 
+**Phase 33 (DEC-062):** the mobile app uploads photos through the existing attachment endpoints.
+- Only a JPEG from `image_picker`'s `pickImage` (camera app or photo picker, scaled to ≤2560 px), checked against 10 MB before sending.
+- The server still sniffs and validates every file. Downloads use the existing authorized route and are held **in memory** for display, never written to the device.
+- No PDF upload or viewer on mobile.
+- `image_picker` adds **no Android permission**: the camera opens through the system camera app (no `CAMERA` permission) and the gallery through Android's photo picker (no storage permission). The UAT APK permission gate requires the list to stay exactly as in 30B.
+
 - Validate file type, size, and (where feasible) content — not just extension — before storage.
 - Store uploads outside the public webroot by default, serving via authenticated/authorized routes rather than direct public URLs, unless a specific attachment type is deliberately public (e.g. a public announcement image) — decided per use case, not by default.
 - Antivirus/malware scanning is a **future consideration**, not a V1 commitment — note this honestly rather than implying it exists.
