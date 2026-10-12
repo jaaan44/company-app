@@ -350,7 +350,7 @@ void main() {
     });
   });
 
-  group('interactive content (R-1, refined by Phase 29A R-6 and 30A R-11)', () {
+  group('interactive content (R-1, refined by Phase 29A R-6 and 30A R-10)', () {
     testWidgets(
       'only the tasks tile and Today rows are tappable; the rest stays plain',
       (tester) async {

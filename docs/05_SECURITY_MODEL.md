@@ -40,6 +40,10 @@ CSV export inherits the identical scoping as its JSON counterpart — no export 
 
 **Implemented as of Phase 29C Gates 1–3:** no authorization change. Projects stay membership-scoped for Staff and fully visible to `projects.view` holders (Manager, Administrator); clients and contacts stay company-wide (`clients.view`). The mobile app narrows further — member projects only for every role, active clients and contacts in lists, no `notes` — and these are **presentation choices, not access control**: the API still returns notes and all visible projects to those readers. A project the reader can't see answers `403` (unchanged), which the app shows as "You don't have access to this project." without ending the session (the Phase 27 rule). The only backend change, `id` tie-breakers on five lists, changes no visibility.
 
+## My Schedule (Phase 30A, DEC-057)
+
+**Implemented as of Phase 30A Gates 1–3:** `GET /me/schedule` is strictly self-scoped — the requester's own Schedule Entries (creator or participant), own open assigned tasks and own approved leave — for **every** role: no permission widens it, Administrator included, and query parameters can't change whose schedule it is. It is a subset of what the requester can already see; entries visible only through a project are excluded. `GET /schedule` keeps its Phase 17 visibility exactly; Gate 1 changed only which company day an item is reported on. The mobile entry detail uses the unchanged `GET /schedule-entries/{id}`: an entry the requester can't see stays `404` (existence not revealed, DEC-040), which the app reads as "This item is no longer available." without ending the session. No location data is read in 30A.
+
 ## Authentication
 
 - **Implemented (DEC-022):** the Admin Backoffice authenticates via Laravel's session/secure-cookie `web` guard (Blade + Livewire login). The Flutter mobile app authenticates via Laravel Sanctum personal access tokens (`Authorization: Bearer <token>`) — bearer-token only, no cookie-based SPA/stateful authentication. No OAuth server, JWT infrastructure, or Passport.

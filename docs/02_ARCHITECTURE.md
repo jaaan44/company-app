@@ -552,3 +552,17 @@ Internet → Cloudflare (proxied, Full (strict))
 **Routing:** `/more/projects`, `/more/projects/:publicId`, `/more/clients`, `/more/clients/:publicId`, all in the More branch. The task detail's Project row `go`es to `/more/projects/<id>`, switching to the More tab (the Tasks tab keeps its stack); members open `/more/directory/<id>`.
 
 **Not introduced:** editing projects, clients or membership; an "all projects" view; overdue milestones; notes; tap-to-call; a new dependency. See `docs/phases/V1_PHASE_29_DEFINITION.md` §7 and `docs/handoffs/V1_PHASE_29C_HANDOFF.md`.
+
+## 38. Operations — Schedule (Phase 30A — implemented, not yet merged; DEC-057)
+
+**Backend:** `App\Http\Controllers\Api\V1\Scheduling\MyScheduleController` serves `GET /api/v1/me/schedule?from&to` (`auth:sanctum` + `account.active`, no permission): the requester's own entries, open tasks due and approved leave over at most 31 company days, using `CompanyTimezone::startOfDayUtc`/`endOfDayUtc` and `OverdueTasks::todayInCompanyTimezone()`. `GET /schedule` now uses the same company-day bounds. No migration, permission or resource change.
+
+**Mobile — `lib/features/schedule/` (`domain`, `data`, `state`, `presentation`):**
+- **`domain/schedule.dart`:** strict `MySchedule`, `ScheduleItem`, `ScheduleCompanyDay` (`boundsOf`, `toCompanyTime`), `groupByDay` (end-exclusive days; multi-day items on each day; server order kept), `ScheduleEntryDetail`, `SchedulePerson`, `shiftDate`.
+- **`data/schedule_api_client.dart`:** `/me/schedule` and `/schedule-entries/{id}` through the shared `ApiClient` (its 401/403 rule applies).
+- **`state/`:** `MyScheduleController` (learns the company week from the server; next/previous/today/refresh/retry; stale responses dropped) and `ScheduleEntryController` (the Phase 28 `ResourceController`).
+- **`presentation/`:** `SchedulePage`, `ScheduleEntryPage`, `schedule_widgets.dart` (route, `ScheduleEntryArgs` carrying the company offset, day/week/time labels).
+
+**Routing:** `/schedule` (the Schedule branch) and its child `/schedule/entries/:publicId`. Schedule task rows `go` to `/tasks/:publicId` (switching to Tasks); entry rows `push` the detail within the branch; Home's Today entry rows `go` to the detail (switching to Schedule). `SchedulePage` listens to `TaskChanges`, as Home does.
+
+**Not introduced:** creating or editing entries on mobile; colleagues' schedules; milestones; a calendar package or any new dependency. See `docs/phases/V1_PHASE_30_DEFINITION.md` §5 and `docs/handoffs/V1_PHASE_30A_HANDOFF.md`.

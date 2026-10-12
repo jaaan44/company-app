@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -17,7 +19,7 @@ import '../../support/task_fixtures.dart';
 /// Phase 30A Gate 3 — the Schedule tab and the entry detail through the
 /// real app (`CompanyApp`, router, shell, `ApiClient`), against an
 /// in-memory `/me/schedule` whose company today is Wed 14 Oct in Manila
-/// (docs/phases/V1_PHASE_30_DEFINITION.md §5.3, R-8…R-11).
+/// (docs/phases/V1_PHASE_30_DEFINITION.md §5.3, R-8…R-10).
 void main() {
   late FakeBackend backend;
   late AuthController auth;
@@ -77,7 +79,26 @@ void main() {
       return jsonResponse({'data': scheduleEntryJson(publicId: id)});
     }
     if (path.contains('/tasks/')) {
-      return jsonResponse({'data': taskJson(publicId: path.split('/').last)});
+      final id = path.split('/').last;
+      if (request.method == 'PATCH') {
+        final status = (jsonDecode(request.body) as Map)['status'] as String;
+        if (status == 'completed') {
+          // The server drops a completed task from /me/schedule.
+          items = items?.where((i) => i['public_id'] != id).toList();
+        }
+
+        return jsonResponse({
+          'data': taskJson(
+            publicId: id,
+            status: status,
+            completedAt: status == 'completed'
+                ? '2026-10-14T03:00:00+00:00'
+                : null,
+          ),
+        });
+      }
+
+      return jsonResponse({'data': taskJson(publicId: id)});
     }
     if (path.endsWith('/me/tasks')) {
       return jsonResponse(myTasksBody([]));
@@ -442,6 +463,32 @@ void main() {
       );
       expect(selectedTab(tester), 1);
     });
+
+    testWidgets(
+      'completing a task in the Tasks tab quietly refreshes the Schedule tab',
+      (tester) async {
+        await pumpApp(tester);
+        await openSchedule(tester);
+        final before = scheduleRequests().length;
+
+        await tester.tap(item('2026-10-14', 'T-filters'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('task-set-completed')));
+        await tester.pumpAndSettle();
+        expect(scheduleRequests().length, before + 1);
+        expect(scheduleRequests().last.queryParameters['from'], '2026-10-14');
+
+        await openSchedule(tester);
+        expect(item('2026-10-14', 'T-filters'), findsNothing);
+        expect(item('2026-10-14', 'E-site'), findsOneWidget);
+        // Quiet: the Tasks tab's own confirmation may show, never a
+        // refresh failure.
+        expect(
+          find.text("Couldn't refresh. Showing earlier information."),
+          findsNothing,
+        );
+      },
+    );
 
     testWidgets('leave is not tappable and has no chevron', (tester) async {
       await pumpApp(tester);

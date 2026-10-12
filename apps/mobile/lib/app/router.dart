@@ -141,8 +141,10 @@ GoRouter buildAppRouter(
               // to this tab (R-10), as its task rows switch to Tasks.
               GoRoute(
                 path: '/schedule',
-                builder: (context, state) =>
-                    SchedulePage(scheduleApiClient: scheduleApiClient),
+                builder: (context, state) => SchedulePage(
+                  scheduleApiClient: scheduleApiClient,
+                  taskChanges: taskChanges,
+                ),
                 routes: [
                   GoRoute(
                     path: 'entries/:publicId',

@@ -1,6 +1,6 @@
 # Phase 30 — Operations: Schedule & Check-in (Mobile) — Specification
 
-**Status:** Revision 1 (2026-10-12), **approved: R-1…R-12 approved as written by the product owner (2026-10-12).** Implementation needs its own authorization, sub-phase by sub-phase and gate by gate (`CLAUDE.md` §1/§8); 30B also needs its own detailed revision first.
+**Status:** Revision 1 (2026-10-12), **approved: R-1…R-12 approved as written by the product owner (2026-10-12).** Implementation needs its own authorization, sub-phase by sub-phase and gate by gate (`CLAUDE.md` §1/§8); 30B also needs its own detailed revision first. **30A implemented (Gates 1–4, 2026-10-12); PR open, not merged** — see `docs/handoffs/V1_PHASE_30A_HANDOFF.md`.
 
 *Previous status line (kept as written):* DRAFT, revision 1 (2026-10-12). Proposed decisions R-1…R-12 await the product owner's approval. **Not authorized for implementation**; each sub-phase's gates need explicit authorization (`CLAUDE.md` §1/§8). No application, test, migration, route, dependency or configuration change has been made.
 
@@ -180,3 +180,6 @@ Let an employee see what's on their plate day by day — their own appointments,
   - **Navigation:** task rows `go` to `/tasks/:publicId` with the company day (as Home does); entry rows in the Schedule tab `push` the entry detail on top of the week (Back keeps the week and makes no request; `go` would behave the same, which the mutation run confirmed); Home's Today entry rows `go` to `/schedule/entries/:publicId` (the Schedule tab, index 2). Every route carries the company offset in `ScheduleEntryArgs`, so the detail shows company time; a restored deep link with no arguments shows device time and says "(device time)".
   - **Change to Gate 2:** "Try again" now reloads **the week that failed** — `MyScheduleController.retry()` repeats the last full load's week (null = the company today's week). Before, a failed Next week retried the week shown before it, which the new page test exposed. One state test added.
   - Leave rows are plain (no tap, no chevron). Home's Phase 27 non-interactive rule now covers only the greeting, the overflow line, the Messages/Notifications tiles and announcements.
+- **30A Gate 4 notes (2026-10-12):**
+  - **Integration review finding, fixed:** `SchedulePage` now listens to `TaskChanges`, as Home does, so completing a task opened from the Schedule tab refreshes the week quietly (before, it stayed listed until a pull). One page test; two mutation checks (listener and router wiring) both caught.
+  - Contract parity: real Laravel responses replayed through the production app code (see `TEST_STATUS.md`, Phase 30A Gate 4). DEC-057; UAT-30A-01…08 added `NOT RUN`; handoff written.

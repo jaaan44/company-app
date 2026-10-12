@@ -8,6 +8,7 @@ import 'package:mobile/features/schedule/presentation/schedule_widgets.dart';
 import 'package:mobile/features/schedule/state/my_schedule_controller.dart';
 import 'package:mobile/features/tasks/presentation/task_widgets.dart'
     show TaskDetailArgs, taskDetailPath;
+import 'package:mobile/features/tasks/state/task_changes.dart';
 
 /// The Schedule tab (Phase 30A, docs/phases/V1_PHASE_30_DEFINITION.md
 /// §5.3, R-8…R-10): my week — seven days from the company today, each
@@ -16,10 +17,20 @@ import 'package:mobile/features/tasks/presentation/task_widgets.dart'
 /// Previous week / Next week / Today, and pull to refresh. Read-only
 /// (R-9): a task opens its detail in the Tasks tab, a meeting its entry
 /// detail; leave isn't tappable.
+///
+/// Loads once (the shell keeps the branch mounted); refreshes on pull, and
+/// quietly after a confirmed task status change ([taskChanges]) — as Home
+/// does — so a task completed from here is gone when the tab shows again.
 class SchedulePage extends StatefulWidget {
-  const SchedulePage({super.key, required this.scheduleApiClient, this.clock});
+  const SchedulePage({
+    super.key,
+    required this.scheduleApiClient,
+    this.taskChanges,
+    this.clock,
+  });
 
   final ScheduleApiClient scheduleApiClient;
+  final TaskChanges? taskChanges;
 
   /// The device clock, for tests (only used to guess the first range).
   final DateTime Function()? clock;
@@ -38,12 +49,22 @@ class _SchedulePageState extends State<SchedulePage> {
   void initState() {
     super.initState();
     _controller.load();
+    widget.taskChanges?.addListener(_onTaskChange);
   }
 
   @override
   void dispose() {
+    widget.taskChanges?.removeListener(_onTaskChange);
     _controller.dispose();
     super.dispose();
+  }
+
+  void _onTaskChange() {
+    if (_controller.status == ScheduleStatus.loaded) {
+      _controller.refresh();
+    } else {
+      _controller.retry();
+    }
   }
 
   Future<void> _refresh() async {

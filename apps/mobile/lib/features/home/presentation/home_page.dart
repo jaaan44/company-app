@@ -15,10 +15,11 @@ import 'package:mobile/features/tasks/state/task_changes.dart';
 /// greeting, Today, Needs attention and Latest announcements — the
 /// authenticated person's own data from `GET /me/home`, read-only.
 ///
-/// **Only task content is tappable (Phase 27 R-1, refined by Phase 29A
-/// R-6).** The "My tasks" tile opens the Tasks tab and a Today **task**
-/// row opens that task (both switch to the Tasks branch). Schedule rows and
-/// the message, notification and announcement items stay plain layout
+/// **Only task and schedule content is tappable (Phase 27 R-1, refined by
+/// Phase 29A R-6 and Phase 30A R-10).** The "My tasks" tile opens the Tasks
+/// tab and a Today **task** row opens that task (both switch to the Tasks
+/// branch); a Today **meeting** row opens its entry detail in the Schedule
+/// tab. The message, notification and announcement items stay plain layout
 /// until their own phases build screens. The other controls are logout,
 /// "Try again", and pull-to-refresh.
 ///

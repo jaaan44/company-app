@@ -4,6 +4,11 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-12 — Phase 30A Gate 4: integration review, DEC-057 and handoff
+- **Fix from the review:** the Schedule tab refreshes quietly after a task status change (`TaskChanges`, as Home), so a task completed from Schedule no longer stays listed. 1 new page test; Flutter 513/513.
+- Contract parity: real `/me/schedule` (padded first request, exact week, next week, a Manager, no profile), `/schedule-entries/{id}` (own, participant, hidden `404`) and `/me/home` responses replayed through the production app code — 5/5. Backend 1,206/1,206; Pint, PHPStan, composer validate/audit clean; `pubspec` unchanged.
+- Docs: DEC-057; `02_ARCHITECTURE.md` §38; `05_SECURITY_MODEL.md` (My Schedule); `06_UI_UX_GUIDELINES.md`; UAT-30A-01…08 `NOT RUN`; `ROADMAP.md`; spec status and Gate 4 notes; `docs/handoffs/V1_PHASE_30A_HANDOFF.md`. Two comments citing R-11 for Home's entry links corrected to R-10.
+
 ### 2026-10-12 — Phase 30A Gate 3: the Schedule tab and the entry detail
 - **Schedule tab** (`SchedulePage`, replacing the placeholder): seven company days from today ("Today", "Tomorrow", "Fri 16 Oct"), my meetings in company time, tasks due and approved leave in server order, multi-day items on each day, "Nothing scheduled." for empty days; Previous week / Next week / Today; pull to refresh; no-profile and error states. Read-only: a task opens in the Tasks tab, a meeting opens its detail, leave isn't tappable.
 - **Entry detail** (`/schedule/entries/:publicId`): title, type, when (company time), project, organizer, people and description. **Home:** Today's meeting rows now open it in the Schedule tab.

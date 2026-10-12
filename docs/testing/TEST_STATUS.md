@@ -1185,6 +1185,23 @@ Branch `claude/amazing-brahmagupta-dbsrjc` after Gate 2 (`4dab362`). Flutter 3.4
 | Device | — | Not yet | Not run on a device; that is UAT. |
 | UAT | — | NOT RUN | UAT-30A-01…08 runnable after merge and staging (Gate 4, then a runbook). |
 
+## Phase 30A — Gate 4 (final integration review)
+
+Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`9e964ec`), confirmed up to date with `main` (`84bd25f`).
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Integration review | Manual (AI) | PASS after one fix | Whole diff against `main` re-read. **Finding, fixed:** the Schedule tab didn't listen to `TaskChanges`, so a task completed from Schedule stayed listed until a pull; it now refreshes quietly, as Home does. New page test (complete a task from Schedule → one `/me/schedule` request for the same week; the task gone; no refresh-failure message). Mutation checks: listener removed, router not passing `taskChanges` — **both caught**. Two comments citing R-11 for Home's entry links corrected to R-10. Confirmed: `/schedule-entries/{id}` has no permission gate and answers `404` (not `403`) for an entry the reader can't see. |
+| `composer validate --strict` / `composer audit --locked` | Automated | PASS | Valid; no advisories. |
+| `vendor/bin/pint --test` / `vendor/bin/phpstan analyse` (level 5) | Automated | PASS | 0 errors. |
+| `php artisan test` | Automated | PASS | 1,206/1,206 (3,486 assertions). |
+| `flutter pub get` / `dart format` / `flutter analyze` | Automated | PASS | `pubspec` unchanged; 0 files to format; no issues. |
+| `flutter test` | Automated | PASS | 513/513 (schedule 39, home 67, tasks 95, work_logs 91, projects 52, people 84, and the rest). |
+| Contract parity (real API → app) | Manual (AI), temporary tests | PASS | A scratch Laravel test (with `RolePermissionSeeder`, Asia/Manila, 14 Oct 08:30 Manila) recorded 9 real responses: a Staff member's `/me/schedule` for the app's padded first range (`2026-10-13`…`21`), the exact week and next week; a Manager's week; a no-profile account (`items: null`); `/schedule-entries/{id}` for an own entry, a participant entry (creator "José Núñez") and someone else's (`404`); and `/me/home`. Data: a 07:00 Manila entry, an overnight entry 22:00–02:00, an all-day company event, a project named "Planta Ñ", a task due today, a completed task, a task due next Tuesday, a milestone, approved two-day leave and pending leave. A scratch Flutter test replayed them through the production API client, controllers, labels and the whole app: **5/5** — each day's rows exactly as expected ("Early briefing · 07:00 – 07:30", "22:00 – until Fri 16 Oct" / "From Thu 15 Oct – 02:00", "Vacation leave" on 18 and 19 Oct; no completed task, milestone, pending leave or hidden entry); the Manager sees only their own and the shared entry; no profile; the hidden entry reads "This item is no longer available." with the session kept; Home's Today meeting opens the detail at "Wed 14 Oct · 07:00 – 07:30" and Back shows the agenda. Both files deleted; nothing committed. |
+| Real device / emulator | — | Not run | No device in this sandbox. |
+| MySQL | — | Not run | Gate 1's queries use `whereDate` and instant comparisons; to be exercised at staging. |
+| UAT | — | NOT RUN | UAT-30A-01…08 `NOT RUN`. |
+
 ---
 
 *(Future phases append their own section above this line, oldest first.)*
