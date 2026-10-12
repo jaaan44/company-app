@@ -175,6 +175,18 @@ abstract class PagedSearchController<T> extends ChangeNotifier {
     }
   }
 
+  /// Replaces the loaded item with [item]'s id by the server's newer copy
+  /// (Phase 32: a notification marked read). Does nothing when it isn't
+  /// loaded.
+  void replaceItem(T item) {
+    final id = idOf(item);
+    final index = _items.indexWhere((i) => idOf(i) == id);
+    if (index >= 0) {
+      _items[index] = item;
+      _notify();
+    }
+  }
+
   void _startGeneration({required bool clearItems}) {
     _generation++;
     _isLoadingMore = false;

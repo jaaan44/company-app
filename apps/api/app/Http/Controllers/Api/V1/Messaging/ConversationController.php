@@ -3,13 +3,17 @@
 namespace App\Http\Controllers\Api\V1\Messaging;
 
 use App\Enums\ConversationType;
+use App\Enums\NotificationSourceType;
+use App\Enums\NotificationType;
 use App\Http\Controllers\Api\V1\Messaging\Concerns\AuthorizesConversationAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Messaging\StoreDirectConversationRequest;
 use App\Http\Requests\Messaging\StoreGroupConversationRequest;
 use App\Http\Resources\ConversationResource;
 use App\Models\Conversation;
+use App\Models\Notification;
 use App\Models\Staff;
+use App\Support\CompanyDay;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -29,6 +33,9 @@ class ConversationController extends Controller
 {
     use AuthorizesConversationAccess;
 
+    /** Every conversation response carries its last message (Phase 32, R-2c). */
+    private const WITH_RELATIONS = ['members.staff', 'owner', 'project', 'latestMessage.sender'];
+
     /**
      * The authenticated Staff member's own conversations — direct,
      * group, and already-created project conversations (a project
@@ -42,12 +49,16 @@ class ConversationController extends Controller
 
         $conversations = Conversation::query()
             ->whereHas('members', fn ($query) => $query->where('staff_id', $staff->id))
-            ->with(['members.staff', 'owner', 'project'])
+            ->with(self::WITH_RELATIONS)
             ->withMax('messages', 'id')
             ->orderByDesc('messages_max_id')
+            // Unique tie-breaker (Phase 32, R-2a): conversations without
+            // messages otherwise tie.
+            ->orderByDesc('id')
             ->paginate($request->integer('per_page', 50));
 
-        return ConversationResource::collection($conversations);
+        return ConversationResource::collection($conversations)
+            ->additional(['meta' => ['company_day' => CompanyDay::meta()]]);
     }
 
     public function show(Request $request, Conversation $conversation): ConversationResource
@@ -55,7 +66,7 @@ class ConversationController extends Controller
         $staff = $this->resolveAuthenticatedStaff($request);
         $this->authorizeMembership($staff, $conversation);
 
-        return new ConversationResource($conversation->load(['members.staff', 'owner', 'project']));
+        return new ConversationResource($conversation->load(self::WITH_RELATIONS));
     }
 
     /**
@@ -76,7 +87,7 @@ class ConversationController extends Controller
             ->first();
 
         if ($existing !== null) {
-            return (new ConversationResource($existing->load(['members.staff', 'owner', 'project'])))
+            return (new ConversationResource($existing->load(self::WITH_RELATIONS)))
                 ->response()
                 ->setStatusCode(200);
         }
@@ -92,7 +103,7 @@ class ConversationController extends Controller
             return $conversation;
         });
 
-        return (new ConversationResource($conversation->load(['members.staff', 'owner', 'project'])))
+        return (new ConversationResource($conversation->load(self::WITH_RELATIONS)))
             ->response()
             ->setStatusCode(201);
     }
@@ -126,7 +137,7 @@ class ConversationController extends Controller
             return $conversation;
         });
 
-        return (new ConversationResource($conversation->load(['members.staff', 'owner', 'project'])))
+        return (new ConversationResource($conversation->load(self::WITH_RELATIONS)))
             ->response()
             ->setStatusCode(201);
     }
@@ -143,10 +154,25 @@ class ConversationController extends Controller
 
         $latestMessageId = $conversation->messages()->max('id');
 
-        $conversation->members()->where('staff_id', $staff->id)->update([
-            'last_read_message_id' => $latestMessageId,
-        ]);
+        $notificationsMarked = DB::transaction(function () use ($conversation, $staff, $request, $latestMessageId) {
+            $conversation->members()->where('staff_id', $staff->id)->update([
+                'last_read_message_id' => $latestMessageId,
+            ]);
 
-        return response()->json(['data' => ['unread_count' => 0]]);
+            // Phase 32 (R-2d): the "New message" notifications for this
+            // conversation are read too — only the caller's own.
+            return Notification::query()
+                ->where('recipient_user_id', $request->user()->id)
+                ->where('type', NotificationType::MessageReceived)
+                ->where('source_type', NotificationSourceType::Conversation)
+                ->where('source_public_id', $conversation->public_id)
+                ->whereNull('read_at')
+                ->update(['read_at' => now()]);
+        });
+
+        return response()->json(['data' => [
+            'unread_count' => 0,
+            'notifications_marked_read' => $notificationsMarked,
+        ]]);
     }
 }

@@ -352,29 +352,28 @@ void main() {
 
   group('interactive content (R-1, refined by Phase 29A R-6 and 30A R-10)', () {
     testWidgets(
-      'only the tasks tile and Today rows are tappable; the rest stays plain',
+      'the greeting stays plain; tiles, Today rows and announcements are '
+      'tappable (Phase 32 R-8)',
       (tester) async {
         await pumpHome(
           tester,
           respond: () => homeResponse(homeDataJson(todayTotal: 7)),
         );
 
-        for (final section in ['home-greeting', 'home-announcements']) {
-          for (final type in [
-            InkWell,
-            GestureDetector,
-            ListTile,
-            TextButton,
-            FilledButton,
-            OutlinedButton,
-            IconButton,
-          ]) {
-            expect(
-              inSection(section, find.byType(type)),
-              findsNothing,
-              reason: '$type in $section',
-            );
-          }
+        for (final type in [
+          InkWell,
+          GestureDetector,
+          ListTile,
+          TextButton,
+          FilledButton,
+          OutlinedButton,
+          IconButton,
+        ]) {
+          expect(
+            inSection('home-greeting', find.byType(type)),
+            findsNothing,
+            reason: '$type in home-greeting',
+          );
         }
 
         Finder inkAround(Finder target) =>
@@ -382,27 +381,22 @@ void main() {
 
         expect(inkAround(find.text('Replace filter unit')), findsOneWidget);
         expect(inkAround(find.text('Site visit — Acme')), findsOneWidget);
-        expect(
-          inkAround(find.byKey(const Key('home-tile-tasks'))),
-          findsNothing,
-        );
-        expect(
-          find.descendant(
-            of: find.byKey(const Key('home-tile-tasks')),
-            matching: find.byType(InkWell),
-          ),
-          findsOneWidget,
-        );
-        for (final tile in ['home-tile-messages', 'home-tile-notifications']) {
+        for (final tile in [
+          'home-tile-tasks',
+          'home-tile-messages',
+          'home-tile-notifications',
+        ]) {
           expect(
             find.descendant(
               of: find.byKey(Key(tile)),
               matching: find.byType(InkWell),
             ),
-            findsNothing,
+            findsOneWidget,
             reason: tile,
           );
         }
+        expect(inkAround(find.text('Office closed Friday')), findsOneWidget);
+        expect(find.byKey(const Key('home-all-announcements')), findsOneWidget);
         // One chevron per Today row: the entry's and the task's.
         expect(
           inSection('home-today', find.byIcon(Icons.chevron_right)),
@@ -411,37 +405,57 @@ void main() {
       },
     );
 
-    testWidgets(
-      'tapping other tiles, the overflow line and announcements navigates nowhere',
-      (tester) async {
-        await pumpHome(
-          tester,
-          respond: () => homeResponse(homeDataJson(todayTotal: 7)),
-        );
-        final router = GoRouter.of(tester.element(find.byType(HomePage)));
+    testWidgets('the overflow line navigates nowhere', (tester) async {
+      await pumpHome(
+        tester,
+        respond: () => homeResponse(homeDataJson(todayTotal: 7)),
+      );
+      final router = GoRouter.of(tester.element(find.byType(HomePage)));
 
-        for (final target in [
-          find.byKey(const Key('home-tile-messages')),
-          find.byKey(const Key('home-tile-notifications')),
-          find.text('Office closed Friday'),
-          find.text('+5 more today'),
-        ]) {
-          await tester.ensureVisible(target);
-          await tester.tap(target, warnIfMissed: false);
-          await tester.pumpAndSettle();
+      final target = find.text('+5 more today');
+      await tester.ensureVisible(target);
+      await tester.tap(target, warnIfMissed: false);
+      await tester.pumpAndSettle();
 
-          expect(router.state.matchedLocation, '/home');
-          expect(
-            tester
-                .widget<NavigationBar>(find.byType(NavigationBar))
-                .selectedIndex,
-            0,
-          );
-          expect(find.byType(HomePage), findsOneWidget);
-        }
-        expect(homeRequests, 1);
-      },
-    );
+      expect(router.state.matchedLocation, '/home');
+      expect(homeRequests, 1);
+    });
+
+    testWidgets('Messages, Notifications and announcements open their '
+        'screens (Phase 32 R-8)', (tester) async {
+      await pumpHome(tester);
+      final router = GoRouter.of(tester.element(find.byType(HomePage)));
+
+      Future<void> tapAndBack(Finder target, String location) async {
+        await tester.ensureVisible(target);
+        await tester.tap(target);
+        await tester.pumpAndSettle();
+        expect(router.state.matchedLocation, location);
+        router.go('/home');
+        await tester.pumpAndSettle();
+      }
+
+      await tapAndBack(
+        find.byKey(const Key('home-tile-notifications')),
+        '/home/notifications',
+      );
+      await tapAndBack(
+        find.text('Office closed Friday'),
+        '/home/announcements/01ANN000000000000000000001',
+      );
+      await tapAndBack(
+        find.byKey(const Key('home-all-announcements')),
+        '/home/announcements',
+      );
+
+      await tester.tap(find.byKey(const Key('home-tile-messages')));
+      await tester.pumpAndSettle();
+      expect(router.state.matchedLocation, '/messages');
+      expect(
+        tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+        3,
+      );
+    });
 
     testWidgets('the My tasks tile opens the Tasks tab', (tester) async {
       await pumpHome(tester);

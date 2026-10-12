@@ -6,6 +6,7 @@ use App\Enums\NotificationType;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\NotificationResource;
 use App\Models\Notification;
+use App\Support\CompanyDay;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -42,9 +43,13 @@ class NotificationController extends Controller
             ->when($request->boolean('unread'), fn ($query) => $query->whereNull('read_at'))
             ->when($request->filled('type'), fn ($query) => $query->where('type', $request->string('type')))
             ->orderByDesc('created_at')
+            // Unique tie-breaker (Phase 32, R-2a): an announcement fans out
+            // notifications in the same second.
+            ->orderByDesc('id')
             ->paginate($request->integer('per_page', 50));
 
-        return NotificationResource::collection($notifications);
+        return NotificationResource::collection($notifications)
+            ->additional(['meta' => ['company_day' => CompanyDay::meta()]]);
     }
 
     public function myUnreadCount(Request $request): JsonResponse

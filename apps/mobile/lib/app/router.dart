@@ -7,7 +7,18 @@ import 'package:mobile/features/clients/presentation/client_detail_page.dart';
 import 'package:mobile/features/clients/presentation/clients_page.dart';
 import 'package:mobile/features/auth/state/auth_controller.dart';
 import 'package:mobile/features/home/data/home_api_client.dart';
+import 'package:mobile/features/announcements/data/announcements_api_client.dart';
+import 'package:mobile/features/announcements/presentation/announcements_pages.dart';
 import 'package:mobile/features/home/presentation/home_page.dart';
+import 'package:mobile/features/messages/data/messages_api_client.dart';
+import 'package:mobile/features/messages/presentation/chat_page.dart';
+import 'package:mobile/features/messages/presentation/conversations_page.dart';
+import 'package:mobile/features/messages/presentation/messages_widgets.dart'
+    show ChatArgs;
+import 'package:mobile/features/messages/presentation/new_message_page.dart';
+import 'package:mobile/features/notifications/data/notifications_api_client.dart';
+import 'package:mobile/features/notifications/presentation/notifications_page.dart';
+import 'package:mobile/features/notifications/state/inbox_changes.dart';
 import 'package:mobile/features/leave/data/leave_api_client.dart';
 import 'package:mobile/features/leave/presentation/leave_form_page.dart';
 import 'package:mobile/features/leave/presentation/leave_page.dart';
@@ -35,7 +46,6 @@ import 'package:mobile/features/schedule/presentation/schedule_entry_page.dart';
 import 'package:mobile/features/schedule/presentation/schedule_page.dart';
 import 'package:mobile/features/schedule/presentation/schedule_widgets.dart';
 import 'package:mobile/features/shell/presentation/app_shell.dart';
-import 'package:mobile/features/shell/presentation/placeholder_page.dart';
 import 'package:mobile/features/tasks/data/tasks_api_client.dart';
 import 'package:mobile/features/tasks/presentation/task_detail_page.dart';
 import 'package:mobile/features/tasks/presentation/task_widgets.dart';
@@ -68,7 +78,46 @@ GoRouter buildAppRouter(
   required LocationService locationService,
   required LeaveApiClient leaveApiClient,
   required LeaveChanges leaveChanges,
+  required MessagesApiClient messagesApiClient,
+  required NotificationsApiClient notificationsApiClient,
+  required AnnouncementsApiClient announcementsApiClient,
+  required InboxChanges inboxChanges,
 }) {
+  // Notifications and Announcements (Phase 32) open from Home and from
+  // More: the same pages under each tab, so Back stays in that tab.
+  List<RouteBase> inboxRoutes(String base) => [
+    GoRoute(
+      path: 'notifications',
+      builder: (context, state) => NotificationsPage(
+        notificationsApiClient: notificationsApiClient,
+        inboxChanges: inboxChanges,
+        base: base,
+      ),
+    ),
+    GoRoute(
+      path: 'announcements',
+      builder: (context, state) => AnnouncementsPage(
+        announcementsApiClient: announcementsApiClient,
+        inboxChanges: inboxChanges,
+        base: base,
+      ),
+      routes: [
+        GoRoute(
+          path: ':publicId',
+          builder: (context, state) => AnnouncementPage(
+            key: ValueKey('$base-${state.pathParameters['publicId']}'),
+            announcementsApiClient: announcementsApiClient,
+            inboxChanges: inboxChanges,
+            publicId: state.pathParameters['publicId']!,
+            args: state.extra is AnnouncementArgs
+                ? state.extra! as AnnouncementArgs
+                : null,
+          ),
+        ),
+      ],
+    ),
+  ];
+
   // A leave request's detail (Phase 31) — mine or a direct report's.
   Widget leaveRequest(GoRouterState state, LeaveRequestViewer viewer) =>
       LeaveRequestPage(
@@ -118,7 +167,9 @@ GoRouter buildAppRouter(
                 builder: (context, state) => HomePage(
                   homeApiClient: homeApiClient,
                   taskChanges: taskChanges,
+                  inboxChanges: inboxChanges,
                 ),
+                routes: inboxRoutes('/home'),
               ),
             ],
           ),
@@ -195,9 +246,38 @@ GoRouter buildAppRouter(
           ),
           StatefulShellBranch(
             routes: [
+              // Messages (Phase 32, R-3/R-4): the conversations list, New
+              // message (registered before the id route), and a chat.
               GoRoute(
                 path: '/messages',
-                builder: (context, state) => const MessagesPlaceholderPage(),
+                builder: (context, state) => ConversationsPage(
+                  messagesApiClient: messagesApiClient,
+                  inboxChanges: inboxChanges,
+                ),
+                routes: [
+                  GoRoute(
+                    path: 'new',
+                    builder: (context, state) => NewMessagePage(
+                      messagesApiClient: messagesApiClient,
+                      peopleApiClient: peopleApiClient,
+                      myStaffId: state.extra is ChatArgs
+                          ? (state.extra! as ChatArgs).myStaffId
+                          : null,
+                    ),
+                  ),
+                  GoRoute(
+                    path: ':publicId',
+                    builder: (context, state) => ChatPage(
+                      key: ValueKey(state.pathParameters['publicId']),
+                      messagesApiClient: messagesApiClient,
+                      inboxChanges: inboxChanges,
+                      publicId: state.pathParameters['publicId']!,
+                      args: state.extra is ChatArgs
+                          ? state.extra! as ChatArgs
+                          : null,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -210,6 +290,7 @@ GoRouter buildAppRouter(
                 builder: (context, state) =>
                     MorePage(myStatusApiClient: myStatusApiClient),
                 routes: [
+                  ...inboxRoutes('/more'),
                   // My status (Phase 30B, R-13): the screen, its two "All"
                   // lists and the check-in flow, all in the More branch.
                   GoRoute(

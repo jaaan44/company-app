@@ -42,7 +42,7 @@ class ProjectConversationController extends Controller
             $conversation = $this->createConversation($project);
         }
 
-        return new ConversationResource($conversation->load(['members.staff', 'owner', 'project']));
+        return new ConversationResource($conversation->load(['members.staff', 'owner', 'project', 'latestMessage.sender']));
     }
 
     private function createConversation(Project $project): Conversation
