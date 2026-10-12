@@ -451,6 +451,17 @@ void main() {
       expect(c.canAttach, isFalse);
     });
 
+    test('a web server size limit (413) says the photo is too large', () async {
+      final c = service(serviceReportJson('SR1'));
+      photos.answers = [photo()];
+      server.override = (r) => r.method == 'POST'
+          ? http.Response('<html>413 Request Entity Too Large</html>', 413)
+          : null;
+
+      expect(await c.addPhoto(PhotoOrigin.camera), isFalse);
+      expect(c.actionMessage, 'This photo is too large to upload.');
+    });
+
     test('remove a photo; read a photo\'s bytes', () async {
       server.files['A1'] = Uint8List.fromList([1, 2, 3]);
       final c = service(

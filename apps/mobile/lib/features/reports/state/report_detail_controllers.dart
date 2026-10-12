@@ -203,6 +203,9 @@ abstract class ReportDetailController<T> extends ChangeNotifier {
           "Couldn't do that. Check your connection and try again.",
         ApiForbiddenException(:final message) => message,
         ApiRequestException(statusCode: 409, :final message) => message,
+        // A web server's size limit, before the API could answer.
+        ApiRequestException(statusCode: 413) =>
+          'This photo is too large to upload.',
         ApiRequestException(statusCode: 404) =>
           'This report is no longer available.',
         _ => "Couldn't do that. Please try again.",

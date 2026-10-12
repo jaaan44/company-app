@@ -678,4 +678,6 @@ No migration, route or permission change.
 
 **Android:** no manifest change in the app. The merged manifest adds the plugin's `FileProvider`. Checked in the UAT APK step.
 
+**Containers:** `client_max_body_size 12m` in `docker/nginx/default.conf`, and `docker/php/conf.d/uploads.ini` (`upload_max_filesize 12M`, `post_max_size 13M`) in both PHP images. The 10 MB attachment limit was unreachable behind nginx's 1 MB and PHP's 2M defaults. The VPS host nginx needs the same `client_max_body_size`.
+
 **Not introduced:** PDF upload or viewing, review or investigation actions, offline drafts, any other dependency. See `docs/phases/V1_PHASE_33_DEFINITION.md` and `docs/handoffs/V1_PHASE_33_HANDOFF.md`.

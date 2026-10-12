@@ -14,7 +14,8 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
   43 new tests (files 7, state 21, pages 15); 747/747.
 - **Gate 4:**
   - contract parity over 15 real responses plus a real upload and download, 1/1;
-  - New moved to the app bar after two layouts failed at 200% text.
+  - New moved to the app bar after two layouts failed at 200% text;
+  - **upload limits:** nginx `client_max_body_size 12m` and PHP `upload_max_filesize 12M`/`post_max_size 13M` (`docker/php/conf.d/uploads.ini`). The defaults (1 MB, 2M/8M) would have refused most photos and Phase 18/19 uploads over 1 MB. The app shows "This photo is too large to upload." for a `413`. Flutter 748/748. The shared host nginx needs the same limit (a runbook step).
 - **Docs:**
   - DEC-062;
   - 02 §42, 04, 05 (file uploads) and 06;

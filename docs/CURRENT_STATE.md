@@ -4,7 +4,7 @@
 
 **Product:** Company App — internal operations & communication platform
 **Current phase:** **Phases 31–33 under one blanket authorization (DEC-059, 2026-10-12)**: specifications with the AI's recommended decisions, gates without stopping, merge on green CI, then **one combined staging deployment and UAT round** for 30B + 31–33.
-- **Phase 33 — Service & Incident Reports (Mobile): implemented** (Gates 1–4, DEC-062; handoff `docs/handoffs/V1_PHASE_33_HANDOFF.md`). New dependency `image_picker` (no Android permission). UAT-33-01…08 `NOT RUN`. Backend 1,253/1,253; Flutter 747/747.
+- **Phase 33 — Service & Incident Reports (Mobile): implemented** (Gates 1–4, DEC-062; handoff `docs/handoffs/V1_PHASE_33_HANDOFF.md`). New dependency `image_picker` (no Android permission). UAT-33-01…08 `NOT RUN`. Backend 1,253/1,253; Flutter 748/748. Upload limits raised in the containers (nginx 12m, PHP 12M); **the host nginx needs the same** (runbook step).
 - **Phase 32 — Messages, Notifications & Announcements (Mobile): implemented and merged** (PR #80, `09780b9`; DEC-061). UAT-32-01…08 `NOT RUN`.
 - **Phase 31 — Leave (Mobile): implemented and merged** (PR #79, `35fd7a1`; DEC-060). UAT-31-01…08 `NOT RUN`.
 - **Phase 30B — Status & Check-in:** merged (PR #77); its runbook (`docs/testing/PHASE_30B_UAT_PREPARATION.md`) is folded into the combined round. UAT-30B-01…08 `NOT RUN`.

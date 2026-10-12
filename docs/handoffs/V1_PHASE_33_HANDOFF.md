@@ -81,7 +81,7 @@ The CLAUDE.md §5 commands for both apps, the dependency audit (publish dates an
 ## 11. Results (Gate 4 final run)
 
 - **Backend:** **1,253/1,253**; Pint, PHPStan, composer validate and audit clean.
-- **Flutter:** **747/747**; format and analyze clean.
+- **Flutter:** **748/748** after §11a; format and analyze clean.
 - **Dependency audit:**
   - `image_picker` 1.2.3 (2026-06-30), `image_picker_android` 0.8.13+23 (2026-09-10), `image_picker_platform_interface` 2.11.1 (2025-10-22, pinned instead of the days-old 2.11.2), `cross_file` 0.3.5+5, `mime` 2.1.0, `flutter_plugin_android_lifecycle` 2.0.35, and the `file_selector_*` and other platform packages that never ship in the Android build;
   - `image_picker_ios` 0.8.13+10 (2026-10-08) is recent but never built for Android, and is recorded rather than pinned.
@@ -89,6 +89,21 @@ The CLAUDE.md §5 commands for both apps, the dependency audit (publish dates an
   - 15 real responses: create with a non-ASCII body at 00:30 Manila (accepted), the future-date `422`, a PNG upload, a GIF `422`, the streamed download (bytes match), show, submit, the post-submit upload `409`, both lists, incident create, the future `422`, patch, and the profile;
   - all parsed by the production models, 1/1; scratch tests deleted.
 - **Layout finding fixed:** the "New" control moved to the app bar.
+
+## 11a. Gate 4 finding: upload size limits (fixed in the repository; one host step remains)
+
+Reviewing the deployment for uploads showed that **nothing in the stack raised the web server's body limits.**
+- The API allows 10 MB, but the Company App nginx container's default `client_max_body_size` is 1 MB, and PHP's defaults are `upload_max_filesize` 2M and `post_max_size` 8M.
+- So most phone photos (0.5–2 MB after scaling) would have been refused with a bare `413`, as would Phase 18/19 web uploads over 1 MB. This was a pre-existing gap.
+
+**Fixed in this PR:**
+- `docker/nginx/default.conf` sets `client_max_body_size 12m`;
+- the new `docker/php/conf.d/uploads.ini` (`upload_max_filesize = 12M`, `post_max_size = 13M`) is copied by both the local and staging PHP images;
+- the app shows "This photo is too large to upload." for a `413` (1 new test; Flutter 748).
+
+No Docker daemon was available here to build the images; the combined round's rebuild verifies them.
+
+**Remaining, on the VPS:** the shared **host** nginx in front of the containers (outside the repository) also defaults to 1 MB. Its Company App vhost needs `client_max_body_size 12m;`. This is a step in the combined UAT runbook, for the operator.
 
 ## 12. Deviations from Specification
 
