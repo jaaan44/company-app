@@ -4,6 +4,13 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-12 — Phase 30 specification, revision 1 (documentation only)
+- PR #71 merged (`2d8ae92`): Phase 29 formally closed.
+- New `docs/phases/V1_PHASE_30_DEFINITION.md` after read-only discovery on `main` at `2d8ae92`. Findings: `GET /schedule` uses UTC day boundaries (the Phase 27 R-7 item, confirmed: items between 00:00 and 07:59 Manila land on the previous day), is visibility-scoped rather than self-scoped (a Manager would see the company's tasks and milestones), has no unique order, does its filtering in memory with a per-entry participant query, and gives no company day; check-ins require device coordinates, so mobile check-in needs the first new dependency since Phase 25 and a location permission.
+- Proposed decisions **R-1…R-12**: split into **30A Schedule** (a self-scoped `GET /me/schedule` over a ≤31-day company-day range — my entries, open tasks and approved leave, no milestones; fix `/schedule`'s day boundaries; a week agenda tab; read-only; entry detail; Home's entry rows tappable) and **30B Status & Check-in** (outlined; explicit, foreground-only check-in; the location package and permissions approved at its own revision).
+- `ROADMAP.md`: Phase 30 marked as specified; the Phase 29 line's leftover pre-closure text removed. `CURRENT_STATE.md`: next is the approval of R-1…R-12.
+- No code, test, route, dependency or configuration change. Not authorized for implementation.
+
 ### 2026-10-12 — Phase 29C formally closed, and with it Phase 29 (documentation only)
 - **Deployment (operator):** staging redeployed to `c79ed90` (PR #69). No migration (45 Ran); `Asia/Manila`; smoke tests `/up` 200, `/login` 200, `/me/home`, `/projects`, `/clients`, `/contacts` 401. Backup `company-app-20261011-044606.sql` (112,221 bytes, complete; smaller only through expired `sessions`).
 - **UAT29C data:** script SHA-256 verified; `plan`/`seed`/`verify`/`exposure` exactly as rehearsed; `verify` was the first MySQL run of the R-19 order.
