@@ -1221,6 +1221,27 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`9e964ec`), confirmed up t
 | Runbook extraction path | Manual | PASS | The §5 step 0 `awk` over the runbook reproduces the script byte for byte (same SHA-256). |
 | Staging, APK, UAT | — | NOT RUN | Operator steps §2, §3 and §5 pending; UAT-30A-01…08 `NOT RUN`. |
 
+## Phase 30A — staging deployment, UAT data and physical-device UAT (2026-10-12)
+
+*Operator- and product-owner-reported. This AI session had no VPS or device access; the outputs below were pasted by the operator, except where marked "not supplied".*
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Staging checkout | Operator, VPS | PASS | `git status --porcelain` empty; `git merge --ff-only` from `c79ed90` to `0e7fce6afd243ecb27cec3123214cd8fbb8e1a20` (37 files); `git rev-parse HEAD` confirmed. |
+| Backup | Operator, VPS | PASS | `company-app-20261012-042648.sql`, 137,569 bytes, ends `-- Dump completed on 2026-10-12  4:26:49` (the 29C-corrected check). |
+| Build and restart | Operator, VPS | PASS | Both images built; `app` restarted; `nginx` kept running (image fully cached; nothing it serves changed); `mysql` healthy, untouched. |
+| `migrate:status`, caches, route, timezone, listener | Operator, VPS | PASS | 45 Ran, none pending; config, routes and Blade cached; `route:list` shows `GET\|HEAD api/v1/me/schedule` (`me.schedule.index`); `Asia/Manila`; only `127.0.0.1:8012`. |
+| Smoke tests (public HTTPS) | Operator, VPS | PASS | `/up` 200, `/login` 200; `/me/home`, `/me/schedule`, `/schedule`, `/schedule-entries` 401. |
+| Script extraction | Operator, VPS | PASS | `uat30a_data.php` from `origin/main`: SHA-256 `50187156dbda9a3fa1f76f198b76c75c808e1522a0656731e9a1eb39ba13676b` (matches). |
+| `plan` / `seed` | Operator, VPS | PASS | Company day 2026-10-12; all absent, roles 3/3; then 4 accounts created, 10 entries, 5 tasks, 3 leave requests; exit 0; credentials file `600 deploy`, 4 lines; shredded (`No such file or directory`). |
+| `verify` (real controllers, **first MySQL run of the 30A queries**) | Operator, VPS | PASS | Exactly the rehearsed output: Rosa's week 12–18 Oct day by day (Order filters, Early briefing 07:00 – 07:30, Client visit 14:00 – 15:30; Night pour on 13 and 14 Oct; Site shutdown before Toolbox talk; the report and leave on 17 Oct; leave on 18 Oct); next week only Planning review; previous week only the retro; every `check` OK; the private entry 404 for Rosa and Ben; Home Today the three items; legacy `/schedule` includes the 07:00 entry on its Manila day; Ben and Ada only their own; no-profile `null`. |
+| `exposure` (before UAT) | Operator, VPS | PASS | All four accounts `api_tokens=0 web_sessions=0 audit: none`. |
+| UAT APK | Operator, Windows | PASS | Checkout `0e7fce6`, `git status --porcelain` empty before and after the build. Flutter 3.47.2, Dart 3.13.2, Java 17.0.15. `dart format` 112 files, 0 changed; `flutter analyze` no issues; `flutter test` **513/513**, schedule **39**, home **67**, tasks **95**. Release build against staging → **54,026,667 bytes**, SHA-256 **`7EAB7F9F353023284F24D6039D4B368FC34B3EEBFC6F1D8A45527223DEF331B7`**. `com.companyapp.mobile`, min SDK 24, target 36; permissions `INTERNET` and the AndroidX-internal `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` — **no location permission**; signer Android Debug (deferred to Phase 38). |
+| Not supplied | — | Gap | the `adb devices`/`adb install` output, the UAT-30A-07 `revoke` output line, and the post-UAT `exposure` output. Recorded as gaps, not invented. |
+| UAT-30A-01…08 | Product owner, physical device | **PASS** | Reported as "ALL PASS" (2026-10-12), with the step-by-step expectations given for each scenario (runbook §6, dated for Mon 12 Oct). No observations or defects were reported. |
+
+Staging now runs `0e7fce6`. The UAT30A data (4 accounts, 4 staff records, 1 project, 10 entries, 5 tasks, an inactive leave type, 3 leave requests) stays in place alongside the UAT29C, UAT29B, UAT29A, UAT28 and UAT27 data; any cleanup needs its own authorization.
+
 ---
 
 *(Future phases append their own section above this line, oldest first.)*
