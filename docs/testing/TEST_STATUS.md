@@ -1202,6 +1202,25 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`9e964ec`), confirmed up t
 | MySQL | — | Not run | Gate 1's queries use `whereDate` and instant comparisons; to be exercised at staging. |
 | UAT | — | NOT RUN | UAT-30A-01…08 `NOT RUN`. |
 
+## Phase 30A — UAT preparation (runbook and data script rehearsal, 2026-10-12)
+
+`docs/testing/PHASE_30A_UAT_PREPARATION.md`; script `uat30a_data.php` revision 1, SHA-256 `50187156dbda9a3fa1f76f198b76c75c808e1522a0656731e9a1eb39ba13676b`. Rehearsed in this AI sandbox on a disposable scratch SQLite database (all 45 migrations + `RolePermissionSeeder`, `SCHEDULING_COMPANY_TIMEZONE=Asia/Manila`, company day 2026-10-12) at `main` `0e7fce6`, run as the runbook runs it (`php -- <stage> < script`), with a non-UAT control user, staff record, schedule entry, task, approved leave and API token in place. Nothing touched staging. MySQL was not available here.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `plan` (read-only) | Manual, scratch DB | PASS | Company day; 4 accounts absent; 0 of 4 staff, 0 of 10 entries, 0 of 5 tasks, 0 of 3 leave requests, project and leave type 0 of 1; roles 3/3. |
+| `seed` | Manual, scratch DB | PASS | Exit 0; STDOUT to a `600` file with exactly 4 `email password` lines (20 characters); all status on STDERR. |
+| `seed` re-run | Manual, scratch DB | PASS | Exit 0, 0 bytes on STDOUT, "password unchanged" ×4, password hashes identical. |
+| `verify` (real controllers) | Manual, scratch DB | PASS | Rosa's week day by day exactly as §4 (D: Order filters, Early briefing 07:00 – 07:30, Client visit 14:00 – 15:30; Night pour on D+1 "22:00 – until …" and D+2 "From … – 02:00"; Site shutdown on D+3 and D+4, before Toolbox talk; Submit the weekly report and the leave on D+5; leave on D+6); next week only Planning review; previous week only the retro; every `check` OK. Entry detail: own 200, participant 200 (organizer Noel), the private entry 404 for Rosa and for Ben. Home Today: the three D items. Legacy `/schedule` for D includes the 07:00 entry. Ben: only Approve the rota and Manager 1:1 prep; Ada: only Admin budget review; no-profile: `items` null. |
+| Drift detection and restore | Manual, scratch DB | PASS | After moving Night pour's start, adding Rosa to Noel's private entry, completing Order filters, cancelling the approved leave and clearing Rosa's manager: `verify` printed `UNEXPECTED` for this week, the previous week and the private entry. A re-`seed` restored everything; `verify` all OK. |
+| `revoke` / `exposure` | Manual, scratch DB | PASS | With tokens on staff and manager, `exposure` showed 1 each; `revoke` removed only staff's (`api_tokens_revoked=1`). |
+| `rotate` | Manual, scratch DB | PASS | Exit 0; `600` file, 4 lines; all tokens revoked; password hashes changed; `exposure` then 0 for all four. |
+| Refusals | Manual, scratch DB | PASS | `rotate` with an account missing and `revoke` with `uat30a.staff` missing: exit 1, nothing on STDOUT. `seed` with a UAT30A staff record linked to a non-UAT30A account: exit 1, nothing on STDOUT, data identical. Unknown stage: exit 1. |
+| All-or-nothing `rotate` | Manual, scratch DB (injected failure) | PASS | A failure on the third account: exit 1, nothing on STDOUT, all four password hashes and remember tokens unchanged, although STDERR had printed `rotated …` twice. |
+| Non-UAT30A data untouched | Manual, scratch DB | PASS | A hash of every non-UAT30A user, staff record, entry, participant, task, leave request, leave type, project and token was identical across all stages. |
+| Runbook extraction path | Manual | PASS | The §5 step 0 `awk` over the runbook reproduces the script byte for byte (same SHA-256). |
+| Staging, APK, UAT | — | NOT RUN | Operator steps §2, §3 and §5 pending; UAT-30A-01…08 `NOT RUN`. |
+
 ---
 
 *(Future phases append their own section above this line, oldest first.)*
