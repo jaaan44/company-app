@@ -111,6 +111,25 @@ Form conventions this phase establishes (extending 29A's write conventions):
 - **Home (R-10):** Today's meeting rows are now tappable too (a chevron on every Today row) and open the same entry detail in the Schedule tab, in company time. This refines the Phase 27 "non-interactive" rule above, after Phase 29A's task rows.
 - Verified by widget tests in light and dark mode and at 200% text on a 320×568 phone; not yet verified on a device.
 
+### My status and Check in (implemented, Phase 30B — Gate 3, not yet merged)
+
+- **More** gains a sixth row, **My status**, second after My profile. Its subtitle is my current status ("In the field"), "No status set", or "Your status and check-ins" when it can't be read. It is read with one small request, and again on returning from My status. This replaces the Phase 28 "More fetches nothing" rule (R-13).
+- **My status:**
+  - my current status as an icon **and** its label, with "Set Today 09:00" (company time). Off duty adds "Not working right now. This isn't leave."
+  - **Check in** (filled) and **Change status** (outlined);
+  - **Recent check-ins** and **Recent status changes**, 5 each, with **All check-ins** / **All status changes** links, or "You haven't checked in yet." / "You haven't set a status yet.";
+  - no profile: only "No staff profile is linked to this account." (no buttons).
+- **Change status** opens a sheet: the five statuses, each with icon and label, the current one marked with a check. Choosing one closes the sheet and sends it. A progress bar shows while sending, and the buttons are disabled. The screen changes **only** when the server confirms ("Status set to In the field."); a failure keeps the old status with a SnackBar. Closing the sheet sends nothing.
+- **Check in** (its own screen):
+  - Unless location is already allowed, an explanation comes **first**: *"Company App reads your location once, only when you tap Check in. It never tracks you in the background. Your manager and administrators can see your check-ins. A check-in isn't a clock-in."* It offers **Continue** (then Android's prompt) and **Not now**.
+  - "Finding your location…".
+  - The form: "Location found (±9 m)" or "Approximate location (±1800 m)", the coordinates, an optional **Place** (≤ 100) and **Note** (≤ 500), **Send check-in** and **Cancel**. A failed send keeps the form with the message in the error role.
+  - Errors, each with **Try again**: "Turn on location to check in." (+ **Open location settings**), "Location permission is needed to check in." (+ **Open app settings** once Android stops asking), and "Couldn't get your location. Try again, ideally outdoors or near a window."
+  - On success it returns to My status with "Checked in." and the check-in on top.
+- **Rows:** a check-in shows the place or "No place name", "Today 10:30 · ±12 m", the note and the coordinates (5 decimals); a status change shows its icon, label and time. Times use Today / Yesterday / "Sat 10 Oct 16:00", in company time. No map; nothing is editable.
+- **All check-ins / All status changes:** the paged list (20 a page) without a search field.
+- Verified by widget tests in light and dark mode at 200% text on a 320×568 phone, plus tap-target and label guidelines. Not yet on a device.
+
 ## Admin Backoffice (Web) — Navigation
 
 Primary sections:

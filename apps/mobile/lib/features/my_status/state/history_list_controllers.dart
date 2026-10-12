@@ -43,12 +43,8 @@ class StatusHistoryController extends PagedSearchController<StatusEntry>
     required int page,
   }) => _page(() => _client.fetchStatusHistory(page: page));
 
-  /// Status rows have no id (DEC-017). With the server's unique order
-  /// (R-14) the time and status identify a row; two identical changes in
-  /// the same second would show once.
   @override
-  String idOf(StatusEntry item) =>
-      '${item.recordedAt.toIso8601String()}|${item.status.wireValue}';
+  String idOf(StatusEntry item) => item.identity;
 
   @override
   String messageFor(ApiException e) => switch (e) {

@@ -3,10 +3,14 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** **Phase 30B — Status & Check-in (Mobile): Gates 1–2 complete (2026-10-12), on branch `claude/amazing-brahmagupta-dbsrjc`, not merged.** Gate 1: `id` tie-breakers on the four status and check-in history lists and `meta.company_day` on `/me/status` and `/me/check-ins`; backend 1,221/1,221. Gate 2: `geolocator` 14.0.3 and `geolocator_android` 5.0.3 (exact); the two location permissions, with the plugin's background service removed; `lib/features/my_status/` (models, API client, `LocationService`, the status, list and check-in flow controllers); Flutter 553/553. No screens yet. The merged manifest isn't verified yet (no Android SDK here). Phase 30A is formally closed (2026-10-12).
+**Current phase:** **Phase 30B — Status & Check-in (Mobile): Gates 1–3 complete (2026-10-12), on branch `claude/amazing-brahmagupta-dbsrjc`, not merged.**
+- Gate 1: history tie-breakers and `meta.company_day`; backend 1,221/1,221.
+- Gate 2: `geolocator` 14.0.3 and `geolocator_android` 5.0.3; the two location permissions with the background service removed; models, API client, `LocationService` and controllers.
+- Gate 3: More → My status (with my current status as its subtitle), Change status (confirmed), the check-in flow (explanation, one position, form, errors), All check-ins and All status changes; Flutter 576/576.
+- The merged Android manifest isn't verified yet (no Android SDK here). Phase 30A is formally closed (2026-10-12).
 **Phase status:** Staging is **deployed and reachable over HTTPS** at `https://company-staging.storm-ark.com` (infrastructure verified by the operator; **real-device UAT passed**, Gate 2F, 2026-09-23). Live deployment refined the Gate 1 model: the verified path is Internet → Cloudflare (proxied, Full (strict)) → **shared** DigitalOcean Cloud Firewall (inbound 80/443 Cloudflare-scoped) → **shared** host Nginx (TLS, Let's Encrypt cert `company-staging.storm-ark.com`, HTTP → HTTPS redirect) → `127.0.0.1:8012` → Company App Docker nginx → Laravel (`APP_URL` HTTPS, `SESSION_SECURE_COOKIE=true`, `trustProxies(at: '*')`). Recorded as **DEC-051** (refines DEC-050). See `docs/DEPLOYMENT_STAGING.md` §13/§7a and the Phase 26 handoff addendum.
 **Last completed phase:** Phase 30A — Schedule (Mobile), formally closed 2026-10-12 (PRs #72–#74): self-scoped `GET /me/schedule`, company days for `/schedule`, the Schedule tab and entry detail. Before it, Phase 29 (closed 2026-10-12). **Open, non-blocking:** the deferred UAT password rotation from 29B (see the 29B handoff).
-**Next planned phase:** 30B Gate 3 (My status, the two "All" lists, the check-in flow, routes and the More row), then Gate 4 (integration review and PR) — each **needs its own explicit authorization.** Per `CLAUDE.md` §8, nothing begins automatically.
+**Next planned phase:** 30B Gate 4 (integration review, contract parity, the merged-manifest check, DEC entry, UAT rows, handoff and PR) — **needs its own explicit authorization.** Per `CLAUDE.md` §8, nothing begins automatically.
 
 ## Current Objective
 

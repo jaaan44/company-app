@@ -1275,6 +1275,22 @@ Branch `claude/amazing-brahmagupta-dbsrjc` after Gate 1 (`99ef67c`). Flutter 3.4
 | Backend | — | Not affected | No `apps/api` change in Gate 2. |
 | UAT | — | NOT RUN | UAT-30B-01…08 not yet runnable. |
 
+## Phase 30B — Gate 3 (My status, Change status and Check in screens)
+
+Branch `claude/amazing-brahmagupta-dbsrjc` after Gate 2 (`e4ce2cb`). Flutter 3.47.2 / Dart 3.13.2 at `/opt/flutter-sdk`.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `test/features/my_status/my_status_pages_test.dart` (23) | Automated | PASS | Whole app against an in-memory status and check-in API and a fake device (company today Wed 14 Oct, Manila). **More and My status:** More's subtitle is my current status ("Busy"; "No status set"; generic on `403`) and refreshes on return. My status shows "Busy", "Set Today 09:00", check-ins with place, "Today 10:30 · ±12 m", note and "14.55470, 121.02440", "No place name" and "Sat 10 Oct 16:00", "Yesterday 08:30", the All links, and no map. The empty states; the Off duty hint; no profile (message only, no buttons, session kept); load error → Try again. **Change status:** the five with labels, the current one checked, the Off duty hint; nothing sent until a choice; while the server holds its answer, the old status, a progress bar and disabled buttons; then "In the field", the SnackBar and exactly `{status: in_field}`; closing the sheet sends nothing; a failure keeps Busy with its message. **Check in:** already allowed → no prompt, one read, "Location found (±9 m)", coordinates, then Send posts exactly the place and note, back to My status with "Checked in." and the new row on top ("Today 12:05 · ±9 m"); approximate → "Approximate location (±1800 m)"; not allowed → the exact explanation, and Not now asks nothing and sends nothing; Continue → prompt → form; denied, then denied for good → messages, Open app settings, nothing read or sent; location off → message, Open location settings, Try again → form; timeout → message, no Send; offline at Send → form and text kept with the message, then one check-in recorded; Cancel and Back send nothing. **Lists:** All check-ins with no search field, pages 1 and 2 (23 rows) without repeats; All status changes with times. **Appearance:** light and dark at 200% on 320×568: My status, the sheet, the explanation and the form (scrolled to Send) without overflow; tap-target and label guidelines. |
+| `test/features/people/people_pages_test.dart` | Automated | PASS | Updated: More lists six rows; the My status subtitle shows the current status; More's only request is `GET /me/status?per_page=1&page=1`, replacing the Phase 28 "fetches nothing" assertion (R-13); a scroll to Staff directory at 200% text. |
+| Mutation checks | Manual (AI) | PASS | 20, one at a time, each restored: Today/Yesterday labels; device time instead of company time; 3 decimals; "No place name"; the note row; the explanation text; the Approximate label; Open app settings; Open location settings; the check-in result not returned; the note not sent; the new check-in not added; Check in enabled while a change is sending; the Off duty hint; the current-status mark; dismissing the sheet sending; More not refreshing; More's subtitle; the injected location service ignored. **All 20 caught.** |
+| `flutter pub get` / `dart format` / `flutter analyze` | Automated | PASS | `pubspec` unchanged since Gate 2; 0 files changed; no issues. |
+| `flutter test` | Automated | PASS | 576/576 (553 + 23). |
+| Merged Android manifest | — | Not run | No Android SDK here; Gate 4 or the UAT APK step. |
+| Device | — | Not run | Location and Android's prompts are exercised only on a physical device (UAT). |
+| Backend | — | Not affected | No `apps/api` change in Gate 3. |
+| UAT | — | NOT RUN | UAT-30B-01…08 not yet runnable. |
+
 ---
 
 *(Future phases append their own section above this line, oldest first.)*

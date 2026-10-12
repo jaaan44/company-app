@@ -67,6 +67,11 @@ class StatusEntry {
 
   /// UTC.
   final DateTime recordedAt;
+
+  /// Status rows have no id (DEC-017). With the server's unique order
+  /// (R-14) the time and status identify a row; two identical changes in
+  /// the same second would show once.
+  String get identity => '${recordedAt.toIso8601String()}|${status.wireValue}';
 }
 
 /// One check-in (`CheckInResource`). Immutable once recorded.

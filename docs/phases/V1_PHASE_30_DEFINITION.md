@@ -302,3 +302,11 @@ Let an employee see what's on their plate day by day — their own appointments,
     - `location/location_service.dart`: `LocationService` and `GeolocatorLocationService`. A test fails if any other file imports `geolocator`.
     - `state/my_status_controller.dart`, `state/history_list_controllers.dart` (`StatusHistoryController` and `CheckInsController` on `PagedSearchController`, never searched), and `state/check_in_flow_controller.dart`.
   - **Status rows have no id (DEC-017):** the status list de-duplicates by time and status, so two identical changes in the same second would show once. With the Gate 1 order, a repeat can only come from new rows arriving between pages.
+- **30B Gate 3 implementation notes (2026-10-12):**
+  - `lib/features/my_status/presentation/`: `my_status_page.dart`, `history_pages.dart` (`CheckInsPage`, `StatusHistoryPage`), `check_in_page.dart` and `my_status_widgets.dart` (paths, status icons, company-time, accuracy and coordinate labels, the two row widgets).
+  - **Routes** in the More branch: `/more/status`, `/more/status/check-ins`, `/more/status/history` and `/more/status/check-in`. My status `push`es the check-in screen and receives the confirmed `CheckIn` when it pops, so nothing is fetched again.
+  - `CompanyApp` takes injectable `MyStatusApiClient` and `LocationService` (production: `GeolocatorLocationService`).
+  - **More row and subtitle (R-13):** `MorePage` became stateful and reads `GET /me/status?per_page=1` once, and again on returning from My status. **This changes the Phase 28 "More fetches nothing" rule**, which its test asserted; the test now expects exactly that one request. A `403`, offline or error keeps the generic subtitle. For an account with no profile, `ApiClient`'s `403` handling re-checks the session with `/auth/me`, one extra request per More visit.
+  - `PagedSearchList` now takes an optional `searchHint`; null shows no search field. Projects, Clients and the directory are unchanged.
+  - `StatusEntry.identity` (time and status) is the status rows' key, shared by the controller and the page.
+  - `geolocator_platform_interface` stays at 4.4.0: no pin was requested.

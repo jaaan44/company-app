@@ -4,6 +4,20 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-12 — Phase 30B Gate 3: My status, Change status and Check in screens
+- **More → My status** (a sixth row; its subtitle is my current status, read with one small request): my current status with when I set it, **Check in**, **Change status**, my 5 newest check-ins and status changes, and **All** lists.
+- **Change status:** a sheet with the five statuses (icon and label, the current one marked). The screen changes only when the server confirms; a failure keeps the old status. Off duty says it isn't leave.
+- **Check in:**
+  - the R-19 explanation before Android's prompt;
+  - one position, then a form with the accuracy (or "Approximate location"), the coordinates, an optional place and note, Send and Cancel;
+  - the four R-20 errors, with Open location settings / Open app settings and Try again;
+  - "Checked in." with the new row on top.
+- Rows show company time (Today / Yesterday / date), place or "No place name", ±m, note and coordinates. No map; nothing editable.
+- `PagedSearchList`'s search field is now optional. `CompanyApp` gains injectable `MyStatusApiClient` and `LocationService`.
+- **Phase 28's "More fetches nothing" rule is replaced** by the R-13 subtitle; its test now expects the one status read.
+- Tests: 23 new page tests (whole app, fake device); the people pages test updated (six More rows, the one request, a scroll at 200% text). Flutter 576/576; format and analyze clean; `pubspec` unchanged since Gate 2. 20 mutation checks, all caught.
+- Docs: spec Gate 3 notes, `06_UI_UX_GUIDELINES.md`, `CURRENT_STATE.md`, `TEST_STATUS.md`. No backend change. Gate 4 is not started.
+
 ### 2026-10-12 — Phase 30B Gate 2: mobile status, check-in and location groundwork
 - **First new dependency since Phase 25 (R-17):** `geolocator` 14.0.3 and `geolocator_android` 5.0.3, pinned exactly. `pubspec.lock` gains 16 packages and changes none. `geolocator_platform_interface` resolved to 4.4.0 (about two weeks old; pure Dart additions) and is recorded for review.
 - **`AndroidManifest.xml` (R-18):** `ACCESS_COARSE_LOCATION` and `ACCESS_FINE_LOCATION`; the plugin's background `GeolocatorLocationService` removed (`tools:node="remove"`). The merged manifest isn't verified here (no Android SDK).

@@ -15,6 +15,8 @@ import 'package:mobile/features/people/presentation/staff_directory_page.dart';
 
 import '../../support/fake_backend.dart';
 import '../../support/home_fixtures.dart';
+import '../../support/my_status_fixtures.dart'
+    show historyBody, myStatusClientFor, statusJson;
 import '../../support/people_fixtures.dart';
 
 /// Phase 28 Gate 3 — the People screens through the real app (`CompanyApp`,
@@ -37,6 +39,10 @@ void main() {
 
     if (path.endsWith('/me/home')) {
       return homeResponse();
+    }
+    // Phase 30B (R-13): More's My status subtitle reads my current status.
+    if (path.endsWith('/me/status')) {
+      return jsonResponse(historyBody([statusJson('in_field')]));
     }
     if (path.endsWith('/me/profile')) {
       return onProfile == null
@@ -78,6 +84,7 @@ void main() {
         authController: auth,
         homeApiClient: homeClientFor(backend, auth),
         peopleApiClient: peopleClientFor(backend, auth),
+        myStatusApiClient: myStatusClientFor(backend, auth),
       ),
     );
     await tester.pumpAndSettle();
@@ -115,15 +122,24 @@ void main() {
   tearDownAll(() => WidgetController.hitTestWarningShouldBeFatal = false);
 
   group('More (R-8)', () {
-    testWidgets('lists exactly My profile, Staff directory, My work logs, '
-        'Projects and Clients', (tester) async {
+    testWidgets('lists exactly My profile, My status, Staff directory, My '
+        'work logs, Projects and Clients', (tester) async {
       await pumpApp(tester);
       await openMore(tester);
 
       expect(find.byType(MorePage), findsOneWidget);
-      // Phase 29B adds My work logs and Phase 29C Projects and Clients
-      // (each phase adds its own row, R-8 / R-27).
-      expect(find.byType(ListTile), findsNWidgets(5));
+      // Phase 29B adds My work logs, Phase 29C Projects and Clients, and
+      // Phase 30B My status (each phase adds its own row, R-8 / R-27 /
+      // R-13).
+      expect(find.byType(ListTile), findsNWidgets(6));
+      // R-13: the subtitle is my current status.
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('more-status')),
+          matching: find.text('In the field'),
+        ),
+        findsOneWidget,
+      );
       expect(find.text('My profile'), findsOneWidget);
       // The signed-in account's name, known without a request.
       expect(find.text('Ada Lovelace'), findsOneWidget);
@@ -132,11 +148,10 @@ void main() {
       expect(find.text('Projects'), findsOneWidget);
       expect(find.text('Clients'), findsOneWidget);
       expect(find.textContaining('coming soon'), findsNothing);
-      expect(
-        requests.where((u) => !u.path.endsWith('/me/home')),
-        isEmpty,
-        reason: 'More fetches nothing',
-      );
+      // More's only request is the one-row status read (R-13).
+      expect(requests.where((u) => !u.path.endsWith('/me/home')).toList(), [
+        Uri.parse('$testBaseUrl/me/status?per_page=1&page=1'),
+      ]);
     });
   });
 
@@ -659,6 +674,8 @@ void main() {
         await tester.pumpAndSettle();
 
         // Directory: the search field and the last row.
+        await tester.ensureVisible(find.byKey(const Key('more-directory')));
+        await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('more-directory')));
         await tester.pumpAndSettle();
         expect(

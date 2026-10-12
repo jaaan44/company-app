@@ -18,24 +18,27 @@ class PagedSearchList<T> extends StatefulWidget {
     super.key,
     required this.controller,
     required this.keyPrefix,
-    required this.searchHint,
+    this.searchHint,
     required this.rowBuilder,
     required this.emptyMessage,
-    required this.searchEmptyMessage,
+    this.searchEmptyMessage,
     required this.errorFallback,
     this.noProfileMessage = 'No staff profile is linked to this account.',
   });
 
   final PagedSearchController<T> controller;
   final String keyPrefix;
-  final String searchHint;
+
+  /// The search field's hint; null shows no search field (a list that is
+  /// never searched, Phase 30B).
+  final String? searchHint;
   final Widget Function(BuildContext context, T item) rowBuilder;
 
   /// Shown when the list is empty without a search.
   final String emptyMessage;
 
   /// Shown when a search matches nothing; given the trimmed query.
-  final String Function(String query) searchEmptyMessage;
+  final String Function(String query)? searchEmptyMessage;
 
   /// The error text when the controller gives none.
   final String errorFallback;
@@ -85,6 +88,11 @@ class _PagedSearchListState<T> extends State<PagedSearchList<T>> {
               );
             }
 
+            final hint = widget.searchHint;
+            if (hint == null) {
+              return _body(context, padding);
+            }
+
             return Column(
               children: [
                 Padding(
@@ -102,7 +110,7 @@ class _PagedSearchListState<T> extends State<PagedSearchList<T>> {
                       onChanged: _controller.setQuery,
                       textInputAction: TextInputAction.search,
                       decoration: InputDecoration(
-                        hintText: widget.searchHint,
+                        hintText: hint,
                         prefixIcon: const Icon(Icons.search),
                         border: const OutlineInputBorder(),
                         suffixIcon: _search.text.isEmpty
@@ -152,9 +160,9 @@ class _PagedSearchListState<T> extends State<PagedSearchList<T>> {
           children: [
             Text(
               key: Key('$_prefix-empty'),
-              query.isEmpty
+              query.isEmpty || widget.searchEmptyMessage == null
                   ? widget.emptyMessage
-                  : widget.searchEmptyMessage(query),
+                  : widget.searchEmptyMessage!(query),
               textAlign: TextAlign.center,
             ),
           ],
