@@ -690,6 +690,22 @@ Internet → Cloudflare (proxied, SSL/TLS "Full (strict)")
 
 ---
 
+### DEC-057 — Phase 30A: a self-scoped `GET /api/v1/me/schedule` for the mobile Schedule tab, company days for `GET /schedule`, and a read-only week agenda
+
+**Date:** 2026-10-12
+**Status:** ACCEPTED (approved with the Phase 30 specification revision 1, PR #72, R-1…R-10; implemented in Phase 30A Gates 1–3)
+**Context:** The Schedule tab was a placeholder. The Phase 17 `GET /schedule` aggregation is visibility-scoped (an Administrator or a project member sees other people's items) and compared its `from`/`to` against UTC days, so an entry between 00:00 and 07:59 Manila fell on the previous day (the Phase 27 R-7 item). Home's Today (DEC-052) already defined "my items today" in company time.
+**Decision** (R-1…R-10, approved as written):
+1. **Split (R-1):** 30A Schedule now; 30B Status & Check-in in its own revision (R-11/R-12 apply there).
+2. **`GET /me/schedule?from&to` (R-2…R-7):** my Schedule Entries (creator or participant), my open assigned tasks due in the range and my approved leave (titled with its leave type) — never milestones, never widened by any role, no permission (the `/me/tasks` pattern). At most 31 company days; unpaginated, in a total order (start, all-day first, entries → tasks → leave, title byte-wise, `public_id`); constant query count. `data: {company_day, range, items}` — the company day sits in `data` (R-7's pattern) rather than `meta` (R-4's wording), as nothing is paginated. `items: null` without a linked Staff record.
+3. **`GET /schedule` (R-5):** `from`/`to` are company days; entries are compared on their UTC instants, date-only sources on their dates. Scope, sources and shape unchanged.
+4. **Mobile (R-8…R-10):** a seven-day agenda from the **company** today, learnt from the server (one padded first request; the device clock never labels a day); Previous/Next/Today; pull to refresh, and a quiet refresh after a task status change (as Home); read-only. A task opens in the Tasks tab, a meeting opens a new read-only entry detail (from the Phase 17 `GET /schedule-entries/{id}`, where `404` reads "This item is no longer available."), leave isn't tappable. Home's Today meeting rows open the same detail in the Schedule tab.
+**Rationale:** One personal agenda consistent with Home at every hour; the day-boundary defect fixed where it lives; no new dependency, permission, migration or field on existing resources.
+**Not a security boundary change:** `/me/schedule` returns a subset of what the requester could already see (their own entries, tasks and leave); `/schedule`'s visibility is unchanged — only which day an item is reported on. Schedule Entry privacy (DEC-040) is untouched.
+**Superseded/reaffirmed:** DEC-052 reaffirmed and extended to a range; DEC-040 reaffirmed. The Phase 27 R-7 deferred item is closed.
+
+---
+
 ## Template for Future Decisions
 
 ```

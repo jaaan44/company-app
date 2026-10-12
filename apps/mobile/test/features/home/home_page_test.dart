@@ -9,11 +9,15 @@ import 'package:mobile/app/app.dart';
 import 'package:mobile/features/auth/presentation/login_page.dart';
 import 'package:mobile/features/auth/state/auth_controller.dart';
 import 'package:mobile/features/home/presentation/home_page.dart';
+import 'package:mobile/features/schedule/presentation/schedule_entry_page.dart';
+import 'package:mobile/features/schedule/presentation/schedule_page.dart';
 import 'package:mobile/features/tasks/presentation/task_detail_page.dart';
 import 'package:mobile/features/tasks/presentation/tasks_page.dart';
 
 import '../../support/fake_backend.dart';
 import '../../support/home_fixtures.dart';
+import '../../support/schedule_fixtures.dart'
+    show myScheduleJson, scheduleClientFor, scheduleEntryJson;
 import '../../support/task_fixtures.dart';
 
 /// Phase 27 Gate 3 — the employee Home screen through the real app
@@ -49,6 +53,16 @@ void main() {
       if (path.contains('/tasks/')) {
         return jsonResponse({'data': taskJson(publicId: path.split('/').last)});
       }
+      // Phase 30A: a Today entry row opens the entry in the Schedule tab,
+      // whose agenda then loads behind it.
+      if (path.contains('/schedule-entries/')) {
+        return jsonResponse({
+          'data': scheduleEntryJson(publicId: path.split('/').last),
+        });
+      }
+      if (path.endsWith('/me/schedule')) {
+        return jsonResponse(myScheduleJson([]));
+      }
       expect(path, endsWith('/me/home'));
       homeRequests++;
 
@@ -61,6 +75,7 @@ void main() {
         authController: auth,
         homeApiClient: homeClientFor(backend, auth),
         tasksApiClient: tasksClientFor(backend, auth),
+        scheduleApiClient: scheduleClientFor(backend, auth),
       ),
     );
     if (settle) {
@@ -335,9 +350,9 @@ void main() {
     });
   });
 
-  group('interactive content (R-1, refined by Phase 29A R-6)', () {
+  group('interactive content (R-1, refined by Phase 29A R-6 and 30A R-10)', () {
     testWidgets(
-      'only the tasks tile and Today task rows are tappable; the rest stays plain',
+      'only the tasks tile and Today rows are tappable; the rest stays plain',
       (tester) async {
         await pumpHome(
           tester,
@@ -366,7 +381,7 @@ void main() {
             find.ancestor(of: target, matching: find.byType(InkWell));
 
         expect(inkAround(find.text('Replace filter unit')), findsOneWidget);
-        expect(inkAround(find.text('Site visit — Acme')), findsNothing);
+        expect(inkAround(find.text('Site visit — Acme')), findsOneWidget);
         expect(
           inkAround(find.byKey(const Key('home-tile-tasks'))),
           findsNothing,
@@ -388,16 +403,16 @@ void main() {
             reason: tile,
           );
         }
-        // One chevron: the task row's.
+        // One chevron per Today row: the entry's and the task's.
         expect(
           inSection('home-today', find.byIcon(Icons.chevron_right)),
-          findsOneWidget,
+          findsNWidgets(2),
         );
       },
     );
 
     testWidgets(
-      'tapping schedule rows, other tiles and announcements navigates nowhere',
+      'tapping other tiles, the overflow line and announcements navigates nowhere',
       (tester) async {
         await pumpHome(
           tester,
@@ -406,7 +421,6 @@ void main() {
         final router = GoRouter.of(tester.element(find.byType(HomePage)));
 
         for (final target in [
-          find.text('Site visit — Acme'),
           find.byKey(const Key('home-tile-messages')),
           find.byKey(const Key('home-tile-notifications')),
           find.text('Office closed Friday'),
@@ -467,6 +481,38 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.byType(TasksPage), findsOneWidget);
         expect(find.byType(TaskDetailPage), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'a Today entry row opens that entry in the Schedule tab; back shows the agenda',
+      (tester) async {
+        await pumpHome(tester);
+
+        await tester.tap(find.text('Site visit — Acme'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(ScheduleEntryPage), findsOneWidget);
+        final router = GoRouter.of(
+          tester.element(find.byType(ScheduleEntryPage)),
+        );
+        expect(
+          router.state.matchedLocation,
+          '/schedule/entries/01ENTRY0000000000000000001',
+        );
+        expect(
+          tester
+              .widget<NavigationBar>(find.byType(NavigationBar))
+              .selectedIndex,
+          2,
+        );
+        // Home's offset is carried, so times are company time.
+        expect(find.textContaining('(device time)'), findsNothing);
+
+        await tester.pageBack();
+        await tester.pumpAndSettle();
+        expect(find.byType(SchedulePage), findsOneWidget);
+        expect(find.byType(ScheduleEntryPage), findsNothing);
       },
     );
 

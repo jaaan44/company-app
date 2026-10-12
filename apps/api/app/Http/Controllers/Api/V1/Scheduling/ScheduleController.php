@@ -67,8 +67,14 @@ class ScheduleController extends Controller
             'project' => ['sometimes', 'string'],
         ]);
 
-        $from = $request->date('from')->startOfDay();
-        $to = $request->date('to')->endOfDay();
+        // Company days (Phase 30A, R-5; Phase 27 R-7): `from`/`to` name
+        // company dates. Timed entries are compared on their UTC instants
+        // against those days' bounds; date-only sources (tasks, leave,
+        // milestones) compare their dates with the company dates.
+        $fromDate = $request->date('from')->toDateString();
+        $toDate = $request->date('to')->toDateString();
+        $from = CompanyTimezone::startOfDayUtc($fromDate);
+        $to = CompanyTimezone::endOfDayUtc($toDate);
         $source = $request->filled('source') ? ScheduleSourceType::from($request->string('source')->toString()) : null;
         $activityType = $request->filled('activity_type') ? $request->string('activity_type')->toString() : null;
         $projectId = $this->resolveProjectId($request->string('project')->toString());
@@ -92,17 +98,17 @@ class ScheduleController extends Controller
         }
 
         if ($includeOtherSources && ($source === null || $source === ScheduleSourceType::Task)) {
-            $items = $items->merge($this->taskItems($request, $from, $to, $projectId));
+            $items = $items->merge($this->taskItems($request, $fromDate, $toDate, $projectId));
         }
 
         // Leave has no Project association at all — a `project` filter
         // excludes it entirely rather than matching nothing "by luck".
         if ($includeOtherSources && $projectId === null && ($source === null || $source === ScheduleSourceType::Leave)) {
-            $items = $items->merge($this->leaveItems($request, $from, $to));
+            $items = $items->merge($this->leaveItems($request, $fromDate, $toDate));
         }
 
         if ($includeOtherSources && ($source === null || $source === ScheduleSourceType::ProjectMilestone)) {
-            $items = $items->merge($this->milestoneItems($request, $from, $to, $projectId));
+            $items = $items->merge($this->milestoneItems($request, $fromDate, $toDate, $projectId));
         }
 
         $sorted = $items->sortBy('starts_at')->values()->all();
@@ -114,8 +120,8 @@ class ScheduleController extends Controller
     {
         $entries = ScheduleEntry::query()
             ->with(['project', 'creator'])
-            ->whereDate('ends_at', '>=', $from)
-            ->whereDate('starts_at', '<=', $to)
+            ->where('ends_at', '>=', $from)
+            ->where('starts_at', '<=', $to)
             ->when($projectId !== null, fn ($query) => $query->where('project_id', $projectId))
             ->when($activityType !== null, fn ($query) => $query->where('activity_type', $activityType))
             ->get();
@@ -146,7 +152,7 @@ class ScheduleController extends Controller
      * rather than modifying TaskController's own trait, which is
      * established, tested code outside this phase's scope.
      */
-    private function taskItems(Request $request, Carbon $from, Carbon $to, ?int $projectId): Collection
+    private function taskItems(Request $request, string $from, string $to, ?int $projectId): Collection
     {
         $tasks = Task::query()
             ->with('project')
@@ -215,7 +221,7 @@ class ScheduleController extends Controller
      * Leave has no Project association, so it never contributes when a
      * `project` filter is present.
      */
-    private function leaveItems(Request $request, Carbon $from, Carbon $to): Collection
+    private function leaveItems(Request $request, string $from, string $to): Collection
     {
         $leaveRequests = LeaveRequest::query()
             ->with('staff')
@@ -264,7 +270,7 @@ class ScheduleController extends Controller
     /**
      * Mirrors AuthorizesProjectVisibility's exact rule.
      */
-    private function milestoneItems(Request $request, Carbon $from, Carbon $to, ?int $projectId): Collection
+    private function milestoneItems(Request $request, string $from, string $to, ?int $projectId): Collection
     {
         $milestones = ProjectMilestone::query()
             ->with('project')

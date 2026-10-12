@@ -13,6 +13,7 @@ import 'package:mobile/features/auth/presentation/login_page.dart';
 import 'package:mobile/features/auth/state/auth_controller.dart';
 import 'package:mobile/features/home/presentation/home_page.dart';
 import 'package:mobile/features/people/presentation/more_page.dart';
+import 'package:mobile/features/schedule/presentation/schedule_page.dart';
 import 'package:mobile/features/shell/presentation/placeholder_page.dart';
 import 'package:mobile/features/tasks/presentation/tasks_page.dart';
 
@@ -188,8 +189,9 @@ void main() {
 
       await tester.tap(find.widgetWithText(NavigationDestination, 'Schedule'));
       await tester.pumpAndSettle();
-      expect(find.byType(SchedulePlaceholderPage), findsOneWidget);
-      expect(find.text('Schedule — coming soon'), findsOneWidget);
+      // Phase 30A: Schedule is the real agenda, not a placeholder.
+      expect(find.byType(SchedulePage), findsOneWidget);
+      expect(find.text('Schedule — coming soon'), findsNothing);
 
       await tester.tap(find.widgetWithText(NavigationDestination, 'Messages'));
       await tester.pumpAndSettle();

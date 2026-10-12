@@ -1134,4 +1134,74 @@ Staging now runs `c79ed90`. The UAT29C data (4 accounts, 4 staff records, 29 pro
 
 ---
 
+## Phase 30A — Gate 1 (backend: `GET /me/schedule` and `/schedule` company days)
+
+Branch `claude/amazing-brahmagupta-dbsrjc`, from `main` at `84bd25f` (PR #72). Run in this AI sandbox (PHP 8.4, SQLite in-memory per `phpunit.xml`).
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `tests/Feature/Api/V1/Scheduling/MyScheduleTest.php` (19) | Automated | PASS | Asia/Manila, company day 2026-10-14. Shape (`company_day` with `+08:00`, `range`, every item field); tasks and leave as all-day items on their Manila days (leave titled with its type); entries I create or join in, project-only and others' out; only my open assigned tasks (blocked in; completed, cancelled, unassigned, undated, others' out); only my approved leave; milestones never. **Self-scope:** a Manager (tasks.view, projects.view, with the colleague as a direct report) and an Administrator see nothing of a colleague's; a Project Lead sees only their own task; extra parameters can't change the subject. **Boundaries:** 07:00 Manila (23:00 UTC the day before) on its Manila day; 23:30 Manila on its day; overnight and multi-day entries over the range edges; tasks and leave on and outside the edges. **Order:** all-day before timed, entries → tasks → leave at one start, titles byte-wise ("10" before "9"), `public_id` for equal items. **Validation:** required, `Y-m-d` only, `to ≥ from`, 31 days allowed and 32 refused with the message. No profile → `items: null`; unauthenticated → 401. **Query count** equal for 3 and 18 items. |
+| `tests/Feature/Api/V1/Scheduling/ScheduleCompanyDayTest.php` (4) | Automated | PASS | `/schedule` in Asia/Manila: a 07:00 Manila entry on its Manila day (not the previous one); a 23:30 Manila entry on its day; tasks, milestones and leave on their company dates; a datetime `from` means its date. **Shown to be necessary:** against the old controller (stashed), 2 of the 4 failed. |
+| Mutation checks | Manual (AI) | PASS | 12 on `MyScheduleController`, each restored: no participant clause; closed tasks included; any leave status; UTC range start; UTC range end; all-day not first; no `public_id` tie-break; numeric title comparison; no range limit; entry project N+1; no-profile as an empty list; leave ranked with entries. **All 12 caught** — after two tests were strengthened (equal items now created with the larger `public_id` first; numeric titles "9"/"10"). |
+| Existing tests | Automated | PASS | `ScheduleAggregationTest`, `ScheduleEntryTest` and the Home tests unchanged and passing (they run in UTC). |
+| Full `php artisan test` | Automated | PASS | 1,206/1,206 (3,486 assertions): 1,183 + 23. |
+| `composer validate --strict` / `composer audit --locked` | Automated | PASS | Valid; no advisories. |
+| `vendor/bin/pint --test` / `vendor/bin/phpstan analyse` (level 5) | Automated | PASS | 0 errors (PHPStan flagged a needless null-safe on the leave type — a required, restrict-on-delete reference — fixed). |
+| MySQL | — | Not run | Instant comparisons and `whereDate` on date columns; to be exercised at staging. |
+| Mobile | — | Not affected | No `apps/mobile` change in Gate 1. |
+| UAT | — | NOT RUN | UAT-30A-01…08 not yet runnable. |
+
+---
+
+## Phase 30A — Gate 2 (mobile schedule data and state)
+
+Branch `claude/amazing-brahmagupta-dbsrjc` after Gate 1 (`b897cf0`). Flutter 3.47.2 / Dart 3.13.2 at `/opt/flutter-sdk`.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `test/features/schedule/schedule_models_test.dart` (10) | Automated | PASS | A full response (company day `+08:00`, range, entry with project and description, task with `task_status`, leave); `items: null` → no profile; an unknown source (`project_milestone`), a bad date, a bad instant, a missing title and a bad offset rejected; entry detail with creator and participants (none → empty). Manila day bounds (16:00 UTC the day before); company time; `shiftDate` across months and years; an 07:00 Manila meeting on its Manila day; a multi-day entry on every day it covers; a meeting until midnight not spilling over; all-day tasks on their own day in server order; a zero-length item at a day's start. |
+| `test/features/schedule/schedule_state_test.dart` (10) | Automated | PASS | Exact `/me/schedule` query; entry by encoded id; bad shape → `ApiRequestException`. **First load:** one padded request (device 13 Oct 22:00 → `2026-10-12`…`2026-10-20`), then the week from the server's 14 Oct; a device clock two weeks off → one exact follow-up for the company week. Next/previous/today move by exact weeks with the exact ranges asked. A slow overtaken week is ignored. A failed refresh keeps the week; a failed week change is an error with its message; Try again recovers. No profile → `noProfile`; `403` → "no access", session kept. Entry detail loads; `404` → "This item is no longer available." |
+| Mutation checks | Manual (AI) | PASS | 12, one at a time, each restored: end-inclusive overlap; the day-bounds sign; a stale first response kept; no exact follow-up; the padded guess without the day before; a failed refresh dropping the week; no profile shown as loaded; next week off by one; an unknown source accepted; the `404` message lost; the company-time sign; the last day dropped. **All 12 caught.** One test was rewritten before the run: its fake server delayed every request for a week, so the overtaking request hung too. |
+| `flutter pub get` / `dart format` / `flutter analyze` | Automated | PASS | `pubspec` unchanged; 0 files changed; no issues. |
+| `flutter test` | Automated | PASS | 493/493 (473 + 20). |
+| Backend | — | Not affected | No `apps/api` change in Gate 2. |
+| Screens / device | — | Not yet | No screens or routes until Gate 3. |
+| UAT | — | NOT RUN | UAT-30A-01…08 not yet runnable. |
+
+## Phase 30A — Gate 3 (Schedule tab, entry detail, routes, Home entry links)
+
+Branch `claude/amazing-brahmagupta-dbsrjc` after Gate 2 (`4dab362`). Flutter 3.47.2 / Dart 3.13.2 at `/opt/flutter-sdk`.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `test/features/schedule/schedule_pages_test.dart` (17) | Automated | PASS | Whole app against an in-memory `/me/schedule` (company today Wed 14 Oct, Manila). **Agenda:** "14 – 20 Oct"; seven day headers (Today, Tomorrow, Fri 16 Oct…); "09:00 – 10:00 · Client visit · Plant Room" before "All day · Task · To do"; leave on 16 and 17 Oct only; four "Nothing scheduled." days. **Weeks:** Next → exact `2026-10-21`…`27`, an overnight entry on both days ("23:00 – until Tue 27 Oct", "From Mon 26 Oct – 01:00"); Today disabled on the current week; Previous → "Yesterday"; "30 Sep – 6 Oct". Pull to refresh reloads the shown week; a failed refresh keeps it with a SnackBar. **States:** no profile; first-load failure → Try again; a failed Next week → Try again reloads that week; `401` → Login. **Navigation:** task → Tasks tab detail; leave has no tap and no chevron; entry → `/schedule/entries/E-night` in tab 2 with company time ("Wed 14 Oct · 09:00 – 10:30"), project, organizer, People (1), description, no buttons; Back keeps the week with no new request; no people / blank description / no project; `404` → "This item is no longer available." and Try again; deep link → "(device time)". **Appearance:** light and dark at 200% text on a 320×568 phone (agenda and detail); tap-target and label guidelines. |
+| `test/features/home/home_page_test.dart` | Automated | PASS | Updated: Today entry rows are tappable (one chevron per row); the "navigates nowhere" list loses the entry row. New: a Today entry row opens `/schedule/entries/01ENTRY0000000000000000001` in the Schedule tab in company time; Back shows the agenda. |
+| `test/app/router_test.dart` | Automated | PASS | Updated: the Schedule destination renders `SchedulePage`, not the placeholder. |
+| `test/features/schedule/schedule_state_test.dart` (+1) | Automated | PASS | `retry()` after a failed Next week asks for `2026-10-21`…`27`; after a failed first load, the company today's week. |
+| Mutation checks | Manual (AI) | PASS | 20, one at a time, each restored: Tomorrow/Yesterday labels; same-month week label; "From …"/"until …"; "All day"; the task status label; Today never disabled; leave tappable; project dropped; empty-day text dropped; entry args dropped (Schedule and Home); Try again → `load`; `retry` week not recorded; "(device time)" dropped; company time ignored; no-people text dropped; blank description shown. **19 caught; 1 equivalent:** `push` → `go` for the entry route (both keep `/schedule` under the detail). |
+| `flutter pub get` / `dart format` / `flutter analyze` | Automated | PASS | `pubspec` unchanged; 0 files changed; no issues. |
+| `flutter test` | Automated | PASS | 512/512 (493 + 19). |
+| Backend | — | Not affected | No `apps/api` change in Gate 3. |
+| Device | — | Not yet | Not run on a device; that is UAT. |
+| UAT | — | NOT RUN | UAT-30A-01…08 runnable after merge and staging (Gate 4, then a runbook). |
+
+## Phase 30A — Gate 4 (final integration review)
+
+Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`9e964ec`), confirmed up to date with `main` (`84bd25f`).
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Integration review | Manual (AI) | PASS after one fix | Whole diff against `main` re-read. **Finding, fixed:** the Schedule tab didn't listen to `TaskChanges`, so a task completed from Schedule stayed listed until a pull; it now refreshes quietly, as Home does. New page test (complete a task from Schedule → one `/me/schedule` request for the same week; the task gone; no refresh-failure message). Mutation checks: listener removed, router not passing `taskChanges` — **both caught**. Two comments citing R-11 for Home's entry links corrected to R-10. Confirmed: `/schedule-entries/{id}` has no permission gate and answers `404` (not `403`) for an entry the reader can't see. |
+| `composer validate --strict` / `composer audit --locked` | Automated | PASS | Valid; no advisories. |
+| `vendor/bin/pint --test` / `vendor/bin/phpstan analyse` (level 5) | Automated | PASS | 0 errors. |
+| `php artisan test` | Automated | PASS | 1,206/1,206 (3,486 assertions). |
+| `flutter pub get` / `dart format` / `flutter analyze` | Automated | PASS | `pubspec` unchanged; 0 files to format; no issues. |
+| `flutter test` | Automated | PASS | 513/513 (schedule 39, home 67, tasks 95, work_logs 91, projects 52, people 84, and the rest). |
+| Contract parity (real API → app) | Manual (AI), temporary tests | PASS | A scratch Laravel test (with `RolePermissionSeeder`, Asia/Manila, 14 Oct 08:30 Manila) recorded 9 real responses: a Staff member's `/me/schedule` for the app's padded first range (`2026-10-13`…`21`), the exact week and next week; a Manager's week; a no-profile account (`items: null`); `/schedule-entries/{id}` for an own entry, a participant entry (creator "José Núñez") and someone else's (`404`); and `/me/home`. Data: a 07:00 Manila entry, an overnight entry 22:00–02:00, an all-day company event, a project named "Planta Ñ", a task due today, a completed task, a task due next Tuesday, a milestone, approved two-day leave and pending leave. A scratch Flutter test replayed them through the production API client, controllers, labels and the whole app: **5/5** — each day's rows exactly as expected ("Early briefing · 07:00 – 07:30", "22:00 – until Fri 16 Oct" / "From Thu 15 Oct – 02:00", "Vacation leave" on 18 and 19 Oct; no completed task, milestone, pending leave or hidden entry); the Manager sees only their own and the shared entry; no profile; the hidden entry reads "This item is no longer available." with the session kept; Home's Today meeting opens the detail at "Wed 14 Oct · 07:00 – 07:30" and Back shows the agenda. Both files deleted; nothing committed. |
+| Real device / emulator | — | Not run | No device in this sandbox. |
+| MySQL | — | Not run | Gate 1's queries use `whereDate` and instant comparisons; to be exercised at staging. |
+| UAT | — | NOT RUN | UAT-30A-01…08 `NOT RUN`. |
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*

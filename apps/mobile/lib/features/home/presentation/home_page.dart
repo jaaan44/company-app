@@ -6,6 +6,8 @@ import 'package:mobile/features/home/data/home_api_client.dart';
 import 'package:mobile/features/home/domain/home_summary.dart';
 import 'package:mobile/features/home/presentation/home_formatting.dart';
 import 'package:mobile/features/home/state/home_controller.dart';
+import 'package:mobile/features/schedule/presentation/schedule_widgets.dart'
+    show ScheduleEntryArgs, scheduleEntryPath;
 import 'package:mobile/features/tasks/presentation/task_widgets.dart';
 import 'package:mobile/features/tasks/state/task_changes.dart';
 
@@ -13,10 +15,11 @@ import 'package:mobile/features/tasks/state/task_changes.dart';
 /// greeting, Today, Needs attention and Latest announcements — the
 /// authenticated person's own data from `GET /me/home`, read-only.
 ///
-/// **Only task content is tappable (Phase 27 R-1, refined by Phase 29A
-/// R-6).** The "My tasks" tile opens the Tasks tab and a Today **task**
-/// row opens that task (both switch to the Tasks branch). Schedule rows and
-/// the message, notification and announcement items stay plain layout
+/// **Only task and schedule content is tappable (Phase 27 R-1, refined by
+/// Phase 29A R-6 and Phase 30A R-10).** The "My tasks" tile opens the Tasks
+/// tab and a Today **task** row opens that task (both switch to the Tasks
+/// branch); a Today **meeting** row opens its entry detail in the Schedule
+/// tab. The message, notification and announcement items stay plain layout
 /// until their own phases build screens. The other controls are logout,
 /// "Try again", and pull-to-refresh.
 ///
@@ -350,32 +353,37 @@ class _TodayRow extends StatelessWidget {
               ],
             ),
           ),
-          if (isTask)
-            ExcludeSemantics(
-              child: Icon(
-                Icons.chevron_right,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+          ExcludeSemantics(
+            child: Icon(
+              Icons.chevron_right,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
+          ),
         ],
       ),
     );
 
-    if (!isTask) {
-      return MergeSemantics(child: row);
-    }
-
-    // A Today task row opens that task in the Tasks tab (R-6), judged
-    // against Home's company day.
+    // A Today task row opens that task in the Tasks tab (Phase 29A R-6),
+    // judged against Home's company day; a Today meeting opens its entry
+    // detail in the Schedule tab (Phase 30A R-10), in company time.
     return MergeSemantics(
       child: Semantics(
         button: true,
         child: InkWell(
-          key: Key('home-today-task-${item.publicId}'),
-          onTap: () => context.go(
-            taskDetailPath(item.publicId),
-            extra: TaskDetailArgs(companyDate: apiDate(day.date)),
+          key: Key(
+            isTask
+                ? 'home-today-task-${item.publicId}'
+                : 'home-today-entry-${item.publicId}',
           ),
+          onTap: () => isTask
+              ? context.go(
+                  taskDetailPath(item.publicId),
+                  extra: TaskDetailArgs(companyDate: apiDate(day.date)),
+                )
+              : context.go(
+                  scheduleEntryPath(item.publicId),
+                  extra: ScheduleEntryArgs(utcOffset: day.utcOffset),
+                ),
           child: row,
         ),
       ),

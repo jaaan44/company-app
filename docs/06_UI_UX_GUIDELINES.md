@@ -101,6 +101,16 @@ Form conventions this phase establishes (extending 29A's write conventions):
 - **Status chips** share one style with the Tasks chip: a container colour per state, the label always written and announced ("Status: Active"); muted states (Cancelled, Inactive) are outlined.
 - **Links between areas:** a task's project opens in the **More** tab (the Tasks tab keeps the task); a project's client and members open within More. Notes are never shown.
 
+### Schedule — my week, read-only (implemented, Phase 30A — not yet merged)
+
+- **Schedule tab:** "Schedule" with a **Today** text button (disabled on the current week). A week bar — **Previous week** / "14 – 20 Oct" / **Next week** (icon buttons with those tooltips) — then seven days from the **company** today, each headed "Today", "Tomorrow", "Yesterday" or "Fri 16 Oct" (today's header in the primary colour, bold; every header a semantics header). Never labelled from the device clock (DEC-052).
+- **Rows** (server order within each day): an icon (event, task, leave) **with** a written line — "09:00 – 10:30 · Client visit · Plant Room", "All day · Task · To do", "All day · Leave". Times are company wall-clock time. A multi-day item appears on every day it covers ("23:00 – until Tue 27 Oct", "From Mon 26 Oct – 01:00"). An empty day reads "Nothing scheduled."
+- **Taps (R-9/R-10):** a task opens its detail in the **Tasks** tab; a meeting opens its entry detail inside the Schedule tab (Back returns to the same week); **leave is not tappable** and has no chevron.
+- **Entry detail** (read-only, no buttons): a header (title, type), then **When** (company time; "(device time)" is added only for a restored deep link that carries no offset), Project, Organizer, **People (N)** (or "No other people.") and the Description under its own header when present.
+- **States:** a centred spinner; "No staff profile is linked to this account."; an error with **Try again** that reloads the week that failed; pull to refresh keeps the week and shows a `SnackBar` if it fails; a gone entry: "This item is no longer available." After a task's status changes in the Tasks tab the week refreshes quietly (as Home does).
+- **Home (R-10):** Today's meeting rows are now tappable too (a chevron on every Today row) and open the same entry detail in the Schedule tab, in company time. This refines the Phase 27 "non-interactive" rule above, after Phase 29A's task rows.
+- Verified by widget tests in light and dark mode and at 200% text on a 320×568 phone; not yet verified on a device.
+
 ## Admin Backoffice (Web) — Navigation
 
 Primary sections:
