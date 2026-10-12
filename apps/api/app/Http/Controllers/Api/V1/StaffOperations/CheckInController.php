@@ -9,9 +9,12 @@ use App\Http\Resources\CheckInResource;
 use App\Models\Role;
 use App\Models\Staff;
 use App\Models\StaffCheckIn;
+use App\Support\CompanyTimezone;
+use App\Support\Reporting\OverdueTasks;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Carbon;
 
 /**
  * Location check-in (Phase 9, DEC-005/DEC-032) — an explicit, user-
@@ -35,7 +38,8 @@ class CheckInController extends Controller
 
     public function myIndex(Request $request): AnonymousResourceCollection
     {
-        return $this->historyFor($this->resolveAuthenticatedStaff($request), $request);
+        return $this->historyFor($this->resolveAuthenticatedStaff($request), $request)
+            ->additional(['meta' => ['company_day' => $this->companyDay()]]);
     }
 
     public function myStore(StoreCheckInRequest $request): JsonResponse
@@ -74,6 +78,10 @@ class CheckInController extends Controller
         return CheckInResource::collection(
             $staff->checkIns()
                 ->latest()
+                // Unique tie-breaker (Phase 30B, R-14): rows created in the
+                // same second otherwise have no defined order, so a paged
+                // client could see one twice or never.
+                ->orderByDesc('id')
                 ->paginate($request->integer('per_page', 20))
         );
     }
@@ -100,5 +108,24 @@ class CheckInController extends Controller
         }
 
         abort(403, 'You may only view the location history of your direct reports.');
+    }
+
+    /**
+     * The company day (Phase 30B, R-14) — additive: the paginator's own
+     * `meta` keys are unchanged. Clients show times in company time with
+     * `utc_offset` and judge "today" from `date`, never from the device
+     * clock (DEC-052).
+     *
+     * @return array{date: string, timezone: string, utc_offset: string}
+     */
+    private function companyDay(): array
+    {
+        $today = OverdueTasks::todayInCompanyTimezone();
+
+        return [
+            'date' => $today,
+            'timezone' => CompanyTimezone::value(),
+            'utc_offset' => Carbon::parse($today, CompanyTimezone::value())->startOfDay()->format('P'),
+        ];
     }
 }

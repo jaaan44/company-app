@@ -3,10 +3,15 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** **Phase 30B — Status & Check-in (Mobile): specification revision 2 approved (2026-10-12; R-13…R-22 as written).** `docs/phases/V1_PHASE_30_DEFINITION.md` §6. Implementation not started. Phase 30A is formally closed (2026-10-12).
+**Current phase:** **Phase 30B — Status & Check-in (Mobile): implementation complete (Gates 1–4, 2026-10-12); PR open from `claude/amazing-brahmagupta-dbsrjc`, not merged.**
+- Backend: history tie-breakers and `meta.company_day` on `/me/status` and `/me/check-ins`; 1,221/1,221.
+- Mobile: More → My status (current status, confirmed changes); an explicit, foreground-only check-in (explanation before Android's prompt, one position, place and note); All check-ins and All status changes; `geolocator` 14.0.3 / `geolocator_android` 5.0.3; coarse and fine location only. Flutter 577/577.
+- Contract parity against real API output passed. DEC-058. UAT-30B-01…08 `NOT RUN`. Not deployed.
+- **The shipped Android permission list is not yet verified:** no Android SDK can be installed here. The UAT APK step checks it.
+- Phase 30A is formally closed (2026-10-12).
 **Phase status:** Staging is **deployed and reachable over HTTPS** at `https://company-staging.storm-ark.com` (infrastructure verified by the operator; **real-device UAT passed**, Gate 2F, 2026-09-23). Live deployment refined the Gate 1 model: the verified path is Internet → Cloudflare (proxied, Full (strict)) → **shared** DigitalOcean Cloud Firewall (inbound 80/443 Cloudflare-scoped) → **shared** host Nginx (TLS, Let's Encrypt cert `company-staging.storm-ark.com`, HTTP → HTTPS redirect) → `127.0.0.1:8012` → Company App Docker nginx → Laravel (`APP_URL` HTTPS, `SESSION_SECURE_COOKIE=true`, `trustProxies(at: '*')`). Recorded as **DEC-051** (refines DEC-050). See `docs/DEPLOYMENT_STAGING.md` §13/§7a and the Phase 26 handoff addendum.
 **Last completed phase:** Phase 30A — Schedule (Mobile), formally closed 2026-10-12 (PRs #72–#74): self-scoped `GET /me/schedule`, company days for `/schedule`, the Schedule tab and entry detail. Before it, Phase 29 (closed 2026-10-12). **Open, non-blocking:** the deferred UAT password rotation from 29B (see the 29B handoff).
-**Next planned phase:** 30B Gate 1 (backend: `id` tie-breakers on the four status/check-in history lists and `meta.company_day` on `/me/status` and `/me/check-ins`), then Gates 2–4 — each **needs its own explicit authorization.** Per `CLAUDE.md` §8, nothing begins automatically.
+**Next planned phase:** review and merge the Phase 30B PR (merge only on the product owner's instruction); then a UAT30B runbook, staging deployment and UAT on a physical Android device; then 30B closure, which also closes Phase 30 — each **needs its own explicit authorization.** Per `CLAUDE.md` §8, nothing begins automatically.
 
 ## Current Objective
 

@@ -12,6 +12,11 @@ import 'package:mobile/features/people/data/people_api_client.dart';
 import 'package:mobile/features/people/presentation/more_page.dart';
 import 'package:mobile/features/people/presentation/my_profile_page.dart';
 import 'package:mobile/features/people/presentation/staff_detail_page.dart';
+import 'package:mobile/features/my_status/data/my_status_api_client.dart';
+import 'package:mobile/features/my_status/location/location_service.dart';
+import 'package:mobile/features/my_status/presentation/check_in_page.dart';
+import 'package:mobile/features/my_status/presentation/history_pages.dart';
+import 'package:mobile/features/my_status/presentation/my_status_page.dart';
 import 'package:mobile/features/people/presentation/staff_directory_page.dart';
 import 'package:mobile/features/projects/data/projects_api_client.dart';
 import 'package:mobile/features/projects/presentation/project_detail_page.dart';
@@ -50,6 +55,8 @@ GoRouter buildAppRouter(
   required ProjectsApiClient projectsApiClient,
   required ClientsApiClient clientsApiClient,
   required ScheduleApiClient scheduleApiClient,
+  required MyStatusApiClient myStatusApiClient,
+  required LocationService locationService,
 }) {
   // The work-log form (Phase 29B) — the same page from My work logs and
   // from a task's detail; its route `extra` says which log or task.
@@ -175,8 +182,36 @@ GoRouter buildAppRouter(
               // branch, so the tab keeps its own stack across tab switches.
               GoRoute(
                 path: '/more',
-                builder: (context, state) => const MorePage(),
+                builder: (context, state) =>
+                    MorePage(myStatusApiClient: myStatusApiClient),
                 routes: [
+                  // My status (Phase 30B, R-13): the screen, its two "All"
+                  // lists and the check-in flow, all in the More branch.
+                  GoRoute(
+                    path: 'status',
+                    builder: (context, state) =>
+                        MyStatusPage(myStatusApiClient: myStatusApiClient),
+                    routes: [
+                      GoRoute(
+                        path: 'check-ins',
+                        builder: (context, state) =>
+                            CheckInsPage(myStatusApiClient: myStatusApiClient),
+                      ),
+                      GoRoute(
+                        path: 'history',
+                        builder: (context, state) => StatusHistoryPage(
+                          myStatusApiClient: myStatusApiClient,
+                        ),
+                      ),
+                      GoRoute(
+                        path: 'check-in',
+                        builder: (context, state) => CheckInPage(
+                          myStatusApiClient: myStatusApiClient,
+                          locationService: locationService,
+                        ),
+                      ),
+                    ],
+                  ),
                   GoRoute(
                     path: 'profile',
                     builder: (context, state) =>

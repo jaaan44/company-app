@@ -553,7 +553,7 @@ Internet → Cloudflare (proxied, Full (strict))
 
 **Not introduced:** editing projects, clients or membership; an "all projects" view; overdue milestones; notes; tap-to-call; a new dependency. See `docs/phases/V1_PHASE_29_DEFINITION.md` §7 and `docs/handoffs/V1_PHASE_29C_HANDOFF.md`.
 
-## 38. Operations — Schedule (Phase 30A — implemented, not yet merged; DEC-057)
+## 38. Operations — Schedule (Phase 30A — complete, formally closed 2026-10-12; DEC-057)
 
 **Backend:** `App\Http\Controllers\Api\V1\Scheduling\MyScheduleController` serves `GET /api/v1/me/schedule?from&to` (`auth:sanctum` + `account.active`, no permission): the requester's own entries, open tasks due and approved leave over at most 31 company days, using `CompanyTimezone::startOfDayUtc`/`endOfDayUtc` and `OverdueTasks::todayInCompanyTimezone()`. `GET /schedule` now uses the same company-day bounds. No migration, permission or resource change.
 
@@ -566,3 +566,23 @@ Internet → Cloudflare (proxied, Full (strict))
 **Routing:** `/schedule` (the Schedule branch) and its child `/schedule/entries/:publicId`. Schedule task rows `go` to `/tasks/:publicId` (switching to Tasks); entry rows `push` the detail within the branch; Home's Today entry rows `go` to the detail (switching to Schedule). `SchedulePage` listens to `TaskChanges`, as Home does.
 
 **Not introduced:** creating or editing entries on mobile; colleagues' schedules; milestones; a calendar package or any new dependency. See `docs/phases/V1_PHASE_30_DEFINITION.md` §5 and `docs/handoffs/V1_PHASE_30A_HANDOFF.md`.
+
+## 39. Operations — My status and Check-in (Phase 30B — implemented, not yet merged; DEC-058)
+
+**Backend:** the Phase 9 controllers, plus `id` tie-breakers on the four history lists and `meta.company_day` on `GET /me/status` and `/me/check-ins` (R-14). No migration, route, field or permission change.
+
+**Mobile — `lib/features/my_status/` (`domain`, `data`, `location`, `state`, `presentation`):**
+- **`domain/my_status.dart`:** `OperationalStatus` (unknown values kept), `StatusEntry` (with `identity`, since status rows have no id), `CheckIn`, `MyHistoryPage<T>` (reusing 30A's `ScheduleCompanyDay`), `CheckInLimits`, `LocationFix`, and `CheckInDraft` (the exact request body, with no status).
+- **`data/my_status_api_client.dart`:** the four calls through the shared `ApiClient`.
+- **`location/location_service.dart`:** the `LocationService` interface and `GeolocatorLocationService`, the **only** file importing `geolocator` (a test enforces it). One-shot `getCurrentPosition` with a 30 s limit; never a stream or the background service.
+- **`state/`:**
+  - `MyStatusController` (current status and the recent lists; confirmed changes);
+  - `StatusHistoryController` and `CheckInsController` (on `PagedSearchController`, never searched);
+  - `CheckInFlowController` (the R-19/R-20 state machine).
+- **`presentation/`:** `MyStatusPage`, `CheckInPage`, `CheckInsPage`, `StatusHistoryPage` and `my_status_widgets.dart`.
+
+**Routing:** `/more/status`, `/more/status/check-ins`, `/more/status/history` and `/more/status/check-in`, all in the More branch. My status `push`es the check-in screen and receives the confirmed `CheckIn`. `MorePage` reads `/me/status?per_page=1` for its subtitle. `CompanyApp` injects `MyStatusApiClient` and `LocationService`.
+
+**Android:** `ACCESS_COARSE_LOCATION`, `ACCESS_FINE_LOCATION`, and `GeolocatorLocationService` removed via `tools:node="remove"`. The Android plugins are `flutter_secure_storage`, `geolocator_android`, `jni`, `jni_flutter`, `package_info_plus` and `path_provider_android`.
+
+**Not introduced:** background or periodic location, maps, editing check-ins, colleagues' statuses, a manager view, iOS. See `docs/phases/V1_PHASE_30_DEFINITION.md` §6 and `docs/handoffs/V1_PHASE_30B_HANDOFF.md`.

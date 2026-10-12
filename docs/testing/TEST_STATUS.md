@@ -1242,6 +1242,73 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`9e964ec`), confirmed up t
 
 Staging now runs `0e7fce6`. The UAT30A data (4 accounts, 4 staff records, 1 project, 10 entries, 5 tasks, an inactive leave type, 3 leave requests) stays in place alongside the UAT29C, UAT29B, UAT29A, UAT28 and UAT27 data; any cleanup needs its own authorization.
 
+## Phase 30B — Gate 1 (backend: history order and company day)
+
+Branch `claude/amazing-brahmagupta-dbsrjc` at `main` `13a37c1` (PR #76 merge).
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `tests/Feature/Api/V1/StaffOperations/StatusCheckInHistoryTest.php` (15) | Automated | PASS | **Order:** five same-second rows page (2 a page) newest id first, with no repeats, on `/me/status`, `/me/check-ins`, a colleague's `/staff/{id}/status` and a Manager's direct report's `/staff/{id}/check-ins`; a later `created_at` still beats a higher id; the SQL `ORDER BY` is `"created_at" desc, "id" desc` on all four. **Company day:** `{2026-10-14, Asia/Manila, +08:00}` on both self-service lists with the paginator `meta` and `links` intact; 07:00 Manila (23:00 UTC the day before) and 23:30 Manila both give the Manila date; present on an empty history; absent on `/staff/…`. **Unchanged:** exact item keys on both lists; the no-profile `403` and its message on all four self-service calls; check-in validation (missing latitude, out-of-range longitude, accuracy −1 and 100,001, label 101, note 501, an unknown status → `422`; the limits themselves accepted); a status snapshot on a check-in doesn't change my status; a Manager can't see a non-report's check-ins. |
+| Existing `CheckInTest`, `OperationalStatusTest` (28) | Automated | PASS | Unchanged and passing. |
+| Mutation checks | Manual (AI) | PASS | 10, one at a time, each restored: tie-breaker removed (status, check-ins), reversed (status); `meta` dropped (status, check-ins); the date from UTC (status, check-ins); `timezone` `UTC`; `startOfDay()` removed from the offset. **9 caught; 1 equivalent:** parsing a bare date already gives the start of the day. The two tie-breaker removals **survived at first**: SQLite returns same-second rows newest-first anyway. The SQL `ORDER BY` test was added, and both are now caught. |
+| `composer validate --strict` / `composer audit --locked` | Automated | PASS | Valid; no advisories. |
+| `vendor/bin/pint --test` / `vendor/bin/phpstan analyse` (level 5) | Automated | PASS | 0 errors. |
+| `php artisan test` | Automated | PASS | 1,221/1,221 (3,578 assertions); 1,206 + 15. |
+| Flutter | — | Not affected | No `apps/mobile` change in Gate 1. |
+| MySQL | — | Not run | The `ORDER BY` is plain columns; to be exercised at staging. |
+| UAT | — | NOT RUN | UAT-30B-01…08 are defined in the spec; not yet runnable. |
+
+## Phase 30B — Gate 2 (mobile status, check-in and location groundwork)
+
+Branch `claude/amazing-brahmagupta-dbsrjc` after Gate 1 (`99ef67c`). Flutter 3.47.2 / Dart 3.13.2 at `/opt/flutter-sdk`.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `flutter pub get` | Automated | PASS | `geolocator` 14.0.3 and `geolocator_android` 5.0.3 exact. 16 packages added, no existing version changed: `dbus` 0.7.15, `fixnum` 1.1.1, `geoclue` 0.1.1, `geolocator` 14.0.3, `geolocator_android` 5.0.3, `geolocator_apple` 2.3.14, `geolocator_linux` 0.2.6, `geolocator_platform_interface` 4.4.0, `geolocator_web` 4.1.4, `geolocator_windows` 0.2.5, `gsettings` 0.2.8, `package_info_plus` 10.2.2, `package_info_plus_platform_interface` 4.1.0, `petitparser` 7.0.2, `uuid` 4.6.0, `xml` 7.0.1. |
+| `test/features/my_status/my_status_models_test.dart` (11) | Automated | PASS | The five statuses, their labels and the Off duty hint; unknown values kept, non-strings rejected. Status times as UTC. Check-ins with integer coordinates and nulls; a missing id, coordinate or time, or a string coordinate, rejected. Pages with paging and the company day; a page without `company_day` rejected. `CheckInDraft`: exact body (rounded accuracy, trimmed text, no `status`), blank text sent as null, accuracy clamped to 100,000 and floored at 0. The limits mirror the API. **Only `location_service.dart` imports `geolocator`** (a scan of `lib/`). |
+| `test/features/my_status/my_status_state_test.dart` (29) | Automated | PASS | **Client:** exact paths and paging; exact `POST` bodies; never sends the unknown status; a bad shape is an `ApiRequestException`; a `403` keeps the session. **`MyStatusController`:** current status and the 5 newest of each with the company day (`per_page=5`); no status ever set; `403` → no profile; a load error message, and a failed refresh that keeps the content; **a change shows only after `201`** (in flight: old status shown, a second change refused), then on top, capped at 5; failures (network, `422`) keep the old status with a message, and a retry clears it; a refresh overtaken by a confirmed change is dropped; a confirmed check-in goes on top. **Lists:** All check-ins pages 20 + 3 without repeats, with the company day; All status changes pages; a `403` → no profile. **Check-in flow (fake device):** already granted → one read (30 s), no prompt; not granted → explanation first, prompt only on Continue; denied, and denied for good → message, nothing read or sent, Open app settings; location off → message, nothing asked or read, Open location settings; timeout → message, and Try again reads again; location lost mid-read; Send → exactly one `POST` with place and note and no status; a fix of exactly 2 minutes is still used, older is re-read and the new position sent; a stale fix that can't be re-read sends nothing; offline at Send → form kept with message, then success; `422` message; `403` → no profile with the session kept; a double tap posts once; Start ignored while reading. |
+| Mutation checks | Manual (AI) | PASS | 17, one at a time, each restored. Flow: explanation skipped; the 2-minute boundary; no re-read; no location-off check; double send; timeout 60 s; Start while busy. Domain: label not trimmed; a status snapshot added; unknown statuses rejected. Controller: no cap at 5; two changes at once; no generation bump after a change; `403` as an error. Lists: `403` not mapped. Client: unknown status sent. **All 17 caught.** One survived at first: the "refresh overtaken by a change" test answered both GETs with a status body, so the check-ins parse failed and the test passed vacuously. Fixed to answer each path. |
+| `dart format` / `flutter analyze` | Automated | PASS | 0 files changed; no issues. |
+| `flutter test` | Automated | PASS | 553/553 (513 + 40). |
+| Merged Android manifest | — | **Not run** | No Android SDK in this sandbox. To be checked from a release build (`aapt2 dump badging`): exactly `INTERNET`, `ACCESS_COARSE_LOCATION`, `ACCESS_FINE_LOCATION` (and the AndroidX `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`), and no `GeolocatorLocationService`. |
+| Real device location | — | Not run | `GeolocatorLocationService` is untested here by design (a thin adapter); it is exercised in UAT on a physical Android device. |
+| Backend | — | Not affected | No `apps/api` change in Gate 2. |
+| UAT | — | NOT RUN | UAT-30B-01…08 not yet runnable. |
+
+## Phase 30B — Gate 3 (My status, Change status and Check in screens)
+
+Branch `claude/amazing-brahmagupta-dbsrjc` after Gate 2 (`e4ce2cb`). Flutter 3.47.2 / Dart 3.13.2 at `/opt/flutter-sdk`.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `test/features/my_status/my_status_pages_test.dart` (23) | Automated | PASS | Whole app against an in-memory status and check-in API and a fake device (company today Wed 14 Oct, Manila). **More and My status:** More's subtitle is my current status ("Busy"; "No status set"; generic on `403`) and refreshes on return. My status shows "Busy", "Set Today 09:00", check-ins with place, "Today 10:30 · ±12 m", note and "14.55470, 121.02440", "No place name" and "Sat 10 Oct 16:00", "Yesterday 08:30", the All links, and no map. The empty states; the Off duty hint; no profile (message only, no buttons, session kept); load error → Try again. **Change status:** the five with labels, the current one checked, the Off duty hint; nothing sent until a choice; while the server holds its answer, the old status, a progress bar and disabled buttons; then "In the field", the SnackBar and exactly `{status: in_field}`; closing the sheet sends nothing; a failure keeps Busy with its message. **Check in:** already allowed → no prompt, one read, "Location found (±9 m)", coordinates, then Send posts exactly the place and note, back to My status with "Checked in." and the new row on top ("Today 12:05 · ±9 m"); approximate → "Approximate location (±1800 m)"; not allowed → the exact explanation, and Not now asks nothing and sends nothing; Continue → prompt → form; denied, then denied for good → messages, Open app settings, nothing read or sent; location off → message, Open location settings, Try again → form; timeout → message, no Send; offline at Send → form and text kept with the message, then one check-in recorded; Cancel and Back send nothing. **Lists:** All check-ins with no search field, pages 1 and 2 (23 rows) without repeats; All status changes with times. **Appearance:** light and dark at 200% on 320×568: My status, the sheet, the explanation and the form (scrolled to Send) without overflow; tap-target and label guidelines. |
+| `test/features/people/people_pages_test.dart` | Automated | PASS | Updated: More lists six rows; the My status subtitle shows the current status; More's only request is `GET /me/status?per_page=1&page=1`, replacing the Phase 28 "fetches nothing" assertion (R-13); a scroll to Staff directory at 200% text. |
+| Mutation checks | Manual (AI) | PASS | 20, one at a time, each restored: Today/Yesterday labels; device time instead of company time; 3 decimals; "No place name"; the note row; the explanation text; the Approximate label; Open app settings; Open location settings; the check-in result not returned; the note not sent; the new check-in not added; Check in enabled while a change is sending; the Off duty hint; the current-status mark; dismissing the sheet sending; More not refreshing; More's subtitle; the injected location service ignored. **All 20 caught.** |
+| `flutter pub get` / `dart format` / `flutter analyze` | Automated | PASS | `pubspec` unchanged since Gate 2; 0 files changed; no issues. |
+| `flutter test` | Automated | PASS | 576/576 (553 + 23). |
+| Merged Android manifest | — | Not run | No Android SDK here; Gate 4 or the UAT APK step. |
+| Device | — | Not run | Location and Android's prompts are exercised only on a physical device (UAT). |
+| Backend | — | Not affected | No `apps/api` change in Gate 3. |
+| UAT | — | NOT RUN | UAT-30B-01…08 not yet runnable. |
+
+## Phase 30B — Gate 4 (final integration review)
+
+Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up to date with `main` (`13a37c1`).
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Integration review | Manual (AI) | PASS after one fix | Whole diff against `main` re-read. **Finding, fixed:** Back during a send left the screen while the `POST` still completed. Back is now held during sending; a new page test holds the server's answer, tries Back (still on the check-in screen), then completes (My status, "Checked in."). Its mutation (`canPop: true`) is caught. **Correction:** the Android plugin list (`.flutter-plugins-dependencies`) also includes `package_info_plus`, which has an empty manifest. No debug logging of coordinates in `lib/features/my_status/`. |
+| Contract parity (real API → app) | Manual (AI), temporary tests | PASS | A scratch Laravel test (with `RolePermissionSeeder`, Asia/Manila, 23:30 Manila on 14 Oct) recorded 13 real responses: `/me/status` at `per_page` 5, 1 and 20 (two rows in the same second: `in_meeting` above `busy`); `/me/check-ins` at 5 and over two pages of 20 (23 rows, a null place and accuracy, a two-line note in Spanish, "Sitio Ñ …"); `POST /me/status`; `POST /me/check-ins` with **exactly** the app's body (`14.5547123`, `121.0244456`, accuracy 9, "Bodega Ñ", note null), which came back with 7 decimals intact; a bare one with accuracy 100,000; a real `422` (label 101); the status list after the change; and a no-profile `403` on GET and POST. A scratch Flutter test replayed them through the production client, controllers and whole app: **5/5**. Both files were deleted; nothing was committed. |
+| `composer validate --strict` / `composer audit --locked` | Automated | PASS | Valid; no advisories. |
+| `vendor/bin/pint --test` / `vendor/bin/phpstan analyse` (level 5) | Automated | PASS | 0 errors. |
+| `php artisan test` | Automated | PASS | 1,221/1,221 (3,578 assertions). |
+| `flutter pub get` / `dart format` / `flutter analyze` | Automated | PASS | `pubspec` unchanged since Gate 2; 0 files changed; no issues. |
+| `flutter test` | Automated | PASS | 577/577 (my_status 64, people 84, home 67, schedule 39, tasks 95, and the rest). |
+| Merged Android manifest / release build | — | **Not run** | `dl.google.com` is denied by this environment's network policy, so no Android SDK and no APK. To be checked in the UAT APK step (`aapt2 dump badging`). |
+| Real device / emulator | — | Not run | No device here; location is exercised in UAT. |
+| MySQL | — | Not run | Plain-column `ORDER BY`; to be exercised at staging. |
+| UAT | — | NOT RUN | UAT-30B-01…08 `NOT RUN`. |
+
 ---
 
 *(Future phases append their own section above this line, oldest first.)*

@@ -706,6 +706,45 @@ Internet → Cloudflare (proxied, SSL/TLS "Full (strict)")
 
 ---
 
+### DEC-058 — Phase 30B: My status and an explicit, foreground-only check-in on mobile — the first location dependency, coarse and fine permissions only
+
+**Date:** 2026-10-12
+**Status:** ACCEPTED (approved with the Phase 30 specification revision 2, PR #76, R-13…R-22; implemented in Phase 30B Gates 1–3)
+**Context:**
+- Phase 9 (DEC-032) built operational status and location check-in in the API: append-only histories, latitude and longitude required, and check-ins visible to the person, their Manager (direct reports only) and Administrators.
+- The mobile app had neither. A check-in needs the device position, so 30B brings the app's first new runtime dependency since Phase 25 and its first sensitive permission.
+- DEC-005 rules out background or continuous tracking.
+
+**Decision** (R-13…R-22, approved as written):
+1. **More → My status (R-13):**
+   - current status (shown as More's subtitle);
+   - Change status;
+   - Check in;
+   - the 5 newest check-ins and status changes, with paged "All" lists.
+2. **Backend, additive (R-14):** `id` tie-breakers on the four status and check-in history lists, and `meta.company_day` on `/me/status` and `/me/check-ins`. No new endpoint, field, permission, migration or rate limit.
+3. **No profile (R-15):** the existing `403` is shown as the no-profile state.
+4. **Status changes are confirmed (R-16):** the screen changes only after `201`. Off duty says it isn't leave.
+5. **Package (R-17):** `geolocator` 14.0.3 and `geolocator_android` 5.0.3, pinned exactly. Only one-shot reads, through one `LocationService` adapter (no other file imports the package).
+6. **Permissions (R-18):** `ACCESS_COARSE_LOCATION` and `ACCESS_FINE_LOCATION` only (Approximate allowed). Never background location or a foreground service: the plugin's `GeolocatorLocationService` is removed from the merged manifest. No iOS build.
+7. **Check-in flow (R-19/R-20):**
+   - an in-app explanation, saying who can see check-ins, before Android's prompt;
+   - one position (30 s);
+   - an optional place and note;
+   - one `POST` with no status snapshot and no offline queue;
+   - a fix older than 2 minutes is read again;
+   - clear errors that send nothing;
+   - Back is held while sending.
+8. **Display (R-21/R-22):** company time, place, note, accuracy and coordinates. No map; nothing editable. Colleagues' statuses, a manager view and Home are unchanged.
+
+**Rationale:** Location is captured only at the person's own tap, with who sees it stated before Android asks, and the shipped manifest proves foreground-only. The rest reuses the Phase 9 API and the established mobile patterns.
+**Not a security boundary change:** the API's visibility rules (DEC-032) are unchanged; the app reads and writes only the person's own records.
+**Dependency note:** `pubspec.lock` gained 16 packages and changed none. `geolocator_platform_interface` resolved to 4.4.0 (pure Dart additions; not pinned). `package_info_plus` is bundled as an Android plugin through `geolocator_linux`, with no permissions.
+**Superseded/reaffirmed:**
+- **Superseded:** Phase 28's "More fetches nothing" (R-13 adds one small status read).
+- **Reaffirmed:** DEC-005, DEC-032 and DEC-052.
+
+---
+
 ## Template for Future Decisions
 
 ```

@@ -9,6 +9,8 @@ import 'package:mobile/features/auth/data/token_storage.dart';
 import 'package:mobile/features/auth/state/auth_controller.dart';
 import 'package:mobile/features/clients/data/clients_api_client.dart';
 import 'package:mobile/features/home/data/home_api_client.dart';
+import 'package:mobile/features/my_status/data/my_status_api_client.dart';
+import 'package:mobile/features/my_status/location/location_service.dart';
 import 'package:mobile/features/people/data/people_api_client.dart';
 import 'package:mobile/features/projects/data/projects_api_client.dart';
 import 'package:mobile/features/schedule/data/schedule_api_client.dart';
@@ -33,7 +35,8 @@ import 'package:mobile/features/work_logs/state/work_log_changes.dart';
 class CompanyApp extends StatefulWidget {
   /// [authController], [homeApiClient], [peopleApiClient],
   /// [tasksApiClient], [workLogsApiClient], [projectsApiClient],
-  /// [clientsApiClient] and [scheduleApiClient] are exposed
+  /// [clientsApiClient], [scheduleApiClient], [myStatusApiClient] and
+  /// [locationService] are exposed
   /// for tests to inject fakes — production code always omits them and
   /// gets the real Sanctum-backed implementations below.
   const CompanyApp({
@@ -46,6 +49,8 @@ class CompanyApp extends StatefulWidget {
     ProjectsApiClient? projectsApiClient,
     ClientsApiClient? clientsApiClient,
     ScheduleApiClient? scheduleApiClient,
+    MyStatusApiClient? myStatusApiClient,
+    LocationService? locationService,
   }) : _injectedAuthController = authController,
        _injectedHomeApiClient = homeApiClient,
        _injectedPeopleApiClient = peopleApiClient,
@@ -53,7 +58,9 @@ class CompanyApp extends StatefulWidget {
        _injectedWorkLogsApiClient = workLogsApiClient,
        _injectedProjectsApiClient = projectsApiClient,
        _injectedClientsApiClient = clientsApiClient,
-       _injectedScheduleApiClient = scheduleApiClient;
+       _injectedScheduleApiClient = scheduleApiClient,
+       _injectedMyStatusApiClient = myStatusApiClient,
+       _injectedLocationService = locationService;
 
   final AuthController? _injectedAuthController;
   final HomeApiClient? _injectedHomeApiClient;
@@ -63,6 +70,8 @@ class CompanyApp extends StatefulWidget {
   final ProjectsApiClient? _injectedProjectsApiClient;
   final ClientsApiClient? _injectedClientsApiClient;
   final ScheduleApiClient? _injectedScheduleApiClient;
+  final MyStatusApiClient? _injectedMyStatusApiClient;
+  final LocationService? _injectedLocationService;
 
   @override
   State<CompanyApp> createState() => _CompanyAppState();
@@ -109,6 +118,12 @@ class _CompanyAppState extends State<CompanyApp> {
   late final ScheduleApiClient _scheduleApiClient =
       widget._injectedScheduleApiClient ?? ScheduleApiClient(_apiClient);
 
+  late final MyStatusApiClient _myStatusApiClient =
+      widget._injectedMyStatusApiClient ?? MyStatusApiClient(_apiClient);
+
+  late final LocationService _locationService =
+      widget._injectedLocationService ?? GeolocatorLocationService();
+
   late final GoRouter _router = buildAppRouter(
     _authController,
     homeApiClient: _homeApiClient,
@@ -120,6 +135,8 @@ class _CompanyAppState extends State<CompanyApp> {
     projectsApiClient: _projectsApiClient,
     clientsApiClient: _clientsApiClient,
     scheduleApiClient: _scheduleApiClient,
+    myStatusApiClient: _myStatusApiClient,
+    locationService: _locationService,
   );
 
   @override

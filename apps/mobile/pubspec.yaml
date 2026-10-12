@@ -37,6 +37,13 @@ dependencies:
   http: ^1.6.0
   flutter_secure_storage: ^11.2.0
   go_router: ^18.0.1
+  # Phase 30B (R-17): the location package and its Android implementation,
+  # both pinned exactly — the version line in use since 2026-06-12, not the
+  # newest (under three weeks old when approved). Only one-shot reads are
+  # used, through lib/features/my_status/location/; never a stream or the
+  # background service.
+  geolocator: 14.0.3
+  geolocator_android: 5.0.3
 
 dev_dependencies:
   flutter_test:

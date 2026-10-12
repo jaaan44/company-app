@@ -4,6 +4,49 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-12 — Phase 30B Gate 4: integration review, DEC-058 and handoff
+- **Fix from the review:** Back is held while a check-in is sending (`PopScope`). Leaving wouldn't cancel the request, and the person could think it had been. 1 new page test; Flutter 577/577.
+- **Correction to Gate 2:** `package_info_plus` (through `geolocator_linux`) is also bundled as an Android plugin, with an empty manifest and no permissions.
+- **Contract parity:** 13 real responses replayed through the production app code, 5/5. They covered:
+  - status and check-in histories, with same-second rows and non-ASCII text, over two pages;
+  - the exact check-in body the app sends, accepted with 7-decimal coordinates round-tripping;
+  - a real `422`, and the no-profile `403` on every call.
+- Backend 1,221/1,221; Pint, PHPStan, composer validate/audit clean.
+- **Merged manifest still unverified:** the network policy blocks Google's Android repository, so no APK build is possible here. It is checked in the UAT APK step.
+- Docs: DEC-058; `02_ARCHITECTURE.md` §39 (and §38 marked closed); `05_SECURITY_MODEL.md` (location capture on mobile); `06_UI_UX_GUIDELINES.md` (Back held; the stale 30A heading fixed); UAT-30B-01…08 `NOT RUN`; `ROADMAP.md`; spec status and Gate 4 notes; `docs/handoffs/V1_PHASE_30B_HANDOFF.md`.
+
+### 2026-10-12 — Phase 30B Gate 3: My status, Change status and Check in screens
+- **More → My status** (a sixth row; its subtitle is my current status, read with one small request): my current status with when I set it, **Check in**, **Change status**, my 5 newest check-ins and status changes, and **All** lists.
+- **Change status:** a sheet with the five statuses (icon and label, the current one marked). The screen changes only when the server confirms; a failure keeps the old status. Off duty says it isn't leave.
+- **Check in:**
+  - the R-19 explanation before Android's prompt;
+  - one position, then a form with the accuracy (or "Approximate location"), the coordinates, an optional place and note, Send and Cancel;
+  - the four R-20 errors, with Open location settings / Open app settings and Try again;
+  - "Checked in." with the new row on top.
+- Rows show company time (Today / Yesterday / date), place or "No place name", ±m, note and coordinates. No map; nothing editable.
+- `PagedSearchList`'s search field is now optional. `CompanyApp` gains injectable `MyStatusApiClient` and `LocationService`.
+- **Phase 28's "More fetches nothing" rule is replaced** by the R-13 subtitle; its test now expects the one status read.
+- Tests: 23 new page tests (whole app, fake device); the people pages test updated (six More rows, the one request, a scroll at 200% text). Flutter 576/576; format and analyze clean; `pubspec` unchanged since Gate 2. 20 mutation checks, all caught.
+- Docs: spec Gate 3 notes, `06_UI_UX_GUIDELINES.md`, `CURRENT_STATE.md`, `TEST_STATUS.md`. No backend change. Gate 4 is not started.
+
+### 2026-10-12 — Phase 30B Gate 2: mobile status, check-in and location groundwork
+- **First new dependency since Phase 25 (R-17):** `geolocator` 14.0.3 and `geolocator_android` 5.0.3, pinned exactly. `pubspec.lock` gains 16 packages and changes none. `geolocator_platform_interface` resolved to 4.4.0 (about two weeks old; pure Dart additions) and is recorded for review.
+- **`AndroidManifest.xml` (R-18):** `ACCESS_COARSE_LOCATION` and `ACCESS_FINE_LOCATION`; the plugin's background `GeolocatorLocationService` removed (`tools:node="remove"`). The merged manifest isn't verified here (no Android SDK).
+- `lib/features/my_status/`:
+  - strict models; `MyStatusApiClient`;
+  - a `LocationService` interface whose only implementation is the one file that imports `geolocator`;
+  - `MyStatusController` (current status and the 5 newest of each, confirmed never-optimistic status changes, no profile on `403`);
+  - paged All status changes / All check-ins;
+  - `CheckInFlowController`: explanation before the prompt; one position with a 30 s timeout; the R-20 messages; a fix older than 2 minutes read again; one `POST` with no status and no queue.
+- Tests: 40 new (models 11, client and controllers 29), against a fake device. Flutter 553/553; format and analyze clean. 17 mutation checks all caught, after one test that passed vacuously was fixed.
+- Docs: spec Gate 2 notes, `CURRENT_STATE.md`, `TEST_STATUS.md`. No screens, routes or backend change. Gate 3 is not started.
+
+### 2026-10-12 — Phase 30B Gate 1: status and check-in history order and company day
+- `GET /me/status`, `/me/check-ins`, `/staff/{id}/status` and `/staff/{id}/check-ins` now end their order in `id` (R-14). Visible order is unchanged; same-second rows page stably.
+- `GET /me/status` and `/me/check-ins` add `meta.company_day {date, timezone, utc_offset}`. The paginator's `meta`, the items, validation, the no-profile `403` and all scoping are unchanged.
+- Tests: 15 new (`StatusCheckInHistoryTest`), including one that pins the SQL `ORDER BY`, because SQLite returns same-second rows newest-first even without the tie-breaker. Mutation checks: 10, 9 caught, 1 equivalent. Backend 1,221/1,221; Pint, PHPStan level 5, composer validate/audit clean.
+- Docs: spec Gate 1 notes, `04_API_CONVENTIONS.md`, `CURRENT_STATE.md`, `TEST_STATUS.md`. No migration, permission, dependency or mobile change. Gate 2 is not started.
+
 ### 2026-10-12 — Phase 30 specification revision 2: 30B Status & Check-in
 - `docs/phases/V1_PHASE_30_DEFINITION.md` §6 rewritten from an outline into a full 30B specification after read-only discovery on `main` at `b57f2ef`.
   - **Findings:** the Phase 9 status and check-in contract; no tie-breaker on the four history lists; no company day; the no-profile `403`; no location code on mobile; the `geolocator` package's versions, permissions and inert background service.
