@@ -70,13 +70,18 @@ class _CheckInPageState extends State<CheckInPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Check in')),
-      body: ListenableBuilder(
-        listenable: _flow,
-        builder: (context, _) => LayoutBuilder(
-          builder: (context, constraints) =>
-              _body(context, peopleListPadding(constraints)),
+    // While the check-in is being sent, Back is held: leaving would not
+    // cancel it, and the person would think it had been (Gate 4 review).
+    return ListenableBuilder(
+      listenable: _flow,
+      builder: (context, _) => PopScope(
+        canPop: _flow.step != CheckInStep.sending,
+        child: Scaffold(
+          appBar: AppBar(title: const Text('Check in')),
+          body: LayoutBuilder(
+            builder: (context, constraints) =>
+                _body(context, peopleListPadding(constraints)),
+          ),
         ),
       ),
     );

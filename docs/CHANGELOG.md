@@ -4,6 +4,17 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-12 — Phase 30B Gate 4: integration review, DEC-058 and handoff
+- **Fix from the review:** Back is held while a check-in is sending (`PopScope`). Leaving wouldn't cancel the request, and the person could think it had been. 1 new page test; Flutter 577/577.
+- **Correction to Gate 2:** `package_info_plus` (through `geolocator_linux`) is also bundled as an Android plugin, with an empty manifest and no permissions.
+- **Contract parity:** 13 real responses replayed through the production app code, 5/5. They covered:
+  - status and check-in histories, with same-second rows and non-ASCII text, over two pages;
+  - the exact check-in body the app sends, accepted with 7-decimal coordinates round-tripping;
+  - a real `422`, and the no-profile `403` on every call.
+- Backend 1,221/1,221; Pint, PHPStan, composer validate/audit clean.
+- **Merged manifest still unverified:** the network policy blocks Google's Android repository, so no APK build is possible here. It is checked in the UAT APK step.
+- Docs: DEC-058; `02_ARCHITECTURE.md` §39 (and §38 marked closed); `05_SECURITY_MODEL.md` (location capture on mobile); `06_UI_UX_GUIDELINES.md` (Back held; the stale 30A heading fixed); UAT-30B-01…08 `NOT RUN`; `ROADMAP.md`; spec status and Gate 4 notes; `docs/handoffs/V1_PHASE_30B_HANDOFF.md`.
+
 ### 2026-10-12 — Phase 30B Gate 3: My status, Change status and Check in screens
 - **More → My status** (a sixth row; its subtitle is my current status, read with one small request): my current status with when I set it, **Check in**, **Change status**, my 5 newest check-ins and status changes, and **All** lists.
 - **Change status:** a sheet with the five statuses (icon and label, the current one marked). The screen changes only when the server confirms; a failure keeps the old status. Off duty says it isn't leave.

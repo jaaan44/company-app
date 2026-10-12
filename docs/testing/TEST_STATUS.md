@@ -1291,6 +1291,24 @@ Branch `claude/amazing-brahmagupta-dbsrjc` after Gate 2 (`e4ce2cb`). Flutter 3.4
 | Backend | — | Not affected | No `apps/api` change in Gate 3. |
 | UAT | — | NOT RUN | UAT-30B-01…08 not yet runnable. |
 
+## Phase 30B — Gate 4 (final integration review)
+
+Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up to date with `main` (`13a37c1`).
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Integration review | Manual (AI) | PASS after one fix | Whole diff against `main` re-read. **Finding, fixed:** Back during a send left the screen while the `POST` still completed. Back is now held during sending; a new page test holds the server's answer, tries Back (still on the check-in screen), then completes (My status, "Checked in."). Its mutation (`canPop: true`) is caught. **Correction:** the Android plugin list (`.flutter-plugins-dependencies`) also includes `package_info_plus`, which has an empty manifest. No debug logging of coordinates in `lib/features/my_status/`. |
+| Contract parity (real API → app) | Manual (AI), temporary tests | PASS | A scratch Laravel test (with `RolePermissionSeeder`, Asia/Manila, 23:30 Manila on 14 Oct) recorded 13 real responses: `/me/status` at `per_page` 5, 1 and 20 (two rows in the same second: `in_meeting` above `busy`); `/me/check-ins` at 5 and over two pages of 20 (23 rows, a null place and accuracy, a two-line note in Spanish, "Sitio Ñ …"); `POST /me/status`; `POST /me/check-ins` with **exactly** the app's body (`14.5547123`, `121.0244456`, accuracy 9, "Bodega Ñ", note null), which came back with 7 decimals intact; a bare one with accuracy 100,000; a real `422` (label 101); the status list after the change; and a no-profile `403` on GET and POST. A scratch Flutter test replayed them through the production client, controllers and whole app: **5/5**. Both files were deleted; nothing was committed. |
+| `composer validate --strict` / `composer audit --locked` | Automated | PASS | Valid; no advisories. |
+| `vendor/bin/pint --test` / `vendor/bin/phpstan analyse` (level 5) | Automated | PASS | 0 errors. |
+| `php artisan test` | Automated | PASS | 1,221/1,221 (3,578 assertions). |
+| `flutter pub get` / `dart format` / `flutter analyze` | Automated | PASS | `pubspec` unchanged since Gate 2; 0 files changed; no issues. |
+| `flutter test` | Automated | PASS | 577/577 (my_status 64, people 84, home 67, schedule 39, tasks 95, and the rest). |
+| Merged Android manifest / release build | — | **Not run** | `dl.google.com` is denied by this environment's network policy, so no Android SDK and no APK. To be checked in the UAT APK step (`aapt2 dump badging`). |
+| Real device / emulator | — | Not run | No device here; location is exercised in UAT. |
+| MySQL | — | Not run | Plain-column `ORDER BY`; to be exercised at staging. |
+| UAT | — | NOT RUN | UAT-30B-01…08 `NOT RUN`. |
+
 ---
 
 *(Future phases append their own section above this line, oldest first.)*

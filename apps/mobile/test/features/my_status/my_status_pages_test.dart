@@ -591,6 +591,46 @@ void main() {
       );
     });
 
+    testWidgets('Back is held while sending, then the check-in returns', (
+      tester,
+    ) async {
+      await pumpApp(tester);
+      await openMyStatus(tester);
+      await tapKey(tester, 'my-status-check-in');
+      final reply = Completer<void>();
+      override = (r) async {
+        if (r.method == 'POST') {
+          await reply.future;
+        }
+
+        return serve(r);
+      };
+
+      await tester.tap(find.byKey(const Key('check-in-send')));
+      await tester.pump();
+      expect(
+        tester
+            .widget<PopScope>(
+              find
+                  .ancestor(
+                    of: find.byKey(const Key('check-in-send')),
+                    matching: find.byWidgetPredicate((w) => w is PopScope),
+                  )
+                  .first,
+            )
+            .canPop,
+        isFalse,
+      );
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+      expect(find.byType(CheckInPage), findsOneWidget);
+
+      reply.complete();
+      await tester.pumpAndSettle();
+      expect(find.byType(MyStatusPage), findsOneWidget);
+      expect(find.text('Checked in.'), findsOneWidget);
+    });
+
     testWidgets('Cancel and Back send nothing', (tester) async {
       await pumpApp(tester);
       await openMyStatus(tester);

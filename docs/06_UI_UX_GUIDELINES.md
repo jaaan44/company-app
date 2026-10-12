@@ -101,7 +101,7 @@ Form conventions this phase establishes (extending 29A's write conventions):
 - **Status chips** share one style with the Tasks chip: a container colour per state, the label always written and announced ("Status: Active"); muted states (Cancelled, Inactive) are outlined.
 - **Links between areas:** a task's project opens in the **More** tab (the Tasks tab keeps the task); a project's client and members open within More. Notes are never shown.
 
-### Schedule — my week, read-only (implemented, Phase 30A — not yet merged)
+### Schedule — my week, read-only (implemented, Phase 30A — complete, formally closed 2026-10-12)
 
 - **Schedule tab:** "Schedule" with a **Today** text button (disabled on the current week). A week bar — **Previous week** / "14 – 20 Oct" / **Next week** (icon buttons with those tooltips) — then seven days from the **company** today, each headed "Today", "Tomorrow", "Yesterday" or "Fri 16 Oct" (today's header in the primary colour, bold; every header a semantics header). Never labelled from the device clock (DEC-052).
 - **Rows** (server order within each day): an icon (event, task, leave) **with** a written line — "09:00 – 10:30 · Client visit · Plant Room", "All day · Task · To do", "All day · Leave". Times are company wall-clock time. A multi-day item appears on every day it covers ("23:00 – until Tue 27 Oct", "From Mon 26 Oct – 01:00"). An empty day reads "Nothing scheduled."
@@ -111,7 +111,7 @@ Form conventions this phase establishes (extending 29A's write conventions):
 - **Home (R-10):** Today's meeting rows are now tappable too (a chevron on every Today row) and open the same entry detail in the Schedule tab, in company time. This refines the Phase 27 "non-interactive" rule above, after Phase 29A's task rows.
 - Verified by widget tests in light and dark mode and at 200% text on a 320×568 phone; not yet verified on a device.
 
-### My status and Check in (implemented, Phase 30B — Gate 3, not yet merged)
+### My status and Check in (implemented, Phase 30B — not yet merged)
 
 - **More** gains a sixth row, **My status**, second after My profile. Its subtitle is my current status ("In the field"), "No status set", or "Your status and check-ins" when it can't be read. It is read with one small request, and again on returning from My status. This replaces the Phase 28 "More fetches nothing" rule (R-13).
 - **My status:**
@@ -125,7 +125,7 @@ Form conventions this phase establishes (extending 29A's write conventions):
   - "Finding your location…".
   - The form: "Location found (±9 m)" or "Approximate location (±1800 m)", the coordinates, an optional **Place** (≤ 100) and **Note** (≤ 500), **Send check-in** and **Cancel**. A failed send keeps the form with the message in the error role.
   - Errors, each with **Try again**: "Turn on location to check in." (+ **Open location settings**), "Location permission is needed to check in." (+ **Open app settings** once Android stops asking), and "Couldn't get your location. Try again, ideally outdoors or near a window."
-  - On success it returns to My status with "Checked in." and the check-in on top.
+  - On success it returns to My status with "Checked in." and the check-in on top. Back is held while a check-in is sending, because leaving wouldn't cancel it.
 - **Rows:** a check-in shows the place or "No place name", "Today 10:30 · ±12 m", the note and the coordinates (5 decimals); a status change shows its icon, label and time. Times use Today / Yesterday / "Sat 10 Oct 16:00", in company time. No map; nothing is editable.
 - **All check-ins / All status changes:** the paged list (20 a page) without a search field.
 - Verified by widget tests in light and dark mode at 200% text on a 320×568 phone, plus tap-target and label guidelines. Not yet on a device.
