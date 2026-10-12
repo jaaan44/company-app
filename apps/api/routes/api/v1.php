@@ -349,8 +349,8 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
     Route::get('me/leave-balances', [LeaveBalanceController::class, 'myIndex'])->name('me.leave-balances.index');
 
     // Phase 31 (R-3): the caller's direct reports' requests, for the
-    // mobile app's Team requests. Needs `leave-requests.view`, checked in
-    // the controller after the linked-Staff check (the `/me` 403 first).
+    // mobile app's Team requests. Without `leave-requests.view` the
+    // controller answers an empty list with `meta.can_review: false`.
     Route::get('me/team-leave-requests', [MyTeamLeaveRequestController::class, 'index'])->name('me.team-leave-requests.index');
 
     Route::get('leave-requests', [LeaveRequestController::class, 'index'])->name('leave-requests.index');

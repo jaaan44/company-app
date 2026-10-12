@@ -18,9 +18,11 @@ use Illuminate\Validation\Rule;
  * "Team requests" for the mobile app (Phase 31, R-3): the leave requests
  * of the caller's own direct reports (`staff.manager_id`) — never the
  * company-wide supervisory list, so an Administrator here sees only the
- * people they manage too. Needs a linked Staff record (the `/me` 403) and
- * `leave-requests.view` (Manager; Administrator via Gate::before).
- * Decisions use the existing `/leave-requests/{id}/approve|reject`, whose
+ * people they manage too. Needs a linked Staff record (the `/me` 403).
+ * Without `leave-requests.view` (Manager; Administrator via Gate::before)
+ * the answer is an empty list with `meta.can_review: false` rather than a
+ * 403 — the app asks on every Leave screen load, and a 403 would cost an
+ * `/auth/me` re-check each time (Phase 31, R-3). Decisions use the existing `/leave-requests/{id}/approve|reject`, whose
  * authority rules are unchanged.
  */
 class MyTeamLeaveRequestController extends Controller
@@ -38,15 +40,15 @@ class MyTeamLeaveRequestController extends Controller
 
         $staff = $this->resolveAuthenticatedStaff($request);
 
-        if (! ($request->user()?->can('leave-requests.view') ?? false)) {
-            abort(403, 'You do not have access to team leave requests.');
-        }
+        $canReview = $request->user()?->can('leave-requests.view') ?? false;
 
         $status = $request->string('status', LeaveRequestStatus::Pending->value)->toString();
 
         /** @var Builder<LeaveRequest> $team */
         $team = LeaveRequest::query()
-            ->whereHas('staff', fn (Builder $query) => $query->where('manager_id', $staff->id));
+            ->whereHas('staff', fn (Builder $query) => $query->where('manager_id', $staff->id))
+            // No review rights: nothing, whoever reports to them.
+            ->when(! $canReview, fn (Builder $query) => $query->whereRaw('1 = 0'));
 
         $query = (clone $team)
             ->with(self::WITH_RELATIONS)
@@ -63,7 +65,8 @@ class MyTeamLeaveRequestController extends Controller
 
         return LeaveRequestResource::collection($query->paginate($request->integer('per_page', 50)))
             ->additional(['meta' => [
-                'direct_reports_count' => Staff::query()->where('manager_id', $staff->id)->count(),
+                'can_review' => $canReview,
+                'direct_reports_count' => $canReview ? Staff::query()->where('manager_id', $staff->id)->count() : 0,
                 'pending_count' => (clone $team)->where('status', LeaveRequestStatus::Pending)->count(),
                 'company_day' => CompanyDay::meta(),
             ]]);

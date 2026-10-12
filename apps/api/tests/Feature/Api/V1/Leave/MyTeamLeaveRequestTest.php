@@ -71,6 +71,7 @@ class MyTeamLeaveRequestTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.*.public_id', [$sooner->public_id, $later->public_id])
             ->assertJsonPath('data.0.staff.public_id', $otherReport->public_id)
+            ->assertJsonPath('meta.can_review', true)
             ->assertJsonPath('meta.direct_reports_count', 2)
             ->assertJsonPath('meta.pending_count', 2)
             ->assertJsonPath('meta.total', 2)
@@ -126,6 +127,7 @@ class MyTeamLeaveRequestTest extends TestCase
         $this->getJson('/api/v1/me/team-leave-requests')
             ->assertOk()
             ->assertJsonPath('data.*.public_id', [$mine->public_id])
+            ->assertJsonPath('meta.can_review', true)
             ->assertJsonPath('meta.direct_reports_count', 1);
     }
 
@@ -141,15 +143,19 @@ class MyTeamLeaveRequestTest extends TestCase
             ->assertJsonPath('meta.pending_count', 0);
     }
 
-    public function test_a_staff_member_is_refused(): void
+    public function test_a_staff_member_without_review_rights_gets_nothing(): void
     {
         $staff = $this->actingAsLinked(User::factory()->staff()->create());
         // Even with someone pointing at them as manager.
         $this->requestFor($this->reportOf($staff), '2026-10-20');
 
-        $this->getJson('/api/v1/me/team-leave-requests')
-            ->assertForbidden()
-            ->assertJsonPath('message', 'You do not have access to team leave requests.');
+        $this->getJson('/api/v1/me/team-leave-requests?status=all')
+            ->assertOk()
+            ->assertJsonCount(0, 'data')
+            ->assertJsonPath('meta.can_review', false)
+            ->assertJsonPath('meta.direct_reports_count', 0)
+            ->assertJsonPath('meta.pending_count', 0)
+            ->assertJsonPath('meta.total', 0);
     }
 
     public function test_a_user_without_a_staff_profile_gets_the_no_profile_403(): void
