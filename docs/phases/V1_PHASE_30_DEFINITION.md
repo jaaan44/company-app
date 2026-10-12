@@ -1,6 +1,8 @@
 # Phase 30 — Operations: Schedule & Check-in (Mobile) — Specification
 
-**Status:** **DRAFT, revision 2 (2026-10-12): §6 specifies 30B — Status & Check-in in full. Proposed decisions R-13…R-22 await the product owner's approval.** 30B is **not authorized for implementation**; each gate needs explicit authorization (`CLAUDE.md` §1/§8). Everything outside §6 (revision 1: R-1…R-12 approved, and the 30A sections) is unchanged, apart from §8's location line and the notes. **30A complete — formally closed 2026-10-12** (PR #73, `0e7fce6`; UAT-30A-01…08 `PASS`).
+**Status:** Revision 2 (2026-10-12), **approved: R-13…R-22 approved as written by the product owner (2026-10-12)** (R-1…R-12 approved with revision 1). 30B implementation needs its own authorization, gate by gate (`CLAUDE.md` §1/§8). **30A complete — formally closed 2026-10-12** (PR #73, `0e7fce6`; UAT-30A-01…08 `PASS`). 30B not started.
+
+*Previous status line (kept as written):* **DRAFT, revision 2 (2026-10-12): §6 specifies 30B — Status & Check-in in full. Proposed decisions R-13…R-22 await the product owner's approval.** 30B is **not authorized for implementation**; each gate needs explicit authorization (`CLAUDE.md` §1/§8). Everything outside §6 (revision 1: R-1…R-12 approved, and the 30A sections) is unchanged, apart from §8's location line and the notes. **30A complete — formally closed 2026-10-12** (PR #73, `0e7fce6`; UAT-30A-01…08 `PASS`).
 
 *Previous status line (kept as written):* Revision 1 (2026-10-12), **approved: R-1…R-12 approved as written by the product owner (2026-10-12).** Implementation needs its own authorization, sub-phase by sub-phase and gate by gate (`CLAUDE.md` §1/§8); 30B also needs its own detailed revision first. **30A complete — formally closed 2026-10-12** (merged PR #73, `0e7fce6`; staging deployed; UAT-30A-01…08 `PASS`) — see `docs/handoffs/V1_PHASE_30A_HANDOFF.md`. 30B not started.
 
@@ -128,7 +130,7 @@ Let an employee see what's on their plate day by day — their own appointments,
 3. **Gate 3, mobile UI:** the Schedule tab, the entry detail, routes and Home's entry links.
 4. **Gate 4:** integration review, contract parity, docs, DEC entry, UAT rows, handoff, PR. Do not merge without approval.
 
-## 6. Sub-phase 30B — Status & Check-in (revision 2: specified in full; R-13…R-22 proposed)
+## 6. Sub-phase 30B — Status & Check-in (revision 2: specified in full; R-13…R-22 approved 2026-10-12)
 
 *Revision 2 replaces the outline that stood here. That outline's direction (approved as R-11 and R-12) is kept. This section adds what 30B needs before it can be built: what the repository holds today (§6.1), proposed decisions R-13…R-22 (§6.2), and the gates (§6.3–§6.8).*
 
@@ -161,7 +163,7 @@ Let an employee see what's on their plate day by day — their own appointments,
 - `geolocator_android` (5.0.3 and 5.1.1+1 alike) declares **no permissions**. It adds an inert `GeolocatorLocationService` (`foregroundServiceType="location"`, used only for background streams) to the merged manifest. It depends on `com.google.android.gms:play-services-location`, using the fused provider and falling back to Android's `LocationManager` without Play Services.
 - The umbrella package also brings the web, Windows and Linux implementations and their Dart dependencies into `pubspec.lock`. The Android build only links the Android one.
 
-### 6.2 Proposed decisions (R-13…R-22, awaiting approval)
+### 6.2 Product decisions (R-13…R-22, approved as written 2026-10-12)
 
 | # | Decision | Why | Not chosen |
 |---|---|---|---|
@@ -284,3 +286,4 @@ Let an employee see what's on their plate day by day — their own appointments,
   - **Integration review finding, fixed:** `SchedulePage` now listens to `TaskChanges`, as Home does, so completing a task opened from the Schedule tab refreshes the week quietly (before, it stayed listed until a pull). One page test; two mutation checks (listener and router wiring) both caught.
   - Contract parity: real Laravel responses replayed through the production app code (see `TEST_STATUS.md`, Phase 30A Gate 4). DEC-057; UAT-30A-01…08 added `NOT RUN`; handoff written.
 - **Revision 2 (2026-10-12):** read-only discovery on `main` at `b57f2ef` (after 30A closed). §6 (30B) rewritten from an outline into a full specification: findings §6.1 (the Phase 9 contract, the missing tie-breakers and company day, the `403` no-profile, no location code on mobile, and the `geolocator` package's versions, permissions and inert background service); proposed decisions **R-13…R-22**; backend, mobile, UI, UAT-30B-01…08, Definition of Done and gate sequence. §8 gains the background-location and iOS exclusions. No code, test, route, dependency or configuration was changed.
+- **Revision 2 approval (2026-10-12):** the product owner approved R-13…R-22 as written. Only the status line, the §6 and §6.2 headings and this note changed.
