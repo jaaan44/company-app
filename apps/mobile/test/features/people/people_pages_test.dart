@@ -122,16 +122,17 @@ void main() {
   tearDownAll(() => WidgetController.hitTestWarningShouldBeFatal = false);
 
   group('More (R-8)', () {
-    testWidgets('lists exactly My profile, My status, Leave, Staff '
-        'directory, My work logs, Projects and Clients', (tester) async {
+    testWidgets('lists exactly My profile, My status, Announcements, '
+        'Notifications, Leave, Staff directory, My work logs, Projects and '
+        'Clients', (tester) async {
       await pumpApp(tester);
       await openMore(tester);
 
       expect(find.byType(MorePage), findsOneWidget);
       // Phase 29B adds My work logs, Phase 29C Projects and Clients, and
-      // Phase 30B My status and Phase 31 Leave (each phase adds its own
-      // row, R-8 / R-27 / R-13 / R-1).
-      expect(find.byType(ListTile), findsNWidgets(7));
+      // Phase 30B My status, Phase 31 Leave and Phase 32 Announcements and
+      // Notifications (each phase adds its own rows).
+      expect(find.byType(ListTile), findsNWidgets(9));
       // R-13: the subtitle is my current status.
       expect(
         find.descendant(
@@ -145,6 +146,8 @@ void main() {
       expect(find.text('Ada Lovelace'), findsOneWidget);
       expect(find.text('Leave'), findsOneWidget);
       expect(find.text('Balances and requests'), findsOneWidget);
+      expect(find.text('Announcements'), findsOneWidget);
+      expect(find.text('Notifications'), findsOneWidget);
       expect(find.text('Staff directory'), findsOneWidget);
       expect(find.text('My work logs'), findsOneWidget);
       expect(find.text('Projects'), findsOneWidget);
@@ -675,8 +678,13 @@ void main() {
         await tester.pageBack();
         await tester.pumpAndSettle();
 
-        // Directory: the search field and the last row.
-        await tester.ensureVisible(find.byKey(const Key('more-directory')));
+        // Directory: the search field and the last row. More builds
+        // lazily: with nine rows at 200% text the row is below the fold.
+        await tester.scrollUntilVisible(
+          find.byKey(const Key('more-directory')),
+          200,
+          scrollable: pageScrollable(MorePage),
+        );
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('more-directory')));
         await tester.pumpAndSettle();

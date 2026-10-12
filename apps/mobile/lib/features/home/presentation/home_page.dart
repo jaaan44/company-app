@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:mobile/app/auth_scope.dart';
+import 'package:mobile/features/announcements/presentation/announcements_pages.dart'
+    show AnnouncementArgs;
+import 'package:mobile/features/schedule/domain/schedule.dart'
+    show ScheduleCompanyDay;
+import 'package:mobile/features/notifications/state/inbox_changes.dart';
 import 'package:mobile/features/home/data/home_api_client.dart';
 import 'package:mobile/features/home/domain/home_summary.dart';
 import 'package:mobile/features/home/presentation/home_formatting.dart';
@@ -19,8 +24,9 @@ import 'package:mobile/features/tasks/state/task_changes.dart';
 /// Phase 29A R-6 and Phase 30A R-10).** The "My tasks" tile opens the Tasks
 /// tab and a Today **task** row opens that task (both switch to the Tasks
 /// branch); a Today **meeting** row opens its entry detail in the Schedule
-/// tab. The message, notification and announcement items stay plain layout
-/// until their own phases build screens. The other controls are logout,
+/// tab. Since Phase 32 (R-8) the Messages tile opens the Messages tab, the
+/// Notifications tile the inbox, and each latest announcement its detail
+/// (with **All announcements**). The other controls are logout,
 /// "Try again", and pull-to-refresh.
 ///
 /// Loads once, in [State.initState] (the shell keeps this branch mounted
@@ -29,10 +35,18 @@ import 'package:mobile/features/tasks/state/task_changes.dart';
 /// so its task counts are current when shown again. Session expiry is
 /// handled entirely by `ApiClient` and the router.
 class HomePage extends StatefulWidget {
-  const HomePage({super.key, required this.homeApiClient, this.taskChanges});
+  const HomePage({
+    super.key,
+    required this.homeApiClient,
+    this.taskChanges,
+    this.inboxChanges,
+  });
 
   final HomeApiClient homeApiClient;
   final TaskChanges? taskChanges;
+
+  /// Confirmed communication changes (Phase 32, R-11): the counts refresh.
+  final InboxChanges? inboxChanges;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -48,11 +62,13 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _controller.load();
     widget.taskChanges?.addListener(_onTaskChange);
+    widget.inboxChanges?.addListener(_onTaskChange);
   }
 
   @override
   void dispose() {
     widget.taskChanges?.removeListener(_onTaskChange);
+    widget.inboxChanges?.removeListener(_onTaskChange);
     _controller.dispose();
     super.dispose();
   }
@@ -420,6 +436,7 @@ class _NeedsAttention extends StatelessWidget {
       if (messages != null)
         _CountTile(
           key: const Key('home-tile-messages'),
+          onTap: () => context.go('/messages'),
           title: 'Messages',
           value: messages,
           caption: messages == 0 ? 'No unread messages' : 'unread',
@@ -429,6 +446,7 @@ class _NeedsAttention extends StatelessWidget {
         ),
       _CountTile(
         key: const Key('home-tile-notifications'),
+        onTap: () => context.push('/home/notifications'),
         title: 'Notifications',
         value: notifications,
         caption: notifications == 0 ? 'No unread notifications' : 'unread',
@@ -564,28 +582,58 @@ class _AnnouncementsCard extends StatelessWidget {
           for (final announcement in announcements)
             MergeSemantics(
               key: ValueKey(announcement.publicId),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      announcement.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleSmall,
+              child: InkWell(
+                key: Key('home-announcement-${announcement.publicId}'),
+                onTap: () => context.push(
+                  '/home/announcements/'
+                  '${Uri.encodeComponent(announcement.publicId)}',
+                  // So the detail shows company time, not device time.
+                  extra: AnnouncementArgs(
+                    companyDay: ScheduleCompanyDay(
+                      date: apiDate(day.date),
+                      timezone: day.timezone,
+                      utcOffset: day.utcOffset,
                     ),
-                    if (announcement.publishedAt case final published?)
-                      Text(
-                        formatDate(day.toCompanyTime(published)),
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              announcement.title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleSmall,
+                            ),
+                            if (announcement.publishedAt case final published?)
+                              Text(
+                                formatDate(day.toCompanyTime(published)),
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                          ],
                         ),
                       ),
-                  ],
+                      const Icon(Icons.chevron_right),
+                    ],
+                  ),
                 ),
               ),
             ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton(
+            key: const Key('home-all-announcements'),
+            onPressed: () => context.push('/home/announcements'),
+            child: const Text('All announcements'),
+          ),
+        ),
       ],
     );
   }

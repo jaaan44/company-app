@@ -8,7 +8,11 @@ import 'package:mobile/features/auth/data/auth_api_client.dart';
 import 'package:mobile/features/auth/data/token_storage.dart';
 import 'package:mobile/features/auth/state/auth_controller.dart';
 import 'package:mobile/features/clients/data/clients_api_client.dart';
+import 'package:mobile/features/announcements/data/announcements_api_client.dart';
 import 'package:mobile/features/home/data/home_api_client.dart';
+import 'package:mobile/features/messages/data/messages_api_client.dart';
+import 'package:mobile/features/notifications/data/notifications_api_client.dart';
+import 'package:mobile/features/notifications/state/inbox_changes.dart';
 import 'package:mobile/features/leave/data/leave_api_client.dart';
 import 'package:mobile/features/leave/state/leave_changes.dart';
 import 'package:mobile/features/my_status/data/my_status_api_client.dart';
@@ -38,7 +42,8 @@ class CompanyApp extends StatefulWidget {
   /// [authController], [homeApiClient], [peopleApiClient],
   /// [tasksApiClient], [workLogsApiClient], [projectsApiClient],
   /// [clientsApiClient], [scheduleApiClient], [myStatusApiClient],
-  /// [locationService] and [leaveApiClient] are exposed
+  /// [locationService], [leaveApiClient], [messagesApiClient],
+  /// [notificationsApiClient] and [announcementsApiClient] are exposed
   /// for tests to inject fakes — production code always omits them and
   /// gets the real Sanctum-backed implementations below.
   const CompanyApp({
@@ -54,6 +59,9 @@ class CompanyApp extends StatefulWidget {
     MyStatusApiClient? myStatusApiClient,
     LocationService? locationService,
     LeaveApiClient? leaveApiClient,
+    MessagesApiClient? messagesApiClient,
+    NotificationsApiClient? notificationsApiClient,
+    AnnouncementsApiClient? announcementsApiClient,
   }) : _injectedAuthController = authController,
        _injectedHomeApiClient = homeApiClient,
        _injectedPeopleApiClient = peopleApiClient,
@@ -64,7 +72,10 @@ class CompanyApp extends StatefulWidget {
        _injectedScheduleApiClient = scheduleApiClient,
        _injectedMyStatusApiClient = myStatusApiClient,
        _injectedLocationService = locationService,
-       _injectedLeaveApiClient = leaveApiClient;
+       _injectedLeaveApiClient = leaveApiClient,
+       _injectedMessagesApiClient = messagesApiClient,
+       _injectedNotificationsApiClient = notificationsApiClient,
+       _injectedAnnouncementsApiClient = announcementsApiClient;
 
   final AuthController? _injectedAuthController;
   final HomeApiClient? _injectedHomeApiClient;
@@ -77,6 +88,9 @@ class CompanyApp extends StatefulWidget {
   final MyStatusApiClient? _injectedMyStatusApiClient;
   final LocationService? _injectedLocationService;
   final LeaveApiClient? _injectedLeaveApiClient;
+  final MessagesApiClient? _injectedMessagesApiClient;
+  final NotificationsApiClient? _injectedNotificationsApiClient;
+  final AnnouncementsApiClient? _injectedAnnouncementsApiClient;
 
   @override
   State<CompanyApp> createState() => _CompanyAppState();
@@ -136,6 +150,21 @@ class _CompanyAppState extends State<CompanyApp> {
   // Schedule reload, so approved leave appears without a manual refresh.
   final LeaveChanges _leaveChanges = LeaveChanges();
 
+  late final MessagesApiClient _messagesApiClient =
+      widget._injectedMessagesApiClient ?? MessagesApiClient(_apiClient);
+
+  late final NotificationsApiClient _notificationsApiClient =
+      widget._injectedNotificationsApiClient ??
+      NotificationsApiClient(_apiClient);
+
+  late final AnnouncementsApiClient _announcementsApiClient =
+      widget._injectedAnnouncementsApiClient ??
+      AnnouncementsApiClient(_apiClient);
+
+  // Confirmed communication changes (Phase 32, R-11): Home's counts,
+  // Messages, Notifications and Announcements reload.
+  final InboxChanges _inboxChanges = InboxChanges();
+
   late final GoRouter _router = buildAppRouter(
     _authController,
     homeApiClient: _homeApiClient,
@@ -151,6 +180,10 @@ class _CompanyAppState extends State<CompanyApp> {
     locationService: _locationService,
     leaveApiClient: _leaveApiClient,
     leaveChanges: _leaveChanges,
+    messagesApiClient: _messagesApiClient,
+    notificationsApiClient: _notificationsApiClient,
+    announcementsApiClient: _announcementsApiClient,
+    inboxChanges: _inboxChanges,
   );
 
   @override
@@ -168,6 +201,7 @@ class _CompanyAppState extends State<CompanyApp> {
     _taskChanges.dispose();
     _workLogChanges.dispose();
     _leaveChanges.dispose();
+    _inboxChanges.dispose();
     _authController.dispose();
     super.dispose();
   }
