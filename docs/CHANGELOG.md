@@ -4,6 +4,17 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-12 — Phase 30B UAT preparation runbook
+- **PR #77 merged** as `4a85918` (CI green on the head).
+- New `docs/testing/PHASE_30B_UAT_PREPARATION.md`:
+  - the staging redeploy from `0e7fce6` (no migration);
+  - the UAT APK (577 / my_status 64), with a **hard permission gate**: `aapt2` must show exactly internet and coarse and fine location (plus the AndroidX internal permission), and no background service or permission;
+  - the UAT30B data plan and stages;
+  - per-scenario UAT notes for an Android 12+ phone;
+  - the script `uat30b_data.php` (SHA-256 `b020d7171a826f0de1243ec474aecfa9bd7d50676834973bea37ff8ced4e0f6f`).
+- Script rehearsed on scratch SQLite, including a check-in made through the real controller with the app's exact body. Nothing ran on staging.
+- Docs: `TEST_STATUS.md`, `UAT_LOG.md` (rows now point to the runbook; still `NOT RUN`), the 30B handoff addendum, `CURRENT_STATE.md`, `ROADMAP.md`, spec status.
+
 ### 2026-10-12 — Phase 30B Gate 4: integration review, DEC-058 and handoff
 - **Fix from the review:** Back is held while a check-in is sending (`PopScope`). Leaving wouldn't cancel the request, and the person could think it had been. 1 new page test; Flutter 577/577.
 - **Correction to Gate 2:** `package_info_plus` (through `geolocator_linux`) is also bundled as an Android plugin, with an empty manifest and no permissions.

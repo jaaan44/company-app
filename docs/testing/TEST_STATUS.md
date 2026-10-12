@@ -1309,6 +1309,26 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | MySQL | — | Not run | Plain-column `ORDER BY`; to be exercised at staging. |
 | UAT | — | NOT RUN | UAT-30B-01…08 `NOT RUN`. |
 
+## Phase 30B — UAT preparation (runbook and data script rehearsal, 2026-10-12)
+
+`docs/testing/PHASE_30B_UAT_PREPARATION.md`; script `uat30b_data.php` revision 1, SHA-256 `b020d7171a826f0de1243ec474aecfa9bd7d50676834973bea37ff8ced4e0f6f`. Rehearsed in this AI sandbox on a disposable scratch SQLite database (all 45 migrations + `RolePermissionSeeder`, `SCHEDULING_COMPANY_TIMEZONE=Asia/Manila`, company day 2026-10-12) at `main` `4a85918`, run as the runbook runs it (`php -- <stage> < script`), with a non-UAT control user, staff record, check-in, status and API token in place. Nothing touched staging. MySQL was not available here.
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `plan` (read-only) | Manual, scratch DB | PASS | Company day; 4 accounts absent; 0 of 3 staff, 0 of 22 status changes, 0 check-ins; roles 3/3; the staff role has no `location.view`. |
+| `seed` | Manual, scratch DB | PASS | Exit 0; STDOUT to a `600` file with exactly 4 `email password` lines (20 characters); all status on STDERR. |
+| `verify` (real controllers) | Manual, scratch DB | PASS | Current status `available` an hour before the seed, with the company day `+08:00`; 22 status changes over 2 pages, the same-second pair `in_meeting above busy`; 22 check-ins over 2 pages with no repeats; the manager `200`; the colleague without `location.view`, and the controller `403`; no-profile `403`. |
+| A check-in made in the app | Manual, scratch DB | PASS | Posted through the real `StoreCheckInRequest` and `CheckInController::myStore` with the app's exact body (`14.5547123`, `121.0244456`, ±9, "Warehouse 3", a note): `201`. `verify` then listed it as "made in the app 1" with the same values, and as the manager's newest. |
+| `seed` re-run | Manual, scratch DB | PASS | Exit 0, 0 bytes on STDOUT, "password unchanged" ×4, hashes identical; **the app's check-in kept**. |
+| Drift detection and restore | Manual, scratch DB | PASS | After making the colleague a manager, clearing Lia's manager and deleting half her status history, `verify` printed `UNEXPECTED` three times (status count and pair, manager `403`, colleague `location.view`). The colleague's controller call stayed `403`, since he is not her manager. A re-`seed` restored everything. |
+| `revoke` / `exposure` | Manual, scratch DB | PASS | With tokens on staff and manager, `exposure` showed 1 each; `revoke` removed only staff's. |
+| `rotate` | Manual, scratch DB | PASS | Exit 0; `600` file with 4 lines; all tokens revoked; hashes changed. |
+| All-or-nothing `rotate` | Manual, scratch DB (injected failure) | PASS | A failure on the third account: exit 1, nothing on STDOUT, all four hashes unchanged, although `rotated …` had printed twice. |
+| Refusals | Manual, scratch DB | PASS | Unknown stage; `revoke`, `rotate` and `verify` with `uat30b.staff` missing: exit 1, nothing on STDOUT (`verify` prints only "accounts missing"). `seed` with a UAT30B staff record linked to a non-UAT30B account: exit 1, nothing changed. |
+| Non-UAT30B data untouched | Manual, scratch DB | PASS | A hash of every non-UAT30B user, staff record, check-in, status and token was identical across all stages. |
+| Runbook extraction path | Manual | PASS | The §5 step 0 `awk` over the runbook reproduces the script byte for byte. |
+| Staging, APK (with the permission gate), UAT | — | NOT RUN | Operator steps §2, §3 and §5 pending; UAT-30B-01…08 `NOT RUN`. |
+
 ---
 
 *(Future phases append their own section above this line, oldest first.)*
