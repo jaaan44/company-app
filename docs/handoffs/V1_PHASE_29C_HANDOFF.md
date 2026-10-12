@@ -1,6 +1,6 @@
 # Phase 29C — Work: Projects & Clients (Mobile) — Handoff
 
-**Status: implementation complete and merged (PR #69, `c79ed90`); UAT preparation runbook written — pending staging deployment and product-owner UAT. Phase 29C is NOT formally closed.** See the addendum at the end. Its closure also closes Phase 29 as a whole. No later phase is started or authorized.
+**Status: COMPLETE — Phase 29C formally closed 2026-10-12, and with it Phase 29 (Work: Tasks, Work Logs, Projects & Clients).** Physical-device UAT-29C-01…08 all `PASS`; see the final addendum. Earlier status lines: *implementation complete — pending PR review/CI, merge, staging deployment and product-owner UAT*, then *merged (PR #69) and UAT runbook written*. Each addendum below was true when it was written. No later phase is started or authorized.
 
 ## 1. Phase Identification
 
@@ -163,3 +163,22 @@ The next roadmap phase must not begin until 29C is closed and that phase is expl
 - **New lesson applied:** passwords are pasted only into the app's sign-in field, never into a terminal (the 29B stray-file incident).
 - **Rehearsal:** on scratch SQLite only, including the refusals, the all-or-nothing `rotate`, a drift-then-reseed check, a non-UAT data snapshot and the runbook's own extraction path. Results are in `TEST_STATUS.md`. Its `verify` stage is the first MySQL check of the R-19 order.
 - **Status:** nothing is deployed or seeded on staging. UAT-29C-01…08 remain `NOT RUN`. Phase 29C is not closed.
+
+## Addendum — Staging Deployment, UAT and Formal Closure (2026-10-12)
+
+*Operator- and product-owner-reported; this AI session had no VPS or device access. Full record: `docs/testing/TEST_STATUS.md`, "Phase 29C — staging deployment, UAT data and physical-device UAT".*
+
+- **Runbook merged:** PR #70 (`ae0a1d5`).
+- **Deployment:** staging runs `c79ed90cac0263a7f7e452c0f7d0861d4adac380` (fast-forward from `7e29ffe`); 45 Ran, none pending; `Asia/Manila`; only `127.0.0.1:8012`; MySQL healthy. Smoke tests `/up` 200, `/login` 200, `/me/home`, `/projects`, `/clients`, `/contacts` 401. Backup `company-app-20261011-044606.sql`, 112,221 bytes, complete (48 tables; smaller than the 29B dump only through expired `sessions`).
+- **UAT data:** script SHA-256 verified; `plan`, `seed`, `verify`, `exposure` exactly as rehearsed. `verify` was the first MySQL run of the R-19 order and matched.
+- **UAT APK:** built from `c79ed90`, 53,993,735 bytes, SHA-256 `A363627B00E68601B9C3244B548FFA832492369DB0E7B80277973404AC127128`, debug-signed; 473/473 locally (projects 52).
+- **UAT:** UAT-29C-01…08 all **`PASS`**, reported by the product owner (2026-10-12). No defects or observations were reported.
+- **Not supplied:** the `adb devices`/`adb install` output, the `apksigner` signer line, confirmation that the credentials file was shredded, the UAT-29C-07 `revoke` output line, and the post-UAT `exposure` output. Recorded as gaps, not invented.
+- **Runbook correction learned in use:** a new backup can legitimately be smaller than the previous one (expired `sessions`); check `-- Dump completed`, the table count and per-table sizes rather than "larger than".
+- **Closure:**
+  - **Implemented:** yes. **Tested automatically:** yes (backend 1,183, Flutter 473). **Manually verified on a device:** yes, by the product owner through UAT. **UAT:** `PASS`. **Deployed:** staging `c79ed90`.
+  - **Formally closed:** **yes, 2026-10-12 — Phase 29C, and Phase 29 as a whole (29A, 29B and 29C all closed).**
+  - No blocking defect is open.
+  - **Carried forward, non-blocking:** the §13 items (first-50 limits by design; Phase 36 candidates: the directory onto `PagedSearchController`, shared UI to `core/`, a shared profile lookup, `per_page`/`q` hardening; `my_role` per row); the deferred UAT password rotation from 29B; debug signing (Phase 38); the UAT29C/29B/29A/28/27 staging data, left in place.
+
+**Phase 30 — Operations: Schedule & Check-in (Mobile)** is next on the roadmap. It has not started; it needs its specification and explicit authorization (`CLAUDE.md` §8).

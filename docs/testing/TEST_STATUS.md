@@ -1111,4 +1111,27 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`75a4af8`), confirmed up t
 
 ---
 
+## Phase 29C — staging deployment, UAT data and physical-device UAT (2026-10-11/12)
+
+*Operator- and product-owner-reported. This AI session had no VPS or device access; the outputs below were pasted by the operator, except where marked "not supplied".*
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Staging checkout | Operator, VPS | PASS | `git status --porcelain` empty (the 29B stray file is gone); `git merge --ff-only` from `7e29ffe` to `c79ed90cac0263a7f7e452c0f7d0861d4adac380` (50 files); `git rev-parse HEAD` confirmed. |
+| Backup | Operator, VPS | PASS | `company-app-20261011-044606.sql`, 112,221 bytes, `-- Dump completed`, 48 tables (same as the 29B dump). Smaller than the 29B dump (131,099) only because `sessions` fell from 26,773 to 1,865 bytes of inserts; every business table was equal or larger (`projects`, `project_memberships`, `staff`, `tasks`, `users` grew; `work_logs` new). The runbook's "larger than 131,099" expectation was wrong; a per-table comparison was used instead. |
+| Build and restart | Operator, VPS | PASS | Both images built; `app` restarted; `nginx` kept running (image fully cached); `mysql` healthy, untouched. |
+| `migrate:status`, caches, timezone, listener | Operator, VPS | PASS | 45 Ran, none pending; config, routes and Blade cached; `Asia/Manila`; only `127.0.0.1:8012`. |
+| Smoke tests (public HTTPS) | Operator, VPS | PASS | `/up` 200, `/login` 200, `/me/home`, `/projects`, `/clients`, `/contacts` 401. |
+| Script extraction | Operator, VPS | PASS | `uat29c_data.php` from `origin/main`: SHA-256 `1c151c4d4c9fcc7b94918da4a4ed526ac5b9accaa2f415b570702b93a52a4a64` (matches). |
+| `plan` / `seed` | Operator, VPS | PASS | Company day 2026-10-11; all absent; then 4 accounts created, 29 projects, 3 clients, 3 contacts, 2 tasks; exit 0; credentials file `600 deploy`, 4 lines. |
+| `verify` (real controllers, **first MySQL run of the R-19 order**) | Operator, VPS | PASS | Exactly the rehearsed output: 28 member projects over 2 pages in name order, Boiler Upgrade lead; "boiler" → 1; P01 members 3/3 and milestones 3/3; P04 milestones 50/52; P05 `403`; the hidden task; active UAT29C clients Acme and Beta; Acme's contacts Maria (primary) and Leo; Dormant inactive; Manager only Boiler Upgrade, Admin only Roof Repair (29 without `member=`); no-profile without a staff record. |
+| `exposure` (before UAT) | Operator, VPS | PASS | All four accounts `api_tokens=0 web_sessions=0 audit: none`. |
+| UAT APK | Operator, Windows | PASS | Checkout `c79ed90`, `git status --porcelain` empty before and after the build. Flutter 3.47.2, Dart 3.13.2. `pub get` ok; `dart format` 101 files, 0 changed; `flutter analyze` no issues; `flutter test` **473/473**, projects **52/52**. `flutter build apk --release --dart-define=API_BASE_URL=https://company-staging.storm-ark.com/api/v1` → **53,993,735 bytes**, SHA-256 **`A363627B00E68601B9C3244B548FFA832492369DB0E7B80277973404AC127128`**. `aapt2`: `com.companyapp.mobile` versionCode 1 / 1.0.0, minSdk 24, target/compile 36, `INTERNET` present. |
+| Not supplied | — | Gap | the `adb devices`/`adb install` output, the `apksigner` signer line, confirmation that the credentials file was shredded, the UAT-29C-07 `revoke` output line, and the post-UAT `exposure` output. Recorded as gaps, not invented. |
+| UAT-29C-01…08 | Product owner, physical device | **PASS** | Reported as "all passed" (2026-10-12), with the step-by-step expectations given for each scenario. No observations or defects were reported. |
+
+Staging now runs `c79ed90`. The UAT29C data (4 accounts, 4 staff records, 29 projects, 52+3 milestones, 2 tasks, 3 clients, 3 contacts) stays in place alongside the UAT29B, UAT29A, UAT28 and UAT27 data; any cleanup needs its own authorization.
+
+---
+
 *(Future phases append their own section above this line, oldest first.)*
