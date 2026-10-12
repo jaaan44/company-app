@@ -745,6 +745,54 @@ Internet → Cloudflare (proxied, SSL/TLS "Full (strict)")
 
 ---
 
+### DEC-059 — Phases 31–33 under one blanket authorization: AI-approved specification decisions, merge on green CI, and one combined UAT round
+
+**Date:** 2026-10-12
+**Status:** ACCEPTED (the product owner's instruction of 2026-10-12, with three explicit answers)
+**Context:** The product owner asked to "proceed and finish this whole Employee mobile application (meaning until phase 33)" before starting a Laravel-based web frontend. Until now every specification, gate, merge and UAT step waited for a separate authorization.
+**Decision:**
+1. **Specifications:** for Phases 31, 32 and 33 the AI writes each specification with its own recommended decisions and records them as approved under this entry. Each specification says so in its Status line. Anything security-sensitive is flagged in the specification and the handoff.
+2. **Gates run without stopping:** Gates 1–4 of each phase run in sequence, with the same validation, mutation checks and contract parity as before. CLAUDE.md §8's stop after each phase is waived for Phases 31–33 only.
+3. **Merges:** the AI merges its own PR when both CI checks pass on the head commit and there is no merge conflict. Docs-only PRs, which run no CI, merge when mergeable.
+4. **One combined UAT round at the end:** the remaining Phase 30B operator steps and Phases 31–33 share one staging deploy, one APK, one data script and one UAT session. Each phase stays "implemented, not closed" until then. Only the product owner records a UAT PASS (CLAUDE.md §7).
+**Rationale:** The owner's explicit request. The phases are independent screens over existing APIs, so the gates and CI guard quality. One UAT round costs the operator one deploy instead of four.
+**Not changed:** the security constraints (no password in the repository or any chat, the operator-script SHA-256 check, never cleaning staging UAT data without its own authorization), the UAT PASS rule, and every validation command.
+
+---
+
+### DEC-060 — Phase 31: Leave on mobile — company-day leave rules, a direct-reports team list, and confirmed decisions
+
+**Date:** 2026-10-12
+**Status:** ACCEPTED (Phase 31 specification R-1…R-12, approved under DEC-059; implemented in Phase 31 Gates 1–3)
+**Context:**
+- Phase 13 (DEC-036) built leave types, requests and derived balances in the API. The mobile app had no leave.
+- Three day-boundary defects surfaced: balances defaulted to the server (UTC) year; self-cancel of approved leave used UTC midnight; and the request lists had no tie-breaker.
+- The supervisory `GET /leave-requests` is company-wide for Administrators.
+**Decision:**
+1. **Backend fixes (R-2):**
+   - balances default to the **company** year;
+   - approved leave can't be self-cancelled once `start_date ≤ company today`;
+   - `id` tie-breakers on `/me/leave-requests` and `/leave-requests`;
+   - `meta.company_day` on `GET /me/leave-requests`.
+   A new `App\Support\CompanyDay` helper gives the `{date, timezone, utc_offset}` triple.
+2. **`GET /me/team-leave-requests?status=` (R-3):**
+   - only the caller's **direct reports** (`staff.manager_id`), for Administrators too;
+   - `meta.can_review`, `direct_reports_count`, `pending_count` and `company_day`;
+   - pending is ordered soonest first, other statuses newest first, `id` breaking ties.
+   A caller without `leave-requests.view` gets an empty list with `can_review: false`, not a `403`: the app reads it on every Leave load, and a `403` would cost an `/auth/me` re-check each time (revised during Gate 2). Decisions use the unchanged approve and reject endpoints.
+3. **Mobile (R-1, R-4…R-11):**
+   - More → Leave: balances, my requests and Request leave, plus Team requests for reviewers who manage someone;
+   - the form defaults to the company today, allows past dates, shows "N calendar days (weekends included)", checks for one calendar year, and shows the server's refusals in its words;
+   - a request's detail has history, and Cancel while pending or approved-not-started by the company day;
+   - a team request has Approve (optional note) and Reject (required reason), each confirmed;
+   - a `LeaveChanges` notifier reloads Leave, Team requests and Schedule.
+4. **Not in Phase 31 (R-10):** leave notifications, attachments, half days, and company-wide approvals on mobile.
+**Rationale:** The everyday leave questions answered on the phone, with the API authoritative and the company day consistent with DEC-052.
+**Not a security boundary change:** the team list returns a subset of what `GET /leave-requests` already shows a Manager, and less for an Administrator. Approve and reject authority (the direct Manager or an Administrator, never one's own) is unchanged.
+**Superseded/reaffirmed:** DEC-036 amended for the company year and the company-day cancel rule; DEC-052 reaffirmed.
+
+---
+
 ## Template for Future Decisions
 
 ```

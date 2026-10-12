@@ -111,7 +111,7 @@ Form conventions this phase establishes (extending 29A's write conventions):
 - **Home (R-10):** Today's meeting rows are now tappable too (a chevron on every Today row) and open the same entry detail in the Schedule tab, in company time. This refines the Phase 27 "non-interactive" rule above, after Phase 29A's task rows.
 - Verified by widget tests in light and dark mode and at 200% text on a 320×568 phone; not yet verified on a device.
 
-### My status and Check in (implemented, Phase 30B — not yet merged)
+### My status and Check in (implemented, Phase 30B — merged, awaiting the combined UAT round)
 
 - **More** gains a sixth row, **My status**, second after My profile. Its subtitle is my current status ("In the field"), "No status set", or "Your status and check-ins" when it can't be read. It is read with one small request, and again on returning from My status. This replaces the Phase 28 "More fetches nothing" rule (R-13).
 - **My status:**
@@ -128,6 +128,35 @@ Form conventions this phase establishes (extending 29A's write conventions):
   - On success it returns to My status with "Checked in." and the check-in on top. Back is held while a check-in is sending, because leaving wouldn't cancel it.
 - **Rows:** a check-in shows the place or "No place name", "Today 10:30 · ±12 m", the note and the coordinates (5 decimals); a status change shows its icon, label and time. Times use Today / Yesterday / "Sat 10 Oct 16:00", in company time. No map; nothing is editable.
 - **All check-ins / All status changes:** the paged list (20 a page) without a search field.
+- Verified by widget tests in light and dark mode at 200% text on a 320×568 phone, plus tap-target and label guidelines. Not yet on a device.
+
+### Leave (implemented, Phase 31 — awaiting the combined UAT round)
+
+- **More** gains a seventh row, **Leave** ("Balances and requests"), after My status.
+- **Leave screen:**
+  - **Request leave** (filled);
+  - **Team requests** ("2 pending" or "Nothing waiting for you"), only for reviewers who manage someone;
+  - **Balances 2026**, one row per active type: "10 days left of 15" over "3 used · 2 pending" for paid types, "Unpaid — no balance" for unpaid ones;
+  - **My requests**, newest first: the type, "Tue 20 Oct – Thu 22 Oct 2026 · 3 days", and the status chip **beneath** (a chip beside the text squeezed rows at 200% text). **Show more** loads 20 more. Empty: "You haven't requested leave yet.";
+  - no profile: only "No staff profile is linked to this account."
+- **Status chips (R-8):** Pending (secondary container), Approved (tertiary), Rejected (error container), Cancelled (muted, outlined); the label is always written and announced ("Status: Approved").
+- **Request leave:**
+  - **Type of leave** opens a sheet (paid types show "10 days left in 2026", unpaid "Unpaid").
+  - **First day** and **Last day** open date pickers, both defaulting to the company today ("Today"); past dates are allowed. A first day after the last moves the last day with it.
+  - "4 calendar days (weekends included)", then **Reason** (3–1000) and **Send request**.
+  - Errors appear on their fields ("A request must stay within one calendar year. Make one request for each year."); the server's refusals (overlap, balance, inactive type) appear in a banner at the top, in its words.
+  - On success: "Leave requested." and back to Leave, which reloads. "Discard this request?" asks before leaving with anything entered.
+- **A request's detail:**
+  - the type with Paid/Unpaid and the chip, the dates with "N calendar days (weekends included)", and the reason;
+  - **History**: "Approved by Grace Hopper · Today 09:12" in company time, with the note beneath;
+  - **Cancel request** (outlined, error colour) while pending, or approved and not yet started (company day). A dialog takes an optional reason: **Keep it** / **Cancel request**. On success: "Request cancelled.";
+  - Back is held while an action is sending.
+- **Team requests:**
+  - chips **Pending (N)** · Approved · Rejected · All; each row shows the person, the type, the dates and days, and the chip;
+  - a team request's detail adds **Requested by**, plus **Reject** (outlined) and **Approve** (filled) while pending;
+  - Approve takes an optional note; Reject needs a reason (3–1000, checked in the dialog);
+  - after a decision: "Request approved." / "Request rejected.", and the buttons go. Decided elsewhere: the server's message in a banner, and the request reloads.
+- Schedule reloads quietly after any confirmed leave change, so approved leave appears there.
 - Verified by widget tests in light and dark mode at 200% text on a 320×568 phone, plus tap-target and label guidelines. Not yet on a device.
 
 ## Admin Backoffice (Web) — Navigation

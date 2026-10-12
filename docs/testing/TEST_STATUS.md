@@ -1329,6 +1329,23 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | Runbook extraction path | Manual | PASS | The §5 step 0 `awk` over the runbook reproduces the script byte for byte. |
 | Staging, APK (with the permission gate), UAT | — | NOT RUN | Operator steps §2, §3 and §5 pending; UAT-30B-01…08 `NOT RUN`. |
 
+## Phase 31 — Leave (Mobile), Gates 1–4 (2026-10-12, DEC-059)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Backend tests (Gate 1) | Automated | PASS | 19 new: `LeaveCompanyDayTest` (10: the company year at 07:00 Manila on 1 January and at 23:30 on 31 December, an explicit year; self-cancel refused at 00:30 and 23:30 Manila on the first day, allowed the evening before, pending after the start; `meta.company_day` with the paginator meta; tie-breakers pinned in SQL) and `MyTeamLeaveRequestTest` (9). |
+| Backend mutation checks | Manual (AI) | PASS | 15 mutations: 14 caught; the 15th (dropping `startOfDay()` before formatting the offset) is equivalent. |
+| Mobile tests (Gates 2–3) | Automated | PASS | 79 new: models 23, state 34, pages 22 (including dark mode and 200% text on 320×568, and the tap-target and label guidelines). |
+| Mobile mutation checks | Manual (AI) | PASS | 10 mutations, all caught after two test gaps (a stale load-more page; an unhandled second failure on the detail) were closed. |
+| Contract parity (real API → app) | Manual (AI), temporary tests | PASS | 16 real responses (Asia/Manila, 07:00 on 14 Oct) parsed by the production models and form controller, 3/3; scratch tests deleted. Found that an insufficient balance is a `422` on `leave_type_id`, already shown at the top. |
+| `composer validate --strict` / `composer audit --locked` | Automated | PASS | Valid; no advisories. |
+| `vendor/bin/pint --test` / `vendor/bin/phpstan analyse` | Automated | PASS | 0 errors. |
+| `php artisan test` | Automated | PASS | 1,240/1,240. |
+| `dart format` / `flutter analyze` | Automated | PASS | 0 changed; no issues. |
+| `flutter test` | Automated | PASS | 656/656. |
+| MySQL / real device | — | Not run | Combined UAT round. |
+| UAT | — | NOT RUN | UAT-31-01…08 `NOT RUN`. |
+
 ---
 
 *(Future phases append their own section above this line, oldest first.)*

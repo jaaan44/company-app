@@ -567,7 +567,7 @@ Internet → Cloudflare (proxied, Full (strict))
 
 **Not introduced:** creating or editing entries on mobile; colleagues' schedules; milestones; a calendar package or any new dependency. See `docs/phases/V1_PHASE_30_DEFINITION.md` §5 and `docs/handoffs/V1_PHASE_30A_HANDOFF.md`.
 
-## 39. Operations — My status and Check-in (Phase 30B — implemented, not yet merged; DEC-058)
+## 39. Operations — My status and Check-in (Phase 30B — implemented and merged, PR #77; awaiting the combined UAT round, DEC-059; DEC-058)
 
 **Backend:** the Phase 9 controllers, plus `id` tie-breakers on the four history lists and `meta.company_day` on `GET /me/status` and `/me/check-ins` (R-14). No migration, route, field or permission change.
 
@@ -586,3 +586,37 @@ Internet → Cloudflare (proxied, Full (strict))
 **Android:** `ACCESS_COARSE_LOCATION`, `ACCESS_FINE_LOCATION`, and `GeolocatorLocationService` removed via `tools:node="remove"`. The Android plugins are `flutter_secure_storage`, `geolocator_android`, `jni`, `jni_flutter`, `package_info_plus` and `path_provider_android`.
 
 **Not introduced:** background or periodic location, maps, editing check-ins, colleagues' statuses, a manager view, iOS. See `docs/phases/V1_PHASE_30_DEFINITION.md` §6 and `docs/handoffs/V1_PHASE_30B_HANDOFF.md`.
+
+## 40. HR — Leave on mobile (Phase 31 — implemented, awaiting the combined UAT round; DEC-060)
+
+**Backend:**
+- **The Phase 13 leave controllers, with company-day fixes (R-2):**
+  - `LeaveBalanceController` defaults `year` to the company year;
+  - `MyLeaveRequestController::myCancel` refuses approved leave once `start_date ≤ company today`;
+  - `id` tie-breakers on `/me/leave-requests` and `/leave-requests`;
+  - `meta.company_day` on `GET /me/leave-requests`.
+- **`App\Support\CompanyDay`:** `meta()` (`{date, timezone, utc_offset}`) and `year()`, built on `CompanyTimezone` and `OverdueTasks::todayInCompanyTimezone()`.
+- **New `MyTeamLeaveRequestController`** serves `GET /api/v1/me/team-leave-requests?status=` (R-3):
+  - the caller's direct reports' requests, needing a linked Staff record;
+  - `meta.can_review`, `direct_reports_count`, `pending_count` and `company_day`;
+  - without `leave-requests.view`, an empty list with `can_review: false`.
+
+No migration, permission or resource change.
+
+**Mobile — `lib/features/leave/` (`domain`, `data`, `state`, `presentation`):**
+- **`domain/leave.dart`:** strict `LeaveRequest` (with `canSelfCancel(companyToday)`), `LeaveBalance`, `LeaveHistoryEntry`, `LeaveStatus`/`LeaveAction` (unknown values kept), `MyLeaveRequestsPage`, `TeamLeavePage` (`hasTeam`), `LeaveDraft` and `calendarDaysInclusive`.
+- **`data/leave_api_client.dart`:** the eight calls (my list, balances, one of mine, submit, cancel, the team list, one team request, approve/reject) through the shared `ApiClient`.
+- **`state/`:**
+  - `LeaveOverviewController`: balances, my requests and the team summary together; load more; stale responses dropped.
+  - `LeaveFormController`: the R-5 checks; the server's `422` errors on its fields.
+  - `LeaveRequestController`: mine or team; cancel, approve or reject, confirmed; a `409` reloads.
+  - `TeamLeaveController`: on `PagedSearchController`, with a filter. `PagedSearchController.restart()` was added so a filter change never joins a stale first page.
+  - `LeaveChanges`: confirmed changes.
+- **`presentation/`:** `LeavePage`, `LeaveFormPage`, `LeaveRequestPage`, `TeamLeavePage` and `leave_widgets.dart` (paths, args, labels, the status chip, the request row).
+
+**Routing:**
+- `/more/leave`, `/more/leave/new`, `/more/leave/requests/:publicId`, `/more/leave/team` and `/more/leave/team/:publicId`, all in the More branch.
+- `LeavePage`, `TeamLeavePage` and `SchedulePage` listen to `LeaveChanges`.
+- `CompanyApp` injects `LeaveApiClient`.
+
+**Not introduced:** leave notifications, attachments, half days, company-wide approvals on mobile, any dependency. See `docs/phases/V1_PHASE_31_DEFINITION.md` and `docs/handoffs/V1_PHASE_31_HANDOFF.md`.

@@ -44,6 +44,15 @@ CSV export inherits the identical scoping as its JSON counterpart — no export 
 
 **Implemented as of Phase 30A Gates 1–3:** `GET /me/schedule` is strictly self-scoped — the requester's own Schedule Entries (creator or participant), own open assigned tasks and own approved leave — for **every** role: no permission widens it, Administrator included, and query parameters can't change whose schedule it is. It is a subset of what the requester can already see; entries visible only through a project are excluded. `GET /schedule` keeps its Phase 17 visibility exactly; Gate 1 changed only which company day an item is reported on. The mobile entry detail uses the unchanged `GET /schedule-entries/{id}`: an entry the requester can't see stays `404` (existence not revealed, DEC-040), which the app reads as "This item is no longer available." without ending the session. No location data is read in 30A.
 
+## Leave on mobile (Phase 31, DEC-060)
+
+**Implemented as of Phase 31 Gates 1–3:** no authorization change.
+- `GET /me/team-leave-requests` returns only the caller's **direct reports'** requests, and only to a `leave-requests.view` holder (Manager; Administrator through `Gate::before`). That is a subset of what `GET /leave-requests` already shows a Manager, and **less** than it shows an Administrator, who sees no company-wide list on mobile.
+- Without the permission the answer is an empty list with `can_review: false`. It reveals nothing, not even whether anyone reports to the caller (`direct_reports_count` is `0`).
+- Approve and reject authority is unchanged: the requester's current direct Manager holding `leave-requests.view`, or an Administrator, never one's own request. A team request the reader can no longer see answers `403` and is shown in the server's words.
+- The self-cancel change (R-2b) **narrows** what a requester can do: approved leave can no longer be cancelled between 00:00 and 07:59 company time on its first day.
+- The app shows a leave reason and history only to the requester and the people the API already lets see them.
+
 ## Authentication
 
 - **Implemented (DEC-022):** the Admin Backoffice authenticates via Laravel's session/secure-cookie `web` guard (Blade + Livewire login). The Flutter mobile app authenticates via Laravel Sanctum personal access tokens (`Authorization: Bearer <token>`) — bearer-token only, no cookie-based SPA/stateful authentication. No OAuth server, JWT infrastructure, or Passport.
