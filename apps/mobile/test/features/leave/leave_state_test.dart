@@ -13,6 +13,8 @@ import 'package:mobile/features/leave/state/leave_form_controller.dart';
 import 'package:mobile/features/leave/state/leave_overview_controller.dart';
 import 'package:mobile/features/leave/state/leave_request_controller.dart';
 import 'package:mobile/features/leave/state/team_leave_controller.dart';
+import 'package:mobile/features/schedule/domain/schedule.dart'
+    show ScheduleCompanyDay;
 
 import '../../support/fake_backend.dart';
 import '../../support/leave_fixtures.dart';
@@ -453,7 +455,13 @@ void main() {
         json['public_id'] as String,
         viewer: LeaveRequestViewer.mine,
         initial: LeaveRequest.fromJson(json),
-        companyDate: companyDate,
+        companyDay: companyDate == null
+            ? null
+            : ScheduleCompanyDay(
+                date: companyDate,
+                timezone: 'Asia/Manila',
+                utcOffset: const Duration(hours: 8),
+              ),
         changes: changes,
       );
     }
@@ -483,7 +491,7 @@ void main() {
 
       await c.load();
 
-      expect(c.companyDate, '2026-10-14');
+      expect(c.companyDay?.date, '2026-10-14');
       expect(c.canCancel, isTrue);
     });
 

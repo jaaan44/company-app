@@ -9,6 +9,8 @@ import 'package:mobile/features/auth/data/token_storage.dart';
 import 'package:mobile/features/auth/state/auth_controller.dart';
 import 'package:mobile/features/clients/data/clients_api_client.dart';
 import 'package:mobile/features/home/data/home_api_client.dart';
+import 'package:mobile/features/leave/data/leave_api_client.dart';
+import 'package:mobile/features/leave/state/leave_changes.dart';
 import 'package:mobile/features/my_status/data/my_status_api_client.dart';
 import 'package:mobile/features/my_status/location/location_service.dart';
 import 'package:mobile/features/people/data/people_api_client.dart';
@@ -35,8 +37,8 @@ import 'package:mobile/features/work_logs/state/work_log_changes.dart';
 class CompanyApp extends StatefulWidget {
   /// [authController], [homeApiClient], [peopleApiClient],
   /// [tasksApiClient], [workLogsApiClient], [projectsApiClient],
-  /// [clientsApiClient], [scheduleApiClient], [myStatusApiClient] and
-  /// [locationService] are exposed
+  /// [clientsApiClient], [scheduleApiClient], [myStatusApiClient],
+  /// [locationService] and [leaveApiClient] are exposed
   /// for tests to inject fakes — production code always omits them and
   /// gets the real Sanctum-backed implementations below.
   const CompanyApp({
@@ -51,6 +53,7 @@ class CompanyApp extends StatefulWidget {
     ScheduleApiClient? scheduleApiClient,
     MyStatusApiClient? myStatusApiClient,
     LocationService? locationService,
+    LeaveApiClient? leaveApiClient,
   }) : _injectedAuthController = authController,
        _injectedHomeApiClient = homeApiClient,
        _injectedPeopleApiClient = peopleApiClient,
@@ -60,7 +63,8 @@ class CompanyApp extends StatefulWidget {
        _injectedClientsApiClient = clientsApiClient,
        _injectedScheduleApiClient = scheduleApiClient,
        _injectedMyStatusApiClient = myStatusApiClient,
-       _injectedLocationService = locationService;
+       _injectedLocationService = locationService,
+       _injectedLeaveApiClient = leaveApiClient;
 
   final AuthController? _injectedAuthController;
   final HomeApiClient? _injectedHomeApiClient;
@@ -72,6 +76,7 @@ class CompanyApp extends StatefulWidget {
   final ScheduleApiClient? _injectedScheduleApiClient;
   final MyStatusApiClient? _injectedMyStatusApiClient;
   final LocationService? _injectedLocationService;
+  final LeaveApiClient? _injectedLeaveApiClient;
 
   @override
   State<CompanyApp> createState() => _CompanyAppState();
@@ -124,6 +129,13 @@ class _CompanyAppState extends State<CompanyApp> {
   late final LocationService _locationService =
       widget._injectedLocationService ?? GeolocatorLocationService();
 
+  late final LeaveApiClient _leaveApiClient =
+      widget._injectedLeaveApiClient ?? LeaveApiClient(_apiClient);
+
+  // Confirmed leave changes (Phase 31, R-11): the Leave screens and
+  // Schedule reload, so approved leave appears without a manual refresh.
+  final LeaveChanges _leaveChanges = LeaveChanges();
+
   late final GoRouter _router = buildAppRouter(
     _authController,
     homeApiClient: _homeApiClient,
@@ -137,6 +149,8 @@ class _CompanyAppState extends State<CompanyApp> {
     scheduleApiClient: _scheduleApiClient,
     myStatusApiClient: _myStatusApiClient,
     locationService: _locationService,
+    leaveApiClient: _leaveApiClient,
+    leaveChanges: _leaveChanges,
   );
 
   @override
@@ -153,6 +167,7 @@ class _CompanyAppState extends State<CompanyApp> {
     _router.dispose();
     _taskChanges.dispose();
     _workLogChanges.dispose();
+    _leaveChanges.dispose();
     _authController.dispose();
     super.dispose();
   }

@@ -8,6 +8,15 @@ import 'package:mobile/features/clients/presentation/clients_page.dart';
 import 'package:mobile/features/auth/state/auth_controller.dart';
 import 'package:mobile/features/home/data/home_api_client.dart';
 import 'package:mobile/features/home/presentation/home_page.dart';
+import 'package:mobile/features/leave/data/leave_api_client.dart';
+import 'package:mobile/features/leave/presentation/leave_form_page.dart';
+import 'package:mobile/features/leave/presentation/leave_page.dart';
+import 'package:mobile/features/leave/presentation/leave_request_page.dart';
+import 'package:mobile/features/leave/presentation/leave_widgets.dart';
+import 'package:mobile/features/leave/presentation/team_leave_page.dart';
+import 'package:mobile/features/leave/state/leave_changes.dart';
+import 'package:mobile/features/leave/state/leave_request_controller.dart'
+    show LeaveRequestViewer;
 import 'package:mobile/features/people/data/people_api_client.dart';
 import 'package:mobile/features/people/presentation/more_page.dart';
 import 'package:mobile/features/people/presentation/my_profile_page.dart';
@@ -57,7 +66,22 @@ GoRouter buildAppRouter(
   required ScheduleApiClient scheduleApiClient,
   required MyStatusApiClient myStatusApiClient,
   required LocationService locationService,
+  required LeaveApiClient leaveApiClient,
+  required LeaveChanges leaveChanges,
 }) {
+  // A leave request's detail (Phase 31) — mine or a direct report's.
+  Widget leaveRequest(GoRouterState state, LeaveRequestViewer viewer) =>
+      LeaveRequestPage(
+        key: ValueKey('${viewer.name}-${state.pathParameters['publicId']}'),
+        leaveApiClient: leaveApiClient,
+        leaveChanges: leaveChanges,
+        publicId: state.pathParameters['publicId']!,
+        viewer: viewer,
+        args: state.extra is LeaveRequestArgs
+            ? state.extra! as LeaveRequestArgs
+            : null,
+      );
+
   // The work-log form (Phase 29B) — the same page from My work logs and
   // from a task's detail; its route `extra` says which log or task.
   Widget workLogForm(GoRouterState state, {WorkLogFormArgs? fallback}) =>
@@ -151,6 +175,7 @@ GoRouter buildAppRouter(
                 builder: (context, state) => SchedulePage(
                   scheduleApiClient: scheduleApiClient,
                   taskChanges: taskChanges,
+                  leaveChanges: leaveChanges,
                 ),
                 routes: [
                   GoRoute(
@@ -209,6 +234,47 @@ GoRouter buildAppRouter(
                           myStatusApiClient: myStatusApiClient,
                           locationService: locationService,
                         ),
+                      ),
+                    ],
+                  ),
+                  // Leave (Phase 31, R-1): my leave, Request leave, my
+                  // requests, and Team requests — all in the More branch.
+                  // `new` and `team` are registered before any id route.
+                  GoRoute(
+                    path: 'leave',
+                    builder: (context, state) => LeavePage(
+                      leaveApiClient: leaveApiClient,
+                      leaveChanges: leaveChanges,
+                    ),
+                    routes: [
+                      GoRoute(
+                        path: 'new',
+                        builder: (context, state) => LeaveFormPage(
+                          leaveApiClient: leaveApiClient,
+                          leaveChanges: leaveChanges,
+                          args: state.extra is LeaveFormArgs
+                              ? state.extra! as LeaveFormArgs
+                              : null,
+                        ),
+                      ),
+                      GoRoute(
+                        path: 'requests/:publicId',
+                        builder: (context, state) =>
+                            leaveRequest(state, LeaveRequestViewer.mine),
+                      ),
+                      GoRoute(
+                        path: 'team',
+                        builder: (context, state) => TeamLeavePage(
+                          leaveApiClient: leaveApiClient,
+                          leaveChanges: leaveChanges,
+                        ),
+                        routes: [
+                          GoRoute(
+                            path: ':publicId',
+                            builder: (context, state) =>
+                                leaveRequest(state, LeaveRequestViewer.team),
+                          ),
+                        ],
                       ),
                     ],
                   ),

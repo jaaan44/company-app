@@ -181,6 +181,14 @@ class FakeLeaveServer {
               for (final t in team)
                 if (status == 'all' || t['status'] == status) t,
             ];
+      // The server's order (R-3): pending soonest first, else newest first.
+      rows.sort((a, b) {
+        final byStart = (a['start_date'] as String).compareTo(
+          b['start_date'] as String,
+        );
+
+        return status == 'pending' ? byStart : -byStart;
+      });
 
       return jsonResponse(
         pageBody(

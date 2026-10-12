@@ -4,6 +4,8 @@ import 'package:mobile/core/network/api_exception.dart';
 import 'package:mobile/features/leave/data/leave_api_client.dart';
 import 'package:mobile/features/leave/domain/leave.dart';
 import 'package:mobile/features/leave/state/leave_changes.dart';
+import 'package:mobile/features/schedule/domain/schedule.dart'
+    show ScheduleCompanyDay;
 
 enum LeaveRequestStatusView { loading, loaded, error }
 
@@ -32,10 +34,10 @@ class LeaveRequestController extends ChangeNotifier {
     this.publicId, {
     required this.viewer,
     LeaveRequest? initial,
-    String? companyDate,
+    ScheduleCompanyDay? companyDay,
     this.changes,
   }) : _data = initial,
-       _companyDate = companyDate, // ignore: prefer_initializing_formals
+       _companyDay = companyDay, // ignore: prefer_initializing_formals
        _status = initial == null
            ? LeaveRequestStatusView.loading
            : LeaveRequestStatusView.loaded;
@@ -47,7 +49,7 @@ class LeaveRequestController extends ChangeNotifier {
 
   LeaveRequestStatusView _status;
   LeaveRequest? _data;
-  String? _companyDate;
+  ScheduleCompanyDay? _companyDay;
   String? _errorMessage;
   String? _actionMessage;
   bool _isRefreshing = false;
@@ -64,12 +66,15 @@ class LeaveRequestController extends ChangeNotifier {
   String? get actionMessage => _actionMessage;
   bool get isRefreshing => _isRefreshing;
   bool get isActing => _isActing;
-  String? get companyDate => _companyDate;
+
+  /// The company day: from the list that opened the screen, or (mine)
+  /// read with the request. Times in the history are shown in it.
+  ScheduleCompanyDay? get companyDay => _companyDay;
 
   /// R-6: Cancel request is offered.
   bool get canCancel {
     final request = _data;
-    final today = _companyDate;
+    final today = _companyDay?.date;
 
     return viewer == LeaveRequestViewer.mine &&
         request != null &&
@@ -221,12 +226,12 @@ class LeaveRequestController extends ChangeNotifier {
       // when the request read fails first.
       day?.ignore();
       final fresh = await _fetch();
-      final today = (await day)?.companyDay.date;
+      final today = (await day)?.companyDay;
       if (epoch == _actionEpoch) {
         _data = fresh;
       }
       if (today != null) {
-        _companyDate = today;
+        _companyDay = today;
       }
       _status = LeaveRequestStatusView.loaded;
       _errorMessage = null;
