@@ -19,7 +19,7 @@ abstract class _ReportList<T> extends PagedSearchController<T> {
   ScheduleCompanyDay? get companyDay => _companyDay;
   String? get myStaffId => _myStaffId;
 
-  Future<ReportsPage<T>> fetch(int page);
+  Future<ReportListPage<T>> fetch(int page);
 
   @override
   Future<PagedResult<T>?> fetchPage({
@@ -51,7 +51,7 @@ class ServiceReportsController extends _ReportList<ServiceReport> {
   ServiceReportsController(super.client);
 
   @override
-  Future<ReportsPage<ServiceReport>> fetch(int page) =>
+  Future<ReportListPage<ServiceReport>> fetch(int page) =>
       client.fetchServiceReports(page: page);
 
   @override
@@ -62,7 +62,7 @@ class IncidentsController extends _ReportList<IncidentReport> {
   IncidentsController(super.client);
 
   @override
-  Future<ReportsPage<IncidentReport>> fetch(int page) =>
+  Future<ReportListPage<IncidentReport>> fetch(int page) =>
       client.fetchIncidents(page: page);
 
   @override

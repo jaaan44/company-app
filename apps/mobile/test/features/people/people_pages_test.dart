@@ -103,6 +103,9 @@ void main() {
 
   Future<void> openDirectory(WidgetTester tester) async {
     await openMore(tester);
+    // On a default-size screen the row may be below More's fold.
+    await tester.ensureVisible(find.byKey(const Key('more-directory')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('more-directory')));
     await tester.pumpAndSettle();
   }
@@ -123,16 +126,16 @@ void main() {
 
   group('More (R-8)', () {
     testWidgets('lists exactly My profile, My status, Announcements, '
-        'Notifications, Leave, Staff directory, My work logs, Projects and '
-        'Clients', (tester) async {
+        'Notifications, Reports, Leave, Staff directory, My work logs, '
+        'Projects and Clients', (tester) async {
       await pumpApp(tester);
       await openMore(tester);
 
       expect(find.byType(MorePage), findsOneWidget);
       // Phase 29B adds My work logs, Phase 29C Projects and Clients, and
-      // Phase 30B My status, Phase 31 Leave and Phase 32 Announcements and
-      // Notifications (each phase adds its own rows).
-      expect(find.byType(ListTile), findsNWidgets(9));
+      // Phase 30B My status, Phase 31 Leave, Phase 32 Announcements and
+      // Notifications, Phase 33 Reports (each phase adds its own rows).
+      expect(find.byType(ListTile), findsNWidgets(10));
       // R-13: the subtitle is my current status.
       expect(
         find.descendant(
@@ -148,6 +151,7 @@ void main() {
       expect(find.text('Balances and requests'), findsOneWidget);
       expect(find.text('Announcements'), findsOneWidget);
       expect(find.text('Notifications'), findsOneWidget);
+      expect(find.text('Reports'), findsOneWidget);
       expect(find.text('Staff directory'), findsOneWidget);
       expect(find.text('My work logs'), findsOneWidget);
       expect(find.text('Projects'), findsOneWidget);

@@ -9,7 +9,8 @@ import 'package:mobile/features/my_status/presentation/my_status_widgets.dart'
 
 /// The `More` tab (Phase 28, R-8): only the real secondary areas — My
 /// profile, (Phase 30B, R-13) My status, (Phase 32, R-6/R-7)
-/// Announcements and Notifications, (Phase 31, R-1) Leave, Staff
+/// Announcements and Notifications, (Phase 33, R-1) Reports, (Phase 31,
+/// R-1) Leave, Staff
 /// directory, (Phase 29B) My work logs and (Phase 29C, R-27) Projects and
 /// Clients. Later phases add
 /// their own rows; there are no "coming soon" entries. Logout stays in the
@@ -102,6 +103,14 @@ class _MorePageState extends State<MorePage> {
             subtitle: const Text("What's new for you"),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.go('/more/notifications'),
+          ),
+          ListTile(
+            key: const Key('more-reports'),
+            leading: const Icon(Icons.assignment_outlined),
+            title: const Text('Reports'),
+            subtitle: const Text('Service and incident reports'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.go('/more/reports'),
           ),
           ListTile(
             key: const Key('more-leave'),

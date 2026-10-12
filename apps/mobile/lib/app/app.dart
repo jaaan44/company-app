@@ -19,6 +19,9 @@ import 'package:mobile/features/my_status/data/my_status_api_client.dart';
 import 'package:mobile/features/my_status/location/location_service.dart';
 import 'package:mobile/features/people/data/people_api_client.dart';
 import 'package:mobile/features/projects/data/projects_api_client.dart';
+import 'package:mobile/features/reports/data/photo_source.dart';
+import 'package:mobile/features/reports/data/reports_api_client.dart';
+import 'package:mobile/features/reports/state/report_changes.dart';
 import 'package:mobile/features/schedule/data/schedule_api_client.dart';
 import 'package:mobile/features/tasks/data/tasks_api_client.dart';
 import 'package:mobile/features/tasks/state/task_changes.dart';
@@ -43,7 +46,8 @@ class CompanyApp extends StatefulWidget {
   /// [tasksApiClient], [workLogsApiClient], [projectsApiClient],
   /// [clientsApiClient], [scheduleApiClient], [myStatusApiClient],
   /// [locationService], [leaveApiClient], [messagesApiClient],
-  /// [notificationsApiClient] and [announcementsApiClient] are exposed
+  /// [notificationsApiClient], [announcementsApiClient], [reportsApiClient]
+  /// and [photoSource] are exposed
   /// for tests to inject fakes — production code always omits them and
   /// gets the real Sanctum-backed implementations below.
   const CompanyApp({
@@ -62,6 +66,8 @@ class CompanyApp extends StatefulWidget {
     MessagesApiClient? messagesApiClient,
     NotificationsApiClient? notificationsApiClient,
     AnnouncementsApiClient? announcementsApiClient,
+    ReportsApiClient? reportsApiClient,
+    PhotoSource? photoSource,
   }) : _injectedAuthController = authController,
        _injectedHomeApiClient = homeApiClient,
        _injectedPeopleApiClient = peopleApiClient,
@@ -75,7 +81,9 @@ class CompanyApp extends StatefulWidget {
        _injectedLeaveApiClient = leaveApiClient,
        _injectedMessagesApiClient = messagesApiClient,
        _injectedNotificationsApiClient = notificationsApiClient,
-       _injectedAnnouncementsApiClient = announcementsApiClient;
+       _injectedAnnouncementsApiClient = announcementsApiClient,
+       _injectedReportsApiClient = reportsApiClient,
+       _injectedPhotoSource = photoSource;
 
   final AuthController? _injectedAuthController;
   final HomeApiClient? _injectedHomeApiClient;
@@ -91,6 +99,8 @@ class CompanyApp extends StatefulWidget {
   final MessagesApiClient? _injectedMessagesApiClient;
   final NotificationsApiClient? _injectedNotificationsApiClient;
   final AnnouncementsApiClient? _injectedAnnouncementsApiClient;
+  final ReportsApiClient? _injectedReportsApiClient;
+  final PhotoSource? _injectedPhotoSource;
 
   @override
   State<CompanyApp> createState() => _CompanyAppState();
@@ -165,6 +175,15 @@ class _CompanyAppState extends State<CompanyApp> {
   // Messages, Notifications and Announcements reload.
   final InboxChanges _inboxChanges = InboxChanges();
 
+  late final ReportsApiClient _reportsApiClient =
+      widget._injectedReportsApiClient ?? ReportsApiClient(_apiClient);
+
+  late final PhotoSource _photoSource =
+      widget._injectedPhotoSource ?? ImagePickerPhotoSource();
+
+  // Confirmed report changes (Phase 33, R-11): both lists reload.
+  final ReportChanges _reportChanges = ReportChanges();
+
   late final GoRouter _router = buildAppRouter(
     _authController,
     homeApiClient: _homeApiClient,
@@ -184,6 +203,9 @@ class _CompanyAppState extends State<CompanyApp> {
     notificationsApiClient: _notificationsApiClient,
     announcementsApiClient: _announcementsApiClient,
     inboxChanges: _inboxChanges,
+    reportsApiClient: _reportsApiClient,
+    photoSource: _photoSource,
+    reportChanges: _reportChanges,
   );
 
   @override
@@ -202,6 +224,7 @@ class _CompanyAppState extends State<CompanyApp> {
     _workLogChanges.dispose();
     _leaveChanges.dispose();
     _inboxChanges.dispose();
+    _reportChanges.dispose();
     _authController.dispose();
     super.dispose();
   }

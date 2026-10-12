@@ -25,10 +25,10 @@ class ReportsApiClient {
 
   final ApiClient _apiClient;
 
-  Future<ReportsPage<ServiceReport>> fetchServiceReports({int page = 1}) =>
+  Future<ReportListPage<ServiceReport>> fetchServiceReports({int page = 1}) =>
       _page(ReportKind.service, page, ServiceReport.fromJson);
 
-  Future<ReportsPage<IncidentReport>> fetchIncidents({int page = 1}) =>
+  Future<ReportListPage<IncidentReport>> fetchIncidents({int page = 1}) =>
       _page(ReportKind.incident, page, IncidentReport.fromJson);
 
   Future<ServiceReport> fetchServiceReport(String id) async => _one(
@@ -136,7 +136,7 @@ class ReportsApiClient {
     });
   }
 
-  Future<ReportsPage<T>> _page<T>(
+  Future<ReportListPage<T>> _page<T>(
     ReportKind kind,
     int page,
     T Function(Map<String, dynamic>) item,
@@ -148,7 +148,7 @@ class ReportsApiClient {
       ).toString(),
     );
 
-    return _parse(() => ReportsPage.fromJson(body, item));
+    return _parse(() => ReportListPage.fromJson(body, item));
   }
 
   String _path(ReportKind kind, String id) =>

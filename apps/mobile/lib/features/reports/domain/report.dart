@@ -501,15 +501,15 @@ class IncidentDraft {
 }
 
 /// One page of a report list with the company day (R-2c).
-class ReportsPage<T> {
-  const ReportsPage({required this.companyDay, required this.page});
+class ReportListPage<T> {
+  const ReportListPage({required this.companyDay, required this.page});
 
-  factory ReportsPage.fromJson(
+  factory ReportListPage.fromJson(
     Map<String, dynamic> json,
     T Function(Map<String, dynamic> json) item,
   ) {
     try {
-      return ReportsPage(
+      return ReportListPage(
         companyDay: ScheduleCompanyDay.fromJson(
           (json['meta'] as Map<String, dynamic>)['company_day']
               as Map<String, dynamic>,
