@@ -930,3 +930,33 @@ Internet → Cloudflare (proxied, SSL/TLS "Full (strict)")
 **Superseded/reaffirmed:**
 - DEC-063 W-5 is **extended**, not replaced: new token values, and the layout is now a tab shell instead of a top navigation.
 - DEC-019 and DEC-063 W-1 are reaffirmed.
+
+---
+
+### DEC-065 — Granular permissions and a Roles & permissions screen (Phase 35A–35C); 35A splits five `.manage` permissions
+
+**Status:** Accepted (2026-10-13), product owner: "approve as recommended" for `docs/phases/V1_PERMISSIONS_PROPOSAL.md` (options 1 and 2, decisions P-1…P-7).
+**Context:**
+- The product owner asked whether roles could allow an employee to add, edit, view and delete tasks.
+- Every module's writes sat behind one Administrator-only `.manage` permission.
+- Nothing could change a role's permissions without a developer.
+**Decision:**
+1. **P-1, placement:** Phase 35 becomes 35A (granular permissions), 35B (the Admin Backoffice Foundation, as planned) and 35C (the Roles & permissions screen). Each sub-phase is authorized separately; **35A is authorized**.
+2. **P-2, the split:**
+   - `staff.manage` → `staff.create` / `.update` / `.delete`;
+   - `clients.manage` → `clients.create` / `.update` / `.delete` (contacts follow `clients.update`);
+   - `projects.manage` → `projects.create` / `.update` / `.delete` / `.members` (milestones follow `projects.update`);
+   - `tasks.manage` → `tasks.create` / `.update` / `.delete`;
+   - `announcements.manage` → `announcements.view-all` / `.create` (drafting and editing) / `.publish` (publishing and archiving) / `.delete`.
+
+   The other modules keep `.view` / `.manage`. The old names are removed by a data migration that gives each role holding one all of its parts.
+3. **P-3, scope:** write permissions are company-wide. Every write includes view, which the 35C screen enforces when ticking. The relationship rules (project lead, assignee, creator, manager of record) are unchanged.
+4. **P-4:** the eight `hasRole(Administrator)` "sees or does everything" checks stay Administrator-only. The screen will explain them.
+5. **P-5:** 35C includes a minimal "Users and roles" list. It never changes your own role and never removes the last Administrator.
+6. **P-6:** add and edit screens for employees in the mobile app or portal are a separate, later sub-phase.
+7. **P-7:** plain labels; shipped defaults equal today's grants.
+8. **Locked in 35C:** `admin.access` and `authorization.manage` stay Administrator-only and can never be ticked for another role.
+**Rationale:** Permissions were already the primitive (DEC-004), with roles as bundles (DEC-028). Splitting the bundles is what lets a role get "add tasks" without "delete tasks". Doing it with today's defaults means no one's access changes until an Administrator chooses to change it.
+**Superseded/reaffirmed:**
+- DEC-028 and DEC-004 are reaffirmed: three fixed roles, one role per user, and the Administrator `Gate::before`.
+- The `.manage` permissions of DEC-030 (staff), DEC-031 (clients), DEC-033 (projects), DEC-034 (tasks) and DEC-037 (announcements) are **superseded** by the split.

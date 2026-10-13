@@ -13,7 +13,7 @@ use Illuminate\Validation\Rules\Enum;
  * Creating an Announcement (Phase 14) always produces a 'draft' —
  * publishing is a separate, explicit action
  * (AnnouncementController::publish()). Permission enforcement
- * (`announcements.manage`) happens at the route level, which runs before
+ * (`announcements.create`) happens at the route level, which runs before
  * this request is resolved.
  */
 class StoreAnnouncementRequest extends FormRequest

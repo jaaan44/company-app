@@ -13,7 +13,7 @@ class StoreProjectRequest extends FormRequest
 {
     /**
      * Permission enforcement happens at the route level
-     * (`can:projects.manage`), which runs before this request is
+     * (`can:projects.create`), which runs before this request is
      * resolved — mirroring the existing Staff/Clients Form Requests.
      */
     public function authorize(): bool

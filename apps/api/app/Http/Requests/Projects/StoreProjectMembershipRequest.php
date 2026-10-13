@@ -16,7 +16,7 @@ class StoreProjectMembershipRequest extends FormRequest
 {
     /**
      * Permission enforcement happens at the route level
-     * (`can:projects.manage`), which runs before this request is
+     * (`can:projects.members`), which runs before this request is
      * resolved.
      */
     public function authorize(): bool

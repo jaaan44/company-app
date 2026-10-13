@@ -24,7 +24,7 @@ use Illuminate\Validation\Rules\Enum;
  * The management surface for Announcements (Phase 14) — self-service
  * employee visibility lives entirely in MyAnnouncementController instead.
  * The entire surface (reads and writes alike) requires
- * `announcements.manage` (Administrator-only, via the centralized
+ * `announcements.view-all`/`create`/`publish`/`delete` (Administrator-only, via the centralized
  * Gate::before override) — enforced by route middleware
  * (routes/api/v1.php), not here. Unlike every prior module, there is no
  * companion `announcements.view` for Manager/Staff: ordinary employee

@@ -19,7 +19,7 @@ use Illuminate\Validation\Rules\Enum;
 
 /**
  * Contacts (Phase 8 — Clients & Contacts). Read endpoints require
- * `clients.view`; writes require `clients.manage` — enforced by route
+ * `clients.view`; writes require `clients.update` — enforced by route
  * middleware (routes/api/v1.php), not here. Contacts share Client's
  * permissions; there is no separate `contacts.*` permission pair (see
  * docs/phases/V1_PHASE_08_DEFINITION.md). Create/update/delete are

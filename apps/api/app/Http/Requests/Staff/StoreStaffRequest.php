@@ -18,7 +18,7 @@ class StoreStaffRequest extends FormRequest
 
     /**
      * Permission enforcement happens at the route level
-     * (`can:staff.manage`), which runs before this request is resolved —
+     * (`can:staff.create`), which runs before this request is resolved —
      * mirroring the existing Organization Structure Form Requests.
      */
     public function authorize(): bool

@@ -21,7 +21,7 @@ use Illuminate\Validation\Rules\Enum;
 
 /**
  * Projects (Phase 10 — Projects & Project Membership). Writes require
- * `projects.manage` (Administrator-only, route middleware). Reads are
+ * `projects.create`/`projects.update`/`projects.delete` (Administrator-only, route middleware). Reads are
  * *not* gated by a bare `can:projects.view` route middleware — visibility
  * is scoped in-controller (AuthorizesProjectVisibility): an Administrator/
  * Manager (`projects.view`) sees every Project, an ordinary Staff member

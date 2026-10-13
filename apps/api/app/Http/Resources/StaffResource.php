@@ -15,7 +15,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * (Administrator/Manager/Staff). The one exception is the linked User
  * account's own identity, which is administrative/management
  * information, not directory information — that's only included for a
- * requester who also holds `staff.manage` (see `user` below);
+ * requester who also holds `staff.update` (see `user` below);
  * `has_user_account` (a plain boolean) is always safe to expose.
  *
  * `operational_status` (Phase 9, DEC-032) is likewise always safe to
@@ -68,7 +68,7 @@ class StaffResource extends JsonResource
                 fn () => $this->latestOperationalStatus?->status->value,
             ),
             'user' => $this->when(
-                $request->user()?->can('staff.manage') ?? false,
+                $request->user()?->can('staff.update') ?? false,
                 fn () => $this->whenLoaded('user', fn () => $this->user === null ? null : [
                     'public_id' => $this->user->public_id,
                     'email' => $this->user->email,

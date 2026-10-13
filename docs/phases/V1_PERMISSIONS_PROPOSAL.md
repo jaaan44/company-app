@@ -1,6 +1,6 @@
 # Proposal — Granular Permissions and a Roles & Permissions Screen
 
-**Status:** PROPOSED (2026-10-13). **Not authorized.** No code has been written.
+**Status:** APPROVED (2026-10-13, "approve as recommended": P-1…P-7 as recommended; DEC-065). **35A authorized and implemented** (§11); 35B and 35C need their own authorization.
 **Requested by the product owner:** "write a proposal for options 1 and 2". This came after asking "is it part of the roadmap to allow roles for each user type? like roles for allowing an employee to add, edit, view and delete tasks etc?"
 **Options proposed:**
 - **Option 1:** finer permissions, so that add, edit and delete are separate.
@@ -187,3 +187,47 @@ On authorization of 35A (and the decisions above):
 2. Update the ROADMAP and this document's status.
 3. Implement 35A only, then stop for review and UAT, as with every phase.
 4. 35B and 35C each need their own authorization.
+
+## 11. Sub-phase 35A as implemented (2026-10-13)
+
+**Authorized:** "approve as recommended". No API shape, endpoint, screen or default grant changed.
+
+**The split** (`RolePermissionSeeder`; 23 → 35 permissions):
+
+| Endpoint | Before | Now |
+|---|---|---|
+| `POST /staff` | `staff.manage` | `staff.create` |
+| `PUT/PATCH /staff/{id}` | `staff.manage` | `staff.update` |
+| `DELETE /staff/{id}` | `staff.manage` | `staff.delete` |
+| a staff record's linked `user` block | `staff.manage` | `staff.update` |
+| `POST /clients` | `clients.manage` | `clients.create` |
+| `PUT/PATCH /clients/{id}` | `clients.manage` | `clients.update` |
+| `DELETE /clients/{id}` | `clients.manage` | `clients.delete` |
+| contacts `POST`, `PUT/PATCH`, `DELETE` | `clients.manage` | `clients.update` |
+| `POST /projects` | `projects.manage` | `projects.create` |
+| `PUT/PATCH /projects/{id}` | `projects.manage` | `projects.update` |
+| `DELETE /projects/{id}` | `projects.manage` | `projects.delete` |
+| `/projects/{id}/members` writes | `projects.manage` | `projects.members` |
+| milestone writes (besides the project lead) | `projects.manage` | `projects.update` |
+| `POST /tasks` (besides the project lead) | `tasks.manage` | `tasks.create` |
+| `PUT/PATCH /tasks/{id}`, all fields (besides the lead and the assignee's status) | `tasks.manage` | `tasks.update` |
+| `DELETE /tasks/{id}` | `tasks.manage` | `tasks.delete` |
+| `GET /announcements`, `GET /announcements/{id}`, the acknowledgement count | `announcements.manage` | `announcements.view-all` |
+| `POST /announcements`, `PUT/PATCH /announcements/{id}` | `announcements.manage` | `announcements.create` |
+| `POST .../publish`, `POST .../archive` | `announcements.manage` | `announcements.publish` |
+| `DELETE /announcements/{id}` | `announcements.manage` | `announcements.delete` |
+
+**Migration** `2026_10_13_000000_split_manage_permissions` is a data migration in one transaction:
+- every role holding an old permission gets all of its parts, then the old permission is removed;
+- on a fresh database it does nothing, and the seeder makes the catalog;
+- `down()` restores an old permission only to a role holding every one of its parts.
+
+On staging no role holds any of the five (only Administrator, through `Gate::before`), so nothing is granted to anyone.
+
+**The "write includes view" rule (P-3)** is a rule for granting. It is applied by the shipped defaults and, from 35C, by the screen. 35A adds no server-side coupling.
+
+**UAT scenarios (all `NOT RUN`):**
+- **UAT-35A-01:** after the deploy, the read-only check script shows 35 permissions, none of the five old names, and the same Manager and Staff grants as before.
+- **UAT-35A-02:** as Staff (Lia), in the app and the portal: tasks, changing a task's status, projects, clients, the directory and announcements work as before.
+- **UAT-35A-03:** as Manager (Ben): all tasks, all projects, team leave and the directory work as before.
+- **UAT-35A-04:** as an Administrator: sign-in to the Admin Backoffice works, and the portal shows Admin.

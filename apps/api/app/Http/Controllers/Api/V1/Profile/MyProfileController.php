@@ -26,7 +26,7 @@ use Illuminate\Http\Request;
  * `staff` is the existing Phase 7 `StaffResource` with the same eager
  * loads as `StaffController`, so it is field-for-field identical to
  * `GET /api/v1/staff/{public_id}` for the same requester, including its
- * `staff.manage`-only `user` block. No new field is exposed.
+ * `staff.update`-only `user` block. No new field is exposed.
  */
 class MyProfileController extends Controller
 {

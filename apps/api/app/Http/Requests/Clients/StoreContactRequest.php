@@ -11,7 +11,7 @@ class StoreContactRequest extends FormRequest
 {
     /**
      * Permission enforcement happens at the route level
-     * (`can:clients.manage`), which runs before this request is
+     * (`can:clients.update`), which runs before this request is
      * resolved — mirroring the existing Staff/Organization Form Requests.
      */
     public function authorize(): bool

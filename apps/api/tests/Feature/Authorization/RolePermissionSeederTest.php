@@ -59,7 +59,10 @@ class RolePermissionSeederTest extends TestCase
         $this->seed(RolePermissionSeeder::class);
 
         $this->assertTrue(Permission::query()->where('name', 'staff.view')->exists());
-        $this->assertTrue(Permission::query()->where('name', 'staff.manage')->exists());
+        foreach (['staff.create', 'staff.update', 'staff.delete'] as $name) { // split from staff.manage in Phase 35A
+            $this->assertTrue(Permission::query()->where('name', $name)->exists(), $name);
+        }
+        $this->assertFalse(Permission::query()->where('name', 'staff.manage')->exists());
     }
 
     public function test_manager_and_staff_are_granted_staff_view(): void
@@ -71,8 +74,12 @@ class RolePermissionSeederTest extends TestCase
 
         $this->assertTrue($manager->permissions->contains('name', 'staff.view'));
         $this->assertTrue($staff->permissions->contains('name', 'staff.view'));
-        $this->assertFalse($manager->permissions->contains('name', 'staff.manage'));
-        $this->assertFalse($staff->permissions->contains('name', 'staff.manage'));
+        foreach (['staff.create', 'staff.update', 'staff.delete'] as $name) {
+            $this->assertFalse($manager->permissions->contains('name', $name), $name);
+        }
+        foreach (['staff.create', 'staff.update', 'staff.delete'] as $name) {
+            $this->assertFalse($staff->permissions->contains('name', $name), $name);
+        }
     }
 
     public function test_it_creates_the_phase_8_clients_permissions(): void
@@ -80,7 +87,10 @@ class RolePermissionSeederTest extends TestCase
         $this->seed(RolePermissionSeeder::class);
 
         $this->assertTrue(Permission::query()->where('name', 'clients.view')->exists());
-        $this->assertTrue(Permission::query()->where('name', 'clients.manage')->exists());
+        foreach (['clients.create', 'clients.update', 'clients.delete'] as $name) { // split from clients.manage in Phase 35A
+            $this->assertTrue(Permission::query()->where('name', $name)->exists(), $name);
+        }
+        $this->assertFalse(Permission::query()->where('name', 'clients.manage')->exists());
     }
 
     public function test_manager_and_staff_are_granted_clients_view(): void
@@ -92,8 +102,12 @@ class RolePermissionSeederTest extends TestCase
 
         $this->assertTrue($manager->permissions->contains('name', 'clients.view'));
         $this->assertTrue($staff->permissions->contains('name', 'clients.view'));
-        $this->assertFalse($manager->permissions->contains('name', 'clients.manage'));
-        $this->assertFalse($staff->permissions->contains('name', 'clients.manage'));
+        foreach (['clients.create', 'clients.update', 'clients.delete'] as $name) {
+            $this->assertFalse($manager->permissions->contains('name', $name), $name);
+        }
+        foreach (['clients.create', 'clients.update', 'clients.delete'] as $name) {
+            $this->assertFalse($staff->permissions->contains('name', $name), $name);
+        }
     }
 
     public function test_it_creates_the_phase_9_staff_operations_permissions(): void
@@ -132,7 +146,10 @@ class RolePermissionSeederTest extends TestCase
         $this->seed(RolePermissionSeeder::class);
 
         $this->assertTrue(Permission::query()->where('name', 'projects.view')->exists());
-        $this->assertTrue(Permission::query()->where('name', 'projects.manage')->exists());
+        foreach (['projects.create', 'projects.update', 'projects.delete', 'projects.members'] as $name) { // split from projects.manage in Phase 35A
+            $this->assertTrue(Permission::query()->where('name', $name)->exists(), $name);
+        }
+        $this->assertFalse(Permission::query()->where('name', 'projects.manage')->exists());
     }
 
     public function test_only_manager_is_granted_projects_view_not_staff(): void
@@ -148,8 +165,12 @@ class RolePermissionSeederTest extends TestCase
         // docs/phases/V1_PHASE_10_DEFINITION.md).
         $this->assertTrue($manager->permissions->contains('name', 'projects.view'));
         $this->assertFalse($staff->permissions->contains('name', 'projects.view'));
-        $this->assertFalse($manager->permissions->contains('name', 'projects.manage'));
-        $this->assertFalse($staff->permissions->contains('name', 'projects.manage'));
+        foreach (['projects.create', 'projects.update', 'projects.delete', 'projects.members'] as $name) {
+            $this->assertFalse($manager->permissions->contains('name', $name), $name);
+        }
+        foreach (['projects.create', 'projects.update', 'projects.delete', 'projects.members'] as $name) {
+            $this->assertFalse($staff->permissions->contains('name', $name), $name);
+        }
     }
 
     public function test_it_creates_the_phase_11_tasks_permissions(): void
@@ -157,7 +178,10 @@ class RolePermissionSeederTest extends TestCase
         $this->seed(RolePermissionSeeder::class);
 
         $this->assertTrue(Permission::query()->where('name', 'tasks.view')->exists());
-        $this->assertTrue(Permission::query()->where('name', 'tasks.manage')->exists());
+        foreach (['tasks.create', 'tasks.update', 'tasks.delete'] as $name) { // split from tasks.manage in Phase 35A
+            $this->assertTrue(Permission::query()->where('name', $name)->exists(), $name);
+        }
+        $this->assertFalse(Permission::query()->where('name', 'tasks.manage')->exists());
     }
 
     public function test_only_manager_is_granted_tasks_view_not_staff(): void
@@ -172,8 +196,12 @@ class RolePermissionSeederTest extends TestCase
         // client-engagement sensitivity as their Project.
         $this->assertTrue($manager->permissions->contains('name', 'tasks.view'));
         $this->assertFalse($staff->permissions->contains('name', 'tasks.view'));
-        $this->assertFalse($manager->permissions->contains('name', 'tasks.manage'));
-        $this->assertFalse($staff->permissions->contains('name', 'tasks.manage'));
+        foreach (['tasks.create', 'tasks.update', 'tasks.delete'] as $name) {
+            $this->assertFalse($manager->permissions->contains('name', $name), $name);
+        }
+        foreach (['tasks.create', 'tasks.update', 'tasks.delete'] as $name) {
+            $this->assertFalse($staff->permissions->contains('name', $name), $name);
+        }
     }
 
     public function test_only_manager_is_granted_work_logs_view_not_staff(): void
@@ -230,7 +258,10 @@ class RolePermissionSeederTest extends TestCase
     {
         $this->seed(RolePermissionSeeder::class);
 
-        $this->assertTrue(Permission::query()->where('name', 'announcements.manage')->exists());
+        foreach (['announcements.view-all', 'announcements.create', 'announcements.publish', 'announcements.delete'] as $name) { // split from announcements.manage in Phase 35A
+            $this->assertTrue(Permission::query()->where('name', $name)->exists(), $name);
+        }
+        $this->assertFalse(Permission::query()->where('name', 'announcements.manage')->exists());
     }
 
     public function test_neither_manager_nor_staff_is_granted_announcements_manage(): void
@@ -245,8 +276,12 @@ class RolePermissionSeederTest extends TestCase
         // served by /me/announcements (a domain check), and Manager holds
         // no special Announcement authority in V1 (see docs/phases/
         // V1_PHASE_14_DEFINITION.md).
-        $this->assertFalse($manager->permissions->contains('name', 'announcements.manage'));
-        $this->assertFalse($staff->permissions->contains('name', 'announcements.manage'));
+        foreach (['announcements.view-all', 'announcements.create', 'announcements.publish', 'announcements.delete'] as $name) {
+            $this->assertFalse($manager->permissions->contains('name', $name), $name);
+        }
+        foreach (['announcements.view-all', 'announcements.create', 'announcements.publish', 'announcements.delete'] as $name) {
+            $this->assertFalse($staff->permissions->contains('name', $name), $name);
+        }
     }
 
     public function test_running_it_twice_does_not_duplicate_rows(): void
@@ -257,7 +292,7 @@ class RolePermissionSeederTest extends TestCase
         $manager = Role::query()->where('name', Role::MANAGER)->firstOrFail();
 
         $this->assertSame(3, Role::query()->count());
-        $this->assertSame(23, Permission::query()->count());
+        $this->assertSame(35, Permission::query()->count());
         $this->assertSame(1, $manager->permissions()->where('name', 'organization.view')->count());
         $this->assertSame(1, $manager->permissions()->where('name', 'staff.view')->count());
         $this->assertSame(1, $manager->permissions()->where('name', 'clients.view')->count());

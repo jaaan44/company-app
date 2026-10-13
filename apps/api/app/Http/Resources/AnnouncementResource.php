@@ -19,7 +19,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * `acknowledgements` scoped to that one Staff member; it is absent
  * (not `null`) on the management surface, where "the requesting user" is
  * not a meaningful acknowledger. `acknowledgements_count` is the opposite:
- * a plain accountability count, only exposed to an `announcements.manage`
+ * a plain accountability count, only exposed to an `announcements.view-all`
  * holder (mirrors `ClientResource.contacts_count`) — never a per-staff
  * read-rate breakdown.
  *
@@ -54,7 +54,7 @@ class AnnouncementResource extends JsonResource
                 fn () => $this->acknowledgements->first()?->created_at?->toIso8601String(),
             ),
             'acknowledgements_count' => $this->when(
-                $request->user()?->can('announcements.manage') ?? false,
+                $request->user()?->can('announcements.view-all') ?? false,
                 fn () => $this->whenCounted('acknowledgements'),
             ),
             'created_at' => $this->created_at?->toIso8601String(),
