@@ -1436,3 +1436,14 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | Runbook §2, deploy `d6dd29a` → `d3cf84d` | Manual (operator) | PASS | Fast-forward; backup `-- Dump completed on 2026-10-13 3:39:36` (149,178 bytes); `BUILD OK` (`npm ci` and `npm run build` ran once, and the second image reused the cache). Block 4 (migrations, timezone, assets in both containers, loopback port, fresh containers) and Block 5 (redirects, CSS `200 text/css`, API `401`s, `up 200`) were reported OK by the operator; the output was not pasted. |
 | UAT-34A-01…06 | UAT (product owner) | PASS | Desktop and phone browsers on staging; recorded in `UAT_LOG.md`. 34A-05 suspended Kai and restored him to active, as reported. The `tinker` output was not pasted. |
 
+## Phase 34B — Staff Web Portal: Work (2026-10-13)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Backend tests | Automated | PASS | 24 new: `WorkPagesTest` 20, `FormatTest` +4. 1,308/1,308. |
+| Pint / PHPStan | Automated | PASS | Clean. No Composer or npm dependency change. |
+| Mutation checks | Manual (AI) | PASS | 11 run. 10 caught at first; the survivor (the Home tile link) exposed a weak assertion, which was tightened and now catches it. |
+| Browser checks (Playwright + Chromium, axe-core 4.10.2) | Manual (AI), local server, scratch SQLite | PASS | 72/72 in light and dark: tasks, a confirmed status change, Log work with validation, edit, delete with confirm, projects → client, clients paged and searched, schedule weeks and an entry, 320 px on 6 pages, no JS errors, **axe AA 0 violations** on 10 page states × 2. Found and fixed: the Schedule wrote `?from=` for the current week. |
+| Staging image build | CI | Pending | `staging-images.yml` on the PR. |
+| MySQL / staging / UAT | — | NOT RUN | UAT-34B-01…07 `NOT RUN`. |
+

@@ -184,3 +184,44 @@ On the product owner's approval of W-1…W-10 (as recommended or amended) and au
 
 Run these with `docs/testing/PHASE_34A_UAT_PREPARATION.md`.
 
+## 12. Sub-phase 34B as implemented (2026-10-13)
+
+**Authorized** by the product owner ("proceed with 34B"). No API, migration or permission change.
+
+**Screens** (each a Livewire component calling `/api/v1` in-process, mirroring the mobile screen named):
+- **Tasks** `/app/tasks` (Phase 29A):
+  - Open and Done, 25 per page;
+  - the status chip, and the due label ("Due today", "Overdue · 3 Sep", "Due 12 Oct") judged against the API's company day.
+- **Task** `/app/tasks/{id}`:
+  - status, priority, due date, project (a link), created by, completed date (company timezone), description;
+  - a **confirmed** status change among To do / In progress / Blocked / Completed, never Cancelled. A cancelled task is read-only. A `403` shows the API's reason and locks the control;
+  - **Log work**.
+- **My work logs** `/app/work-logs` (Phase 29B): grouped by day (Today, Yesterday, "Wed 7 Oct"), with durations.
+- **Log work / Edit work log** `/app/work-logs/new[?task=]`, `/app/work-logs/{id}/edit`:
+  - the target is one of my open tasks or one of my projects that isn't closed;
+  - the date is no later than the company today and within the last year;
+  - hours and minutes (up to 24 h), and a description of up to 2,000 characters;
+  - the same checks and messages as the mobile form, and the API's `422` errors land on the same fields;
+  - edit changes only the date, time and description; Delete asks for confirmation.
+- **Projects** `/app/projects` (Phase 29C, R-20):
+  - the projects I'm a member of, for every role, with search;
+  - **Project** `/app/projects/{id}`: client (a link), my role, dates, description, members (links to Staff), and milestones.
+- **Clients** `/app/clients`: active clients, with search. **Client** `/app/clients/{id}`: contact details with Copy, and active contacts with Primary.
+- **Schedule** `/app/schedule` (Phase 30A):
+  - seven days from the company today, with Previous week / Next week / Today;
+  - meetings, open tasks due and approved leave per day, in company time;
+  - tasks and meetings link to their pages; leave doesn't link (34C).
+  - **Entry** `/app/schedule/entries/{id}`: when, project, organizer, people, description.
+- **Home:** the My tasks tile and the Today rows now link to their pages, as on mobile. Messages and Notifications follow in 34D.
+- **Navigation:** Home, Tasks, Schedule, Work logs, Projects, Clients, Staff directory, My profile, on its own row.
+
+**Status chips:** one shared component (`x-portal.chip`). Every status shows its text, and its colour comes from one tone per status concept (06 "Status presentation").
+
+**UAT scenarios (all `NOT RUN`):**
+- **UAT-34B-01:** Tasks Open and Done, with due labels matching the phone.
+- **UAT-34B-02:** a task: change status, and see the phone show the same; a cancelled task is read-only.
+- **UAT-34B-03:** log work from a task and from the form's picker (a project), and check the form's messages.
+- **UAT-34B-04:** edit and delete a work log; the phone shows the same.
+- **UAT-34B-05:** Projects (mine only, search), a project, its client and members.
+- **UAT-34B-06:** Clients (search) and a client with contacts.
+- **UAT-34B-07:** Schedule week, Next / Previous / Today, an entry; Home's links; dark mode, zoom and a phone browser on the new pages.

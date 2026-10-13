@@ -1,0 +1,88 @@
+@php
+    use App\Support\Portal\Format;
+    use App\Livewire\Portal\TaskShow;
+    use Carbon\CarbonImmutable;
+@endphp
+<div>
+    <x-portal.back :href="route('portal.tasks')">Tasks</x-portal.back>
+
+    @if ($noProfile)
+        <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
+    @elseif ($errorMessage)
+        <h1 class="mb-4 text-2xl font-semibold">Task</h1>
+        <x-portal.error :message="$errorMessage" />
+    @elseif ($task)
+        @php
+            $companyDate = $companyDay['date'] ?? null;
+            $dueState = Format::taskDueState($task, $companyDate);
+            $dueValue = $task['due_date'] === null ? null : Format::date($task['due_date']).match ($dueState) {
+                'overdue' => ' · Overdue',
+                'due_today' => ' · Due today',
+                default => '',
+            };
+        @endphp
+        <h1 class="text-2xl font-semibold">{{ $task['title'] }}</h1>
+        <p class="mt-2 flex flex-wrap items-center gap-3">
+            <x-portal.chip :tone="Format::tone($task['status'])">{{ Format::taskStatus($task['status']) }}</x-portal.chip>
+            <span>Priority: {{ Format::priority($task['priority']) }}</span>
+        </p>
+
+        <section aria-labelledby="task-status" class="mt-6 rounded-xl border border-line bg-raised p-5">
+            <h2 id="task-status" class="mb-3 font-semibold">Status</h2>
+            @if ($task['status'] === 'cancelled')
+                <p class="text-muted">This task was cancelled. Its status can't be changed here.</p>
+            @else
+                <div role="group" aria-label="Change status" class="flex flex-wrap gap-2">
+                    @foreach (TaskShow::SELECTABLE as $status)
+                        <button type="button" wire:click="setStatus('{{ $status }}')" aria-pressed="{{ $task['status'] === $status ? 'true' : 'false' }}"
+                                @disabled($task['status'] === $status || $locked) wire:loading.attr="disabled" wire:target="setStatus"
+                                class="inline-flex min-h-11 items-center rounded-md border px-4 {{ $task['status'] === $status ? 'border-accent bg-accent-soft font-semibold text-accent-ink' : 'border-line hover:bg-hover disabled:opacity-50' }}">
+                            {{ Format::taskStatus($status) }}
+                        </button>
+                    @endforeach
+                </div>
+                <p wire:loading wire:target="setStatus" class="mt-3 text-sm text-muted">Saving…</p>
+                <div aria-live="polite">
+                    @if ($savedMessage)
+                        <p role="status" class="mt-3 text-sm">{{ $savedMessage }}</p>
+                    @endif
+                    @if ($saveMessage)
+                        <p role="alert" class="mt-3 text-sm font-medium text-danger">{{ $saveMessage }}</p>
+                    @endif
+                </div>
+                <a href="{{ route('portal.work-logs.new', ['task' => $task['public_id']]) }}"
+                   class="mt-4 inline-flex min-h-11 items-center rounded-md border border-line px-4 hover:bg-hover">Log work</a>
+            @endif
+        </section>
+
+        <section aria-labelledby="task-details" class="mt-6 rounded-xl border border-line bg-raised px-5">
+            <h2 id="task-details" class="pt-4 font-semibold">Details</h2>
+            <dl>
+                <x-portal.info-row label="Due date" :value="$dueValue" />
+                <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-line py-3">
+                    <dt class="text-sm text-muted">Project</dt>
+                    <dd class="font-medium">
+                        @if ($task['project'] ?? null)
+                            <a href="{{ route('portal.project', $task['project']['public_id']) }}" class="inline-flex min-h-11 items-center text-accent-ink underline-offset-4 hover:underline">{{ $task['project']['name'] }}</a>
+                        @else
+                            Independent task
+                        @endif
+                    </dd>
+                </div>
+                <x-portal.info-row label="Created by" :value="$task['created_by']['display_name'] ?? null" />
+                @if ($task['completed_at'] ?? null)
+                    <x-portal.info-row label="Completed" :value="Format::date(CarbonImmutable::parse($task['completed_at'])->setTimezone($companyDay['timezone'] ?? 'UTC')->toDateString())" />
+                @endif
+            </dl>
+        </section>
+
+        <section aria-labelledby="task-description" class="mt-6 rounded-xl border border-line bg-raised p-5">
+            <h2 id="task-description" class="mb-2 font-semibold">Description</h2>
+            @if (filled($task['description'] ?? null))
+                <p class="whitespace-pre-line">{{ $task['description'] }}</p>
+            @else
+                <p class="text-muted">No description.</p>
+            @endif
+        </section>
+    @endif
+</div>

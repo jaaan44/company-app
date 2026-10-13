@@ -4,6 +4,16 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-13 — Phase 34B: Staff Web Portal, Work
+- **Web pages, all through the existing API, mirroring the mobile screens:**
+  - Tasks and a task, with a confirmed status change and Log work;
+  - My work logs, with Log work and Edit (create, update, delete);
+  - Projects (mine) and a project; Clients and a client;
+  - the Schedule week and an entry.
+- **Home:** the My tasks tile and the Today rows link to their pages.
+- **Shared components:** a status chip, pager, search and back link; the navigation has its own row.
+- **Tests:** 24 new; 1,284 → 1,308/1,308. 72/72 browser checks, including axe AA with no violations. UAT-34B-01…07 `NOT RUN`.
+
 ### 2026-10-13 — Phase 34A closed (UAT PASS)
 - Staging deployed at `d3cf84d`. UAT-34A-01…06 **PASS**, reported by the product owner in desktop and phone browsers. Phase 34A, the Staff Web Portal foundation, is formally closed. UAT_LOG, TEST_STATUS, ROADMAP, CURRENT_STATE and the handoff updated.
 

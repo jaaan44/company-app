@@ -696,5 +696,9 @@ No migration, route or permission change.
   - In the staging images: a `node:22-alpine` stage builds them, and both the app and nginx images copy `public/build`.
   - Tests use `withoutVite()`.
 - **CI:** `.github/workflows/staging-images.yml` builds both staging images and checks their assets and upload limits.
-- **34A screens:** Home, My profile, Staff directory and a colleague. 34B–34E (Work, HR & Operations, Communication, Reports) are planned in `docs/phases/V1_PHASE_34_DEFINITION.md` and not yet authorized.
+- **34A screens:** Home, My profile, Staff directory and a colleague.
+- **34B screens** (implemented): Tasks and a task (confirmed status change), My work logs with Log work / Edit (create, update, delete through `/me/work-logs`), Projects and a project, Clients and a client, the Schedule week and an entry.
+  - Later pages use one wrapper view, `portal.page`, plus a component.
+  - Shared Blade components: `x-portal.chip`, `pager`, `search`, `back`, `info-row`, `error`.
+- **34C–34E** (HR & Operations, Communication, Reports) are planned in `docs/phases/V1_PHASE_34_DEFINITION.md` and not yet authorized.
 
