@@ -151,3 +151,10 @@ The combined UAT runbook for 30B + 31–33 (DEC-059). After UAT and closure, the
 - **Fixed** in `d6dd29a` (PR #83): only `local-dev.ini` is excluded. Verified with BuildKit's pattern matcher, not with a real build.
 - **Not run:** the real image build. The operator's re-run of the runbook's §2 is the check.
 - **Known gap (not fixed, outside scope):** CI does not build the staging images, so a broken `COPY` or ignore rule is first seen on the VPS. A CI job running `docker build -f docker/php/Dockerfile.staging .` would catch it; it needs its own authorization.
+
+## Addendum — UAT and Formal Closure (2026-10-13)
+
+- **Deployed:** staging `d6dd29a` and the APK built at `d6dd29a` (combined round, `docs/testing/COMBINED_UAT_PREPARATION.md`; preparation results in `docs/testing/TEST_STATUS.md`).
+- **UAT-33-01…08: PASS**, reported by the product owner after running each scenario on a physical Android 12+ device against staging. Recorded by the AI on that report.
+- **Phase 33 is formally closed.** UAT data stays on staging; any cleanup needs its own authorization.
+
