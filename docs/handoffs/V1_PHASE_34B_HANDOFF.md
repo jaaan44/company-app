@@ -1,6 +1,6 @@
 # Phase 34B — Staff Web Portal: Work — Handoff
 
-**Status: implemented; awaiting merge, staging deployment and UAT.** UAT-34B-01…07 are `NOT RUN`. 34C–34E are not authorized.
+**Status: implemented and merged (PR #92, `2a7bca9`); awaiting staging deployment and UAT.** UAT-34B-01…07 are `NOT RUN`. 34C–34E are not authorized.
 
 ## 1. Phase Identification
 
@@ -159,3 +159,14 @@ See §5.
 1. Merge on green CI.
 2. Deploy to staging and run UAT-34B.
 3. Then 34C (HR & Operations) needs its own authorization.
+
+## Addendum — Merge and UAT runbook (2026-10-13)
+
+- **PR #92 merged as `2a7bca9`.** CI was green, including the staging image build.
+- **Runbook `docs/testing/PHASE_34B_UAT_PREPARATION.md`:**
+  - the deploy `d3cf84d` → `2a7bca9`, with no migration;
+  - the data script `uat34b_data.php` (SHA-256 `cef6db23…`), which reuses the UAT30B accounts and makes no password. It seeds a client with contacts, a project with members and milestones, seven tasks for Lia, four work logs and three schedule entries.
+  - UAT-34B-01…07.
+- **The script was rehearsed on scratch SQLite:** `plan`, `seed` and `verify` gave the expected output; a re-seed is idempotent; a work log made in the app is kept; and task statuses reset.
+- **Not run:** the deployment and UAT.
+

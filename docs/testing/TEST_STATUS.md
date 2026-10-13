@@ -1447,3 +1447,11 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | Staging image build | CI | Pending | `staging-images.yml` on the PR. |
 | MySQL / staging / UAT | — | NOT RUN | UAT-34B-01…07 `NOT RUN`. |
 
+## Phase 34B — UAT preparation (2026-10-13)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `uat34b_data.php` rehearsal | Manual (AI), scratch SQLite | PASS | After the 30B seed: `plan` shows 3 accounts and no UAT34B data; `seed` and `verify` print the runbook's §4 lines (tasks open 5 with overdue 1 and due today 1, done 2; work logs 4 / 285 min; project and client found; schedule week 5). A re-seed is idempotent; a work log made in the app is kept; a changed task status is reset. |
+| Embedded script integrity | Manual (AI) | PASS | The extracted `php` block matches the rehearsed file byte for byte; SHA-256 `cef6db23…` in §6. |
+| Deployment / data / UAT | — | NOT RUN | Operator and product owner. |
+
