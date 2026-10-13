@@ -4,6 +4,12 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-13 — Proposal: granular permissions and a Roles & permissions screen
+- New `docs/phases/V1_PERMISSIONS_PROPOSAL.md`, written at the product owner's request ("write a proposal for options 1 and 2").
+  - Option 1 splits `.manage` into add, edit and delete permissions for tasks, projects, clients, staff and announcements, with today's behaviour kept.
+  - Option 2 adds an Administration → Roles & permissions screen in the Admin Backoffice, audited, with locked access permissions.
+  - Proposed as sub-phases 35A–35C, with decisions P-1…P-7. **Not authorized**; no code changed.
+
 ### 2026-10-13 — Phase 34F deployed and closed (UAT PASS)
 - Staging deployed at `b682935` (output pasted). UAT-34F-01…07 **PASS**, reported by the product owner on a phone browser and a computer, including installing to the home screen. Phase 34F, the Staff Web Portal as an app, is formally closed.
 
