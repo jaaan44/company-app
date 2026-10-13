@@ -4,6 +4,9 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-13 — Combined UAT preparation completed on staging
+- Operator ran runbook §2–§6: staging deployed at `d6dd29a`; host nginx `client_max_body_size 12m` for the Company App site (3 MB upload reaches Laravel); APK at `d6dd29a` built, permission gate passed (no new permission), installed; UAT30B accounts and the 31–33 data seeded and verified. Details in TEST_STATUS. All UAT remains `NOT RUN`.
+
 ### 2026-10-13 — Fix: staging app image could not copy `uploads.ini`
 - **Found by the operator** in the combined runbook's §2: at `1d4f437`, `docker compose … build app` failed with `"/docker/php/conf.d/uploads.ini": not found`. The root `.dockerignore` (Phase 24) excluded all of `docker/php/conf.d`, which Phase 33's new `COPY` needed. The `nginx` image rebuilt and restarted; the `app` container kept its old 30A image (hence a `404` on `/me/team-leave-requests` and `2M 8M` limits). No data was touched.
 - **Fix:** exclude only `docker/php/conf.d/local-dev.ini`. Checked with `moby/patternmatcher` v0.6.0 (BuildKit's matcher), against both revisions: `uploads.ini` is now in the build context, and `local-dev.ini`, `entrypoint.sh`, `.env` files, `apps/mobile` and `docs` stay out. A real image build was not possible here (no Docker daemon); the operator's re-run of §2 is the check.
