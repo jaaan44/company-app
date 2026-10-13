@@ -1,15 +1,11 @@
 @php use App\Support\Portal\Format; @endphp
 <div>
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h1 class="text-2xl font-semibold">My work logs</h1>
+        <h1 class="sr-only">My work logs</h1>
         @unless ($noProfile)
-            <a href="{{ route('portal.work-logs.new') }}" class="inline-flex min-h-11 items-center rounded-md bg-accent px-4 font-medium text-on-accent hover:opacity-90">Log work</a>
+            <x-portal.fab :href="route('portal.work-logs.new')" label="Log work" />
         @endunless
     </div>
-
-    @if (session('status'))
-        <p role="status" class="mb-4 rounded-md border border-line bg-raised p-3">{{ session('status') }}</p>
-    @endif
 
     @if ($noProfile)
         <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
@@ -24,7 +20,7 @@
                 <ul class="divide-y divide-line rounded-xl border border-line bg-raised">
                     @foreach ($logs as $log)
                         <li wire:key="log-{{ $log['public_id'] }}">
-                            <a href="{{ route('portal.work-logs.edit', $log['public_id']) }}" class="flex min-h-11 items-start justify-between gap-4 px-5 py-3 hover:bg-hover">
+                            <a href="{{ route('portal.work-logs.edit', $log['public_id']) }}" class="chevron flex min-h-11 items-start justify-between gap-4 px-5 py-3 hover:bg-hover">
                                 <span class="min-w-0">
                                     <span class="block font-medium">{{ $log['task']['title'] ?? $log['project']['name'] ?? '' }}</span>
                                     @if (($log['task'] ?? null) && ($log['project']['name'] ?? null))

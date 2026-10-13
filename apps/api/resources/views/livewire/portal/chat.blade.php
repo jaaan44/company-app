@@ -9,7 +9,7 @@
     @if ($noProfile)
         <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
     @elseif ($errorMessage)
-        <h1 class="mb-4 text-2xl font-semibold">Conversation</h1>
+        <h1 class="sr-only">Conversation</h1>
         @if ($errorMessage === 'This conversation is no longer available.' || $errorMessage === "You don't have access to this conversation.")
             <p class="rounded-lg border border-line bg-raised p-4">{{ $errorMessage }}</p>
         @else

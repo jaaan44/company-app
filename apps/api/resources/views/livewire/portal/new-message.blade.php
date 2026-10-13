@@ -1,7 +1,7 @@
 @php use App\Support\Portal\Format; @endphp
 <div>
     <x-portal.back :href="route('portal.messages')">Messages</x-portal.back>
-    <h1 class="mb-4 text-2xl font-semibold">New message</h1>
+    <h1 class="sr-only">New message</h1>
 
     @if ($noProfile)
         <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>

@@ -1,6 +1,6 @@
 # Phase 34E — Staff Web Portal: Reports — Handoff
 
-**Status: complete and formally closed (2026-10-13).** Merged (PR #108, `bcdd6f5`), deployed to staging, UAT-34E-01…06 **PASS**. **Phase 34 (Staff Web Portal) is complete.** UAT-34E-01…06 are `NOT RUN`. This is the last web sub-phase of Phase 34.
+**Status: complete and formally closed (2026-10-13).** Merged (PR #108, `bcdd6f5`), deployed to staging, UAT-34E-01…06 **PASS**. **Phase 34A–34E (Staff Web Portal) is complete.**
 
 ## 1. Phase Identification
 

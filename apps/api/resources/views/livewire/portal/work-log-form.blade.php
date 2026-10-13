@@ -1,6 +1,6 @@
 <div>
     <x-portal.back :href="route('portal.work-logs')">My work logs</x-portal.back>
-    <h1 class="mb-4 text-2xl font-semibold">{{ $publicId === null ? 'Log work' : 'Edit work log' }}</h1>
+    <h1 class="sr-only">{{ $publicId === null ? 'Log work' : 'Edit work log' }}</h1>
 
     @if ($noProfile)
         <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
@@ -86,9 +86,8 @@
                 </button>
                 <a href="{{ route('portal.work-logs') }}" class="inline-flex min-h-11 items-center rounded-md px-4 hover:bg-hover">Cancel</a>
                 @if ($publicId !== null)
-                    <button type="button" wire:click="delete" wire:confirm="Delete this work log? This can't be undone."
-                            wire:loading.attr="disabled" wire:target="save,delete"
-                            class="ml-auto inline-flex min-h-11 items-center rounded-md border border-line px-4 text-danger hover:bg-hover disabled:opacity-60">Delete</button>
+                    <x-portal.confirm title="Delete this work log?" body="This can't be undone." confirm="Delete" action="delete()" :danger="true"
+                                      class="ml-auto inline-flex min-h-11 items-center rounded-md border border-line px-4 text-danger hover:bg-hover">Delete</x-portal.confirm>
                 @endif
             </div>
         </form>

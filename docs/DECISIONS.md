@@ -912,3 +912,21 @@ Internet → Cloudflare (proxied, SSL/TLS "Full (strict)")
 - **DEC-048**'s numbering is shifted by W-9.
 - **DEC-044**'s two-value source set gains `web`.
 - The Phase 4 rule that the web login admits only `admin.access` accounts is **superseded** by W-3/W-4.
+
+---
+
+### DEC-064 — Phase 34F: the Staff Web Portal looks and moves like the mobile app
+
+**Status:** Accepted (2026-10-13), product owner: "approve 34f as recommended".
+**Context:** After Phase 34, the product owner asked for the web portal to look and work "more like a mobile app". The 34A shell was a top navigation of 15 links and a plain centred column.
+**Decision:**
+1. **Navigation (F-1):** the mobile app's five tabs (Home, Tasks, Schedule, Messages, More): a bottom tab bar on phones and a sidebar from `md` up. A new More page (`/app/more`) lists the other pages in the app's order, with Admin and Log out.
+2. **App bar (F-2):** a sticky bar with the title and a back arrow (to the parent page, or to More for More's pages). It replaces the in-page "← …" links.
+3. **Look (F-3):** the DEC-063 tokens now carry the app's M3 indigo palette (light and dark). Cards, chevron rows, inline SVG icons and a FAB on phones for a list's main action. Still Tailwind v4, the system font and no third-party request.
+4. **Feedback (F-4):** confirmations as toasts; the browser's `confirm()` replaced by an in-app `<dialog>`, a bottom sheet on phones. 34C's inline panels are unchanged.
+5. **Speed (F-5):** same-origin links into `/app` and the portal's redirects use Livewire's navigation (no full reload) with its progress bar. Downloads, files, new tabs and links marked `data-no-navigate` (Admin) are left to the browser.
+6. **Install (F-6):** a web app manifest and icons. **No service worker, no offline mode, no push.** Offline work stays a mobile-app capability.
+**Rationale:** Staff already know the app; the portal now matches its structure, so moving between the two needs no relearning. All of it is presentation: every page still reads and writes only through `/api/v1` (DEC-063 W-1), and no rule changed.
+**Superseded/reaffirmed:**
+- DEC-063 W-5 is **extended**, not replaced: new token values, and the layout is now a tab shell instead of a top navigation.
+- DEC-019 and DEC-063 W-1 are reaffirmed.

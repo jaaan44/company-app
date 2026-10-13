@@ -1,5 +1,5 @@
 <div>
-    <h1 class="mb-4 text-2xl font-semibold">Clients</h1>
+    <h1 class="sr-only">Clients</h1>
     <x-portal.search id="client-search" label="Find a client" placeholder="Search by name or code" />
 
     @if ($errorMessage)
@@ -10,7 +10,7 @@
         <ul class="divide-y divide-line rounded-xl border border-line bg-raised">
             @foreach ($clients as $client)
                 <li wire:key="client-{{ $client['public_id'] }}">
-                    <a href="{{ route('portal.client', $client['public_id']) }}" class="block min-h-11 px-5 py-3 hover:bg-hover">
+                    <a href="{{ route('portal.client', $client['public_id']) }}" class="chevron block min-h-11 px-5 py-3 hover:bg-hover">
                         <span class="block font-medium">{{ $client['name'] }}</span>
                         @if ($client['client_code'] ?? null)
                             <span class="block text-sm text-muted">{{ $client['client_code'] }}</span>

@@ -82,10 +82,13 @@ class WorkPagesTest extends TestCase
         }
     }
 
-    public function test_the_navigation_lists_the_work_pages(): void
+    public function test_tasks_and_schedule_are_tabs_and_the_other_work_pages_are_on_more(): void
     {
-        $this->actingAs($this->user, 'web')->get('/app/tasks')
-            ->assertSeeInOrder(['Home', 'Tasks', 'Schedule', 'Work logs', 'Projects', 'Clients', 'Staff directory', 'My profile']);
+        foreach (['/app/tasks' => '/app/tasks', '/app/schedule' => '/app/schedule'] as $url => $tab) {
+            $page = $this->actingAs($this->user, 'web')->get($url)->assertDontSee('Back to More')->getContent();
+            $this->assertMatchesRegularExpression('#href="[^"]*'.$tab.'"\s+aria-current="page"#', $page);
+        }
+        $this->get('/app/more')->assertSeeInOrder(['My work logs', 'Projects', 'Clients']);
     }
 
     // ---- Tasks -------------------------------------------------------------

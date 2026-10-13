@@ -1,6 +1,6 @@
 @php use App\Support\Portal\Format; @endphp
 <div>
-    <h1 class="mb-4 text-2xl font-semibold">Tasks</h1>
+    <h1 class="sr-only">Tasks</h1>
 
     <div role="group" aria-label="Which tasks" class="mb-4 inline-flex rounded-md border border-line bg-raised p-1">
         @foreach (['open' => 'Open', 'closed' => 'Done'] as $value => $label)
@@ -20,7 +20,7 @@
             @foreach ($tasks as $task)
                 @php($due = Format::taskDueLabel($task, $companyDate))
                 <li wire:key="task-{{ $task['public_id'] }}">
-                    <a href="{{ route('portal.task', $task['public_id']) }}" class="block min-h-11 px-5 py-3 hover:bg-hover">
+                    <a href="{{ route('portal.task', $task['public_id']) }}" class="chevron block min-h-11 px-5 py-3 hover:bg-hover">
                         <span class="block font-medium">{{ $task['title'] }}</span>
                         @if ($task['project']['name'] ?? null)
                             <span class="block text-sm text-muted">{{ $task['project']['name'] }}</span>

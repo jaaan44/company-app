@@ -348,3 +348,42 @@ Run these with `docs/testing/PHASE_34A_UAT_PREPARATION.md`.
 - **UAT-34E-04:** Submit, which the phone then shows as Submitted; Delete draft; Return to draft for a rejected report.
 - **UAT-34E-05:** Report an incident, edit it while it is reported, and add a photo; an incident that is no longer reported can't be edited.
 - **UAT-34E-06:** dark mode, 200% zoom, a phone browser (including a photo upload from the phone) and keyboard on the new pages.
+
+## 16. Sub-phase 34F as implemented (2026-10-13)
+
+**Requested** by the product owner ("can you improve the look of the web based frontend so that it looks and functions more like a mobile app?"). **Proposed** as 34F with F-1…F-6 and placed before Phase 35. **Authorized:** "approve 34f as recommended" (DEC-064). No API, migration, permission or dependency change; no page gains or loses a function.
+
+- **F-1, navigation like the app:**
+  - phones get the app's **bottom tab bar**: Home, Tasks, Schedule, Messages, More;
+  - **More** (`/app/more`) lists the other pages in the mobile app's order: My profile, My status, Announcements, Notifications, Reports, Leave, Staff directory, My work logs, Projects, Clients. Then Admin (for `admin.access` only) and Log out;
+  - from `md` up, the same five tabs sit in a **sidebar** with Admin and Log out;
+  - a page's tab is marked `aria-current`: a task under Tasks, a chat under Messages, every More page under More.
+- **F-2, app bar:**
+  - a sticky bar with the page title;
+  - on a sub-page, a back arrow to its parent (the former "← …" links);
+  - on a page listed on More, a back arrow to More.
+  - The page's own heading is kept for screen readers (`sr-only`) where it repeated the title.
+- **F-3, the app's look:**
+  - the M3 indigo palette (light and dark tokens from the app's seed colour);
+  - rounded cards; list rows with chevrons;
+  - inline SVG icons (Material shapes, no icon font);
+  - each list's main action as a **"+" button** (FAB) on phones and a pill button on wider screens: Log work, Request leave, New message, New service report / Report an incident.
+- **F-4, feedback:**
+  - the confirmation messages ("Work logged.", "Draft saved.", …) show as **toasts** above the tab bar that hide after 4.5 s (`role="status"`);
+  - the browser's own confirm dialogs (Delete work log; Submit, Delete draft, Return to draft and Remove file on a report) became **in-app dialogs**: a sheet from the bottom on phones, centred on wider screens, with Cancel focused and Escape closing it. 34C's inline confirmation panels stay as they are.
+- **F-5, speed:**
+  - links into `/app` and the portal's own redirects move between pages **without a full page load** (Livewire's navigation), with a thin indigo progress bar;
+  - downloads, files, new tabs, modified clicks and Admin (`data-no-navigate`) load normally.
+- **F-6, installable:**
+  - `/manifest.json` (start `/app`, standalone, indigo theme) and PNG icons (192, 512, maskable 512, Apple touch);
+  - theme colours and `viewport-fit=cover` with safe-area padding.
+  - **No service worker and no offline mode.**
+
+**UAT scenarios (all `NOT RUN`):**
+- **UAT-34F-01:** on a phone browser, the bottom tabs and More match the app's tabs and More list, and the current tab is highlighted.
+- **UAT-34F-02:** the app bar shows each page's title; the back arrow returns to the parent page or to More.
+- **UAT-34F-03:** the look on a phone and a computer, in light and dark: indigo colours, cards, chevrons, the "+" buttons, the sidebar on a computer.
+- **UAT-34F-04:** toasts after saving, and the in-app dialogs (Delete work log; Submit, Delete draft, Return to draft and Remove file on a report): Cancel and Escape do nothing, the confirm button acts.
+- **UAT-34F-05:** moving between tabs and pages without a full reload, the progress bar; Admin and file downloads still open normally.
+- **UAT-34F-06:** "Add to Home screen" / "Install app" on a phone, then opening it from the icon: the app opens on Home without the browser bar.
+- **UAT-34F-07:** keyboard only, 200% zoom and a 320 px-wide window: everything reachable, no sideways scrolling, nothing hidden behind the tab bar.

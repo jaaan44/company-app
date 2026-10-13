@@ -57,5 +57,7 @@ jobs:
             set -e
             test -f /var/www/html/public/build/manifest.json
             ls /var/www/html/public/build/assets/*.css
+            test -f /var/www/html/public/manifest.json
+            test -f /var/www/html/public/icons/icon-192.png
             grep -q "client_max_body_size 12m" /etc/nginx/conf.d/default.conf
             echo "nginx image OK"'

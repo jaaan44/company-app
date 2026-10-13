@@ -1510,6 +1510,17 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | Embedded script integrity | Manual (AI) | PASS | The extracted `php` block matches the rehearsed file byte for byte; SHA-256 `7b894d2a…` in §6. |
 | Deployment / data / UAT | — | NOT RUN | Operator and product owner. |
 
+## Phase 34F — Staff Web Portal: Portal as an app (2026-10-13, DEC-064)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Backend tests | Automated | PASS | 10 new in `AppShellTest`: tabs, the current tab on 8 pages, More's order, Admin, back arrows, the app bar title, the toast, the head tags and the manifest and icons. Four navigation tests rewritten for the tabs; the Admin link and the Submit dialog assertions updated; `/app/more` added to the role checks. 1,371 → 1,381/1,381. |
+| Pint / PHPStan / Composer | Automated | PASS | Clean; `composer validate --strict` and `composer audit --locked` clean. No dependency change. `npm run build` OK. |
+| Mutation checks | Manual (AI) | PASS | 6 on the layout, all caught: New message not under Messages, My profile without its back arrow, More always current, a page's own back arrow ignored, no toast, a fixed app bar title. |
+| Browser checks (Playwright + Chromium, axe-core 4.10.2) | Manual (AI), local server, scratch SQLite | PASS | 94/94 in light and dark. Phone (390 px, touch): bottom tabs; moving between tabs, More, back arrows, saves and redirects with **no page reload**; More's order; FAB vs pill; the "Work logged." toast above the tab bar, hiding after 4.5 s; the Delete dialog as a bottom sheet with Cancel focused, Escape and Cancel keeping the log, Delete removing it, and **no browser dialog**; a report submitted through the dialog; content clear of the tab bar; no horizontal scroll at 320 px on 8 pages; manifest and four icons served; no JS errors. Desktop (1280 px): sidebar, pill, a centred dialog. **axe AA: 0 violations** on 6 states × 2 schemes. Screenshots reviewed. |
+| Staging image build | CI | pending | Now also checks `manifest.json` and an icon in the nginx image. |
+| MySQL / staging / UAT | — | NOT RUN | UAT-34F-01…07 `NOT RUN`. |
+
 ## Phase 34D — staging deployment, data and UAT (2026-10-13)
 
 | Check | Type | Status | Notes |

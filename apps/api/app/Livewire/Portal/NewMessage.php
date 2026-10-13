@@ -54,7 +54,7 @@ class NewMessage extends Component
         try {
             $conversation = $this->api()->send('POST', '/conversations/direct', json: ['staff_id' => $staffId])['data'] ?? null;
             if (isset($conversation['public_id'])) {
-                $this->redirect(route('portal.chat', $conversation['public_id']));
+                $this->redirect(route('portal.chat', $conversation['public_id']), navigate: true);
             }
         } catch (PortalApiException $e) {
             if ($e->isSessionExpired()) {

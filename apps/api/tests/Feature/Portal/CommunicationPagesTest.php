@@ -92,10 +92,13 @@ class CommunicationPagesTest extends TestCase
         }
     }
 
-    public function test_the_navigation_lists_the_communication_pages(): void
+    public function test_messages_is_a_tab_and_the_other_communication_pages_are_on_more(): void
     {
-        $this->actingAs($this->user, 'web')->get('/app/messages')
-            ->assertSeeInOrder(['Home', 'Tasks', 'Schedule', 'Work logs', 'Projects', 'Clients', 'Leave', 'My status', 'Messages', 'Notifications', 'Announcements', 'Staff directory', 'My profile']);
+        $page = $this->actingAs($this->user, 'web')->get('/app/messages')
+            ->assertSeeInOrder(['Home', 'Tasks', 'Schedule', 'Messages', 'More'])->getContent();
+        $this->assertMatchesRegularExpression('#href="[^"]*/app/messages"\s+aria-current="page"#', $page);
+
+        $this->get('/app/more')->assertSeeInOrder(['Announcements', 'Notifications']);
     }
 
     // ---- Messages ----------------------------------------------------------

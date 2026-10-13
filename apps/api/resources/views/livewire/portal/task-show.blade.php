@@ -9,7 +9,7 @@
     @if ($noProfile)
         <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
     @elseif ($errorMessage)
-        <h1 class="mb-4 text-2xl font-semibold">Task</h1>
+        <h1 class="sr-only">Task</h1>
         <x-portal.error :message="$errorMessage" />
     @elseif ($task)
         @php
@@ -43,9 +43,7 @@
                 </div>
                 <p wire:loading wire:target="setStatus" class="mt-3 text-sm text-muted">Saving…</p>
                 <div aria-live="polite">
-                    @if ($savedMessage)
-                        <p role="status" class="mt-3 text-sm">{{ $savedMessage }}</p>
-                    @endif
+                    <x-portal.toast :message="$savedMessage" :nonce="$toastNonce ?? 0" />
                     @if ($saveMessage)
                         <p role="alert" class="mt-3 text-sm font-medium text-danger">{{ $saveMessage }}</p>
                     @endif

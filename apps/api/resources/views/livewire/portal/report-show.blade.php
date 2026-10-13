@@ -5,14 +5,10 @@
 <div>
     <x-portal.back :href="route('portal.reports', $kind === 'incidents' ? ['type' => 'incidents'] : [])">Reports</x-portal.back>
 
-    @if (session('status'))
-        <p role="status" class="mb-4 rounded-md border border-line bg-raised p-3">{{ session('status') }}</p>
-    @endif
-
     @if ($noProfile)
         <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
     @elseif ($errorMessage)
-        <h1 class="mb-4 text-2xl font-semibold">{{ $kind === 'incidents' ? 'Incident' : 'Service report' }}</h1>
+        <h1 class="sr-only">{{ $kind === 'incidents' ? 'Incident' : 'Service report' }}</h1>
         @if (in_array($errorMessage, ['This report is no longer available.', "You don't have access to this report."], true))
             <p class="rounded-lg border border-line bg-raised p-4">{{ $errorMessage }}</p>
         @else
@@ -54,9 +50,7 @@
         @endif
 
         <div aria-live="polite">
-            @if ($doneMessage)
-                <p role="status" class="mt-4 rounded-md border border-line bg-raised p-3">{{ $doneMessage }}</p>
-            @endif
+            <x-portal.toast :message="$doneMessage" :nonce="$toastNonce ?? 0" />
             @if ($actionMessage)
                 <p role="alert" class="mt-4 rounded-md bg-danger-soft p-3 font-medium text-danger">{{ $actionMessage }}</p>
             @endif
@@ -67,15 +61,15 @@
                 @if ($canEdit)
                     <a href="{{ $editRoute }}" class="inline-flex min-h-11 items-center rounded-md border border-line px-4 hover:bg-hover">Edit</a>
                     @if ($kind === 'service')
-                        <button type="button" wire:click="submitReport" wire:confirm="Submit this report? Your manager will review it. You can't edit it after submitting." wire:loading.attr="disabled"
-                                class="inline-flex min-h-11 items-center rounded-md bg-accent px-4 font-medium text-on-accent hover:opacity-90 disabled:opacity-60">Submit</button>
-                        <button type="button" wire:click="deleteDraft" wire:confirm="Delete this draft? This can't be undone." wire:loading.attr="disabled"
-                                class="inline-flex min-h-11 items-center rounded-md border border-line px-4 text-danger hover:bg-hover disabled:opacity-60">Delete draft</button>
+                        <x-portal.confirm title="Submit this report?" body="Your manager will review it. You can't edit it after submitting." confirm="Submit" action="submitReport()"
+                                          class="inline-flex min-h-11 items-center rounded-md bg-accent px-4 font-medium text-on-accent hover:opacity-90">Submit</x-portal.confirm>
+                        <x-portal.confirm title="Delete this draft?" body="This can't be undone." confirm="Delete" action="deleteDraft()" :danger="true"
+                                          class="inline-flex min-h-11 items-center rounded-md border border-line px-4 text-danger hover:bg-hover">Delete draft</x-portal.confirm>
                     @endif
                 @endif
                 @if ($canReturn)
-                    <button type="button" wire:click="returnToDraft" wire:confirm="Return to draft? You can then edit it and submit it again." wire:loading.attr="disabled"
-                            class="inline-flex min-h-11 items-center rounded-md bg-accent px-4 font-medium text-on-accent hover:opacity-90 disabled:opacity-60">Return to draft</button>
+                    <x-portal.confirm title="Return to draft?" body="You can then edit it and submit it again." confirm="Return to draft" action="returnToDraft()"
+                                      class="inline-flex min-h-11 items-center rounded-md bg-accent px-4 font-medium text-on-accent hover:opacity-90">Return to draft</x-portal.confirm>
                 @endif
             </div>
         @endif
@@ -111,8 +105,8 @@
                             <div class="mt-1 flex flex-wrap gap-2">
                                 <a href="{{ $url }}" @if ($image) target="_blank" rel="noopener" @endif class="inline-flex min-h-11 items-center rounded-md px-3 text-accent-ink hover:bg-hover">{{ $image ? 'Open photo' : 'Download' }}<span class="sr-only"> {{ $a['original_filename'] }}</span></a>
                                 @if ($canEdit)
-                                    <button type="button" wire:click="removeFile('{{ $a['public_id'] }}')" wire:confirm="Remove this file? {{ $a['original_filename'] }}"
-                                            class="inline-flex min-h-11 items-center rounded-md px-3 text-danger hover:bg-hover">Remove<span class="sr-only"> {{ $a['original_filename'] }}</span></button>
+                                    <x-portal.confirm title="Remove this file?" :body="$a['original_filename']" confirm="Remove" :action="'removeFile(\''.$a['public_id'].'\')'" :danger="true"
+                                                      class="inline-flex min-h-11 items-center rounded-md px-3 text-danger hover:bg-hover">Remove<span class="sr-only"> {{ $a['original_filename'] }}</span></x-portal.confirm>
                                 @endif
                             </div>
                         </li>

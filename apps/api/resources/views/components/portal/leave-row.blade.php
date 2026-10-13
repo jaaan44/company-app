@@ -1,7 +1,7 @@
 {{-- One leave request in a list (Phase 34C): the type (or, for a team list, the person and type), the dates and days, and the status. --}}
 @props(['request', 'href', 'showRequester' => false])
 @php use App\Support\Portal\Format; @endphp
-<a href="{{ $href }}" class="block min-h-11 px-5 py-3 hover:bg-hover">
+<a href="{{ $href }}" class="chevron block min-h-11 px-5 py-3 hover:bg-hover">
     @if ($showRequester && ($request['staff']['display_name'] ?? null))
         <span class="block font-medium">{{ $request['staff']['display_name'] }}</span>
         <span class="block text-sm">{{ $request['leave_type']['name'] }}</span>

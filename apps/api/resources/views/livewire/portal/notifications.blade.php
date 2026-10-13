@@ -1,7 +1,7 @@
 @php use App\Support\Portal\Format; @endphp
 <div>
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h1 class="text-2xl font-semibold">Notifications</h1>
+        <h1 class="sr-only">Notifications</h1>
         @if (! $errorMessage && $hasUnread)
             <button type="button" wire:click="markAllRead" wire:loading.attr="disabled" wire:target="markAllRead"
                     class="inline-flex min-h-11 items-center rounded-md border border-line px-4 hover:bg-hover disabled:opacity-60">Mark all read</button>
@@ -9,9 +9,7 @@
     </div>
 
     <div aria-live="polite">
-        @if ($doneMessage)
-            <p role="status" class="mb-4 rounded-md border border-line bg-raised p-3">{{ $doneMessage }}</p>
-        @endif
+        <x-portal.toast :message="$doneMessage" :nonce="$toastNonce ?? 0" />
         @if ($actionMessage)
             <p role="alert" class="mb-4 rounded-md bg-danger-soft p-3 font-medium text-danger">{{ $actionMessage }}</p>
         @endif

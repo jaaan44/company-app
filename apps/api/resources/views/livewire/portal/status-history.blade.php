@@ -1,6 +1,6 @@
 <div>
     <x-portal.back :href="route('portal.status')">My status</x-portal.back>
-    <h1 class="mb-4 text-2xl font-semibold">{{ $kind === 'check-ins' ? 'All check-ins' : 'All status changes' }}</h1>
+    <h1 class="sr-only">{{ $kind === 'check-ins' ? 'All check-ins' : 'All status changes' }}</h1>
 
     @if ($noProfile)
         <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>

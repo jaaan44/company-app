@@ -1,9 +1,9 @@
 @php use App\Support\Portal\Format; @endphp
 <div>
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h1 class="text-2xl font-semibold">Messages</h1>
+        <h1 class="sr-only">Messages</h1>
         @unless ($noProfile || $errorMessage)
-            <a href="{{ route('portal.messages.new') }}" class="inline-flex min-h-11 items-center rounded-md bg-accent px-4 font-medium text-on-accent hover:opacity-90">New message</a>
+            <x-portal.fab :href="route('portal.messages.new')" label="New message" />
         @endunless
     </div>
 
@@ -18,7 +18,7 @@
             @foreach ($conversations as $conversation)
                 @php($unread = (int) ($conversation['unread_count'] ?? 0))
                 <li wire:key="conversation-{{ $conversation['public_id'] }}">
-                    <a href="{{ route('portal.chat', $conversation['public_id']) }}" class="flex min-h-11 items-start justify-between gap-4 px-5 py-3 hover:bg-hover">
+                    <a href="{{ route('portal.chat', $conversation['public_id']) }}" class="chevron flex min-h-11 items-start justify-between gap-4 px-5 py-3 hover:bg-hover">
                         <span class="min-w-0">
                             <span class="block truncate {{ $unread > 0 ? 'font-semibold' : 'font-medium' }}">{{ Format::conversationTitle($conversation, $myStaffId) }}</span>
                             <span class="block truncate text-sm text-muted">{{ Format::lastMessagePreview($conversation, $myStaffId) }}</span>

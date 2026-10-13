@@ -1,6 +1,6 @@
 @php use App\Support\Portal\Format; @endphp
 <div>
-    <h1 class="mb-4 text-2xl font-semibold">Projects</h1>
+    <h1 class="sr-only">Projects</h1>
 
     @if ($noProfile)
         <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
@@ -16,7 +16,7 @@
                 @foreach ($projects as $project)
                     @php($details = implode(' · ', array_filter([$project['project_code'] ?? null, $project['client']['name'] ?? null])))
                     <li wire:key="project-{{ $project['public_id'] }}">
-                        <a href="{{ route('portal.project', $project['public_id']) }}" class="block min-h-11 px-5 py-3 hover:bg-hover">
+                        <a href="{{ route('portal.project', $project['public_id']) }}" class="chevron block min-h-11 px-5 py-3 hover:bg-hover">
                             <span class="block font-medium">{{ $project['name'] }}</span>
                             @if ($details !== '')
                                 <span class="block text-sm text-muted">{{ $details }}</span>

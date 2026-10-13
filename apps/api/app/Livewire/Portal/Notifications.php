@@ -72,8 +72,8 @@ class Notifications extends Component
         $sourceId = (string) ($source['public_id'] ?? '');
         if (preg_match('/^[0-9A-Za-z]{1,64}$/', $sourceId) === 1) {
             match ($source['type'] ?? null) {
-                'announcement' => $this->redirect(route('portal.announcement', $sourceId)),
-                'conversation' => $this->redirect(route('portal.chat', $sourceId)),
+                'announcement' => $this->redirect(route('portal.announcement', $sourceId), navigate: true),
+                'conversation' => $this->redirect(route('portal.chat', $sourceId), navigate: true),
                 default => null,
             };
         }

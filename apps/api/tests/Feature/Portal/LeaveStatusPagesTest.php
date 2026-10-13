@@ -94,10 +94,13 @@ class LeaveStatusPagesTest extends TestCase
         }
     }
 
-    public function test_the_navigation_lists_leave_and_my_status(): void
+    public function test_leave_and_my_status_are_on_more(): void
     {
-        $this->actingAs($this->user, 'web')->get('/app/leave')
-            ->assertSeeInOrder(['Home', 'Tasks', 'Schedule', 'Work logs', 'Projects', 'Clients', 'Leave', 'My status', 'Staff directory', 'My profile']);
+        $this->actingAs($this->user, 'web')->get('/app/more')->assertSeeInOrder(['My status', 'Leave']);
+        foreach (['/app/leave', '/app/status'] as $url) {
+            $page = $this->get($url)->assertSee('aria-label="Back to More"', false)->getContent();
+            $this->assertMatchesRegularExpression('#href="[^"]*/app/more"\s+aria-current="page"#', $page);
+        }
     }
 
     // ---- Leave overview ----------------------------------------------------

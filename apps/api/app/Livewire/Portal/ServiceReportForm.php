@@ -163,7 +163,7 @@ class ServiceReportForm extends Component
                 ? $this->api()->send('POST', '/service-reports', json: $body)['data']
                 : $this->api()->send('PATCH', '/service-reports/'.rawurlencode($this->publicId), json: $body)['data'];
             session()->flash('status', $this->publicId === null ? 'Draft saved.' : 'Changes saved.');
-            $this->redirect(route('portal.service-report', $report['public_id']));
+            $this->redirect(route('portal.service-report', $report['public_id']), navigate: true);
         } catch (PortalApiException $e) {
             $this->refused($e, [
                 'client_id' => 'client', 'project_id' => 'project', 'service_date' => 'serviceDate',
