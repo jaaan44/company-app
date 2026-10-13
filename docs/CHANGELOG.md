@@ -4,6 +4,9 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-13 — Phase 34E deployed and closed (UAT PASS); Phase 34 complete
+- Staging deployed at `bcdd6f5` with the UAT34E data (outputs pasted). UAT-34E-01…06 **PASS**, reported by the product owner, with real uploads through the host nginx. Phase 34E, Staff Web Portal: Reports, is formally closed, and with it **Phase 34 — Staff Web Portal (34A–34E)**.
+
 ### 2026-10-13 — Phase 34E merged; UAT runbook
 - PR #108 merged as `bcdd6f5` (CI green, including the staging image build). New `docs/testing/PHASE_34E_UAT_PREPARATION.md` covers the deploy `fd57c7c` → `bcdd6f5`, a rehearsed data script (`uat34e_data.php`, no accounts or passwords: a client and project, a rejected service report and a resolved incident for Lia; its `verify` also prints the container's PHP upload limits) and UAT-34E-01…06. UAT `NOT RUN`.
 
