@@ -1480,8 +1480,17 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | Pint / PHPStan | Automated | PASS | Clean. No Composer or npm dependency change. |
 | Mutation checks | Manual (AI) | PASS | 7 run. 6 caught at first (myself excluded from New message, a chat marked read, a notification marked read on open, "You:" previews, Load earlier, Mark all read only with unread). The survivor (blank text sent) exposed a missing assertion; with it, the mutation is caught. |
 | Browser checks (Playwright + Chromium, axe-core 4.10.2) | Manual (AI), local server, scratch SQLite | PASS | 49/49 in light and dark: Home's links, a notification opening its chat, the inbox, a chat with Send (field cleared), **a reply sent by a second signed-in browser appearing within the poll (14 s both runs)**, New message without myself and opening the direct chat, announcements and Acknowledge, Mark all read, 320 px on 5 pages, no JS errors, **axe AA 0 violations** on 7 page states × 2. |
-| Staging image build | CI | Pending | `staging-images.yml` on the PR. |
+| Staging image build | CI | PASS | Green on PR #105. |
 | MySQL / staging / UAT | — | NOT RUN | UAT-34D-01…06 `NOT RUN`. |
+
+## Phase 34D — UAT preparation (2026-10-13)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Staging image build / backend CI | CI | PASS | Both green on PR #105, merged as `fd57c7c`. |
+| `uat34d_data.php` rehearsal | Manual (AI), scratch SQLite | PASS | After the 30B seed: `plan` shows 4 accounts and no UAT34D data; `seed` and `verify` print the runbook's §4 lines; `reply` sends Ben's message through the real API (Lia's unread count 2 → 3); a re-seed resets an acknowledgement and the reply (identical `verify`); an unknown stage exits 1. |
+| Embedded script integrity | Manual (AI) | PASS | The extracted `php` block matches the rehearsed file byte for byte; SHA-256 `ee650733…` in §6. |
+| Deployment / data / UAT | — | NOT RUN | Operator and product owner. |
 
 ## Phase 34C — Staff Web Portal: HR & Operations (2026-10-13)
 

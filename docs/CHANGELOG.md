@@ -4,6 +4,9 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-13 — Phase 34D merged; UAT runbook
+- PR #105 merged as `fd57c7c` (CI green, including the staging image build). New `docs/testing/PHASE_34D_UAT_PREPARATION.md` covers the deploy `0248615` → `fd57c7c`, a rehearsed data script (`uat34d_data.php`, no accounts or passwords; a `reply` stage posts as Ben through the real API to test the 15 s poll) and UAT-34D-01…06. UAT `NOT RUN`.
+
 ### 2026-10-13 — Phase 34D: Staff Web Portal, Communication
 - **Web pages, all through the existing API, mirroring the mobile Phase 32 screens:**
   - Messages: the inbox, a conversation (Send confirmed, Load earlier messages, checked every 15 s while open, marked read), and New message;
