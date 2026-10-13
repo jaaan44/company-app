@@ -23,7 +23,7 @@ use Illuminate\Validation\Rules\Enum;
  * genuinely, inherently contextual to a Project, unlike Tasks or
  * Schedule Entries). Viewing the roster requires the same visibility as
  * viewing the Project itself (AuthorizesProjectVisibility, reused
- * as-is); managing it requires Administrator (`projects.manage`) or the
+ * as-is); managing it requires Administrator (`projects.update`) or the
  * Project's own Project Lead (AuthorizesMilestoneAccess) — no new
  * permission was introduced.
  */

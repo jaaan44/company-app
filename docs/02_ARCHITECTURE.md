@@ -715,3 +715,13 @@ No migration, route or permission change.
   - **Navigation:** `resources/js/app.js` hands plain `/app` links to `Livewire.navigate()`. Components redirect with `navigate: true`.
   - **Install:** `public/manifest.json` and `public/icons/*` are static files, copied into the nginx staging image with the rest of `public/`, and checked by `staging-images.yml`.
 
+## 44. Granular permissions (Phase 35A — implemented; DEC-065)
+
+- **Five `.manage` permissions are split** into add / edit / delete permissions (staff, clients, projects with `.members`, tasks, and announcements with `.view-all` and `.publish`). The endpoint-by-endpoint mapping is in `docs/phases/V1_PERMISSIONS_PROPOSAL.md` §11.
+- **Same mechanism:**
+  - `can:` route middleware per route instead of per group;
+  - `AuthorizesTaskAccess` checks `tasks.create` and `tasks.update` separately;
+  - `AuthorizesMilestoneAccess` checks `projects.update`.
+  - `StaffResource`'s `user` block follows `staff.update`, and `AnnouncementResource`'s acknowledgement count follows `announcements.view-all`.
+- **Data migration** `2026_10_13_000000_split_manage_permissions` moves existing grants onto the new names; the seeder holds the catalog for fresh installs.
+- **Not changed:** the API, its responses, the default grants, the relationship rules and the eight `hasRole(Administrator)` checks (P-4).

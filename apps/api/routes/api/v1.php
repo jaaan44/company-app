@@ -103,7 +103,7 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
 
 // Staff (Phase 7): the company personnel directory. Reads require
 // 'staff.view' (granted to Administrator/Manager/Staff); writes require
-// 'staff.manage' (Administrator only, via the centralized Gate::before
+// 'staff.create'/'staff.update'/'staff.delete' (Administrator only, via the centralized Gate::before
 // override — DEC-028). Route-model-bound by public_id (DEC-017), never
 // the internal numeric id. Status changes (including offboarding) go
 // through the same update endpoint as Organization Structure's own
@@ -114,17 +114,16 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
         Route::get('staff/{staff:public_id}', [StaffController::class, 'show'])->name('staff.show');
     });
 
-    Route::middleware('can:staff.manage')->group(function (): void {
-        Route::post('staff', [StaffController::class, 'store'])->name('staff.store');
-        Route::match(['put', 'patch'], 'staff/{staff:public_id}', [StaffController::class, 'update'])->name('staff.update');
-        Route::delete('staff/{staff:public_id}', [StaffController::class, 'destroy'])->name('staff.destroy');
-    });
+    // Phase 35A (DEC-065): add, edit and delete are separate permissions.
+    Route::post('staff', [StaffController::class, 'store'])->middleware('can:staff.create')->name('staff.store');
+    Route::match(['put', 'patch'], 'staff/{staff:public_id}', [StaffController::class, 'update'])->middleware('can:staff.update')->name('staff.update');
+    Route::delete('staff/{staff:public_id}', [StaffController::class, 'destroy'])->middleware('can:staff.delete')->name('staff.destroy');
 });
 
 // Clients & Contacts (Phase 8): the customer-data foundation later
 // modules (Projects, Tasks, Work Logs, Messaging, reporting) reference.
 // Reads require 'clients.view' (granted to Administrator/Manager/Staff);
-// writes require 'clients.manage' (Administrator only, via the
+// writes require 'clients.create'/'.update'/'.delete' (Administrator only, via the
 // centralized Gate::before override — DEC-028). Contacts share Client's
 // permissions — no separate 'contacts.*' pair. Both are flat top-level
 // resources (Contact filterable by ?client=<public_id>), route-model-bound
@@ -139,11 +138,13 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
         Route::get('contacts/{contact:public_id}', [ContactController::class, 'show'])->name('contacts.show');
     });
 
-    Route::middleware('can:clients.manage')->group(function (): void {
-        Route::post('clients', [ClientController::class, 'store'])->name('clients.store');
-        Route::match(['put', 'patch'], 'clients/{client:public_id}', [ClientController::class, 'update'])->name('clients.update');
-        Route::delete('clients/{client:public_id}', [ClientController::class, 'destroy'])->name('clients.destroy');
+    // Phase 35A (DEC-065): add, edit and delete are separate permissions;
+    // a client's contacts are part of editing that client.
+    Route::post('clients', [ClientController::class, 'store'])->middleware('can:clients.create')->name('clients.store');
+    Route::match(['put', 'patch'], 'clients/{client:public_id}', [ClientController::class, 'update'])->middleware('can:clients.update')->name('clients.update');
+    Route::delete('clients/{client:public_id}', [ClientController::class, 'destroy'])->middleware('can:clients.delete')->name('clients.destroy');
 
+    Route::middleware('can:clients.update')->group(function (): void {
         Route::post('contacts', [ContactController::class, 'store'])->name('contacts.store');
         Route::match(['put', 'patch'], 'contacts/{contact:public_id}', [ContactController::class, 'update'])->name('contacts.update');
         Route::delete('contacts/{contact:public_id}', [ContactController::class, 'destroy'])->name('contacts.destroy');
@@ -199,7 +200,7 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
 // (AuthorizesProjectVisibility): an Administrator/Manager ('projects.view')
 // sees every Project; an ordinary Staff member sees only Projects where
 // they hold a Project Membership. Writes (Project CRUD and all Project
-// Membership changes) require 'projects.manage' (Administrator-only, via
+// Membership changes) require 'projects.create'/'.update'/'.delete'/'.members' (Administrator-only, via
 // the centralized Gate::before override — DEC-028) — no project-lead
 // self-management carve-out. Route-model-bound by public_id (DEC-017);
 // membership rows are addressed by their member's Staff public_id within
@@ -209,11 +210,12 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
     Route::get('projects/{project:public_id}', [ProjectController::class, 'show'])->name('projects.show');
     Route::get('projects/{project:public_id}/members', [ProjectMembershipController::class, 'index'])->name('projects.members.index');
 
-    Route::middleware('can:projects.manage')->group(function (): void {
-        Route::post('projects', [ProjectController::class, 'store'])->name('projects.store');
-        Route::match(['put', 'patch'], 'projects/{project:public_id}', [ProjectController::class, 'update'])->name('projects.update');
-        Route::delete('projects/{project:public_id}', [ProjectController::class, 'destroy'])->name('projects.destroy');
+    // Phase 35A (DEC-065): add, edit, delete and membership are separate permissions.
+    Route::post('projects', [ProjectController::class, 'store'])->middleware('can:projects.create')->name('projects.store');
+    Route::match(['put', 'patch'], 'projects/{project:public_id}', [ProjectController::class, 'update'])->middleware('can:projects.update')->name('projects.update');
+    Route::delete('projects/{project:public_id}', [ProjectController::class, 'destroy'])->middleware('can:projects.delete')->name('projects.destroy');
 
+    Route::middleware('can:projects.members')->group(function (): void {
         Route::post('projects/{project:public_id}/members', [ProjectMembershipController::class, 'store'])->name('projects.members.store');
 
         // withoutScopedBindings(): explicit `:public_id` binding fields on
@@ -234,7 +236,7 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
     // nested under its Project (mirroring Project Membership above) —
     // reads require the same visibility as the Project itself
     // (AuthorizesProjectVisibility, reused as-is); writes require
-    // Administrator (`projects.manage`) or the Project's own Project
+    // Administrator (`projects.update`) or the Project's own Project
     // Lead (AuthorizesMilestoneAccess) — no new permission was
     // introduced. withoutScopedBindings() mirrors this file's existing
     // two-consecutive-Eloquent-parameter fix (Project has no singular
@@ -256,15 +258,15 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
 // rather than nested under /projects/{project}/tasks — a Task is not
 // inherently contextual to a Project the way Project Membership is.
 // Reads, creates, and updates are deliberately NOT gated by a bare
-// 'can:tasks.manage'/'can:tasks.view' route middleware — visibility and
+// 'can:tasks.create'/'can:tasks.view' route middleware — visibility and
 // management authority are both scoped in-controller
 // (AuthorizesTaskAccess): 'tasks.view' (Administrator/Manager) sees
 // every Task; otherwise a linked Staff record scopes visibility to
 // Projects they're a member of plus Tasks assigned to them.
-// 'tasks.manage' (Administrator-only) may create/update/delete any
+// 'tasks.create'/'tasks.update' (Administrator by default) may create/update any
 // Task; a Project Lead may create/update Tasks scoped to their own
 // Project; a Task's assignee may update only its own `status` field.
-// DELETE remains a plain 'can:tasks.manage' route (Administrator-only,
+// DELETE remains a plain 'can:tasks.delete' route (Administrator-only,
 // and only while a Task is still in its initial 'todo' state — see
 // TaskController::destroy).
 Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
@@ -273,9 +275,7 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
     Route::post('tasks', [TaskController::class, 'store'])->name('tasks.store');
     Route::match(['put', 'patch'], 'tasks/{task:public_id}', [TaskController::class, 'update'])->name('tasks.update');
 
-    Route::middleware('can:tasks.manage')->group(function (): void {
-        Route::delete('tasks/{task:public_id}', [TaskController::class, 'destroy'])->name('tasks.destroy');
-    });
+    Route::delete('tasks/{task:public_id}', [TaskController::class, 'destroy'])->middleware('can:tasks.delete')->name('tasks.destroy');
 });
 
 // Work Logs (Phase 12): historical records of work performed by Staff,
@@ -377,7 +377,7 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
 // `/me/...` precedent; only ever return `published` (non-archived)
 // announcements within the requester's own audience (company-wide, or
 // their current Department/Team). The entire management surface requires
-// `announcements.manage` (Administrator-only, via the centralized
+// `announcements.view-all`/`create`/`publish`/`delete` (Administrator-only, via the centralized
 // Gate::before override) — unlike every prior module, there is no
 // companion `announcements.view` for Manager/Staff. Lifecycle transitions
 // (publish/archive) are explicit action endpoints, never a generic status
@@ -387,12 +387,14 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
     Route::get('me/announcements/{announcement:public_id}', [MyAnnouncementController::class, 'myShow'])->name('me.announcements.show');
     Route::post('me/announcements/{announcement:public_id}/acknowledge', [MyAnnouncementController::class, 'myAcknowledge'])->name('me.announcements.acknowledge');
 
-    Route::middleware('can:announcements.manage')->group(function (): void {
-        Route::get('announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
-        Route::get('announcements/{announcement:public_id}', [AnnouncementController::class, 'show'])->name('announcements.show');
-        Route::post('announcements', [AnnouncementController::class, 'store'])->name('announcements.store');
-        Route::match(['put', 'patch'], 'announcements/{announcement:public_id}', [AnnouncementController::class, 'update'])->name('announcements.update');
-        Route::delete('announcements/{announcement:public_id}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
+    // Phase 35A (DEC-065): viewing all, drafting, publishing (and
+    // archiving) and deleting are separate permissions.
+    Route::get('announcements', [AnnouncementController::class, 'index'])->middleware('can:announcements.view-all')->name('announcements.index');
+    Route::get('announcements/{announcement:public_id}', [AnnouncementController::class, 'show'])->middleware('can:announcements.view-all')->name('announcements.show');
+    Route::post('announcements', [AnnouncementController::class, 'store'])->middleware('can:announcements.create')->name('announcements.store');
+    Route::match(['put', 'patch'], 'announcements/{announcement:public_id}', [AnnouncementController::class, 'update'])->middleware('can:announcements.create')->name('announcements.update');
+    Route::delete('announcements/{announcement:public_id}', [AnnouncementController::class, 'destroy'])->middleware('can:announcements.delete')->name('announcements.destroy');
+    Route::middleware('can:announcements.publish')->group(function (): void {
         Route::post('announcements/{announcement:public_id}/publish', [AnnouncementController::class, 'publish'])->name('announcements.publish');
         Route::post('announcements/{announcement:public_id}/archive', [AnnouncementController::class, 'archive'])->name('announcements.archive');
     });

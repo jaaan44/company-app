@@ -23,7 +23,7 @@ use Illuminate\Validation\Rules\Enum;
 /**
  * Staff — the company personnel directory and employment-profile
  * foundation (Phase 7). Read endpoints require `staff.view`; writes
- * require `staff.manage` — enforced by route middleware
+ * require `staff.create`/`staff.update`/`staff.delete` — enforced by route middleware
  * (routes/api/v1.php), not here. Create/significant structural changes
  * (status/manager/department/team/position) are audited (Phase 21,
  * DEC-044) — ordinary profile fields (name, contact info) are not.

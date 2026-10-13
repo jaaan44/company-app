@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
  * purely permission-gated (docs/phases/V1_PHASE_11_DEFINITION.md) —
  * mirroring Phase 10's AuthorizesProjectVisibility, but extended to
  * writes (create/update), not just reads, since a Project Lead needs
- * scoped management authority without holding the global `tasks.manage`
+ * scoped management authority without holding the global `tasks.create`/`tasks.update`
  * permission:
  *
  * - `tasks.view` (Administrator/Manager) sees every Task.
@@ -20,7 +20,7 @@ use Illuminate\Http\Request;
  *   Projects where they hold a Project Membership, plus any Task
  *   assigned to them directly (including an independent, project-less
  *   Task assigned to them).
- * - `tasks.manage` (Administrator-only) may create/update/delete any
+ * - `tasks.create` / `tasks.update` (Administrator by default) may create/update any
  *   Task.
  * - A Project Lead (ProjectMembershipRole::ProjectLead on the Task's own
  *   Project) may create/update Tasks scoped to that Project — never a
@@ -37,9 +37,15 @@ trait AuthorizesTaskAccess
         return $request->user()?->can('tasks.view') ?? false;
     }
 
-    private function canManageAllTasks(Request $request): bool
+    // Phase 35A (DEC-065): adding and editing any task are separate permissions.
+    private function canCreateAnyTask(Request $request): bool
     {
-        return $request->user()?->can('tasks.manage') ?? false;
+        return $request->user()?->can('tasks.create') ?? false;
+    }
+
+    private function canUpdateAnyTask(Request $request): bool
+    {
+        return $request->user()?->can('tasks.update') ?? false;
     }
 
     private function isProjectLeadOf(Request $request, ?int $projectId): bool
@@ -104,7 +110,7 @@ trait AuthorizesTaskAccess
 
     private function authorizeCreate(Request $request, ?int $projectId): void
     {
-        if ($this->canManageAllTasks($request)) {
+        if ($this->canCreateAnyTask($request)) {
             return;
         }
 
@@ -122,7 +128,7 @@ trait AuthorizesTaskAccess
      */
     private function authorizeUpdate(Request $request, Task $task): bool
     {
-        if ($this->canManageAllTasks($request)) {
+        if ($this->canUpdateAnyTask($request)) {
             return true;
         }
 

@@ -11,7 +11,7 @@ class StoreClientRequest extends FormRequest
 {
     /**
      * Permission enforcement happens at the route level
-     * (`can:clients.manage`), which runs before this request is resolved —
+     * (`can:clients.create`), which runs before this request is resolved —
      * mirroring the existing Organization Structure / Staff Form Requests.
      */
     public function authorize(): bool

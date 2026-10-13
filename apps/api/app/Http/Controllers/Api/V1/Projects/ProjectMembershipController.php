@@ -23,7 +23,7 @@ use Illuminate\Validation\Rules\Enum;
  * Project Membership — the current roster of a Project (Phase 10).
  * Viewing the roster requires the same visibility as viewing the Project
  * itself (AuthorizesProjectVisibility); adding/changing/removing a member
- * requires `projects.manage` (Administrator-only, route middleware) — no
+ * requires `projects.members` (Administrator-only, route middleware) — no
  * separate `project-membership.*` permission pair and no project-lead
  * self-management carve-out (see docs/phases/V1_PHASE_10_DEFINITION.md).
  * Addressed by the member's Staff `public_id` within the nested

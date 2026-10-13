@@ -1510,6 +1510,16 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | Embedded script integrity | Manual (AI) | PASS | The extracted `php` block matches the rehearsed file byte for byte; SHA-256 `7b894d2a…` in §6. |
 | Deployment / data / UAT | — | NOT RUN | Operator and product owner. |
 
+## Phase 35A — Granular permissions (2026-10-13, DEC-065)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Backend tests | Automated | PASS | 9 new in `GranularPermissionsTest`: each of the 17 new permissions opens only its own endpoints; the old names are gone; the migration moves and rolls back grants and does nothing on a fresh catalog. `RolePermissionSeederTest` checks the parts (23 → 35). Every module's `*AuthorizationTest` passes unchanged. 1,381 → 1,390/1,390. |
+| Pint / PHPStan | Automated | PASS | Clean. No dependency change. |
+| Mutation checks | Manual (AI) | PASS | 10/10 caught (route, helper, resource and migration mappings; see the handoff §11). |
+| Upgrade rehearsal (SQLite) | Manual (AI) | PASS | `main`'s migrations and seeder (23 permissions, 45 migrations) plus a probe grant of `tasks.manage` to Manager; then the new `migrate`: 35 permissions, no old names, the probe moved onto `tasks.create/.update/.delete`. Re-seed: no change. Rollback: 23, with the probe back. Re-migrate: the same as the first run. |
+| MySQL / staging / UAT | — | NOT RUN | UAT-35A-01…04 `NOT RUN`. |
+
 ## Phase 34F — Staff Web Portal: Portal as an app (2026-10-13, DEC-064)
 
 | Check | Type | Status | Notes |

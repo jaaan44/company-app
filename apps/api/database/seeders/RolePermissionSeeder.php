@@ -124,6 +124,16 @@ use Illuminate\Database\Seeder;
  * plain per-row ownership (recipient_user_id), not a permission or Staff
  * link, checked entirely in NotificationController. Not even Administrator
  * can read another User's notification through this API.
+ *
+ * Phase 35A (Granular permissions, DEC-065) splits five `.manage`
+ * permissions into separate add / edit / delete permissions, so a role
+ * can be given one without the others: `staff.*`, `clients.*` (contacts
+ * follow `clients.update`), `projects.*` (plus `projects.members`),
+ * `tasks.*`, and `announcements.*` (`view-all`, `create`, `publish`,
+ * `delete`). The old names are gone (migration
+ * 2026_10_13_000000_split_manage_permissions moves existing grants).
+ * Defaults are unchanged: none of the new permissions is attached to
+ * Manager or Staff, so only Administrator holds them, as before.
  */
 class RolePermissionSeeder extends Seeder
 {
@@ -170,8 +180,16 @@ class RolePermissionSeeder extends Seeder
         );
 
         Permission::query()->firstOrCreate(
-            ['name' => 'staff.manage'],
-            ['label' => 'Create, update, and delete staff records'],
+            ['name' => 'staff.create'],
+            ['label' => 'Add staff records'],
+        );
+        Permission::query()->firstOrCreate(
+            ['name' => 'staff.update'],
+            ['label' => 'Edit staff records'],
+        );
+        Permission::query()->firstOrCreate(
+            ['name' => 'staff.delete'],
+            ['label' => 'Delete staff records'],
         );
 
         $clientsView = Permission::query()->firstOrCreate(
@@ -180,8 +198,16 @@ class RolePermissionSeeder extends Seeder
         );
 
         Permission::query()->firstOrCreate(
-            ['name' => 'clients.manage'],
-            ['label' => 'Create, update, and delete clients and contacts'],
+            ['name' => 'clients.create'],
+            ['label' => 'Add clients'],
+        );
+        Permission::query()->firstOrCreate(
+            ['name' => 'clients.update'],
+            ['label' => 'Edit clients and their contacts'],
+        );
+        Permission::query()->firstOrCreate(
+            ['name' => 'clients.delete'],
+            ['label' => 'Delete clients'],
         );
 
         $staffStatusView = Permission::query()->firstOrCreate(
@@ -210,8 +236,20 @@ class RolePermissionSeeder extends Seeder
         );
 
         Permission::query()->firstOrCreate(
-            ['name' => 'projects.manage'],
-            ['label' => 'Create, update, and delete projects and project memberships'],
+            ['name' => 'projects.create'],
+            ['label' => 'Add projects'],
+        );
+        Permission::query()->firstOrCreate(
+            ['name' => 'projects.update'],
+            ['label' => 'Edit projects and their milestones'],
+        );
+        Permission::query()->firstOrCreate(
+            ['name' => 'projects.delete'],
+            ['label' => 'Delete projects'],
+        );
+        Permission::query()->firstOrCreate(
+            ['name' => 'projects.members'],
+            ['label' => 'Add, change, and remove project members and leads'],
         );
 
         $tasksView = Permission::query()->firstOrCreate(
@@ -220,8 +258,16 @@ class RolePermissionSeeder extends Seeder
         );
 
         Permission::query()->firstOrCreate(
-            ['name' => 'tasks.manage'],
-            ['label' => 'Create, update, and delete any task'],
+            ['name' => 'tasks.create'],
+            ['label' => 'Add tasks in any project'],
+        );
+        Permission::query()->firstOrCreate(
+            ['name' => 'tasks.update'],
+            ['label' => 'Edit any task (all fields, including the assignee)'],
+        );
+        Permission::query()->firstOrCreate(
+            ['name' => 'tasks.delete'],
+            ['label' => 'Delete tasks'],
         );
 
         $workLogsView = Permission::query()->firstOrCreate(
@@ -255,8 +301,20 @@ class RolePermissionSeeder extends Seeder
         );
 
         Permission::query()->firstOrCreate(
-            ['name' => 'announcements.manage'],
-            ['label' => 'Create, edit, publish, archive, and delete announcements'],
+            ['name' => 'announcements.view-all'],
+            ['label' => 'View all announcements, including drafts and archived'],
+        );
+        Permission::query()->firstOrCreate(
+            ['name' => 'announcements.create'],
+            ['label' => 'Add and edit announcement drafts'],
+        );
+        Permission::query()->firstOrCreate(
+            ['name' => 'announcements.publish'],
+            ['label' => 'Publish and archive announcements'],
+        );
+        Permission::query()->firstOrCreate(
+            ['name' => 'announcements.delete'],
+            ['label' => 'Delete announcements'],
         );
 
         $manager->permissions()->syncWithoutDetaching([

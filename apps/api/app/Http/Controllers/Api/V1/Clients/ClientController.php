@@ -18,7 +18,7 @@ use Illuminate\Validation\Rules\Enum;
 
 /**
  * Clients (Phase 8 — Clients & Contacts). Read endpoints require
- * `clients.view`; writes require `clients.manage` — enforced by route
+ * `clients.view`; writes require `clients.create`/`clients.update`/`clients.delete` — enforced by route
  * middleware (routes/api/v1.php), not here. Create/update/delete are
  * audited (Phase 21, DEC-044) with curated status metadata only —
  * business-contact details are not captured in before/after.

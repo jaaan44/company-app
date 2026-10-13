@@ -4,6 +4,14 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-13 — Phase 35A: granular permissions (DEC-065)
+- **The proposal was approved** ("approve as recommended"), and Phase 35 is now 35A–35C. **35A is implemented**; 35B and 35C are not authorized.
+- **The split:**
+  - `staff.manage`, `clients.manage`, `projects.manage`, `tasks.manage` and `announcements.manage` became separate add / edit / delete permissions (plus `projects.members`, `announcements.view-all` and `announcements.publish`);
+  - 23 → 35 permissions.
+- **The data migration** moves existing grants onto every part. **No one's access changes**, and the API is unchanged.
+- **Tests:** 9 new, 1,381 → 1,390/1,390. 10/10 mutations caught. An upgrade, rollback and re-run rehearsal on SQLite. UAT-35A-01…04 `NOT RUN`.
+
 ### 2026-10-13 — Proposal: granular permissions and a Roles & permissions screen
 - New `docs/phases/V1_PERMISSIONS_PROPOSAL.md`, written at the product owner's request ("write a proposal for options 1 and 2").
   - Option 1 splits `.manage` into add, edit and delete permissions for tasks, projects, clients, staff and announcements, with today's behaviour kept.
