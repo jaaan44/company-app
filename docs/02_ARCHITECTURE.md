@@ -682,7 +682,7 @@ No migration, route or permission change.
 
 **Not introduced:** PDF upload or viewing, review or investigation actions, offline drafts, any other dependency. See `docs/phases/V1_PHASE_33_DEFINITION.md` and `docs/handoffs/V1_PHASE_33_HANDOFF.md`.
 
-## 43. Staff Web Portal (Phase 34A — implemented, awaiting staging deployment and UAT; DEC-063)
+## 43. Staff Web Portal (Phase 34, 34A–34E closed; 34F implemented; DEC-063, DEC-064)
 
 - **Where:** inside `apps/api` (DEC-011/DEC-019), under `/app`, behind `auth` and `account.active`. `/` redirects there; the login page is shared.
 - **How:** each screen is a Livewire component (`App\Livewire\Portal\*`) that calls the existing `/api/v1` routes in-process through `App\Services\Portal\InternalApi`.
@@ -707,4 +707,11 @@ No migration, route or permission change.
   - **Uploads:** Livewire `WithFileUploads` holds the file as a temporary upload; `InternalApi::upload()` forwards it in-process as a multipart request to the API's attachment endpoint (`file`), and the temporary file is deleted afterwards.
   - **Downloads:** `InternalApi::raw()` returns the API's own response unread; `App\Http\Controllers\Portal\ReportFileController` streams it back at `/app/reports/{kind}/{id}/files/{fileId}`, inline for JPEG/PNG and as a download otherwise.
   - `InternalApi::send()` now shares one private `dispatch()` with these two, so every in-process call keeps the same request restoration.
+- **34F, the shell** (implemented, DEC-064). Presentation only; no route reads or writes anything new.
+  - **Layout:** `components/layouts/portal.blade.php` holds the five tabs. A bottom bar on phones and a sidebar from `md` up. The current tab comes from route-name patterns, with More for every other portal route.
+  - **App bar:** the title, and a back arrow pushed by `x-portal.back` (`@push('appbar-back')`), or else to More for More's pages.
+  - **New page:** `/app/more` (`portal.more`, a plain view).
+  - **Shared components:** `x-portal.icon`, `fab`, `toast`, `confirm`, and the `partials.app-head` shared with the sign-in page.
+  - **Navigation:** `resources/js/app.js` hands plain `/app` links to `Livewire.navigate()`. Components redirect with `navigate: true`.
+  - **Install:** `public/manifest.json` and `public/icons/*` are static files, copied into the nginx staging image with the rest of `public/`, and checked by `staging-images.yml`.
 

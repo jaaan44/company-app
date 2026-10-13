@@ -4,10 +4,10 @@
 @endphp
 <div>
     @if ($noProfile)
-        <h1 class="mb-4 text-2xl font-semibold">Home</h1>
+        <h1 class="sr-only">Home</h1>
         <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
     @elseif ($errorMessage)
-        <h1 class="mb-4 text-2xl font-semibold">Home</h1>
+        <h1 class="sr-only">Home</h1>
         <x-portal.error :message="$errorMessage" />
     @elseif ($home)
         @php
@@ -103,7 +103,7 @@
                     <ul class="divide-y divide-line">
                         @foreach ($home['announcements']['latest'] as $announcement)
                             <li wire:key="announcement-{{ $announcement['public_id'] }}">
-                                <a href="{{ route('portal.announcement', $announcement['public_id']) }}" class="block min-h-11 py-3 hover:bg-hover">
+                                <a href="{{ route('portal.announcement', $announcement['public_id']) }}" class="chevron block min-h-11 py-3 hover:bg-hover">
                                     <span class="block font-medium">{{ $announcement['title'] }}</span>
                                     @if ($announcement['published_at'] ?? null)
                                         <span class="block text-sm text-muted">{{ Format::dayMonth(CarbonImmutable::parse($announcement['published_at'])->setTimezone($day['utc_offset'])) }}</span>

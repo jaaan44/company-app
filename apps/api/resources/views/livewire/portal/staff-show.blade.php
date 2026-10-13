@@ -1,12 +1,12 @@
 @php use App\Support\Portal\Format; @endphp
 <div>
-    <p class="mb-4"><a href="{{ route('portal.directory') }}" class="inline-flex min-h-11 items-center text-accent-ink underline-offset-4 hover:underline">← Staff directory</a></p>
+    <x-portal.back :href="route('portal.directory')">Staff directory</x-portal.back>
 
     @if ($notFound)
-        <h1 class="mb-4 text-2xl font-semibold">Staff</h1>
+        <h1 class="sr-only">Staff</h1>
         <p class="rounded-lg border border-line bg-raised p-4">This person isn't in the directory.</p>
     @elseif ($errorMessage)
-        <h1 class="mb-4 text-2xl font-semibold">Staff</h1>
+        <h1 class="sr-only">Staff</h1>
         <x-portal.error :message="$errorMessage" />
     @elseif ($staff)
         <h1 class="text-2xl font-semibold">{{ $staff['display_name'] }}</h1>

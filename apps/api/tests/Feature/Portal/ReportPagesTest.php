@@ -89,10 +89,11 @@ class ReportPagesTest extends TestCase
         }
     }
 
-    public function test_the_navigation_lists_reports(): void
+    public function test_reports_are_on_more(): void
     {
-        $this->actingAs($this->user, 'web')->get('/app/reports')
-            ->assertSeeInOrder(['Messages', 'Notifications', 'Announcements', 'Reports', 'Staff directory', 'My profile']);
+        $this->actingAs($this->user, 'web')->get('/app/more')->assertSeeInOrder(['Notifications', 'Reports', 'Leave']);
+        $page = $this->get('/app/reports')->assertSee('aria-label="Back to More"', false)->getContent();
+        $this->assertMatchesRegularExpression('#href="[^"]*/app/more"\s+aria-current="page"#', $page);
     }
 
     // ---- Lists -------------------------------------------------------------
@@ -209,7 +210,8 @@ class ReportPagesTest extends TestCase
             ->assertSee('Mon 12 Oct 2026')->assertSee('No project')->assertSee('Lia Ramos')
             ->assertSeeInOrder(['Work performed', 'Replaced the seals.', 'Recommendations', 'Replace the hinge.'])
             ->assertSee('Edit')->assertSee('Submit')->assertSee('Delete draft')->assertDontSee('Return to draft')
-            ->assertSee("Submit this report? Your manager will review it. You can't edit it after submitting.", false)
+            ->assertSeeInOrder(['Submit this report?', "Your manager will review it. You can't edit it after submitting."])
+            ->assertSee('<dialog', false)->assertSee('$refs.dialog.close(); $wire.submitReport()', false)
             ->assertSee('Photos and files (0)')->assertSee('Upload');
 
         Livewire::test(ReportShow::class, ['publicId' => $draft->public_id])

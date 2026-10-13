@@ -128,7 +128,7 @@ class WorkLogForm extends Component
                 $this->api()->send('PATCH', '/me/work-logs/'.rawurlencode($this->publicId), json: $body);
                 session()->flash('status', 'Changes saved.');
             }
-            $this->redirect(route('portal.work-logs'));
+            $this->redirect(route('portal.work-logs'), navigate: true);
         } catch (PortalApiException $e) {
             $this->applyFailure($e, 'save');
         }
@@ -144,7 +144,7 @@ class WorkLogForm extends Component
         try {
             $this->api()->send('DELETE', '/me/work-logs/'.rawurlencode($this->publicId));
             session()->flash('status', 'Work log deleted.');
-            $this->redirect(route('portal.work-logs'));
+            $this->redirect(route('portal.work-logs'), navigate: true);
         } catch (PortalApiException $e) {
             $this->applyFailure($e, 'delete');
         }

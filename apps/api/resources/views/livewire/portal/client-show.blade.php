@@ -3,7 +3,7 @@
     <x-portal.back :href="route('portal.clients')">Clients</x-portal.back>
 
     @if ($errorMessage)
-        <h1 class="mb-4 text-2xl font-semibold">Client</h1>
+        <h1 class="sr-only">Client</h1>
         <x-portal.error :message="$errorMessage" />
     @elseif ($client)
         <h1 class="text-2xl font-semibold">{{ $client['name'] }}</h1>

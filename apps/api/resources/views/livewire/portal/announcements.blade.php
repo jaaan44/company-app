@@ -1,6 +1,6 @@
 @php use App\Support\Portal\Format; @endphp
 <div>
-    <h1 class="mb-4 text-2xl font-semibold">Announcements</h1>
+    <h1 class="sr-only">Announcements</h1>
 
     @if ($noProfile)
         <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
@@ -13,7 +13,7 @@
             @foreach ($announcements as $announcement)
                 @php($new = ($announcement['acknowledged_at'] ?? null) === null)
                 <li wire:key="announcement-{{ $announcement['public_id'] }}">
-                    <a href="{{ route('portal.announcement', $announcement['public_id']) }}" class="block min-h-11 px-5 py-3 hover:bg-hover">
+                    <a href="{{ route('portal.announcement', $announcement['public_id']) }}" class="chevron block min-h-11 px-5 py-3 hover:bg-hover">
                         <span class="block {{ $new ? 'font-semibold' : 'font-medium' }}">{{ $announcement['title'] }}</span>
                         @if (($announcement['published_at'] ?? null) && $companyDay)
                             <span class="block text-sm text-muted">{{ Format::date(\Carbon\CarbonImmutable::parse($announcement['published_at'])->setTimezone($companyDay['utc_offset'])->toDateString()) }}</span>

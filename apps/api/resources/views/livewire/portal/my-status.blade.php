@@ -3,7 +3,7 @@
     use App\Livewire\Portal\MyStatus;
 @endphp
 <div>
-    <h1 class="mb-4 text-2xl font-semibold">My status</h1>
+    <h1 class="sr-only">My status</h1>
 
     @if ($noProfile)
         <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
@@ -32,9 +32,7 @@
             <p class="mt-2 text-sm text-muted">Off duty: not working right now. This isn't leave.</p>
             <p wire:loading wire:target="setStatus" class="mt-2 text-sm text-muted">Saving…</p>
             <div aria-live="polite">
-                @if ($savedMessage)
-                    <p role="status" class="mt-2 text-sm">{{ $savedMessage }}</p>
-                @endif
+                <x-portal.toast :message="$savedMessage" :nonce="$toastNonce ?? 0" />
                 @if ($saveMessage)
                     <p role="alert" class="mt-2 text-sm font-medium text-danger">{{ $saveMessage }}</p>
                 @endif

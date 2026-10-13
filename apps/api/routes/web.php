@@ -29,6 +29,7 @@ Route::pattern('publicId', '[0-9A-Za-z]{1,64}');
 
 Route::middleware(['auth', 'account.active'])->prefix('app')->name('portal.')->group(function (): void {
     Route::view('/', 'portal.home')->name('home');
+    Route::view('more', 'portal.more')->name('more'); // Phase 34F (F-1)
     Route::view('profile', 'portal.profile')->name('profile');
     Route::view('staff', 'portal.directory')->name('directory');
     Route::get('staff/{publicId}', fn (string $publicId) => view('portal.staff', ['publicId' => $publicId]))->name('staff');

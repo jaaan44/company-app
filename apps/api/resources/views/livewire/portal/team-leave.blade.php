@@ -1,6 +1,6 @@
 <div>
     <x-portal.back :href="route('portal.leave')">Leave</x-portal.back>
-    <h1 class="mb-4 text-2xl font-semibold">Team requests</h1>
+    <h1 class="sr-only">Team requests</h1>
 
     <div role="group" aria-label="Which requests" class="mb-4 inline-flex flex-wrap rounded-md border border-line bg-raised p-1">
         @foreach (\App\Livewire\Portal\TeamLeave::FILTERS as $value => $label)

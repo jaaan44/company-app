@@ -70,7 +70,7 @@ class LeaveForm extends Component
                 'reason' => trim($this->reason),
             ]);
             session()->flash('status', 'Leave requested.');
-            $this->redirect(route('portal.leave'));
+            $this->redirect(route('portal.leave'), navigate: true);
         } catch (PortalApiException $e) {
             if ($e->isSessionExpired()) {
                 $this->failed($e, '');

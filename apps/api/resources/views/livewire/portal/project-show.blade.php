@@ -3,7 +3,7 @@
     <x-portal.back :href="route('portal.projects')">Projects</x-portal.back>
 
     @if ($errorMessage)
-        <h1 class="mb-4 text-2xl font-semibold">Project</h1>
+        <h1 class="sr-only">Project</h1>
         <x-portal.error :message="$errorMessage" />
     @elseif ($project)
         <h1 class="text-2xl font-semibold">{{ $project['name'] }}</h1>
@@ -46,7 +46,7 @@
                 <ul class="divide-y divide-line rounded-xl border border-line bg-raised">
                     @foreach ($members as $member)
                         <li wire:key="member-{{ $member['staff']['public_id'] }}">
-                            <a href="{{ route('portal.staff', $member['staff']['public_id']) }}" class="block min-h-11 px-5 py-3 hover:bg-hover">
+                            <a href="{{ route('portal.staff', $member['staff']['public_id']) }}" class="chevron block min-h-11 px-5 py-3 hover:bg-hover">
                                 <span class="block font-medium">{{ $member['staff']['display_name'] }}</span>
                                 <span class="block text-sm text-muted">{{ Format::projectRole($member['role']) }}</span>
                             </a>

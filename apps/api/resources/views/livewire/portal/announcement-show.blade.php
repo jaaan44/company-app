@@ -5,7 +5,7 @@
     @if ($noProfile)
         <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
     @elseif ($errorMessage)
-        <h1 class="mb-4 text-2xl font-semibold">Announcement</h1>
+        <h1 class="sr-only">Announcement</h1>
         @if ($errorMessage === 'This announcement is no longer available.')
             <p class="rounded-lg border border-line bg-raised p-4">{{ $errorMessage }}</p>
         @else

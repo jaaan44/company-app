@@ -235,12 +235,13 @@ The visual-design foundation for Flutter is below (DEC-046). **The web equivalen
 
 - **Toolkit:** Tailwind CSS v4 via Vite, server-rendered Blade + Livewire (DEC-019). There is no client-side component library. Alpine (bundled with Livewire) is used only for small conveniences, such as Copy buttons.
 - **Tokens** (`apps/api/resources/css/app.css`):
-  - `surface`, `raised`, `ink`, `muted`, `line`, `hover`, `accent`, `on-accent`, `accent-ink`, `accent-soft` and `danger`, each with a light and a dark value; dark follows the browser's `prefers-color-scheme`.
-  - They are the web counterparts of the mobile color roles; the indigo accent matches the app's seed color.
+  - `surface`, `raised`, `ink`, `muted`, `line`, `hover`, `accent`, `on-accent`, `accent-ink`, `accent-soft`, `danger`, `danger-soft`, `success` and `success-soft`, each with a light and a dark value; dark follows the browser's `prefers-color-scheme`.
+  - They are the web counterparts of the mobile color roles. Since 34F (DEC-064) they take the app's M3 indigo palette: light surface `#fbf8ff`, accent `#4355b9`; dark surface `#121318`, accent `#bac3ff`.
   - Every text and surface pair meets WCAG 2.2 AA. Axe scans of the 34A pages in light and dark found no violations.
 - **Type:** the system font stack. No web fonts, so no third-party request.
+- **Shell (34F, DEC-064):** the app's five tabs (Home, Tasks, Schedule, Messages, More), a bottom tab bar on phones and a sidebar from `md` up, with the current tab marked. More lists the other pages in the app's order. A sticky app bar shows the title, with a back arrow on sub-pages (to the parent, or to More). A list's main action is a "+" FAB on phones and a pill button on wider screens. The page content keeps clear of the tab bar and the safe areas.
 - **Layout:**
-  - one centered column, at most `5xl` wide, with a 16 px gutter;
+  - one centered column, at most `3xl` wide (since 34F), with a 16 px gutter;
   - cards for sections;
   - grids collapse to one column on narrow screens;
   - no horizontal scrolling at 320 px (200% zoom of a 640 px window).
@@ -255,7 +256,12 @@ The visual-design foundation for Flutter is below (DEC-046). **The web equivalen
 
   A status concept looks the same on every web page ("Status presentation" below).
 - **Chat (34D):** my messages sit on the right in the accent-soft colour; others' on the left with a border. Each shows its time, and the sender's name in group and project chats (screen readers always hear "You" or the sender). Day separators are centred headings. Unread counts are text in a badge with " unread" for screen readers; an unread notification is bold, with a dot and "Unread" for screen readers.
-- **Files (34E):** a photo shows as a thumbnail with its name and size, and **Open photo** opens it in a new tab; a PDF shows its name and size with **Download**. The file input says what is allowed ("JPEG, PNG or PDF, up to 10 MB"), and Livewire's "Preparing the file…" and "Uploading…" are announced while they run. Destructive report actions (Submit, Delete draft, Remove) are confirmed with the browser's dialog, using the mobile app's wording.
+- **Files (34E):** a photo shows as a thumbnail with its name and size, and **Open photo** opens it in a new tab; a PDF shows its name and size with **Download**. The file input says what is allowed ("JPEG, PNG or PDF, up to 10 MB"), and Livewire's "Preparing the file…" and "Uploading…" are announced while they run. Destructive report actions (Submit, Delete draft, Return to draft, Remove) are confirmed with the mobile app's wording; since 34F in an in-app dialog, not the browser's.
+- **Feedback (34F):**
+  - a confirmation message shows as a **toast** above the tab bar (`role="status"`, hides after 4.5 s);
+  - a confirmation that needs no typing is an **in-app dialog** (`x-portal.confirm`, a modal `<dialog>`). It is a sheet from the bottom on phones and centred on wider screens. The question is its heading, the body follows, **Cancel** has focus, Escape closes it, and destructive confirms use the danger colour.
+  - The browser's own dialogs are no longer used.
+- **Icons (34F):** inline SVG Material shapes (`x-portal.icon`), always beside a text label and hidden from screen readers.
 - **Confirmations (34C):** a decision that can't be undone from the page (Cancel request, Approve, Reject) opens an inline panel in place of its buttons: the question as a heading, the body when there is one, the text field (focused), and the confirm button next to Keep it / Back. Destructive confirms use the danger colour. No browser dialog is used for these, so the reason or note can be typed in the same place.
 
 ## Mobile Visual-Design Foundation (resolved, DEC-046)

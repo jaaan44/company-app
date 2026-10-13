@@ -49,6 +49,9 @@ class ReportShow extends Component
 
     public ?string $doneMessage = null;
 
+    /** Bumped with each confirmation, so the same message shows its toast again. */
+    public int $toastNonce = 0;
+
     public function mount(string $publicId, string $kind = 'service'): void
     {
         $this->publicId = $publicId;
@@ -86,6 +89,7 @@ class ReportShow extends Component
                 $this->file->getMimeType(),
             );
             $this->doneMessage = 'File added.';
+            $this->toastNonce++;
         } catch (PortalApiException $e) {
             if ($e->isSessionExpired()) {
                 $this->failed($e, '');
@@ -121,7 +125,7 @@ class ReportShow extends Component
     {
         if ($this->act('DELETE', '', 'Draft deleted.')) {
             session()->flash('status', 'Draft deleted.');
-            $this->redirect(route('portal.reports'));
+            $this->redirect(route('portal.reports'), navigate: true);
         }
     }
 
@@ -169,6 +173,7 @@ class ReportShow extends Component
         try {
             $this->api()->send($method, $this->path().$suffix);
             $this->doneMessage = $done;
+            $this->toastNonce++;
 
             return true;
         } catch (PortalApiException $e) {

@@ -30,7 +30,7 @@ class PortalPagesTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const PAGES = ['/app', '/app/profile', '/app/staff'];
+    private const PAGES = ['/app', '/app/more', '/app/profile', '/app/staff'];
 
     private User $user;
 
@@ -90,9 +90,9 @@ class PortalPagesTest extends TestCase
 
     public function test_only_administrators_see_the_admin_link(): void
     {
-        $this->actingAs($this->user, 'web')->get('/app')->assertDontSee('>Admin<', false);
+        $this->actingAs($this->user, 'web')->get('/app')->assertDontSee(' Admin</a>', false);
         $this->app['auth']->forgetGuards(); // a new request in production starts with fresh guards
-        $this->actingAs(User::factory()->administrator()->create(), 'web')->get('/app')->assertSee('>Admin<', false);
+        $this->actingAs(User::factory()->administrator()->create(), 'web')->get('/app')->assertSee(' Admin</a>', false);
     }
 
     public function test_home_shows_greeting_today_counts_and_announcements(): void

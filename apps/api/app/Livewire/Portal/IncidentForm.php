@@ -143,7 +143,7 @@ class IncidentForm extends Component
                 ? $this->api()->send('POST', '/incident-reports', json: $body)['data']
                 : $this->api()->send('PATCH', '/incident-reports/'.rawurlencode($this->publicId), json: $body)['data'];
             session()->flash('status', $this->publicId === null ? 'Incident reported.' : 'Changes saved.');
-            $this->redirect(route('portal.incident', $report['public_id']));
+            $this->redirect(route('portal.incident', $report['public_id']), navigate: true);
         } catch (PortalApiException $e) {
             $this->refused($e, [
                 'incident_type' => 'type', 'severity' => 'severity', 'occurred_at' => 'occurredAt', 'location' => 'location',

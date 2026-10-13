@@ -4,6 +4,19 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-13 — Phase 34F: the Staff Web Portal as an app (DEC-064)
+- **Requested and authorized** by the product owner ("approve 34f as recommended"). Presentation only: no API, migration, permission or dependency change.
+- **Navigation:**
+  - the app's tabs (Home, Tasks, Schedule, Messages, More): a bottom bar on phones, a sidebar on computers;
+  - a new **More** page in the app's order;
+  - an app bar with the title and a back arrow.
+- **Look:** the app's M3 indigo palette in light and dark, cards, chevron rows, SVG icons, and "+" buttons on phone lists.
+- **Feedback:** toasts for confirmations; in-app dialogs replace the browser's confirm (work log Delete; report Submit, Delete draft, Return to draft, Remove file).
+- **Speed:** portal links and redirects move without a full page load (Livewire navigation), with a progress bar.
+- **Install:** a web app manifest and icons. No service worker or offline mode.
+- **CI:** the staging image check also looks for the manifest and an icon.
+- **Tests:** 10 new; 1,371 → 1,381/1,381. 94/94 browser checks (phone and desktop, light and dark, axe AA 0 violations). UAT-34F-01…07 `NOT RUN`.
+
 ### 2026-10-13 — Phase 34E deployed and closed (UAT PASS); Phase 34 complete
 - Staging deployed at `bcdd6f5` with the UAT34E data (outputs pasted). UAT-34E-01…06 **PASS**, reported by the product owner, with real uploads through the host nginx. Phase 34E, Staff Web Portal: Reports, is formally closed, and with it **Phase 34 — Staff Web Portal (34A–34E)**.
 

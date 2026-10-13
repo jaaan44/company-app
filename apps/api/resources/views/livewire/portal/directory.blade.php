@@ -1,6 +1,6 @@
 @php use App\Support\Portal\Format; @endphp
 <div>
-    <h1 class="mb-4 text-2xl font-semibold">Staff directory</h1>
+    <h1 class="sr-only">Staff directory</h1>
 
     <form role="search" wire:submit.prevent class="mb-4 flex gap-2" aria-label="Find a colleague">
         <label for="directory-search" class="sr-only">Search by name</label>
@@ -27,7 +27,7 @@
             <ul class="divide-y divide-line rounded-xl border border-line bg-raised">
                 @foreach ($staff as $person)
                     <li wire:key="staff-{{ $person['public_id'] }}">
-                        <a href="{{ route('portal.staff', $person['public_id']) }}" class="block min-h-11 px-5 py-3 hover:bg-hover">
+                        <a href="{{ route('portal.staff', $person['public_id']) }}" class="chevron block min-h-11 px-5 py-3 hover:bg-hover">
                             <span class="block font-medium">{{ $person['display_name'] }}</span>
                             @if ($line = Format::roleLine($person))
                                 <span class="block text-sm text-muted">{{ $line }}</span>

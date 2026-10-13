@@ -4,7 +4,7 @@
 @endphp
 <div>
     <x-portal.back :href="$publicId ? route('portal.incident', $publicId) : route('portal.reports', ['type' => 'incidents'])">{{ $publicId ? 'Incident' : 'Reports' }}</x-portal.back>
-    <h1 class="mb-4 text-2xl font-semibold">{{ $publicId === null ? 'Report an incident' : 'Edit incident' }}</h1>
+    <h1 class="sr-only">{{ $publicId === null ? 'Report an incident' : 'Edit incident' }}</h1>
 
     @if ($noProfile)
         <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>

@@ -1,6 +1,6 @@
 @php use App\Support\Portal\Format; @endphp
 <div>
-    <h1 class="mb-4 text-2xl font-semibold">Schedule</h1>
+    <h1 class="sr-only">Schedule</h1>
 
     @if ($noProfile)
         <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>

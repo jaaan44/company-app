@@ -9,7 +9,7 @@
     @if ($noProfile)
         <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
     @elseif ($errorMessage)
-        <h1 class="mb-4 text-2xl font-semibold">{{ $viewer === 'team' ? 'Team request' : 'Leave request' }}</h1>
+        <h1 class="sr-only">{{ $viewer === 'team' ? 'Team request' : 'Leave request' }}</h1>
         @if ($errorMessage === 'This request is no longer available.' || $errorMessage === "You don't have access to this request.")
             <p class="rounded-lg border border-line bg-raised p-4">{{ $errorMessage }}</p>
         @else
@@ -23,9 +23,7 @@
         </p>
 
         <div aria-live="polite">
-            @if ($doneMessage)
-                <p role="status" class="mt-4 rounded-md border border-line bg-raised p-3">{{ $doneMessage }}</p>
-            @endif
+            <x-portal.toast :message="$doneMessage" :nonce="$toastNonce ?? 0" />
             @if ($actionMessage)
                 <p role="alert" class="mt-4 rounded-md bg-danger-soft p-3 font-medium text-danger">{{ $actionMessage }}</p>
             @endif
