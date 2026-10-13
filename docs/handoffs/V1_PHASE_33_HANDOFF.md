@@ -144,3 +144,10 @@ The combined UAT runbook for 30B + 31–33 (DEC-059). After UAT and closure, the
 - **Manually verified (AI):** the script on scratch SQLite: every stage, a re-seed, `send`, `reject`, `investigate`; the embedded text matches the rehearsed file byte for byte.
 - **Not run:** everything on the VPS and the build machine, including MySQL, the image rebuild and the host nginx change.
 - **Awaiting UAT:** UAT-30B-01…08, UAT-31/32/33-01…08, all `NOT RUN`.
+
+## Addendum — Staging image build failure (2026-10-13)
+
+- **Found by the operator, runbook §2:** the staging `app` image failed to build at `1d4f437` because the root `.dockerignore` excluded `docker/php/conf.d`, including the new `uploads.ini`. Phase 33 changed `Dockerfile.staging` without checking the build context; no daemon was available to build the image.
+- **Fixed** in `d6dd29a` (PR #83): only `local-dev.ini` is excluded. Verified with BuildKit's pattern matcher, not with a real build.
+- **Not run:** the real image build. The operator's re-run of the runbook's §2 is the check.
+- **Known gap (not fixed, outside scope):** CI does not build the staging images, so a broken `COPY` or ignore rule is first seen on the VPS. A CI job running `docker build -f docker/php/Dockerfile.staging .` would catch it; it needs its own authorization.

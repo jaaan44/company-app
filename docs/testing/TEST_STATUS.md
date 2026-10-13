@@ -1391,3 +1391,10 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | Staging deploy, host nginx, MySQL, APK, device | — | Not run | Operator steps §2–§6. |
 | UAT | — | NOT RUN | UAT-30B-01…08, UAT-31/32/33-01…08. |
 
+## Combined UAT — staging deploy attempt 1 and the `.dockerignore` fix (2026-10-13)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Runbook §2 at `1d4f437` | Manual (operator) | FAIL | Checkout fast-forwarded; backup `-- Dump completed` (145,848 bytes); `nginx` image built and restarted (`client_max_body_size 12m;`); **`app` image failed**: `"/docker/php/conf.d/uploads.ini": not found`. `app` kept the 30A image: `2M 8M`, `me/team-leave-requests` `404`, the other eight paths `401`, `up 200`. 45 migrations Ran; timezone `Asia/Manila`; 8012 loopback only. |
+| `.dockerignore` fix | Manual (AI), `moby/patternmatcher` v0.6.0 | PASS | At `1d4f437` the matcher excludes `uploads.ini` (reproduces the failure); at the fix it includes it, and still excludes `local-dev.ini`, `entrypoint.sh`, `apps/api/.env`, `apps/mobile` and `docs`. |
+| Real image build | — | Not run | No Docker daemon here; operator re-runs §2 at `d6dd29a`. |
