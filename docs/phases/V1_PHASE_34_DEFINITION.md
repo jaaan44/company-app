@@ -1,6 +1,6 @@
 # Phase 34 — Staff Web Portal (Laravel) — Specification
 
-**Status:** Revision 1 (2026-10-13). **Decisions W-1…W-10 approved "as recommended" by the product owner on 2026-10-13 (DEC-063).** **34A authorized and implemented** (§11; handoff `docs/handoffs/V1_PHASE_34A_HANDOFF.md`). 34B–34E are **not authorized**: each needs its own authorization (W-10). Revision 0 was the draft reviewed in PR #89.
+**Status:** Revision 1 (2026-10-13). **Decisions W-1…W-10 approved "as recommended" by the product owner on 2026-10-13 (DEC-063).** **34A and 34B authorized, implemented and closed** (§11–§12); **34C authorized and implemented** (§13; handoff `docs/handoffs/V1_PHASE_34C_HANDOFF.md`). 34D–34E are **not authorized**: each needs its own authorization (W-10). Revision 0 was the draft reviewed in PR #89.
 
 **Requested by the product owner (2026-10-12):** "a laravel based frontend (basically similar function with the flutter frontend)". This draft reads that as: **the same staff functions as the Flutter app, in a web browser, built with Laravel**, for the same accounts and the same rules.
 
@@ -210,7 +210,7 @@ Run these with `docs/testing/PHASE_34A_UAT_PREPARATION.md`.
 - **Schedule** `/app/schedule` (Phase 30A):
   - seven days from the company today, with Previous week / Next week / Today;
   - meetings, open tasks due and approved leave per day, in company time;
-  - tasks and meetings link to their pages; leave doesn't link (34C).
+  - tasks and meetings link to their pages; leave doesn't link, as on mobile (§13).
   - **Entry** `/app/schedule/entries/{id}`: when, project, organizer, people, description.
 - **Home:** the My tasks tile and the Today rows now link to their pages, as on mobile. Messages and Notifications follow in 34D.
 - **Navigation:** Home, Tasks, Schedule, Work logs, Projects, Clients, Staff directory, My profile, on its own row.
@@ -225,3 +225,45 @@ Run these with `docs/testing/PHASE_34A_UAT_PREPARATION.md`.
 - **UAT-34B-05:** Projects (mine only, search), a project, its client and members.
 - **UAT-34B-06:** Clients (search) and a client with contacts.
 - **UAT-34B-07:** Schedule week, Next / Previous / Today, an entry; Home's links; dark mode, zoom and a phone browser on the new pages.
+
+## 13. Sub-phase 34C as implemented (2026-10-13)
+
+**Authorized** by the product owner ("proceed with 34C"). No API, migration or permission change.
+
+**Screens** (each a Livewire component calling `/api/v1` in-process, mirroring the mobile screen named):
+- **Leave** `/app/leave` (Phase 31):
+  - **Balances YYYY**: per type, "N days left of M" with "X used · Y pending", or "Unpaid — no balance";
+  - **My requests**, newest first, 20 per page: the type, the dates and days, and the status chip;
+  - **Request leave**;
+  - a **Team requests** entry ("N pending" or "Nothing waiting for you"), only for a reviewer who manages someone (R-1).
+- **Request leave** `/app/leave/new`:
+  - the types are my balance rows ("15 days left in 2026" or "Unpaid");
+  - the first and last day (the last follows the first), "N calendar days (weekends included)", and a reason of 3–1,000 characters;
+  - the mobile form's checks and messages, including "A request must stay within one calendar year…";
+  - the API's `422` errors land on the same fields, and its `403`/`409` show at the top in its own words;
+  - "Leave requested." on the list.
+- **Leave request** `/app/leave/requests/{id}` (mine):
+  - the type, Paid or Unpaid, the status, the dates and days, the reason and the **History** ("Approved by Ben Cruz · Today 09:12", with the note);
+  - **Cancel request**, offered while pending, or approved and not yet started by the company day. It's confirmed first ("Cancel this request?", with the right body, an optional reason, and Keep it).
+- **Team requests** `/app/leave/team` (R-3): my direct reports' requests, with Pending (N) / Approved / Rejected / All, 20 per page.
+- **Team request** `/app/leave/team/{id}`:
+  - "Requested by", and **Approve** (optional note) or **Reject** (a reason of at least 3 characters), each confirmed first and offered only while pending;
+  - "Request approved." / "Request rejected."; a stale decision shows the API's refusal;
+  - someone else's request: "You don't have access to this request."
+- **My status** `/app/status` (Phase 30B):
+  - the current status and when it was set ("Set Today 09:12", or "No status set yet");
+  - **Change status** among the five statuses. The change is confirmed by the API before "Status set to X." shows; Off duty is explained as "not working right now. This isn't leave.";
+  - the 5 newest status changes and check-ins, with **All status changes** and **All check-ins** (`/app/status/changes`, `/app/status/check-ins`, 20 per page);
+  - check-ins are read-only: the place (or "No place name"), the time and "±N m", the note, and the coordinates to 5 decimals. **There is no check-in from the browser** (W-7); the page says to check in from the phone.
+- **Navigation:** Home, Tasks, Schedule, Work logs, Projects, Clients, **Leave**, **My status**, Staff directory, My profile.
+
+**As on mobile, the Schedule's leave rows stay unlinked** (mobile's Schedule doesn't open leave either). That corrects the 34B note, which expected 34C to link them.
+
+**UAT scenarios (all `NOT RUN`):**
+- **UAT-34C-01:** Leave: balances and My requests matching the phone; the Team requests entry only for the manager.
+- **UAT-34C-02:** Request leave: the form's messages, then a request that the phone shows as Pending.
+- **UAT-34C-03:** Cancel: a pending request, and an approved one not yet started; neither is offered for leave that has started.
+- **UAT-34C-04:** Team requests as the manager: the filters, then Approve with a note; the staff member sees "Approved by …" on the web and the phone.
+- **UAT-34C-05:** Reject with a reason (a too-short reason is refused); a colleague can't open a team request.
+- **UAT-34C-06:** My status: change it and see the phone show the same; the histories and check-ins match the phone; no check-in from the browser.
+- **UAT-34C-07:** dark mode, 200% zoom, a phone browser and keyboard on the new pages.

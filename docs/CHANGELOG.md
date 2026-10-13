@@ -4,6 +4,15 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-13 — Phase 34C: Staff Web Portal, HR & Operations
+- **Web pages, all through the existing API, mirroring the mobile screens:**
+  - Leave: balances, my requests, Request leave, and my request with a confirmed Cancel;
+  - Team requests (Pending / Approved / Rejected / All) and a team request with a confirmed Approve (optional note) or Reject (reason);
+  - My status: the current status, Change status, recent changes and check-ins, and All status changes / All check-ins. No check-in from the browser (W-7).
+- **Navigation** adds Leave and My status.
+- **Tests:** 26 new; 1,308 → 1,334/1,334. 67/67 browser checks, including axe AA with no violations. UAT-34C-01…07 `NOT RUN`.
+- **Docs:** the 34B note that 34C would link the Schedule's leave rows is corrected: they stay unlinked, as on mobile. The 34B handoff's status line no longer says its UAT is `NOT RUN`.
+
 ### 2026-10-13 — Phase 34B closed (UAT PASS)
 - Staging deployed at `2a7bca9` with the UAT34B data. UAT-34B-01…07 **PASS**, reported by the product owner. Phase 34B, Staff Web Portal: Work, is formally closed.
 

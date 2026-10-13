@@ -24,6 +24,8 @@
                             ['portal.work-logs', 'Work logs', ['portal.work-logs*']],
                             ['portal.projects', 'Projects', ['portal.projects', 'portal.project']],
                             ['portal.clients', 'Clients', ['portal.clients', 'portal.client']],
+                            ['portal.leave', 'Leave', ['portal.leave*']],
+                            ['portal.status', 'My status', ['portal.status*']],
                             ['portal.directory', 'Staff directory', ['portal.directory', 'portal.staff']],
                             ['portal.profile', 'My profile', ['portal.profile']],
                         ] as [$name, $label, $patterns])
