@@ -4,6 +4,9 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-13 — Phase 34F deployed and closed (UAT PASS)
+- Staging deployed at `b682935` (output pasted). UAT-34F-01…07 **PASS**, reported by the product owner on a phone browser and a computer, including installing to the home screen. Phase 34F, the Staff Web Portal as an app, is formally closed.
+
 ### 2026-10-13 — Phase 34F merged; UAT runbook
 - PR #111 merged as `b682935` (CI green, including the staging image build with the manifest and icon check). New `docs/testing/PHASE_34F_UAT_PREPARATION.md` covers the deploy `bcdd6f5` → `b682935`, smoke tests for the More page, the manifest and the icons, an optional re-seed with the unchanged 34E script, and UAT-34F-01…07 (phone browser, computer, install to the home screen). No new data script, account or password.
 

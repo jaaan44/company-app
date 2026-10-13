@@ -1,6 +1,6 @@
 # Phase 34F — Staff Web Portal: Portal as an app — Handoff
 
-**Status: merged (PR #111, `b682935`, 2026-10-13); awaiting staging deployment and UAT.** UAT-34F-01…07 are `NOT RUN`.
+**Status: complete and formally closed (2026-10-13).** Merged (PR #111, `b682935`), deployed to staging, UAT-34F-01…07 **PASS**. UAT-34F-01…07 are `NOT RUN`.
 
 ## 1. Phase Identification
 
@@ -194,3 +194,9 @@ See §5.
   - an optional re-seed with the unchanged 34E script (SHA `7b894d2a…`, checked again) to bring back the rejected report for the Return to draft dialog;
   - UAT-34F-01…07.
 - **Not run:** the deployment and UAT.
+
+## Addendum — Deployment, UAT and Formal Closure (2026-10-13)
+
+- **Deployed:** staging `bcdd6f5` → `b682935`. The operator pasted the output: a fast-forward, the backup, `BUILD OK`, migrations Ran, and the same asset names in both containers as the local build. The icons were in nginx. The smoke tests passed, including the manifest and the four icons.
+- **UAT-34F-01…07: PASS**, reported by the product owner, and recorded by the AI on that report. The optional §3 re-seed output was not pasted.
+- **Phase 34F is formally closed.** The records made during UAT stay on staging; cleanup needs its own authorization.
