@@ -1429,3 +1429,10 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | Staging image build | — | Not run here | No Docker daemon in this environment. The new `staging-images.yml` workflow runs it on the PR. |
 | MySQL / staging / UAT | — | NOT RUN | UAT-34A-01…06 `NOT RUN`. |
 
+## Phase 34A — staging deployment and UAT (2026-10-13)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Runbook §2, deploy `d6dd29a` → `d3cf84d` | Manual (operator) | PASS | Fast-forward; backup `-- Dump completed on 2026-10-13 3:39:36` (149,178 bytes); `BUILD OK` (`npm ci` and `npm run build` ran once, and the second image reused the cache). Block 4 (migrations, timezone, assets in both containers, loopback port, fresh containers) and Block 5 (redirects, CSS `200 text/css`, API `401`s, `up 200`) were reported OK by the operator; the output was not pasted. |
+| UAT-34A-01…06 | UAT (product owner) | PASS | Desktop and phone browsers on staging; recorded in `UAT_LOG.md`. 34A-05 suspended Kai and restored him to active, as reported. The `tinker` output was not pasted. |
+
