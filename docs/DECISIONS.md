@@ -874,3 +874,41 @@ Internet → Cloudflare (proxied, SSL/TLS "Full (strict)")
 **Decision:** <what was decided>
 **Rationale:** <why>
 ```
+
+### DEC-063 — Phase 34: a Staff Web Portal in the Laravel app that calls the existing API in-process; one web login for every account; Tailwind as the web design system; roadmap renumbered
+
+**Date:** 2026-10-13
+**Status:** ACCEPTED (decisions W-1…W-10 of `docs/phases/V1_PHASE_34_DEFINITION.md`, approved "as recommended" by the product owner on 2026-10-13; **34A authorized and implemented**; 34B–34E each need their own authorization). **Sensitive (flagged): the web login now admits every active account, and the staging images gain a Node build stage.**
+**Context:**
+- The product owner asked for "a laravel based frontend (basically similar function with the flutter frontend)".
+- The web side had a Livewire login that refused any account without `admin.access`, and one placeholder page.
+- `06_UI_UX_GUIDELINES.md` had left the web visual-design system open.
+- A spike (deleted, never committed) showed that `/api/v1` routes can be dispatched in-process from a session-authenticated web request, with the API's own middleware, FormRequests and policies applying and no token created.
+**Decision:**
+1. **W-1, data and rules:** portal screens are Livewire components that call the existing `/api/v1` routes **in-process** through one class, `App\Services\Portal\InternalApi`, as the signed-in web user (`auth:sanctum` reads the `web` guard). No business rule is re-implemented for the web.
+   - The class copies the client identity, asks for JSON, and always runs the API's middleware.
+   - It restores the outer request, the current route and the default auth guard.
+   - It maps failures as the mobile `ApiClient` does: 401 signs out with "Your session has ended. Please sign in again."; 403 is the no-profile or forbidden state; 404, 409, 413 and 422 are handled; other failures offer "Try again".
+   - API data is rendered from component `render()`, never kept in public Livewire properties, so it is not echoed into the page snapshot.
+2. **W-2, place:** the same Laravel app and domain, under `/app`. `/` redirects there.
+3. **W-3 / W-4, sign-in:** one web login for **every active account**, landing on `/app`. Accounts with `admin.access` also see an "Admin" link. The Admin Backoffice (`/home`) keeps `can:admin.access`. The generic failure messages, rate limit and audit are unchanged; the "no Admin Backoffice access" refusal is removed.
+4. **W-5, web design system:**
+   - **Tailwind CSS v4 via Vite**, with design tokens in `resources/css/app.css` (light and dark by `prefers-color-scheme`, WCAG 2.2 AA contrast, 44 px targets, visible focus), scanning only `resources/views`, and no web fonts.
+   - The staging images gain a Node stage (`node:22-alpine`, `npm ci && npm run build`); only `public/build` is copied into the app and nginx images.
+   - Tests render pages without the manifest (`withoutVite()`).
+   - This is the web counterpart of DEC-046; the Admin Backoffice reuses it.
+5. **W-6, audit:** `AuditSource::Web`.
+   - The shared web login and logout now record `web` (previously `admin`).
+   - Writes made through the portal are recorded as `web` automatically: `AuditLogger::recordForRequest` reads a request attribute that only `InternalApi` sets, never a client.
+   - The mobile API stays `api`.
+6. **W-7:** no browser check-in. **W-8:** web uploads through the file picker, and PDFs downloadable (34E).
+7. **W-9, roadmap:** the portal is **Phase 34 (34A–34E)**. The former Phases 34–38 become 35–39: Admin Backoffice Foundation 35, Business Management Screens 36, Integration & UX Hardening 37, UAT 38, Release Readiness 39. Documents written before 2026-10-13 use the old numbers; for example, "deferred to Phase 38" means Release Readiness, now 39.
+8. **W-10:** authorization sub-phase by sub-phase; the product owner authorized 34A only.
+9. **CI:** a new workflow, `.github/workflows/staging-images.yml`, builds both staging images on every relevant change and checks the built assets and upload limits. This closes the gap behind the PR #83 failure.
+**Rationale:** One source of rules for both clients, so behavior matches mobile by construction. A refactor of tested API code is avoided. The design-system decision is made once, for both web surfaces.
+**Superseded/reaffirmed:**
+- **DEC-019 (Blade + Livewire)** is reaffirmed and extended to the staff portal.
+- **DEC-022** is reaffirmed: the browser uses the session, the mobile app uses tokens.
+- **DEC-048**'s numbering is shifted by W-9.
+- **DEC-044**'s two-value source set gains `web`.
+- The Phase 4 rule that the web login admits only `admin.access` accounts is **superseded** by W-3/W-4.

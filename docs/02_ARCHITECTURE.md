@@ -681,3 +681,20 @@ No migration, route or permission change.
 **Containers:** `client_max_body_size 12m` in `docker/nginx/default.conf`, and `docker/php/conf.d/uploads.ini` (`upload_max_filesize 12M`, `post_max_size 13M`) in both PHP images. The 10 MB attachment limit was unreachable behind nginx's 1 MB and PHP's 2M defaults. The VPS host nginx needs the same `client_max_body_size`.
 
 **Not introduced:** PDF upload or viewing, review or investigation actions, offline drafts, any other dependency. See `docs/phases/V1_PHASE_33_DEFINITION.md` and `docs/handoffs/V1_PHASE_33_HANDOFF.md`.
+
+## 43. Staff Web Portal (Phase 34A — implemented, awaiting staging deployment and UAT; DEC-063)
+
+- **Where:** inside `apps/api` (DEC-011/DEC-019), under `/app`, behind `auth` and `account.active`. `/` redirects there; the login page is shared.
+- **How:** each screen is a Livewire component (`App\Livewire\Portal\*`) that calls the existing `/api/v1` routes in-process through `App\Services\Portal\InternalApi`.
+  - That class dispatches through the HTTP kernel with the browser's identity, always running the API middleware.
+  - It restores the outer request, route and default guard afterwards.
+  - It raises `PortalApiException` for non-2xx answers.
+  - `App\Livewire\Portal\Concerns\CallsInternalApi` maps those to the page states, as the mobile `ApiClient` does.
+- **No business logic in the web layer.** Display helpers (`App\Support\Portal\Format`) are ports of the mobile app's formatting, using the API's `company_day.utc_offset`.
+- **Assets:** Vite and Tailwind CSS v4 (`resources/css/app.css` tokens; only `resources/views` scanned; no web fonts).
+  - Locally: `npm ci && npm run build`, or `npm run dev`.
+  - In the staging images: a `node:22-alpine` stage builds them, and both the app and nginx images copy `public/build`.
+  - Tests use `withoutVite()`.
+- **CI:** `.github/workflows/staging-images.yml` builds both staging images and checks their assets and upload limits.
+- **34A screens:** Home, My profile, Staff directory and a colleague. 34B–34E (Work, HR & Operations, Communication, Reports) are planned in `docs/phases/V1_PHASE_34_DEFINITION.md` and not yet authorized.
+

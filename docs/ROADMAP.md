@@ -130,24 +130,38 @@ Cross-module dashboard and administrative reports. Preceded by a product-owner-r
 
 ---
 
+### Staff Web Portal
+*Depends on: the completed backend API and the Employee Mobile Application whose functions it mirrors (Phases 25–33). Added 2026-10-13 by DEC-063, which renumbered the phases after it.*
+
+**Phase 34 — Staff Web Portal (Laravel)** *(specification `docs/phases/V1_PHASE_34_DEFINITION.md`, DEC-063)* — the mobile app's staff functions in a browser, built with Blade + Livewire inside `apps/api`, calling the existing API in-process. Split into sub-phases, each authorized on its own:
+- **34A — Foundation** *(implemented 2026-10-13; awaiting staging deployment and UAT, see `docs/handoffs/V1_PHASE_34A_HANDOFF.md`)*: shared web login, layout and the web design system, Home, My profile and the Staff directory, and a CI build of the staging images.
+- **34B — Work:** Tasks, Work logs, Projects, Clients and Schedule. *Not authorized.*
+- **34C — HR & Operations:** Leave (including Team requests) and My status. *Not authorized.*
+- **34D — Communication:** Messages, Notifications and Announcements. *Not authorized.*
+- **34E — Reports:** Service and incident reports with uploads. *Not authorized.*
+
+---
+
 ### Admin Backoffice
 *Depends on: the completed backend API (Phases 5–21); does not block, and is not blocked by, the Employee Mobile Application phases above — the two tracks share only the already-stable API*
 
-**Phase 34 — Admin Backoffice Foundation** — the Blade/Livewire navigation shell (`06_UI_UX_GUIDELINES.md`'s existing `Dashboard / People | Clients | Work | HR | Operations | Communication | Reports | Administration` section layout) and the web visual-design-system decision `06_UI_UX_GUIDELINES.md` explicitly left open for "whichever phase first builds real Admin Backoffice screens."
-**Phase 35 — Admin Backoffice Business Management Screens** — CRUD/management UI for the business modules, grouped by the same section layout; may be split into sub-phases at its own planning time.
+**Phase 35 — Admin Backoffice Foundation** *(formerly 34, DEC-063)* — the Blade/Livewire navigation shell (`06_UI_UX_GUIDELINES.md`'s existing `Dashboard / People | Clients | Work | HR | Operations | Communication | Reports | Administration` section layout) and the web visual-design-system decision `06_UI_UX_GUIDELINES.md` explicitly left open for "whichever phase first builds real Admin Backoffice screens." *(That design decision has since been made by Phase 34A, W-5, DEC-063; this phase reuses it.)*
+**Phase 36 — Admin Backoffice Business Management Screens** *(formerly 35)* — CRUD/management UI for the business modules, grouped by the same section layout; may be split into sub-phases at its own planning time.
 
 ---
 
 ### Release Preparation (re-baselined)
 *Sequential, depends on the phases above*
 
-**Phase 36 — Mobile/Admin Integration & UX Hardening** — cross-cutting polish and real-device/cross-browser verification across both surfaces once real workflows exist on both; the natural point to revisit whether a shared loading/empty/error-state widget library (deferred at Phase 25 as premature) is now justified by real, repeated usage.
-**Phase 37 — UAT** — product owner acceptance testing (see `docs/testing/UAT_LOG.md`), now meaningful because real client workflows exist on both surfaces. Formerly numbered Phase 25 — see DEC-048.
-**Phase 38 — Release Readiness** — final go/no-go. Formerly numbered Phase 26 — see DEC-048.
+**Phase 37 — Mobile/Web/Admin Integration & UX Hardening** *(formerly 36)* — cross-cutting polish and real-device/cross-browser verification across both surfaces once real workflows exist on both; the natural point to revisit whether a shared loading/empty/error-state widget library (deferred at Phase 25 as premature) is now justified by real, repeated usage.
+**Phase 38 — UAT** *(formerly 37)* — product owner acceptance testing (see `docs/testing/UAT_LOG.md`), now meaningful because real client workflows exist on both surfaces. Formerly numbered Phase 25 — see DEC-048.
+**Phase 39 — Release Readiness** *(formerly 38)* — final go/no-go. Formerly numbered Phase 26 — see DEC-048.
 
 ---
 
 ## Notes
+
+- **Renumbering (2026-10-13, DEC-063):** the Staff Web Portal became Phase 34, so the phases after it moved up by one (old 34→35, 35→36, 36→37, 37→38, 38→39). Documents written before that date use the old numbers. For example, "deferred to Phase 38" means Release Readiness, now Phase 39, and "Phase 36" hardening items are now Phase 37.
 
 - Audit logging (DEC-009) was not introduced during Phase 3 (Core Architecture) or Phase 5 (Roles & Permissions) as originally anticipated here — every phase from 6 through 20 re-flagged the same standing gap. Phase 21 (Integration Audit) was the named backstop for exactly this case, and built it — see DEC-044.
 - **Phase 25 onward was re-baselined on 2026-09-22 (DEC-048).** The original roadmap assumed Phase 25 = UAT and Phase 26 = Release Readiness, on the (reasonable, at the time) assumption that the backend API would be the long pole. A dedicated discovery/readiness assessment established that the backend is in fact substantially complete while both user-facing clients (Flutter mobile, Admin Backoffice) remain foundation-only — meaning UAT as originally sequenced would only have been able to exercise authentication. The product owner then directed that the employee mobile application be built out before the Admin Backoffice, without either blocking the other. See DEC-048 for the full reasoning and this file's Employee Mobile Application / Admin Backoffice / Release Preparation sections above for the resulting sequence.

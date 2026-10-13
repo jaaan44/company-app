@@ -82,12 +82,15 @@ cp .env.example .env
 php artisan key:generate
 php artisan migrate
 php artisan db:seed --class="Database\Seeders\AdminUserSeeder"  # local dev only — admin@example.test / password
+npm ci && npm run build   # the web pages' CSS/JS (Phase 34A); `npm run dev` while editing views
 php artisan serve
 ```
 
+The browser pages (the login and the Staff Web Portal at `/app`) load their CSS and JS through Vite. Build them once with `npm ci && npm run build`, on the host, from `apps/api`, for either path. Without a build those pages fail with a missing-manifest error; the API and the tests are unaffected.
+
 Checks (either path — prefix with `docker compose exec app` for Docker): `composer validate --strict` · `vendor/bin/pint --test` · `vendor/bin/phpstan analyse` · `php artisan test`
 
-Once running, `GET /api/v1/health` returns `{"data": {"status": "ok", "timestamp": "..."}}` — the versioned API foundation, not a business endpoint. Authentication (Phase 4): visit `/login` for the Admin Backoffice, or use `POST /api/v1/auth/login` for the mobile API — see `docs/handoffs/V1_PHASE_04_HANDOFF.md` for full manual-verification steps.
+Once running, `GET /api/v1/health` returns `{"data": {"status": "ok", "timestamp": "..."}}` — the versioned API foundation, not a business endpoint. Authentication (Phase 4; shared web login since Phase 34A): visit `/login` to sign in to the Staff Web Portal (`/app`) and, for administrators, the Admin Backoffice, or use `POST /api/v1/auth/login` for the mobile API — see `docs/handoffs/V1_PHASE_04_HANDOFF.md` for full manual-verification steps.
 
 > **Before any non-local deployment** (Phase 22, Security Audit, F-08): both `.env.example` and `.env.docker.example` set `APP_DEBUG=true` for local-dev convenience — a real staging/production `.env` must explicitly set `APP_DEBUG=false` (the application code already defaults to `false` if unset; this is a reminder against accidentally copying the dev example verbatim, not a code gap). See `docs/05_SECURITY_MODEL.md`.
 
@@ -118,7 +121,7 @@ The app starts on a login screen (Phase 4); sign in with an account seeded via `
 
 ## Quality Gates / CI
 
-GitHub Actions runs the exact checks above on every pull request targeting `main` and every push to `main` — `.github/workflows/backend-ci.yml` and `.github/workflows/mobile-ci.yml`, each scoped (via `paths:`) to run only when its own app changes. CI runs directly on the runner, not via Docker — a single PHP version and a single Flutter version, no build matrix, no Android/iOS artifact builds, matching the resource-efficiency direction in `docs/02_ARCHITECTURE.md` §0. `CLAUDE.md` §5 is the authoritative list of commands; this section and CI both mirror it.
+GitHub Actions runs the exact checks above on every pull request targeting `main` and every push to `main` — `.github/workflows/backend-ci.yml` and `.github/workflows/mobile-ci.yml`, each scoped (via `paths:`) to run only when its own app changes. Since Phase 34A, `.github/workflows/staging-images.yml` also builds both staging Docker images (including the Vite asset build) whenever `apps/api`, `docker/` or `.dockerignore` changes. CI runs directly on the runner, not via Docker — a single PHP version and a single Flutter version, no build matrix, no Android/iOS artifact builds, matching the resource-efficiency direction in `docs/02_ARCHITECTURE.md` §0. `CLAUDE.md` §5 is the authoritative list of commands; this section and CI both mirror it.
 
 ## Local Development
 

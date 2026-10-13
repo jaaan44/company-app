@@ -1417,3 +1417,15 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 |---|---|---|---|
 | UAT-30B-01…08, UAT-31-01…08, UAT-32-01…08, UAT-33-01…08 | UAT (product owner) | PASS | 32 scenarios on a physical Android 12+ device against staging `d6dd29a`, APK SHA-256 `0470A31A…A55E9D`; results reported by the product owner, recorded in `UAT_LOG.md`. Not reported: whether UAT-33-02's 00:00–07:59 Manila window was tried (automated tests cover it); UAT-33-06's oversized-image case is not reachable from the phone (photos are scaled to 2560 px). The final `exposure` output was not pasted. |
 
+## Phase 34A — Staff Web Portal: Foundation (2026-10-13, DEC-063)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Backend tests | Automated | PASS | 31 new: `InternalApiTest` 11, `PortalPagesTest` 16, `FormatTest` 4. 3 `AdminLoginTest` tests and the `ExampleTest` updated to the approved login and root behaviour. 1,284/1,284. |
+| Pint / PHPStan / `composer validate` / `composer audit` | Automated | PASS | Clean. No Composer change. |
+| Mutation checks | Manual (AI) | PASS | 10 mutations: 8 caught. 2 survivors led to fixes: the no-op session hand-off was removed, and the no-profile state now shows on a `403`. |
+| Browser checks (Playwright + Chromium, axe-core 4.10.2) | Manual (AI), local server, scratch SQLite | PASS | 50/50 in light and dark: login and landing, Home, directory (pages, live search in URL, Back), colleague, profile, Copy (clipboard verified), skip link, no horizontal scroll at 320 px, logout, no JS errors, **axe WCAG 2.x AA: 0 violations** on 4 pages × 2 schemes, Admin link and backoffice, no-profile states, `/home` forbidden for staff. |
+| Asset build | Manual (AI) | PASS | `npm ci && npm run build` offline-safe (no font fetch). An isolated build of the Docker stage's inputs produces the identical manifest. |
+| Staging image build | — | Not run here | No Docker daemon in this environment. The new `staging-images.yml` workflow runs it on the PR. |
+| MySQL / staging / UAT | — | NOT RUN | UAT-34A-01…06 `NOT RUN`. |
+

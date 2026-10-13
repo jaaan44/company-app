@@ -2,18 +2,18 @@
 
 namespace Tests\Feature;
 
-// use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
     /**
-     * A basic test example.
+     * The site root opens the Staff Web Portal (Phase 34A), which sends a
+     * guest on to the login page.
      */
-    public function test_the_application_returns_a_successful_response(): void
+    public function test_the_site_root_opens_the_portal(): void
     {
-        $response = $this->get('/');
-
-        $response->assertStatus(200);
+        $this->get('/')->assertRedirect('/app');
+        $this->get('/app')->assertRedirect('/login');
+        $this->get('/login')->assertOk();
     }
 }

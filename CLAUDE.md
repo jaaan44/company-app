@@ -68,6 +68,13 @@ flutter analyze
 flutter test
 ```
 
+**Staging images (Phase 34A, DEC-063):** `.github/workflows/staging-images.yml` builds `docker/php/Dockerfile.staging` and `docker/nginx/Dockerfile.staging` from the repository root and checks the built assets and upload limits. Locally, when a Docker daemon is available:
+```sh
+docker build -f docker/php/Dockerfile.staging -t company-app-api:ci .
+docker build -f docker/nginx/Dockerfile.staging -t company-app-nginx:ci .
+```
+Web assets (Vite + Tailwind, `apps/api`): `npm ci && npm run build` builds them for local browser use; the images build them in their own Node stage. Backend tests do not need them (`withoutVite()`).
+
 If a future phase changes these versions or commands, update this section — don't let it go stale.
 
 **Local development environment (Phase 4A, DEC-027):** Docker Compose (`docker compose up -d`, three services — `nginx`, `app`, `mysql`) is the standard way to run the backend locally, superseding DEC-013. The commands above are unchanged and remain what CI runs and what this section governs; inside the Docker environment, run them as `docker compose exec app <command>` (e.g. `docker compose exec app php artisan test`). See `README.md` "Backend (Docker)" for the full setup and `docs/handoffs/V1_PHASE_04A_HANDOFF.md` for what was built. Flutter is not Dockerized — `apps/mobile`'s commands are unaffected.

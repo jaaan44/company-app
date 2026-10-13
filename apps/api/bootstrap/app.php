@@ -18,6 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'account.active' => EnsureAccountIsActive::class,
         ]);
 
+        // A signed-in user who opens the login page goes to the Staff Web
+        // Portal (Phase 34A), the landing page for every role.
+        $middleware->redirectUsersTo(fn () => route('portal.home'));
+
         // Phase 26 (Staging Mobile Connectivity & TLS): staging terminates TLS at a
         // host-level Nginx that reverse-proxies over loopback to this application's
         // own Docker-internal Nginx (docker/nginx/default.conf), which in turn

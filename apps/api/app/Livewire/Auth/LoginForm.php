@@ -14,8 +14,10 @@ use Livewire\Attributes\Validate;
 use Livewire\Component;
 
 /**
- * Admin Backoffice login (Phase 4). Session/cookie authentication via
- * Laravel's `web` guard — see DEC-022. Credential failures always return
+ * The web login (Phase 4; shared since Phase 34A, DEC-063 W-3/W-4): every
+ * active account signs in here and lands on the Staff Web Portal; the
+ * Admin Backoffice stays behind `can:admin.access` on its own routes.
+ * Session/cookie authentication via Laravel's `web` guard — see DEC-022. Credential failures always return
  * the same generic message so login behavior never discloses which
  * emails are registered, nor whether a matched account is
  * suspended/inactive (Phase 22, F-01 — see 05_SECURITY_MODEL.md).
@@ -38,7 +40,7 @@ class LoginForm extends Component
      * API's identical AuthController::login() behavior — a failure never
      * records the attempted password, only (when the email matches a
      * real account) which account was targeted, plus IP/user agent.
-     * `source: Admin` distinguishes these entries from the API's own.
+     * `source: Web` distinguishes these entries from the API's own.
      */
     public function login(): void
     {
@@ -83,16 +85,6 @@ class LoginForm extends Component
             ]);
         }
 
-        if ($user->cannot('admin.access')) {
-            Auth::logout();
-
-            $this->auditLoginFailed($auditLogger, $user);
-
-            throw ValidationException::withMessages([
-                'email' => 'This account does not have Admin Backoffice access.',
-            ]);
-        }
-
         session()->regenerate();
 
         $auditLogger->recordForRequest(
@@ -100,11 +92,11 @@ class LoginForm extends Component
             AuditActions::AUTH_LOGIN_SUCCEEDED,
             entityType: 'User',
             entityPublicId: $user->public_id,
-            source: AuditSource::Admin,
+            source: AuditSource::Web,
             actor: $user,
         );
 
-        $this->redirect(route('home'), navigate: false);
+        $this->redirect(route('portal.home'), navigate: false);
     }
 
     private function auditLoginFailed(AuditLogger $auditLogger, ?User $user, ?string $reason = null): void
@@ -114,7 +106,7 @@ class LoginForm extends Component
             AuditActions::AUTH_LOGIN_FAILED,
             entityType: 'User',
             entityPublicId: $user?->public_id,
-            source: AuditSource::Admin,
+            source: AuditSource::Web,
             actor: null,
             after: $reason === null ? [] : ['reason' => $reason],
         );

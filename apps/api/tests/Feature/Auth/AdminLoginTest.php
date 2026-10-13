@@ -27,7 +27,8 @@ class AdminLoginTest extends TestCase
         $user = User::factory()->administrator()->create();
         $this->actingAs($user);
 
-        $this->get('/login')->assertRedirect(route('home'));
+        // Since Phase 34A every signed-in user's landing page is the portal.
+        $this->get('/login')->assertRedirect(route('portal.home'));
     }
 
     public function test_admin_user_can_log_in_with_valid_credentials(): void
@@ -40,9 +41,10 @@ class AdminLoginTest extends TestCase
             ->set('email', $user->email)
             ->set('password', 'correct-password')
             ->call('login')
-            ->assertRedirect(route('home'));
+            ->assertRedirect(route('portal.home'));
 
         $this->assertAuthenticatedAs($user);
+        $this->get('/home')->assertOk();
     }
 
     public function test_session_id_is_regenerated_after_successful_login(): void
@@ -77,8 +79,10 @@ class AdminLoginTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_non_admin_account_is_rejected_from_admin_backoffice(): void
+    public function test_non_admin_account_signs_in_to_the_portal_but_not_the_admin_backoffice(): void
     {
+        // Phase 34A (DEC-063 W-3/W-4): the web login is shared; the Admin
+        // Backoffice itself stays behind `can:admin.access`.
         $user = User::factory()->staff()->create([
             'password' => Hash::make('correct-password'),
         ]);
@@ -87,9 +91,11 @@ class AdminLoginTest extends TestCase
             ->set('email', $user->email)
             ->set('password', 'correct-password')
             ->call('login')
-            ->assertHasErrors('email');
+            ->assertHasNoErrors()
+            ->assertRedirect(route('portal.home'));
 
-        $this->assertGuest();
+        $this->assertAuthenticatedAs($user);
+        $this->get('/home')->assertForbidden();
     }
 
     public function test_suspended_admin_account_cannot_log_in(): void

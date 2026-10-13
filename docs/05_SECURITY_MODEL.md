@@ -53,6 +53,27 @@ CSV export inherits the identical scoping as its JSON counterpart — no export 
 - The self-cancel change (R-2b) **narrows** what a requester can do: approved leave can no longer be cancelled between 00:00 and 07:59 company time on its first day.
 - The app shows a leave reason and history only to the requester and the people the API already lets see them.
 
+## Staff Web Portal (Phase 34A, DEC-063)
+
+**Implemented as of Phase 34A.** These are the only authorization changes in this phase:
+- **The web login admits every active account** (W-3/W-4).
+  - The former refusal of accounts without `admin.access` is removed.
+  - Everyone lands on `/app`.
+  - The Admin Backoffice keeps `auth` → `account.active` → `can:admin.access` on its own routes (`/home`). A staff or manager account that signs in gets `403` there.
+  - The generic failure message (F-01), the rate limit and the audit entry are unchanged.
+- **Portal routes** (`/app/*`) require `auth` and `account.active`. A suspended or inactive account is signed out on its next page, exactly as before.
+- **Every portal screen reads and writes only through `/api/v1`, in-process** (`App\Services\Portal\InternalApi`).
+  - The API's own `auth:sanctum` (which reads the `web` session user), `account.active`, permissions, policies and validation decide.
+  - The portal adds no rule of its own and widens nothing.
+  - No Sanctum token is ever created for a browser session.
+  - The API's middleware always runs for these calls, even when the calling request runs without middleware (Livewire's test harness).
+  - API data is rendered, never kept in Livewire's client-side snapshot.
+- **Audit:** the shared login and logout, and every write made through the portal, record `source: web`.
+  - The marker is a request attribute that only `InternalApi` sets; a client cannot set request attributes (pinned by a test).
+  - The mobile API stays `api`.
+- **Sessions and CSRF:** Laravel's `web` stack (CSRF on every form and Livewire request), with the session cookie `Secure` on staging and `HttpOnly` and `SameSite=Lax` by default.
+- **No third-party resource** is loaded by any page: no web fonts and no CDN. Assets are built into the images.
+
 ## Authentication
 
 - **Implemented (DEC-022):** the Admin Backoffice authenticates via Laravel's session/secure-cookie `web` guard (Blade + Livewire login). The Flutter mobile app authenticates via Laravel Sanctum personal access tokens (`Authorization: Bearer <token>`) — bearer-token only, no cookie-based SPA/stateful authentication. No OAuth server, JWT infrastructure, or Passport.
@@ -102,7 +123,7 @@ CSV export inherits the identical scoping as its JSON counterpart — no export 
 ## Administrative Access
 
 - Administrative actions (staff suspension, role changes, settings changes, data exports) are higher-risk and are candidates for stricter checks (e.g. requiring a specific elevated permission, and always audit-logged). **Implemented as of Phase 21:** data exports (every Phase 20 report export, and the Audit Log's own export) and every Staff/Organization/Client/Project/Task/Announcement/attachment mutation named in DEC-044's event catalog are audit-logged. **Staff suspension and role changes are not yet audited** — no mutation endpoint exists anywhere in the application for either (`users.status`/`users.role_id` can currently only be set at account creation); this is a documented, pre-existing gap the Phase 21 consistency audit surfaced, not something this phase's own scope authorized it to fix by building new User-management endpoints. See DEC-044's Known Limitation.
-- **Implemented as of Phase 5 (DEC-028), retiring the Phase 4 transitional `is_admin` flag (DEC-024):** the Admin Backoffice's access chain is `auth` → `account.active` → `can:admin.access` → `/home` (`routes/web.php`), enforced both at login (`App\Livewire\Auth\LoginForm`) and on every subsequent request to `/home` via Laravel's built-in `can` route middleware — not a one-time login-only check. `is_admin` no longer exists on `users`; there is no remaining reference to it in application authorization logic.
+- **Since Phase 34A (DEC-063) the login is shared and no longer checks `admin.access`; the route chain below still does.** **Implemented as of Phase 5 (DEC-028), retiring the Phase 4 transitional `is_admin` flag (DEC-024):** the Admin Backoffice's access chain is `auth` → `account.active` → `can:admin.access` → `/home` (`routes/web.php`), enforced both at login (`App\Livewire\Auth\LoginForm`) and on every subsequent request to `/home` via Laravel's built-in `can` route middleware — not a one-time login-only check. `is_admin` no longer exists on `users`; there is no remaining reference to it in application authorization logic.
 
 ## API Access
 

@@ -5,6 +5,7 @@ namespace App\Services\Audit;
 use App\Enums\AuditSource;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Services\Portal\InternalApi;
 use Illuminate\Http\Request;
 
 /**
@@ -56,10 +57,11 @@ final class AuditLogger
     /**
      * Convenience for the overwhelmingly common case: an authenticated
      * API request, where the actor/IP/user agent all come straight from
-     * the request itself. `source` defaults to `Api` — pass `Admin`
-     * explicitly for a Blade/Livewire Admin Backoffice call site (there
-     * is no request-derived way to distinguish the two guards reliably
-     * enough to infer it here).
+     * the request itself. Without an explicit `source` it is `Web` for a
+     * request the Staff Web Portal dispatched in-process (InternalApi
+     * marks it; a client cannot set request attributes) and `Api`
+     * otherwise. Pass `Admin` or `Web` explicitly for a Blade/Livewire
+     * call site of its own.
      *
      * @param  array<int, string>  $changedFields
      * @param  array<string, mixed>  $before
@@ -73,7 +75,7 @@ final class AuditLogger
         array $changedFields = [],
         array $before = [],
         array $after = [],
-        AuditSource $source = AuditSource::Api,
+        ?AuditSource $source = null,
         ?User $actor = null,
     ): AuditLog {
         return $this->record(
@@ -81,7 +83,7 @@ final class AuditLogger
             actor: $actor ?? $request->user(),
             entityType: $entityType,
             entityPublicId: $entityPublicId,
-            source: $source,
+            source: $source ?? (InternalApi::isInternal($request) ? AuditSource::Web : AuditSource::Api),
             changedFields: $changedFields,
             before: $before,
             after: $after,
