@@ -1481,7 +1481,15 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | Mutation checks | Manual (AI) | PASS | 7 run. 6 caught at first (myself excluded from New message, a chat marked read, a notification marked read on open, "You:" previews, Load earlier, Mark all read only with unread). The survivor (blank text sent) exposed a missing assertion; with it, the mutation is caught. |
 | Browser checks (Playwright + Chromium, axe-core 4.10.2) | Manual (AI), local server, scratch SQLite | PASS | 49/49 in light and dark: Home's links, a notification opening its chat, the inbox, a chat with Send (field cleared), **a reply sent by a second signed-in browser appearing within the poll (14 s both runs)**, New message without myself and opening the direct chat, announcements and Acknowledge, Mark all read, 320 px on 5 pages, no JS errors, **axe AA 0 violations** on 7 page states × 2. |
 | Staging image build | CI | PASS | Green on PR #105. |
-| MySQL / staging / UAT | — | NOT RUN | UAT-34D-01…06 `NOT RUN`. |
+| MySQL / staging / UAT | — | see below | Deployed and UAT PASS ("Phase 34D — staging deployment, data and UAT"). |
+
+## Phase 34D — staging deployment, data and UAT (2026-10-13)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Runbook §2, deploy `0248615` → `fd57c7c` | Manual (operator), output pasted | PASS | Fast-forward from `0248615` (matching the records); backup `-- Dump completed on 2026-10-13 8:37:57`; `BUILD OK`; migrations all Ran; `app-BvRk9kiK.js` / `app-Dg9_EW2l.css` in both containers; fresh containers; four pages `302 → /login`, `css 200 text/css`, three API `401`s. |
+| Runbook §4, `uat34d_data.php` | Manual (operator), output pasted | PASS | SHA `ee650733…`; `plan` clean; `seed exit=0`; every `verify` line as expected (also the MySQL check of the 34D pages' API calls). |
+| UAT-34D-01…06 | UAT (product owner) | PASS | Desktop and phone browsers on staging `fd57c7c`; recorded in `UAT_LOG.md`. |
 
 ## Phase 34D — UAT preparation (2026-10-13)
 
