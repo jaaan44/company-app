@@ -19,7 +19,9 @@ docs
 # they describe how to build).
 docker-compose.yml
 docker/php/entrypoint.sh
-docker/php/conf.d
+# Only the dev-only ini is excluded: docker/php/conf.d/uploads.ini is
+# copied into the staging app image (Phase 33 upload limits).
+docker/php/conf.d/local-dev.ini
 
 # Secrets — never baked into an image. Runtime config is supplied via
 # docker-compose.staging.yml's bind mount / environment instead.

@@ -28,20 +28,21 @@
 
 | Item | SHA | Meaning |
 |---|---|---|
-| **UAT source baseline (deploy and APK)** | `1d4f437b281a1bcf923020478d174bffff2bc46e` | PR #81 merge into `main`: Phases 30B, 31, 32 and 33. |
+| **UAT source baseline (deploy and APK)** | `d6dd29a4d10fd39f6e72a998c9aa0880926e4010` | Phases 30B, 31, 32 and 33 (PR #81, merged as `1d4f437`), plus the `.dockerignore` fix that lets the staging app image include `uploads.ini` (PR #83). Revision 2 of this runbook. |
 | Running staging implementation (before §2) | `0e7fce6afd243ecb27cec3123214cd8fbb8e1a20` | Phase 30A (PR #73). |
 
 **What changes between them:**
 - **`apps/api`:** controllers, one form-request concern, one resource, `App\Support\CompanyDay`, and one new route (`GET /me/team-leave-requests`). **No migration** (still 45 Ran); `composer.lock` and the environment variables are unchanged.
 - **Docker images:** `docker/nginx/default.conf` gains `client_max_body_size 12m`, and the PHP image gains `docker/php/conf.d/uploads.ini` (`upload_max_filesize 12M`, `post_max_size 13M`). §2 rebuilds both.
-- The rest is mobile code and docs (PRs #74–#81).
+- **`.dockerignore`:** excludes only `docker/php/conf.d/local-dev.ini`, no longer the whole directory. At `1d4f437` the app image build failed with `"/docker/php/conf.d/uploads.ini": not found` (found by the operator in §2 on 2026-10-13).
+- The rest is mobile code and docs (PRs #74–#83). The mobile app is identical at `1d4f437` and at the baseline.
 
 ## 2. Staging deployment — **[Operator, VPS]**
 
 **Where:** the VPS, as the `deploy` user, in the staging checkout.
 
 **What it does:**
-- moves the checkout from `0e7fce6` to `1d4f437` (fast-forward only);
+- moves the checkout to `d6dd29a` (fast-forward only, from `0e7fce6` or from `1d4f437`);
 - takes a MySQL backup;
 - rebuilds and restarts only `app` and `nginx` (MySQL and its data, and the attachment volume, are not touched);
 - confirms no migration is pending, rebuilds the Laravel caches (the new route needs `route:cache`), and checks the new upload limits inside the containers.
@@ -54,8 +55,8 @@ This follows `docs/DEPLOYMENT_STAGING.md` §9.
 cd /home/deploy/company-app/company-app-build/company-app
 git status --porcelain                  # expect: nothing
 git fetch origin
-git merge --ff-only 1d4f437b281a1bcf923020478d174bffff2bc46e
-git rev-parse HEAD                      # must print 1d4f437b281a1bcf923020478d174bffff2bc46e
+git merge --ff-only d6dd29a4d10fd39f6e72a998c9aa0880926e4010
+git rev-parse HEAD                      # must print d6dd29a4d10fd39f6e72a998c9aa0880926e4010
 ```
 
 ```sh
@@ -64,7 +65,15 @@ $C exec mysql sh -c 'mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"
   > /home/deploy/backups/company-app-$(date +%Y%m%d-%H%M%S).sql
 ls -lt /home/deploy/backups/company-app-*.sql | head -3     # newest first
 tail -c 200 "$(ls -t /home/deploy/backups/company-app-*.sql | head -1)" | grep -- '-- Dump completed'
-$C build app nginx
+```
+
+Build both images. **Run this block on its own**, and go on only if it ends with `BUILD OK`:
+
+```sh
+$C build app nginx && echo "BUILD OK"
+```
+
+```sh
 $C up -d --no-deps app nginx            # mysql untouched
 $C exec app php artisan migrate:status  # expect all 45 Ran, none pending
 $C exec app php artisan config:cache
@@ -78,10 +87,12 @@ $C ps                                   # mysql "healthy", app and nginx "Up"
 ```
 
 **Expected:**
-- **Checkout:** `git status --porcelain` prints nothing (if it lists a file, **STOP** and paste its name; if the name looks like a password, paste nothing and say so). `git merge` prints `Updating 0e7fce6..1d4f437` and `Fast-forward`.
+- **Checkout:** `git status --porcelain` prints nothing (if it lists a file, **STOP** and paste its name; if the name looks like a password, paste nothing and say so). `git merge` prints `Updating <current>..d6dd29a` and `Fast-forward`.
 - **Backup:** the first `ls -lt` line is today's file with a non-zero size, and `grep` prints `-- Dump completed on …`. Otherwise **STOP**.
+- **Build:** the last line is `BUILD OK`. Any `ERROR` or `failed to solve`: **STOP** and paste the error lines. Don't run the next block: the old containers keep serving.
 - **Migrations:** 45, all `Ran`. **Timezone:** ends in `Asia/Manila`.
 - **Upload limits:** `12M 13M`, then `client_max_body_size 12m;`. Anything else means the images did not rebuild: **STOP**.
+- **`$C ps`:** `app` and `nginx` both show `CREATED` a few seconds or minutes ago. An `app` created hours ago is still the old image: **STOP**.
 
 **Smoke tests** (same VPS, any directory):
 
@@ -93,9 +104,9 @@ done
 curl -s -o /dev/null -w 'up %{http_code}\n' $B/up
 ```
 
-**Expected:** `401` for each of the nine API paths, then `up 200`. A `404` or `500`: **STOP** (a `404` on `me/team-leave-requests` means `route:cache` ran before the new code; run the three cache commands again).
+**Expected:** `401` for each of the nine API paths, then `up 200`. A `404` or `500`: **STOP** (a `404` on `me/team-leave-requests` means the `app` container still runs old code: check the build and `$C ps`).
 
-**Paste back:** the `git` lines, the three `ls -lt` lines and the `-- Dump completed` line, the `migrate:status` summary, the timezone line, the two upload-limit lines, the ten smoke-test lines, the `ss` line and the `$C ps` table.
+**Paste back:** the `git` lines, the three `ls -lt` lines and the `-- Dump completed` line, the `BUILD OK` line, the `migrate:status` summary, the timezone line, the two upload-limit lines, the ten smoke-test lines, the `ss` line and the `$C ps` table.
 
 ## 3. Host nginx upload limit — **[Operator, VPS, needs `sudo`]**
 
@@ -151,7 +162,7 @@ curl -s -o /dev/null -w 'bikeworkshop %{http_code}\n' https://bikeworkshop.storm
 **Where:** PowerShell, in the repository root on the Windows build machine.
 
 **What it does:**
-- checks out exactly `1d4f437` and runs the same Flutter checks CI runs;
+- checks out exactly `d6dd29a` and runs the same Flutter checks CI runs;
 - **builds** the release APK against staging (it downloads `image_picker`'s Android parts the first time);
 - **proves the permission list** (hard gate), then installs the APK on the phone.
 
@@ -159,8 +170,8 @@ curl -s -o /dev/null -w 'bikeworkshop %{http_code}\n' https://bikeworkshop.storm
 
 ```powershell
 git fetch origin
-git checkout --detach 1d4f437b281a1bcf923020478d174bffff2bc46e
-git rev-parse HEAD                 # must print 1d4f437b281a1bcf923020478d174bffff2bc46e
+git checkout --detach d6dd29a4d10fd39f6e72a998c9aa0880926e4010
+git rev-parse HEAD                 # must print d6dd29a4d10fd39f6e72a998c9aa0880926e4010
 git status --porcelain             # must print nothing
 cd apps/mobile
 
@@ -197,7 +208,7 @@ adb shell getprop ro.build.version.release    # Android version: 12 or higher
 ```
 
 **Expected:**
-- **Checkout:** `git rev-parse HEAD` prints the full `1d4f437…` SHA, and both `git status --porcelain` print nothing. Otherwise **STOP**.
+- **Checkout:** `git rev-parse HEAD` prints the full `d6dd29a…` SHA, and both `git status --porcelain` print nothing. Otherwise **STOP**.
 - **Checks:** `dart format` changes nothing; `flutter analyze` says `No issues found!`; the test counts above, exactly. A different count means a different checkout: **STOP**.
 - **Build:** ends with `√ Built build\app\outputs\flutter-apk\app-release.apk`, and `LastWriteTime` is **now**.
 - **Permission gate (hard):** the `uses-permission` lines are **exactly these four**, the same as 30B, no more:
