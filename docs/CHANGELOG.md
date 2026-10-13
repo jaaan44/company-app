@@ -4,6 +4,9 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-13 — Phase 35A deployed and closed (UAT PASS)
+- Staging deployed at `999380e`, with the permission migration run on MySQL (output pasted). The role grants were identical before and after. UAT-35A-01…04 **PASS**, reported by the product owner. Phase 35A, Granular permissions, is formally closed.
+
 ### 2026-10-13 — Phase 35A merged; UAT runbook
 - PR #115 merged as `999380e` (CI green). New `docs/testing/PHASE_35A_UAT_PREPARATION.md` covers:
   - a read-only check script (`p35a_check.php`, rehearsed), run before and after the deploy;

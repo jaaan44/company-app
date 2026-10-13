@@ -147,7 +147,7 @@ Cross-module dashboard and administrative reports. Preceded by a product-owner-r
 *Depends on: the completed backend API (Phases 5–21); does not block, and is not blocked by, the Employee Mobile Application phases above — the two tracks share only the already-stable API*
 
 *Approved 2026-10-13 (DEC-065): Phase 35 is split into three sub-phases, each authorized on its own (`docs/phases/V1_PERMISSIONS_PROPOSAL.md`):*
-- **35A — Granular permissions** *(authorized; **merged as `999380e` (PR #115), awaiting staging deployment and UAT**; runbook `docs/testing/PHASE_35A_UAT_PREPARATION.md`; see `docs/handoffs/V1_PHASE_35A_HANDOFF.md`)*: add / edit / delete permissions for staff, clients, projects, tasks and announcements, with today's defaults.
+- **35A — Granular permissions** *(**complete, formally closed 2026-10-13**: PR #115, `999380e`; UAT `PASS` on staging; see `docs/handoffs/V1_PHASE_35A_HANDOFF.md`)*: add / edit / delete permissions for staff, clients, projects, tasks and announcements, with today's defaults.
 - **35B — Admin Backoffice Foundation** *(not authorized)*: as described below.
 - **35C — Roles & permissions screen** *(not authorized)*: per-role permission grid (audited, `admin.access`/`authorization.manage` locked) and a minimal Users and roles list.
 

@@ -1520,7 +1520,8 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | Upgrade rehearsal (SQLite) | Manual (AI) | PASS | `main`'s migrations and seeder (23 permissions, 45 migrations) plus a probe grant of `tasks.manage` to Manager; then the new `migrate`: 35 permissions, no old names, the probe moved onto `tasks.create/.update/.delete`. Re-seed: no change. Rollback: 23, with the probe back. Re-migrate: the same as the first run. |
 | Staging image build | CI | PASS | Green on PR #115, merged as `999380e`. |
 | `p35a_check.php` rehearsal | Manual (AI), scratch SQLite | PASS | Before the migration: 45 migrations, 23 permissions, the old names. After: 46, 35, 17/17 new. The role lines are identical between the two runs. Read-only; an unknown stage exits 1. The extracted `php` block matches the rehearsed file (SHA `66b1b4b1…`). |
-| MySQL / staging / UAT | — | NOT RUN | UAT-35A-01…04 `NOT RUN`. |
+| Runbook §2, deploy `b682935` → `999380e` (MySQL) | Manual (operator), output pasted | PASS | Block 0: SHA `66b1b4b1…`, 45 migrations, 23 permissions, no role holding any of the five old permissions. Fast-forward from `b682935`. Backup `-- Dump completed on 2026-10-13 14:57:24`. `BUILD OK`. The migration was `Pending`, then `DONE` (63 ms) on MySQL, then `Ran`. Block 6: 46 migrations, 35 permissions, no old names, 17/17 new, **`ROLE GRANTS IDENTICAL`**, both UAT accounts holding none of the new write permissions; pages `302` to login, five API `401`. The nginx container was not recreated: its image content is identical (every build step cached), and 35A changes nothing nginx serves. |
+| UAT-35A-01…04 | UAT (product owner) | PASS | Phone app, web portal and browser on staging `999380e`; recorded in `UAT_LOG.md`. |
 
 ## Phase 34F — Staff Web Portal: Portal as an app (2026-10-13, DEC-064)
 
