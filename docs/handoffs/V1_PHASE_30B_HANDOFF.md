@@ -191,3 +191,11 @@ Nothing further begins until explicitly authorized (`CLAUDE.md` §8).
   - `verify` shows what Lia, Ben, Kai and the no-profile account each get, and lists every check-in made in the app.
 - **Rehearsal:** on scratch SQLite only, including a check-in made through the real controller with the app's exact body, drift then re-seed, the refusals, the all-or-nothing `rotate` and a non-UAT data snapshot. Results are in `TEST_STATUS.md`.
 - **Status:** nothing is deployed or seeded on staging. UAT-30B-01…08 remain `NOT RUN`. Phase 30B is not closed.
+
+## Addendum — UAT and Formal Closure (2026-10-13)
+
+- **Deployed:** staging `d6dd29a` (combined round, `docs/testing/COMBINED_UAT_PREPARATION.md` §2; first attempt at `1d4f437` failed on `.dockerignore`, fixed in PR #83). APK built at `d6dd29a`; the permission gate showed the same four permissions as planned.
+- **UAT-30B-01…08: PASS**, reported by the product owner after running each scenario on a physical Android 12+ device against staging. Recorded by the AI on that report.
+- **Phase 30B is formally closed, and with it Phase 30** (30A closed 2026-10-12).
+- **Open, non-blocking:** UAT30B data stays on staging (cleanup needs its own authorization); the deferred UAT password rotation from 29B.
+
