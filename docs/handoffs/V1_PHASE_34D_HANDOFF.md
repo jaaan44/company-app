@@ -1,6 +1,6 @@
 # Phase 34D — Staff Web Portal: Communication — Handoff
 
-**Status: merged (PR #105, `fd57c7c`, 2026-10-13), awaiting staging deployment and UAT.** UAT-34D-01…06 are `NOT RUN`. 34E is not authorized.
+**Status: complete and formally closed (2026-10-13).** Merged (PR #105, `fd57c7c`), deployed to staging, UAT-34D-01…06 **PASS**. 34E needs its own authorization. UAT-34D-01…06 are `NOT RUN`. 34E is not authorized.
 
 ## 1. Phase Identification
 
@@ -138,3 +138,10 @@ See §5.
   - UAT-34D-01…06.
 - **The script was rehearsed on scratch SQLite.**
 - **Not run:** the deployment and UAT.
+
+## Addendum — Deployment, UAT and Formal Closure (2026-10-13)
+
+- **Deployed:** staging `0248615` → `fd57c7c` (the operator's output was pasted: fast-forward, backup, `BUILD OK`, migrations Ran, assets in both containers, smoke tests).
+- **Data:** `uat34d_data.php` seeded and verified on staging (SHA `ee650733…`, `seed exit=0`, `verify` as expected, output pasted).
+- **UAT-34D-01…06: PASS**, reported by the product owner after running them in desktop and phone browsers against staging, including the `reply` stage for the 15 s poll. Recorded by the AI on that report.
+- **Phase 34D is formally closed.** The UAT34D data stays on staging; cleanup needs its own authorization. 34E needs its own authorization. The 30B and 31–33 UAT records are still to be reconciled (see TEST_STATUS).

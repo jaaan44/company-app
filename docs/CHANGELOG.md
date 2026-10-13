@@ -4,6 +4,9 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-13 — Phase 34D deployed and closed (UAT PASS)
+- Staging deployed at `fd57c7c` with the UAT34D data (outputs pasted). UAT-34D-01…06 **PASS**, reported by the product owner. Phase 34D, Staff Web Portal: Communication, is formally closed.
+
 ### 2026-10-13 — Phase 34D merged; UAT runbook
 - PR #105 merged as `fd57c7c` (CI green, including the staging image build). New `docs/testing/PHASE_34D_UAT_PREPARATION.md` covers the deploy `0248615` → `fd57c7c`, a rehearsed data script (`uat34d_data.php`, no accounts or passwords; a `reply` stage posts as Ben through the real API to test the 15 s poll) and UAT-34D-01…06. UAT `NOT RUN`.
 
