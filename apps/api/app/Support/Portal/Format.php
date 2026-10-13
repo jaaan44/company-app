@@ -377,6 +377,92 @@ final class Format
         ]));
     }
 
+    /**
+     * A moment in company time, relative to the company day: "Today
+     * 09:12", "Yesterday 18:40", "Mon 12 Oct 09:12", or in another year
+     * "12 Oct 2025 09:12".
+     */
+    public static function companyTime(string $iso, string $companyDate, string $utcOffset): string
+    {
+        $at = CarbonImmutable::parse($iso)->setTimezone($utcOffset);
+        $date = $at->toDateString();
+        $today = CarbonImmutable::parse($companyDate);
+
+        return match ($date) {
+            $companyDate => 'Today '.$at->format('H:i'),
+            $today->subDay()->toDateString() => 'Yesterday '.$at->format('H:i'),
+            default => ($at->year === $today->year ? self::dayMonth($at) : self::date($date)).' '.$at->format('H:i'),
+        };
+    }
+
+    /** "1 day", "3 days". */
+    public static function days(int $n): string
+    {
+        return $n === 1 ? '1 day' : $n.' days';
+    }
+
+    /** "Tue 20 Oct 2026", or "Tue 20 Oct – Thu 22 Oct 2026". */
+    public static function leaveDates(string $start, string $end): string
+    {
+        $s = CarbonImmutable::parse($start);
+        $e = CarbonImmutable::parse($end);
+        if ($start === $end) {
+            return self::dayMonth($s).' '.$s->format('Y');
+        }
+
+        return $s->year === $e->year
+            ? self::dayMonth($s).' – '.self::dayMonth($e).' '.$e->format('Y')
+            : self::dayMonth($s).' '.$s->format('Y').' – '.self::dayMonth($e).' '.$e->format('Y');
+    }
+
+    /** "3 calendar days (weekends included)". */
+    public static function calendarDays(int $days): string
+    {
+        return ($days === 1 ? '1 calendar day' : $days.' calendar days').' (weekends included)';
+    }
+
+    /**
+     * A balance's headline: "10 days left of 15", or "Unpaid — no
+     * balance".
+     *
+     * @param  array<string, mixed>  $balance
+     */
+    public static function balanceHeadline(array $balance): string
+    {
+        $remaining = $balance['remaining_days'] ?? null;
+        $allocated = $balance['allocated_days'] ?? null;
+        if (($balance['is_paid'] ?? false) !== true || $remaining === null || $allocated === null) {
+            return 'Unpaid — no balance';
+        }
+
+        return self::days((int) $remaining).' left of '.$allocated;
+    }
+
+    public static function leaveStatus(?string $value): string
+    {
+        return match ($value) {
+            'pending' => 'Pending', 'approved' => 'Approved', 'rejected' => 'Rejected', 'cancelled' => 'Cancelled',
+            default => 'Unknown',
+        };
+    }
+
+    public static function leaveAction(?string $value): string
+    {
+        return match ($value) {
+            'submitted' => 'Requested', 'approved' => 'Approved', 'rejected' => 'Rejected', 'cancelled' => 'Cancelled',
+            default => 'Updated',
+        };
+    }
+
+    public static function operationalStatus(?string $value): string
+    {
+        return match ($value) {
+            'available' => 'Available', 'busy' => 'Busy', 'in_meeting' => 'In a meeting',
+            'in_field' => 'In the field', 'off_duty' => 'Off duty',
+            default => 'Unknown status',
+        };
+    }
+
     private static function humanize(?string $value, string $fallback): string
     {
         if ($value === null || $value === '') {

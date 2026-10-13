@@ -1463,3 +1463,14 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | Runbook §4, `uat34b_data.php` (SHA, plan, seed, verify) | Manual (operator) | PASS (reported) | Reported "all ok"; the output was not pasted. This was also the MySQL check of the 34B pages' API calls. |
 | UAT-34B-01…07 | UAT (product owner) | PASS | Desktop and phone browsers; recorded in `UAT_LOG.md`. |
 
+## Phase 34C — Staff Web Portal: HR & Operations (2026-10-13)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Backend tests | Automated | PASS | 26 new: `LeaveStatusPagesTest` 23, `FormatTest` +3. 1,334/1,334. |
+| Pint / PHPStan | Automated | PASS | Clean. No Composer or npm dependency change. |
+| Mutation checks | Manual (AI) | PASS | 5 run, 4 caught (Cancel for started leave, the reject reason length, the Team entry's direct-reports check, the one-calendar-year check). The survivor removed the web's status allow-list: the API's own validation still refused the unknown status, so the web check is usability only. |
+| Browser checks (Playwright + Chromium, axe-core 4.10.2) | Manual (AI), local server, scratch SQLite | PASS | 67/67 in light and dark, as a staff member and as her manager: leave overview, form validation then a request (the last day follows the first; the balance hint), Cancel with Keep it then a reason (focus moves into the field), My status change confirmed (`aria-pressed`), both histories, the Team entry and list, Approve with a note (history "Approved by …") and Reject (a too-short reason refused), 320 px on 6 pages, no JS errors, **axe AA 0 violations** on 13 page states × 2. |
+| Staging image build | CI | Pending | `staging-images.yml` on the PR. |
+| MySQL / staging / UAT | — | NOT RUN | UAT-34C-01…07 `NOT RUN`. |
+

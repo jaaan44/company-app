@@ -1,6 +1,6 @@
 # Phase 34B — Staff Web Portal: Work — Handoff
 
-**Status: complete and formally closed (2026-10-13).** Merged (PR #92, `2a7bca9`), deployed to staging, UAT-34B-01…07 PASS. UAT-34B-01…07 are `NOT RUN`. 34C–34E are not authorized.
+**Status: complete and formally closed (2026-10-13).** Merged (PR #92, `2a7bca9`), deployed to staging, UAT-34B-01…07 PASS. 34C–34E each need their own authorization.
 
 ## 1. Phase Identification
 
@@ -143,7 +143,7 @@ None. Two small improvements over mobile, both using the API's company day and t
 ## 13. Known Issues/Limitations
 
 - **The edit page finds a log** by scanning my own work-log pages (at most 2,000 logs), because the API gives the owner no single-log read. Older logs can still be edited from the phone.
-- **Leave rows in the Schedule aren't links yet**: Leave arrives in 34C.
+- **Leave rows in the Schedule aren't links yet**: Leave arrives in 34C. *(34C keeps them unlinked, as mobile's Schedule does; see the 34C handoff.)*
 - **Home's Messages and Notifications tiles aren't links yet**: they arrive in 34D.
 
 ## 14. Manual/UAT Testing Instructions

@@ -79,6 +79,12 @@ CSV export inherits the identical scoping as its JSON counterpart — no export 
   - A write the API audits records `source: web`.
   - Every form is a Livewire request under CSRF.
   - The work-log form's checks repeat the API's for usability only; the API stays authoritative.
+- **Since 34C the portal also writes**, through the same endpoints as the mobile app:
+  - leave requests (`POST /me/leave-requests`) and their cancellation (`POST /me/leave-requests/{id}/cancel`);
+  - a reviewer's decision (`POST /leave-requests/{id}/approve|reject`), where the API's own policy decides who may review (a manager for direct reports);
+  - my operational status (`POST /me/status`).
+  - **No check-in is possible from the browser** (W-7): the portal never calls `POST /me/check-ins` and never asks for the browser's location.
+  - The leave form's and decision panel's checks repeat the API's for usability only; a refusal (`403`, `409`, `422`) shows in the API's words.
 
 ## Authentication
 

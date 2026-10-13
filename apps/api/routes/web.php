@@ -45,6 +45,16 @@ Route::middleware(['auth', 'account.active'])->prefix('app')->name('portal.')->g
     Route::get('clients/{publicId}', fn (string $publicId) => $page('Client', 'portal.client-show', ['publicId' => $publicId]))->name('client');
     Route::get('schedule', fn () => $page('Schedule', 'portal.schedule'))->name('schedule');
     Route::get('schedule/entries/{publicId}', fn (string $publicId) => $page('Schedule', 'portal.schedule-entry-show', ['publicId' => $publicId]))->name('schedule-entry');
+
+    // Phase 34C — HR & Operations.
+    Route::get('leave', fn () => $page('Leave', 'portal.leave'))->name('leave');
+    Route::get('leave/new', fn () => $page('Request leave', 'portal.leave-form'))->name('leave.new');
+    Route::get('leave/requests/{publicId}', fn (string $publicId) => $page('Leave request', 'portal.leave-request-show', ['publicId' => $publicId]))->name('leave.request');
+    Route::get('leave/team', fn () => $page('Team requests', 'portal.team-leave'))->name('leave.team');
+    Route::get('leave/team/{publicId}', fn (string $publicId) => $page('Team request', 'portal.leave-request-show', ['publicId' => $publicId, 'viewer' => 'team']))->name('leave.team-request');
+    Route::get('status', fn () => $page('My status', 'portal.my-status'))->name('status');
+    Route::get('status/changes', fn () => $page('All status changes', 'portal.status-history'))->name('status.changes');
+    Route::get('status/check-ins', fn () => $page('All check-ins', 'portal.status-history', ['kind' => 'check-ins']))->name('status.check-ins');
 });
 
 // Deliberately outside the account.active gate: revoking one's own session

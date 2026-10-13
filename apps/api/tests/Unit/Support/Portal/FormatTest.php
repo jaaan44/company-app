@@ -106,4 +106,42 @@ class FormatTest extends TestCase
         $this->assertSame('muted', Format::tone('cancelled'));
         $this->assertSame('neutral', Format::tone('todo'));
     }
+
+    public function test_company_time_relative_to_the_company_day(): void
+    {
+        $this->assertSame('Today 09:12', Format::companyTime('2026-10-13T01:12:00+00:00', '2026-10-13', '+08:00'));
+        $this->assertSame('Today 00:05', Format::companyTime('2026-10-12T16:05:00+00:00', '2026-10-13', '+08:00'));
+        $this->assertSame('Yesterday 18:40', Format::companyTime('2026-10-12T10:40:00+00:00', '2026-10-13', '+08:00'));
+        $this->assertSame('Thu 1 Oct 08:30', Format::companyTime('2026-10-01T00:30:00+00:00', '2026-10-13', '+08:00'));
+        $this->assertSame('30 Dec 2025 08:30', Format::companyTime('2025-12-30T00:30:00+00:00', '2026-01-02', '+08:00'));
+    }
+
+    public function test_leave_labels(): void
+    {
+        $this->assertSame('1 day', Format::days(1));
+        $this->assertSame('0 days', Format::days(0));
+        $this->assertSame('Tue 20 Oct 2026', Format::leaveDates('2026-10-20', '2026-10-20'));
+        $this->assertSame('Tue 20 Oct – Thu 22 Oct 2026', Format::leaveDates('2026-10-20', '2026-10-22'));
+        $this->assertSame('Thu 31 Dec 2026 – Fri 1 Jan 2027', Format::leaveDates('2026-12-31', '2027-01-01'));
+        $this->assertSame('1 calendar day (weekends included)', Format::calendarDays(1));
+        $this->assertSame('3 calendar days (weekends included)', Format::calendarDays(3));
+        $this->assertSame('10 days left of 15', Format::balanceHeadline(['is_paid' => true, 'allocated_days' => 15, 'remaining_days' => 10]));
+        $this->assertSame('1 day left of 5', Format::balanceHeadline(['is_paid' => true, 'allocated_days' => 5, 'remaining_days' => 1]));
+        $this->assertSame('Unpaid — no balance', Format::balanceHeadline(['is_paid' => false, 'allocated_days' => null, 'remaining_days' => null]));
+        $this->assertSame('Pending', Format::leaveStatus('pending'));
+        $this->assertSame('Cancelled', Format::leaveStatus('cancelled'));
+        $this->assertSame('Unknown', Format::leaveStatus('odd'));
+        $this->assertSame('Requested', Format::leaveAction('submitted'));
+        $this->assertSame('Rejected', Format::leaveAction('rejected'));
+        $this->assertSame('Updated', Format::leaveAction(null));
+    }
+
+    public function test_operational_statuses(): void
+    {
+        $this->assertSame('Available', Format::operationalStatus('available'));
+        $this->assertSame('In a meeting', Format::operationalStatus('in_meeting'));
+        $this->assertSame('In the field', Format::operationalStatus('in_field'));
+        $this->assertSame('Off duty', Format::operationalStatus('off_duty'));
+        $this->assertSame('Unknown status', Format::operationalStatus(null));
+    }
 }

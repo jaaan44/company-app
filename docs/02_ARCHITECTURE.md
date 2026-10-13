@@ -700,5 +700,7 @@ No migration, route or permission change.
 - **34B screens** (implemented): Tasks and a task (confirmed status change), My work logs with Log work / Edit (create, update, delete through `/me/work-logs`), Projects and a project, Clients and a client, the Schedule week and an entry.
   - Later pages use one wrapper view, `portal.page`, plus a component.
   - Shared Blade components: `x-portal.chip`, `pager`, `search`, `back`, `info-row`, `error`.
-- **34C–34E** (HR & Operations, Communication, Reports) are planned in `docs/phases/V1_PHASE_34_DEFINITION.md` and not yet authorized.
+- **34C screens** (implemented): Leave (balances, my requests, Request leave, my request with Cancel), Team requests and a team request (Approve / Reject), My status (Change status, recent changes and check-ins) with All status changes and All check-ins. Check-ins are read-only on the web (W-7).
+  - Shared Blade component `x-portal.leave-row`; partials `livewire.portal.partials.{status-rows,check-in-rows}`.
+- **34D–34E** (Communication, Reports) are planned in `docs/phases/V1_PHASE_34_DEFINITION.md` and not yet authorized.
 
