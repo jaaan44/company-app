@@ -703,5 +703,8 @@ No migration, route or permission change.
 - **34C screens** (implemented): Leave (balances, my requests, Request leave, my request with Cancel), Team requests and a team request (Approve / Reject), My status (Change status, recent changes and check-ins) with All status changes and All check-ins. Check-ins are read-only on the web (W-7).
   - Shared Blade component `x-portal.leave-row`; partials `livewire.portal.partials.{status-rows,check-in-rows}`.
 - **34D screens** (implemented): Messages (inbox, a conversation with Send and a 15 s `wire:poll` while open, New message), Notifications (open → mark read → source; Mark all read), Announcements and an announcement (Acknowledge). Home's Messages and Notifications tiles and announcements link to them.
-- **34E** (Reports) is planned in `docs/phases/V1_PHASE_34_DEFINITION.md` and not yet authorized.
+- **34E screens** (implemented): Reports (service reports and incidents), the two forms, and one detail component (`ReportShow`) for both kinds, with the creator's actions and files.
+  - **Uploads:** Livewire `WithFileUploads` holds the file as a temporary upload; `InternalApi::upload()` forwards it in-process as a multipart request to the API's attachment endpoint (`file`), and the temporary file is deleted afterwards.
+  - **Downloads:** `InternalApi::raw()` returns the API's own response unread; `App\Http\Controllers\Portal\ReportFileController` streams it back at `/app/reports/{kind}/{id}/files/{fileId}`, inline for JPEG/PNG and as a download otherwise.
+  - `InternalApi::send()` now shares one private `dispatch()` with these two, so every in-process call keeps the same request restoration.
 

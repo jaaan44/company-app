@@ -1,6 +1,6 @@
 # Phase 34 — Staff Web Portal (Laravel) — Specification
 
-**Status:** Revision 1 (2026-10-13). **Decisions W-1…W-10 approved "as recommended" by the product owner on 2026-10-13 (DEC-063).** **34A and 34B authorized, implemented and closed** (§11–§12); **34C authorized, implemented and closed** (§13); **34D authorized, implemented and closed** (§14; handoff `docs/handoffs/V1_PHASE_34D_HANDOFF.md`). 34E is **not authorized**: each needs its own authorization (W-10). Revision 0 was the draft reviewed in PR #89.
+**Status:** Revision 1 (2026-10-13). **Decisions W-1…W-10 approved "as recommended" by the product owner on 2026-10-13 (DEC-063).** **34A and 34B authorized, implemented and closed** (§11–§12); **34C authorized, implemented and closed** (§13); **34D authorized, implemented and closed** (§14); **34E authorized and implemented** (§15; handoff `docs/handoffs/V1_PHASE_34E_HANDOFF.md`). Revision 0 was the draft reviewed in PR #89.
 
 **Requested by the product owner (2026-10-12):** "a laravel based frontend (basically similar function with the flutter frontend)". This draft reads that as: **the same staff functions as the Flutter app, in a web browser, built with Laravel**, for the same accounts and the same rules.
 
@@ -303,3 +303,48 @@ Run these with `docs/testing/PHASE_34A_UAT_PREPARATION.md`.
 - **UAT-34D-04:** Notifications: unread ones bold; opening one marks it read and opens its announcement or chat; Mark all read; an account without a profile still sees its notifications.
 - **UAT-34D-05:** Announcements: New until acknowledged; the detail; Acknowledge, then the phone shows it acknowledged; Home's links.
 - **UAT-34D-06:** dark mode, 200% zoom, a phone browser and keyboard on the new pages.
+
+## 15. Sub-phase 34E as implemented (2026-10-13)
+
+**Authorized** by the product owner ("proceed with 34E"). No API, migration or permission change.
+
+**Screens** (each a Livewire component calling `/api/v1` in-process, mirroring the mobile Phase 33 screen named):
+- **Reports** `/app/reports` (R-1): **Service reports** and **Incidents**.
+  - The reports I can see, newest first, 20 per page, with status chips (and severity for incidents).
+  - **New service report** / **Report an incident**.
+- **New / edit service report** `/app/reports/service/new`, `…/{id}/edit` (R-3):
+  - a client found by searching the active clients;
+  - an optional project (one of my open projects for that client);
+  - a service date (by default, and at most, the company today);
+  - work performed (required), and optional findings, recommendations, follow-up actions and site representative;
+  - the mobile form's checks and messages; the API's `422` errors on the same fields;
+  - saved as a **draft**, and editable while it is **my draft**.
+- **Service report** `/app/reports/service/{id}` (R-4):
+  - the client, project, date, author, status, every text, the history in company time, and the photos and files;
+  - while it is **my draft**: **Edit**, add and remove files, **Submit** ("Your manager will review it. You can't edit it after submitting.") and **Delete draft**;
+  - while **my report is rejected**: **Return to draft**.
+  - Each action is confirmed first and done by the API.
+- **Report / edit an incident** `/app/reports/incidents/new`, `…/{id}/edit` (R-5):
+  - the type, the severity (Medium by default), the date and time in company time (by default now, never in the future), the location, what happened (required), immediate action, people involved and witness notes;
+  - created as **reported**, and editable while it is **mine and still reported**.
+- **Incident** `/app/reports/incidents/{id}` (R-6):
+  - the type, severity and status chips, when, the location, the reporter, assigned to, every narrative field (including the investigation's), the history, and the photos and files;
+  - while it is mine and still reported: **Edit**, and add and remove files.
+- **Files (W-8):**
+  - **JPEG, PNG or PDF up to 10 MB**, chosen with the browser's file picker; uploaded to the API's own attachment endpoint, which checks them again;
+  - **photos show on the page and open in the browser; PDFs download.** Both come through `/app/reports/{kind}/{id}/files/{fileId}`, which streams the API's authorized download.
+- **Navigation:** … Announcements, **Reports**, Staff directory, My profile.
+
+**Not in 34E** (as Phase 33 R-12): reviewing and rejecting service reports, the incident investigation workflow (assign, investigate, resolve, close, reopen), participants, linking a task, signatures and exports. These are management tasks for the Admin Backoffice phases.
+
+**UAT scenarios (all `NOT RUN`):**
+- **UAT-34E-01:** Reports: the service reports and incidents lists match the phone.
+- **UAT-34E-02:** New service report: the form's messages, a client search, a project, then a draft that the phone shows.
+- **UAT-34E-03:** Files:
+  - a photo and a PDF added from the computer;
+  - a wrong type and a file over 10 MB refused;
+  - the photo opens, the PDF downloads, and one is removed;
+  - the phone shows the photo and the PDF's name.
+- **UAT-34E-04:** Submit, which the phone then shows as Submitted; Delete draft; Return to draft for a rejected report.
+- **UAT-34E-05:** Report an incident, edit it while it is reported, and add a photo; an incident that is no longer reported can't be edited.
+- **UAT-34E-06:** dark mode, 200% zoom, a phone browser (including a photo upload from the phone) and keyboard on the new pages.

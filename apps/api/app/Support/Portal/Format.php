@@ -556,6 +556,84 @@ final class Format
             : $text;
     }
 
+    /** "Wed 14 Oct 2026" for an API date (a service date, Phase 33). */
+    public static function reportDate(?string $apiDate): ?string
+    {
+        return $apiDate === null || $apiDate === '' ? null : CarbonImmutable::parse($apiDate)->format('D j M Y');
+    }
+
+    /** "Wed 14 Oct 2026 09:30" in company time (an incident's time, a history step). */
+    public static function reportTime(string $iso, string $utcOffset): string
+    {
+        return CarbonImmutable::parse($iso)->setTimezone($utcOffset)->format('D j M Y H:i');
+    }
+
+    /** "512 KB" or "2.4 MB", as on mobile. */
+    public static function fileSize(int $bytes): string
+    {
+        return $bytes < 1024 * 1024
+            ? ((int) ceil($bytes / 1024)).' KB'
+            : number_format($bytes / (1024 * 1024), 1).' MB';
+    }
+
+    public static function serviceStatus(?string $value): string
+    {
+        return match ($value) {
+            'draft' => 'Draft', 'submitted' => 'Submitted', 'reviewed' => 'Reviewed', 'rejected' => 'Rejected',
+            default => 'Unknown',
+        };
+    }
+
+    public static function incidentStatus(?string $value): string
+    {
+        return match ($value) {
+            'reported' => 'Reported', 'under_investigation' => 'Under investigation', 'resolved' => 'Resolved', 'closed' => 'Closed',
+            default => 'Unknown',
+        };
+    }
+
+    public static function incidentType(?string $value): string
+    {
+        return match ($value) {
+            'workplace_safety' => 'Workplace safety', 'client_site' => 'Client site', 'operational' => 'Operational',
+            'property_equipment_damage' => 'Property or equipment damage', 'it_security' => 'IT security', 'other' => 'Other',
+            default => 'Unknown type',
+        };
+    }
+
+    public static function severity(?string $value): string
+    {
+        return match ($value) {
+            'low' => 'Low', 'medium' => 'Medium', 'high' => 'High', 'critical' => 'Critical',
+            default => 'Unknown',
+        };
+    }
+
+    /** A report status's chip tone (Phase 33 R-4/R-6): reviewed, resolved and closed are good; rejected is bad. */
+    public static function reportTone(?string $status): string
+    {
+        return match ($status) {
+            'submitted', 'reported', 'under_investigation' => 'info',
+            'reviewed', 'resolved', 'closed' => 'success',
+            'rejected' => 'danger',
+            default => 'neutral',
+        };
+    }
+
+    /** High and Critical severities are shown as danger. */
+    public static function severityTone(?string $severity): string
+    {
+        return in_array($severity, ['high', 'critical'], true) ? 'danger' : 'neutral';
+    }
+
+    /** A history step's action: "return_to_draft" → "Return to draft". */
+    public static function reportAction(?string $action): string
+    {
+        $words = str_replace('_', ' ', (string) $action);
+
+        return $words === '' ? 'Updated' : ucfirst($words);
+    }
+
     private static function humanize(?string $value, string $fallback): string
     {
         if ($value === null || $value === '') {

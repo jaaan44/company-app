@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\AuditSource;
+use App\Http\Controllers\Portal\ReportFileController;
 use App\Services\Audit\AuditLogger;
 use App\Support\Audit\AuditActions;
 use Illuminate\Support\Facades\Auth;
@@ -63,6 +64,17 @@ Route::middleware(['auth', 'account.active'])->prefix('app')->name('portal.')->g
     Route::get('notifications', fn () => $page('Notifications', 'portal.notifications'))->name('notifications');
     Route::get('announcements', fn () => $page('Announcements', 'portal.announcements'))->name('announcements');
     Route::get('announcements/{publicId}', fn (string $publicId) => $page('Announcement', 'portal.announcement-show', ['publicId' => $publicId]))->name('announcement');
+
+    // Phase 34E — Reports.
+    Route::get('reports', fn () => $page('Reports', 'portal.reports'))->name('reports');
+    Route::get('reports/service/new', fn () => $page('New service report', 'portal.service-report-form'))->name('service-report.new');
+    Route::get('reports/service/{publicId}', fn (string $publicId) => $page('Service report', 'portal.report-show', ['publicId' => $publicId]))->name('service-report');
+    Route::get('reports/service/{publicId}/edit', fn (string $publicId) => $page('Edit service report', 'portal.service-report-form', ['publicId' => $publicId]))->name('service-report.edit');
+    Route::get('reports/incidents/new', fn () => $page('Report an incident', 'portal.incident-form'))->name('incident.new');
+    Route::get('reports/incidents/{publicId}', fn (string $publicId) => $page('Incident', 'portal.report-show', ['publicId' => $publicId, 'kind' => 'incidents']))->name('incident');
+    Route::get('reports/incidents/{publicId}/edit', fn (string $publicId) => $page('Edit incident', 'portal.incident-form', ['publicId' => $publicId]))->name('incident.edit');
+    Route::get('reports/{kind}/{publicId}/files/{attachmentId}', ReportFileController::class)
+        ->whereIn('kind', ['service', 'incidents'])->where('attachmentId', '[0-9A-Za-z]{1,64}')->name('report-file');
 });
 
 // Deliberately outside the account.active gate: revoking one's own session

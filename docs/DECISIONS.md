@@ -878,7 +878,7 @@ Internet → Cloudflare (proxied, SSL/TLS "Full (strict)")
 ### DEC-063 — Phase 34: a Staff Web Portal in the Laravel app that calls the existing API in-process; one web login for every account; Tailwind as the web design system; roadmap renumbered
 
 **Date:** 2026-10-13
-**Status:** ACCEPTED (decisions W-1…W-10 of `docs/phases/V1_PHASE_34_DEFINITION.md`, approved "as recommended" by the product owner on 2026-10-13; **34A and 34B authorized, implemented and closed; 34C authorized, implemented and closed; 34D authorized, implemented and closed**; 34E needs its own authorization). **Sensitive (flagged): the web login now admits every active account, and the staging images gain a Node build stage.**
+**Status:** ACCEPTED (decisions W-1…W-10 of `docs/phases/V1_PHASE_34_DEFINITION.md`, approved "as recommended" by the product owner on 2026-10-13; **34A and 34B authorized, implemented and closed; 34C authorized, implemented and closed; 34D authorized, implemented and closed; 34E authorized and implemented**). **Sensitive (flagged): the web login now admits every active account, and the staging images gain a Node build stage.**
 **Context:**
 - The product owner asked for "a laravel based frontend (basically similar function with the flutter frontend)".
 - The web side had a Livewire login that refused any account without `admin.access`, and one placeholder page.
