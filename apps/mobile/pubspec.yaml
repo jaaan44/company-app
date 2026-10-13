@@ -51,7 +51,7 @@ dependencies:
   image_picker_android: 0.8.13+23
   # Its 2.11.2 is days old (2026-10-06); 2.11.1 (2025-10-22) satisfies
   # both packages' ^2.11.0 and is compiled into the app, so pin it.
-  image_picker_platform_interface: 2.11.1
+  image_picker_platform_interface: 2.11.2
 
 dev_dependencies:
   flutter_test:
