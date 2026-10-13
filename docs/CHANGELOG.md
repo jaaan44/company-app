@@ -4,6 +4,9 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-13 — Draft: Staff Web Portal specification (planning only)
+- New `docs/phases/V1_STAFF_WEB_PORTAL_PLAN.md`: a Laravel (Blade + Livewire) web portal with the mobile app's staff functions. Ten decisions (W-1…W-10) with recommendations, a feature map, an architecture sketch, sub-phases 34A–34E and a test plan. **Not authorized; no code, configuration or roadmap change.** A temporary in-process API dispatch spike test (deleted, never committed) informed W-1.
+
 ### 2026-10-13 — Phase 33 closed (UAT PASS)
 - UAT-33-01…08 **PASS**, reported by the product owner (physical device, staging `d6dd29a`, combined round). Phase 33 — Service & Incident Reports with photos (Mobile) — formally closed. UAT_LOG, ROADMAP, CURRENT_STATE and the handoff updated.
 
