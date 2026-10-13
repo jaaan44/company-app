@@ -1,6 +1,6 @@
 # Phase 34D — Staff Web Portal: Communication — Handoff
 
-**Status: implemented (2026-10-13), awaiting merge, staging deployment and UAT.** UAT-34D-01…06 are `NOT RUN`. 34E is not authorized.
+**Status: merged (PR #105, `fd57c7c`, 2026-10-13), awaiting staging deployment and UAT.** UAT-34D-01…06 are `NOT RUN`. 34E is not authorized.
 
 ## 1. Phase Identification
 
@@ -128,3 +128,13 @@ See §5.
 1. Merge on green CI.
 2. Deploy to staging and run UAT-34D.
 3. Then 34E (Reports) needs its own authorization.
+
+## Addendum — Merge and UAT runbook (2026-10-13)
+
+- **PR #105 merged as `fd57c7c`.** CI was green, including the staging image build.
+- **Runbook `docs/testing/PHASE_34D_UAT_PREPARATION.md`:**
+  - the deploy `0248615` → `fd57c7c`, with no migration;
+  - the data script `uat34d_data.php` (SHA-256 `ee650733…`), which reuses the UAT30B accounts and makes no password. It seeds a group chat with two unread messages for Lia, two announcements, and notifications for Lia and the no-profile account. Its `reply` stage posts a message as Ben through the real API, to test the 15 s poll on staging;
+  - UAT-34D-01…06.
+- **The script was rehearsed on scratch SQLite.**
+- **Not run:** the deployment and UAT.
