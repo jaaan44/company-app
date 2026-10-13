@@ -1,6 +1,6 @@
 # Phase 34B — Staff Web Portal: Work — Handoff
 
-**Status: implemented and merged (PR #92, `2a7bca9`); awaiting staging deployment and UAT.** UAT-34B-01…07 are `NOT RUN`. 34C–34E are not authorized.
+**Status: complete and formally closed (2026-10-13).** Merged (PR #92, `2a7bca9`), deployed to staging, UAT-34B-01…07 PASS. UAT-34B-01…07 are `NOT RUN`. 34C–34E are not authorized.
 
 ## 1. Phase Identification
 
@@ -169,4 +169,10 @@ See §5.
   - UAT-34B-01…07.
 - **The script was rehearsed on scratch SQLite:** `plan`, `seed` and `verify` gave the expected output; a re-seed is idempotent; a work log made in the app is kept; and task statuses reset.
 - **Not run:** the deployment and UAT.
+
+## Addendum — Deployment, UAT and Formal Closure (2026-10-13)
+
+- **Deployed:** staging `d3cf84d` → `2a7bca9`; the UAT34B data was seeded and verified. Both were reported OK by the operator, without the output pasted.
+- **UAT-34B-01…07: PASS**, reported by the product owner after running them in desktop and phone browsers against staging. Recorded by the AI on that report.
+- **Phase 34B is formally closed.** The `[UAT34B]` data stays on staging; cleanup needs its own authorization. 34C needs its own authorization.
 
