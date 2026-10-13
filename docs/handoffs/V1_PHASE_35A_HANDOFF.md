@@ -1,6 +1,6 @@
 # Phase 35A — Granular Permissions — Handoff
 
-**Status: merged (PR #115, `999380e`, 2026-10-13); awaiting staging deployment and UAT.** UAT-35A-01…04 are `NOT RUN`.
+**Status: complete and formally closed (2026-10-13).** Merged (PR #115, `999380e`), deployed to staging, UAT-35A-01…04 **PASS**. UAT-35A-01…04 are `NOT RUN`.
 
 ## 1. Phase Identification
 
@@ -157,3 +157,15 @@ See §5.
   - a rollback section;
   - UAT-35A-01…04.
 - **Not run:** the deployment and UAT.
+
+## Addendum — Deployment, UAT and Formal Closure (2026-10-13)
+
+- **Deployed:** staging `b682935` → `999380e`. The operator pasted Blocks 0–6:
+  - the check script's SHA matched;
+  - no role held any of the old permissions before;
+  - the backup completed, and the build ended `BUILD OK`;
+  - the migration was `DONE` on MySQL in 63 ms;
+  - after: 35 permissions, no old names, 17/17 new, **role grants identical**;
+  - the smoke tests passed.
+- **UAT-35A-01…04: PASS**, reported by the product owner, and recorded by the AI on that report.
+- **Phase 35A is formally closed.** 35B (Admin Backoffice Foundation) and 35C (Roles & permissions screen) each need their own authorization.
