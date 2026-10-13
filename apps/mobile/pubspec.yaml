@@ -47,7 +47,7 @@ dependencies:
   # Photo attachments for reports (Phase 33, R-7/R-8): only pickImage
   # (system camera app or Android's photo picker), through
   # lib/features/reports/data/photo_source.dart. Pinned exactly.
-  image_picker: 1.2.3
+  image_picker: 1.2.4
   image_picker_android: 0.8.13+23
   # Its 2.11.2 is days old (2026-10-06); 2.11.1 (2025-10-22) satisfies
   # both packages' ^2.11.0 and is compiled into the app, so pin it.
