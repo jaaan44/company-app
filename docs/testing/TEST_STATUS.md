@@ -1518,7 +1518,8 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | Pint / PHPStan / Composer / build | Automated | PASS | Clean. No dependency change. |
 | Mutation checks | Manual (AI) | PASS | 11 run. 10 caught at first. One survivor (Roles and Users pages without their own `authorization.manage`, still refused by the API) led to a new test, and is now caught. |
 | Browser checks (Playwright + Chromium, axe-core 4.10.2) | Manual (AI), local server, scratch SQLite | PASS | 79/79, desktop and phone, light and dark: Dashboard and period; sections; Roles ticking, Save dialog, Undo, Reset; Users; Audit log; drawer; 320 px on 6 pages; Manager refused; no JS errors or browser dialogs; **axe AA 0 violations** on 18 scans (10 light, 8 dark). Found and fixed: the role dialog named the old role. |
-| MySQL / staging / UAT | — | NOT RUN | UAT-35BC-01…08 `NOT RUN`. |
+| Staging image build | CI | PASS | Green on PR #119, merged as `680444e`. |
+| MySQL / staging / UAT | — | NOT RUN | UAT-35BC-01…08 `NOT RUN`; runbook `PHASE_35BC_UAT_PREPARATION.md`. |
 
 ## Phase 35A — Granular permissions (2026-10-13, DEC-065)
 

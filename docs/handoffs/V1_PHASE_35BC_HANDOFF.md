@@ -1,6 +1,6 @@
 # Phases 35B and 35C — Admin Backoffice Foundation and Roles & Permissions — Handoff
 
-**Status: implemented and tested (2026-10-13); awaiting merge, staging deployment and UAT.** One UAT covers both, UAT-35BC-01…08, all `NOT RUN`. With them, Phase 35 (35A–35C) is implemented.
+**Status: merged (PR #119, `680444e`, 2026-10-13); awaiting staging deployment and UAT.** One UAT covers both, UAT-35BC-01…08, all `NOT RUN`. With them, Phase 35 (35A–35C) is implemented.
 
 ## 1. Phase Identification
 
@@ -190,3 +190,13 @@ See §5.
 2. Deploy and run UAT-35BC.
 3. Close Phase 35.
 4. Phase 36 (Business Management Screens) needs its own authorization.
+
+## Addendum — Merge and UAT runbook (2026-10-13)
+
+- **PR #119 merged as `680444e`.** CI was green, including the staging image build.
+- **Runbook `docs/testing/PHASE_35BC_UAT_PREPARATION.md`:**
+  - the deploy `999380e` → `680444e`, with no migration and no data script;
+  - `--force-recreate` for both containers;
+  - smoke tests for `/admin`, the `/home` redirect and the new API;
+  - UAT-35BC-01…08, including a real permission change (Staff's "View clients and contacts", undone by Reset to defaults) and a role change that is set back.
+- **Not run:** the deployment and UAT.

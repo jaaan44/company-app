@@ -4,6 +4,11 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-13 — Phases 35B + 35C merged; UAT runbook
+- PR #119 merged as `680444e` (CI green). New `docs/testing/PHASE_35BC_UAT_PREPARATION.md` covers:
+  - the deploy `999380e` → `680444e`, with no migration and no data script;
+  - UAT-35BC-01…08.
+
 ### 2026-10-13 — Phases 35B + 35C: Admin Backoffice and Roles & permissions (DEC-065)
 - **Approved:** 35B as recommended (B-1…B-6), with 35C authorized in the same message, and one UAT for both.
 - **35B:**
