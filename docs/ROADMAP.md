@@ -133,12 +133,12 @@ Cross-module dashboard and administrative reports. Preceded by a product-owner-r
 ### Staff Web Portal
 *Depends on: the completed backend API and the Employee Mobile Application whose functions it mirrors (Phases 25–33). Added 2026-10-13 by DEC-063, which renumbered the phases after it.*
 
-**Phase 34 — Staff Web Portal (Laravel)** *(specification `docs/phases/V1_PHASE_34_DEFINITION.md`, DEC-063)* — the mobile app's staff functions in a browser, built with Blade + Livewire inside `apps/api`, calling the existing API in-process. Split into sub-phases, each authorized on its own:
+**Phase 34 — Staff Web Portal (Laravel)** *(**complete, formally closed 2026-10-13**: 34A–34E all UAT `PASS` on staging; specification `docs/phases/V1_PHASE_34_DEFINITION.md`, DEC-063)* — the mobile app's staff functions in a browser, built with Blade + Livewire inside `apps/api`, calling the existing API in-process. Split into sub-phases, each authorized on its own:
 - **34A — Foundation** *(**complete, formally closed 2026-10-13**: PR #89, `d3cf84d`; UAT `PASS` on staging; see `docs/handoffs/V1_PHASE_34A_HANDOFF.md`)*: shared web login, layout and the web design system, Home, My profile and the Staff directory, and a CI build of the staging images.
 - **34B — Work** *(**complete, formally closed 2026-10-13**: PR #92, `2a7bca9`; UAT `PASS` on staging `0248615` (re-run); see `docs/handoffs/V1_PHASE_34B_HANDOFF.md`)*: Tasks, Work logs, Projects, Clients and Schedule.
 - **34C — HR & Operations** *(**complete, formally closed 2026-10-13**: PR #101, `0248615`; UAT `PASS` on staging; see `docs/handoffs/V1_PHASE_34C_HANDOFF.md`)*: Leave (including Team requests) and My status.
 - **34D — Communication** *(**complete, formally closed 2026-10-13**: PR #105, `fd57c7c`; UAT `PASS` on staging; see `docs/handoffs/V1_PHASE_34D_HANDOFF.md`)*: Messages, Notifications and Announcements.
-- **34E — Reports** *(**merged 2026-10-13**, PR #108, `bcdd6f5`; awaiting deployment and UAT; see `docs/handoffs/V1_PHASE_34E_HANDOFF.md`)*: Service and incident reports with uploads.
+- **34E — Reports** *(**complete, formally closed 2026-10-13**: PR #108, `bcdd6f5`; UAT `PASS` on staging; see `docs/handoffs/V1_PHASE_34E_HANDOFF.md`)*: Service and incident reports with uploads.
 
 ---
 

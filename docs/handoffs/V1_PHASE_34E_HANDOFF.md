@@ -1,6 +1,6 @@
 # Phase 34E — Staff Web Portal: Reports — Handoff
 
-**Status: merged (PR #108, `bcdd6f5`, 2026-10-13), awaiting staging deployment and UAT.** UAT-34E-01…06 are `NOT RUN`. This is the last web sub-phase of Phase 34.
+**Status: complete and formally closed (2026-10-13).** Merged (PR #108, `bcdd6f5`), deployed to staging, UAT-34E-01…06 **PASS**. **Phase 34 (Staff Web Portal) is complete.** UAT-34E-01…06 are `NOT RUN`. This is the last web sub-phase of Phase 34.
 
 ## 1. Phase Identification
 
@@ -155,3 +155,10 @@ See §5.
   - UAT-34E-01…06, including a real upload through the host nginx.
 - **The script was rehearsed on scratch SQLite.**
 - **Not run:** the deployment and UAT.
+
+## Addendum — Deployment, UAT and Formal Closure (2026-10-13)
+
+- **Deployed:** staging `fd57c7c` → `bcdd6f5` (the operator's output was pasted: fast-forward, backup, `BUILD OK`, migrations Ran, assets in both containers, smoke tests including the file route).
+- **Data:** `uat34e_data.php` seeded and verified on staging (SHA `7b894d2a…`, `seed exit=0`, `verify` as expected, PHP upload limits 12M/13M), output pasted.
+- **UAT-34E-01…06: PASS**, reported by the product owner after running them in desktop and phone browsers against staging, with real photo and PDF uploads, including one from a phone browser. Recorded by the AI on that report.
+- **Phase 34E is formally closed, and with it Phase 34 (34A–34E).** The UAT34E data and the reports and files made during UAT stay on staging; cleanup needs its own authorization. The 30B and 31–33 UAT records are still to be reconciled (see TEST_STATUS).
