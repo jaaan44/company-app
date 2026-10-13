@@ -4,6 +4,9 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-13 — Phase 34A merged; UAT runbook
+- PR #89 merged as `d3cf84d`, CI green, including the first staging-image build. New `docs/testing/PHASE_34A_UAT_PREPARATION.md` covers the deploy and UAT-34A-01…06. UAT `NOT RUN`.
+
 ### 2026-10-13 — Phase 34A: Staff Web Portal foundation (DEC-063)
 - **Approved:** decisions W-1…W-10 ("as recommended") and 34A only. The draft plan became `docs/phases/V1_PHASE_34_DEFINITION.md`. The roadmap inserts Phase 34 and renumbers the later phases (35–39).
 - **Web:**

@@ -1,6 +1,6 @@
 # Phase 34A — Staff Web Portal: Foundation — Handoff
 
-**Status: implemented; awaiting merge, staging deployment and UAT.** UAT-34A-01…06 are `NOT RUN`. 34B–34E are **not authorized** (DEC-063 W-10).
+**Status: implemented and merged (PR #89, `d3cf84d`); awaiting staging deployment and UAT.** UAT-34A-01…06 are `NOT RUN`. 34B–34E are **not authorized** (DEC-063 W-10).
 
 ## 1. Phase Identification
 
@@ -186,3 +186,12 @@ See §5.
 1. Merge on green CI. This is the first run of the new staging-images workflow.
 2. Write the runbook, deploy to staging and run UAT-34A.
 3. After that, 34B (Work) needs its own authorization.
+
+## Addendum — Merge and UAT runbook (2026-10-13)
+
+- **PR #89 merged as `d3cf84d`.** CI was green, including the **first real build of both staging images** by the new `staging-images.yml`: assets built, upload limits correct, no `.env` or `node_modules` in the image.
+- **Runbook:** `docs/testing/PHASE_34A_UAT_PREPARATION.md` covers:
+  - the deploy `d6dd29a` → `d3cf84d`, with no migration, the `BUILD OK` rule, a check that both containers carry the same assets, and smoke tests including the CSS served as `text/css`;
+  - UAT-34A-01…06 in a desktop and a phone browser. 34A-05 ends Kai's web sessions, then suspends and restores his account, with exact commands.
+- **Not run:** the staging deployment and UAT.
+
