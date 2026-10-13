@@ -177,4 +177,27 @@ class FormatTest extends TestCase
         $this->assertTrue(Format::showsSenderNames($project));
         $this->assertFalse(Format::showsSenderNames($direct));
     }
+
+    public function test_report_labels(): void
+    {
+        $this->assertSame('Wed 14 Oct 2026', Format::reportDate('2026-10-14'));
+        $this->assertNull(Format::reportDate(null));
+        $this->assertSame('Tue 13 Oct 2026 07:45', Format::reportTime('2026-10-12T23:45:00+00:00', '+08:00'));
+        $this->assertSame('1 KB', Format::fileSize(1));
+        $this->assertSame('512 KB', Format::fileSize(512 * 1024));
+        $this->assertSame('2.4 MB', Format::fileSize((int) (2.4 * 1024 * 1024)));
+        $this->assertSame('Draft', Format::serviceStatus('draft'));
+        $this->assertSame('Under investigation', Format::incidentStatus('under_investigation'));
+        $this->assertSame('Property or equipment damage', Format::incidentType('property_equipment_damage'));
+        $this->assertSame('Unknown type', Format::incidentType('odd'));
+        $this->assertSame('Critical', Format::severity('critical'));
+        $this->assertSame('danger', Format::severityTone('high'));
+        $this->assertSame('neutral', Format::severityTone('medium'));
+        $this->assertSame('success', Format::reportTone('closed'));
+        $this->assertSame('danger', Format::reportTone('rejected'));
+        $this->assertSame('info', Format::reportTone('under_investigation'));
+        $this->assertSame('neutral', Format::reportTone('draft'));
+        $this->assertSame('Return to draft', Format::reportAction('return_to_draft'));
+        $this->assertSame('Updated', Format::reportAction(''));
+    }
 }

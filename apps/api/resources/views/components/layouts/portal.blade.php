@@ -29,6 +29,7 @@
                             ['portal.messages', 'Messages', ['portal.messages*', 'portal.chat']],
                             ['portal.notifications', 'Notifications', ['portal.notifications']],
                             ['portal.announcements', 'Announcements', ['portal.announcement*']],
+                            ['portal.reports', 'Reports', ['portal.reports', 'portal.service-report*', 'portal.incident*']],
                             ['portal.directory', 'Staff directory', ['portal.directory', 'portal.staff']],
                             ['portal.profile', 'My profile', ['portal.profile']],
                         ] as [$name, $label, $patterns])

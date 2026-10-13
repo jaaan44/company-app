@@ -91,6 +91,9 @@ CSV export inherits the identical scoping as its JSON counterpart — no export 
   - Only a conversation's members can read or write it; the API answers `404` to anyone else, and the portal shows "This conversation is no longer available." No administrator view of others' messages exists (DEC-039).
   - A notification opens its source only by the source id the API returns for **my** notification; the page never takes a source from the browser.
   - The chat's 15 s poll is a normal session request under CSRF, made only while the page is open.
+- **Since 34E the portal also writes** service reports and incidents (create, update, submit, delete, return to draft) and their attachments, through the same endpoints as the mobile app; the API decides who may do each.
+  - **Uploads:** the browser sends the file to Livewire's signed upload endpoint (a temporary file on the private `local` disk, Livewire's 12 MB cap). The portal checks it is JPEG, PNG or PDF and at most 10 MB, then forwards it to the API's attachment endpoint, which checks the type (by content) and the size again and stores it as for mobile. The temporary file is deleted afterwards. Uploads are audited with `source: web`.
+  - **Downloads** (`/app/reports/{kind}/{id}/files/{fileId}`, behind `auth` and `account.active`) are served only through the API's authorized download for the signed-in user; anything the API refuses is a `404`. Responses carry `X-Content-Type-Options: nosniff`, a sandboxing `Content-Security-Policy`, `Cache-Control: private, no-store`, and `Content-Disposition: inline` only for JPEG and PNG (PDFs and anything else download).
 
 ## Authentication
 

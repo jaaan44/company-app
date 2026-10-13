@@ -6,8 +6,10 @@ use Closure;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Facade;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * The Staff Web Portal's only way to business data and rules (Phase 34A,
@@ -82,6 +84,54 @@ class InternalApi
      */
     public function send(string $method, string $path, array $query = [], array $json = []): array
     {
+        $content = $method === 'GET' ? null : json_encode((object) $json, JSON_THROW_ON_ERROR);
+
+        return $this->decode($this->dispatch($method, $path, $query, $content));
+    }
+
+    /**
+     * `POST` one file (multipart, under `$field`) to an attachment
+     * endpoint, as the mobile app does (Phase 34E, W-8). The file must
+     * already be on this server (a Livewire temporary upload); it is
+     * forwarded as a trusted local file so the API's own validation and
+     * storage run unchanged.
+     *
+     * @return array<string, mixed>
+     *
+     * @throws PortalApiException for any non-2xx answer
+     */
+    public function upload(string $path, string $field, string $localPath, string $originalName, ?string $mimeType): array
+    {
+        $file = new UploadedFile($localPath, $originalName, $mimeType, null, true);
+
+        return $this->decode($this->dispatch('POST', $path, [], null, [$field => $file]));
+    }
+
+    /**
+     * `GET /api/v1{$path}` and the API's own response, unread — for a
+     * download (Phase 34E): the caller streams it to the browser.
+     *
+     * @param  array<string, scalar|null>  $query
+     *
+     * @throws PortalApiException for any non-2xx answer
+     */
+    public function raw(string $path, array $query = []): Response
+    {
+        $response = $this->dispatch('GET', $path, $query, null);
+        $status = $response->getStatusCode();
+        if ($status < 200 || $status >= 300) {
+            $this->decode($response);
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param  array<string, scalar|null>  $query
+     * @param  array<string, UploadedFile>  $files
+     */
+    private function dispatch(string $method, string $path, array $query, ?string $content, array $files = []): Response
+    {
         $outer = $this->app->make('request');
 
         $uri = '/api/v1/'.ltrim($path, '/');
@@ -92,13 +142,11 @@ class InternalApi
 
         $server = array_intersect_key($outer->server->all(), array_flip(self::FORWARDED_SERVER_KEYS));
         $server['HTTP_ACCEPT'] = 'application/json';
-        $content = null;
-        if ($method !== 'GET') {
+        if ($content !== null) {
             $server['CONTENT_TYPE'] = 'application/json';
-            $content = json_encode((object) $json, JSON_THROW_ON_ERROR);
         }
 
-        $inner = Request::create($uri, $method, server: $server, content: $content);
+        $inner = Request::create($uri, $method, files: $files, server: $server, content: $content);
         $inner->attributes->set(self::ATTRIBUTE, true);
 
         $router = $this->app->make('router');
@@ -114,7 +162,7 @@ class InternalApi
         }
 
         try {
-            $response = $this->kernel->handle($inner);
+            return $this->kernel->handle($inner);
         } finally {
             if ($middlewareDisabled !== null) {
                 $this->app->instance('middleware.disable', $middlewareDisabled);
@@ -124,7 +172,15 @@ class InternalApi
             Facade::clearResolvedInstance('request');
             $this->restoreRouter($router, $route, $routeRequest);
         }
+    }
 
+    /**
+     * @return array<string, mixed>
+     *
+     * @throws PortalApiException for any non-2xx answer
+     */
+    private function decode(Response $response): array
+    {
         $status = $response->getStatusCode();
         $body = json_decode((string) $response->getContent(), true);
         $body = is_array($body) ? $body : [];

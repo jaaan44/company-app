@@ -255,6 +255,7 @@ The visual-design foundation for Flutter is below (DEC-046). **The web equivalen
 
   A status concept looks the same on every web page ("Status presentation" below).
 - **Chat (34D):** my messages sit on the right in the accent-soft colour; others' on the left with a border. Each shows its time, and the sender's name in group and project chats (screen readers always hear "You" or the sender). Day separators are centred headings. Unread counts are text in a badge with " unread" for screen readers; an unread notification is bold, with a dot and "Unread" for screen readers.
+- **Files (34E):** a photo shows as a thumbnail with its name and size, and **Open photo** opens it in a new tab; a PDF shows its name and size with **Download**. The file input says what is allowed ("JPEG, PNG or PDF, up to 10 MB"), and Livewire's "Preparing the file…" and "Uploading…" are announced while they run. Destructive report actions (Submit, Delete draft, Remove) are confirmed with the browser's dialog, using the mobile app's wording.
 - **Confirmations (34C):** a decision that can't be undone from the page (Cancel request, Approve, Reject) opens an inline panel in place of its buttons: the question as a heading, the body when there is one, the text field (focused), and the confirm button next to Keep it / Back. Destructive confirms use the danger colour. No browser dialog is used for these, so the reason or note can be typed in the same place.
 
 ## Mobile Visual-Design Foundation (resolved, DEC-046)

@@ -4,6 +4,16 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-13 — Phase 34E: Staff Web Portal, Reports
+- **Web pages, all through the existing API, mirroring the mobile Phase 33 screens:**
+  - Reports: service reports and incidents;
+  - a new or edited service report (client search, my project, date, texts), its page with Edit, Submit, Delete draft, Return to draft;
+  - report or edit an incident, and its page.
+- **Files (W-8):** JPEG, PNG or PDF up to 10 MB from the browser's file picker; photos open in the browser, PDFs download, both through the API's authorized download.
+- **`InternalApi`:** `upload()` (multipart, in-process) and `raw()` (the API's own response, for downloads), sharing one `dispatch()` with `send()`.
+- **Navigation** adds Reports.
+- **Tests:** 17 new; 1,354 → 1,371/1,371. 49/49 browser checks, including real uploads of a PNG and a PDF and a refused `.txt`, and axe AA with no violations. UAT-34E-01…06 `NOT RUN`.
+
 ### 2026-10-13 — Phase 34D deployed and closed (UAT PASS)
 - Staging deployed at `fd57c7c` with the UAT34D data (outputs pasted). UAT-34D-01…06 **PASS**, reported by the product owner. Phase 34D, Staff Web Portal: Communication, is formally closed.
 

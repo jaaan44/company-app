@@ -138,7 +138,7 @@ Cross-module dashboard and administrative reports. Preceded by a product-owner-r
 - **34B — Work** *(**complete, formally closed 2026-10-13**: PR #92, `2a7bca9`; UAT `PASS` on staging `0248615` (re-run); see `docs/handoffs/V1_PHASE_34B_HANDOFF.md`)*: Tasks, Work logs, Projects, Clients and Schedule.
 - **34C — HR & Operations** *(**complete, formally closed 2026-10-13**: PR #101, `0248615`; UAT `PASS` on staging; see `docs/handoffs/V1_PHASE_34C_HANDOFF.md`)*: Leave (including Team requests) and My status.
 - **34D — Communication** *(**complete, formally closed 2026-10-13**: PR #105, `fd57c7c`; UAT `PASS` on staging; see `docs/handoffs/V1_PHASE_34D_HANDOFF.md`)*: Messages, Notifications and Announcements.
-- **34E — Reports:** Service and incident reports with uploads. *Not authorized.*
+- **34E — Reports** *(**implemented 2026-10-13**, awaiting merge, deployment and UAT; see `docs/handoffs/V1_PHASE_34E_HANDOFF.md`)*: Service and incident reports with uploads.
 
 ---
 
