@@ -43,7 +43,7 @@ dependencies:
   # used, through lib/features/my_status/location/; never a stream or the
   # background service.
   geolocator: 14.0.3
-  geolocator_android: 5.0.3
+  geolocator_android: 5.1.1+1
   # Photo attachments for reports (Phase 33, R-7/R-8): only pickImage
   # (system camera app or Android's photo picker), through
   # lib/features/reports/data/photo_source.dart. Pinned exactly.
