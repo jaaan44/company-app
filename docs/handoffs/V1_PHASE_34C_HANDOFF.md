@@ -1,6 +1,6 @@
 # Phase 34C — Staff Web Portal: HR & Operations — Handoff
 
-**Status: merged (PR #101, `0248615`, 2026-10-13), awaiting staging deployment and UAT.** UAT-34C-01…07 are `NOT RUN`. 34D–34E are not authorized.
+**Status: complete and formally closed (2026-10-13).** Merged (PR #101, `0248615`), deployed to staging, UAT-34C-01…07 **PASS**. 34D–34E each need their own authorization. UAT-34C-01…07 are `NOT RUN`. 34D–34E are not authorized.
 
 ## 1. Phase Identification
 
@@ -143,3 +143,10 @@ See §5.
   - UAT-34C-01…07.
 - **The script was rehearsed on scratch SQLite:** `plan`, `seed` and `verify` gave the expected output; a re-seed is idempotent; a request made in the app is kept.
 - **Not run:** the deployment and UAT.
+
+## Addendum — Deployment, UAT and Formal Closure (2026-10-13)
+
+- **Deployed:** staging → `0248615` (the operator's output was pasted: fast-forward, backup, `BUILD OK`, migrations Ran, assets in both containers, smoke tests). The fast-forward started from `d3cf84d`, which exposed the 34B discrepancy recorded in the 34B handoff.
+- **Data:** `uat34c_data.php` seeded and verified on staging (SHA `3e0f0e0c…`, `seed exit=0`, `verify` as expected, output pasted). This was also the MySQL check of the 34C pages' API calls.
+- **UAT-34C-01…07: PASS**, reported by the product owner after running them in desktop and phone browsers against staging. Recorded by the AI on that report.
+- **Phase 34C is formally closed.** The `[UAT34C]` data stays on staging; cleanup needs its own authorization. 34D needs its own authorization. The 30B and 31–33 UAT records are still to be reconciled (see TEST_STATUS).

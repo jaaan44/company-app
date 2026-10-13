@@ -136,7 +136,7 @@ Cross-module dashboard and administrative reports. Preceded by a product-owner-r
 **Phase 34 — Staff Web Portal (Laravel)** *(specification `docs/phases/V1_PHASE_34_DEFINITION.md`, DEC-063)* — the mobile app's staff functions in a browser, built with Blade + Livewire inside `apps/api`, calling the existing API in-process. Split into sub-phases, each authorized on its own:
 - **34A — Foundation** *(**complete, formally closed 2026-10-13**: PR #89, `d3cf84d`; UAT `PASS` on staging; see `docs/handoffs/V1_PHASE_34A_HANDOFF.md`)*: shared web login, layout and the web design system, Home, My profile and the Staff directory, and a CI build of the staging images.
 - **34B — Work** *(**complete, formally closed 2026-10-13**: PR #92, `2a7bca9`; UAT `PASS` on staging `0248615` (re-run); see `docs/handoffs/V1_PHASE_34B_HANDOFF.md`)*: Tasks, Work logs, Projects, Clients and Schedule.
-- **34C — HR & Operations** *(**implemented 2026-10-13**, awaiting merge, deployment and UAT; see `docs/handoffs/V1_PHASE_34C_HANDOFF.md`)*: Leave (including Team requests) and My status.
+- **34C — HR & Operations** *(**complete, formally closed 2026-10-13**: PR #101, `0248615`; UAT `PASS` on staging; see `docs/handoffs/V1_PHASE_34C_HANDOFF.md`)*: Leave (including Team requests) and My status.
 - **34D — Communication:** Messages, Notifications and Announcements. *Not authorized.*
 - **34E — Reports:** Service and incident reports with uploads. *Not authorized.*
 

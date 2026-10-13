@@ -1498,5 +1498,5 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 |---|---|---|---|
 | Runbook §2, deploy → `0248615` | Manual (operator), output pasted | PASS | Fast-forward (from `d3cf84d`, see the 34B discrepancy above); backup `-- Dump completed on 2026-10-13 7:41:22`; `BUILD OK`; migrations all Ran; the same `app-BvRk9kiK.js` / `app-CfZ9LilG.css` in both containers; fresh containers; six pages `302 → /login`, `css 200 text/css`, five API `401`s. |
 | Runbook §4, `uat34c_data.php` | Manual (operator), output pasted | PASS | SHA `3e0f0e0c…`; `seed exit=0`; `verify`: Lia UAT31 Annual 12 left of 15 (1 used, 2 pending); the four `[UAT34C]` requests; Lia `can_review=false`; Ben `can_review=true reports=2 pending=3`; 2 `[UAT34C]` check-ins. Also the MySQL check of the 34C pages' API calls. |
-| UAT-34C-01…07 | UAT (product owner) | NOT RUN | |
+| UAT-34C-01…07 | UAT (product owner) | PASS | Desktop and phone browsers on staging `0248615`; recorded in `UAT_LOG.md`. |
 
