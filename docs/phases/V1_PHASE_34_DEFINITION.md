@@ -1,6 +1,6 @@
 # Phase 34 — Staff Web Portal (Laravel) — Specification
 
-**Status:** Revision 1 (2026-10-13). **Decisions W-1…W-10 approved "as recommended" by the product owner on 2026-10-13 (DEC-063).** **34A and 34B authorized, implemented and closed** (§11–§12); **34C authorized and implemented** (§13; handoff `docs/handoffs/V1_PHASE_34C_HANDOFF.md`). 34D–34E are **not authorized**: each needs its own authorization (W-10). Revision 0 was the draft reviewed in PR #89.
+**Status:** Revision 1 (2026-10-13). **Decisions W-1…W-10 approved "as recommended" by the product owner on 2026-10-13 (DEC-063).** **34A and 34B authorized, implemented and closed** (§11–§12); **34C authorized, implemented and closed** (§13; handoff `docs/handoffs/V1_PHASE_34C_HANDOFF.md`). 34D–34E are **not authorized**: each needs its own authorization (W-10). Revision 0 was the draft reviewed in PR #89.
 
 **Requested by the product owner (2026-10-12):** "a laravel based frontend (basically similar function with the flutter frontend)". This draft reads that as: **the same staff functions as the Flutter app, in a web browser, built with Laravel**, for the same accounts and the same rules.
 

@@ -4,6 +4,9 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-13 — Phase 34C closed (UAT PASS)
+- UAT-34C-01…07 **PASS** on staging `0248615`, reported by the product owner. Phase 34C, Staff Web Portal: HR & Operations, is formally closed. The 30B and 31–33 records remain to be reconciled.
+
 ### 2026-10-13 — Phase 34B UAT re-run; 34C deployed
 - **Discrepancy:** the 34C deploy showed staging had never been moved to `2a7bca9` (34B) and held no UAT34B, UAT31 or UAT32 data. The earlier 34B deploy and UAT records are annotated, not removed.
 - **34B:** UAT-34B-01…07 re-run on staging `0248615` with freshly seeded UAT34B data: **PASS** (product owner).
