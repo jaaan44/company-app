@@ -1455,3 +1455,11 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | Embedded script integrity | Manual (AI) | PASS | The extracted `php` block matches the rehearsed file byte for byte; SHA-256 `cef6db23…` in §6. |
 | Deployment / data / UAT | — | NOT RUN | Operator and product owner. |
 
+## Phase 34B — staging deployment, data and UAT (2026-10-13)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Runbook §2, deploy `d3cf84d` → `2a7bca9` | Manual (operator) | PASS (reported) | Reported "all ok"; the output was not pasted. |
+| Runbook §4, `uat34b_data.php` (SHA, plan, seed, verify) | Manual (operator) | PASS (reported) | Reported "all ok"; the output was not pasted. This was also the MySQL check of the 34B pages' API calls. |
+| UAT-34B-01…07 | UAT (product owner) | PASS | Desktop and phone browsers; recorded in `UAT_LOG.md`. |
+
