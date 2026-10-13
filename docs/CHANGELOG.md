@@ -4,6 +4,9 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-13 — Phase 33 closed (UAT PASS)
+- UAT-33-01…08 **PASS**, reported by the product owner (physical device, staging `d6dd29a`, combined round). Phase 33 — Service & Incident Reports with photos (Mobile) — formally closed. UAT_LOG, ROADMAP, CURRENT_STATE and the handoff updated.
+
 ### 2026-10-13 — Phase 32 closed (UAT PASS)
 - UAT-32-01…08 **PASS**, reported by the product owner (physical device, staging `d6dd29a`, combined round). Phase 32 — Messages, Notifications & Announcements (Mobile) — formally closed. UAT_LOG, ROADMAP, CURRENT_STATE and the handoff updated.
 

@@ -1410,3 +1410,10 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | §6 step 1 (30B seed, passwords) | Manual (operator) | PASS (reported) | Operator reported all as expected; passwords stored in the operator's password manager and the file shredded. No password left the VPS terminal. |
 | §6 step 2 (31–33 seed, verify, exposure) | Manual (operator) | PASS (reported) | Operator reported all as expected (output not pasted). This was also the MySQL check of the 31–33 list orders and company day. |
 | UAT | — | NOT RUN | UAT-30B-01…08, UAT-31/32/33-01…08. |
+
+## Combined UAT round — result (2026-10-13)
+
+| Item | Type | Status | Notes |
+|---|---|---|---|
+| UAT-30B-01…08, UAT-31-01…08, UAT-32-01…08, UAT-33-01…08 | UAT (product owner) | PASS | 32 scenarios on a physical Android 12+ device against staging `d6dd29a`, APK SHA-256 `0470A31A…A55E9D`; results reported by the product owner, recorded in `UAT_LOG.md`. Not reported: whether UAT-33-02's 00:00–07:59 Manila window was tried (automated tests cover it); UAT-33-06's oversized-image case is not reachable from the phone (photos are scaled to 2560 px). The final `exposure` output was not pasted. |
+
