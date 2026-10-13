@@ -124,3 +124,10 @@ See §5.
 ## 16. Recommended Next Step
 
 Phase 33, under DEC-059.
+
+## Addendum — UAT and Formal Closure (2026-10-13)
+
+- **Deployed:** staging `d6dd29a` and the APK built at `d6dd29a` (combined round, `docs/testing/COMBINED_UAT_PREPARATION.md`; preparation results in `docs/testing/TEST_STATUS.md`).
+- **UAT-32-01…08: PASS**, reported by the product owner after running each scenario on a physical Android 12+ device against staging. Recorded by the AI on that report.
+- **Phase 32 is formally closed.** UAT data stays on staging; any cleanup needs its own authorization.
+
