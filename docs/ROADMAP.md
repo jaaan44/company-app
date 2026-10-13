@@ -146,6 +146,8 @@ Cross-module dashboard and administrative reports. Preceded by a product-owner-r
 ### Admin Backoffice
 *Depends on: the completed backend API (Phases 5–21); does not block, and is not blocked by, the Employee Mobile Application phases above — the two tracks share only the already-stable API*
 
+*Proposed 2026-10-13, **not authorized**: granular permissions and a Roles & permissions screen, as sub-phases 35A–35C (`docs/phases/V1_PERMISSIONS_PROPOSAL.md`, decisions P-1…P-7).*
+
 **Phase 35 — Admin Backoffice Foundation** *(formerly 34, DEC-063)* — the Blade/Livewire navigation shell (`06_UI_UX_GUIDELINES.md`'s existing `Dashboard / People | Clients | Work | HR | Operations | Communication | Reports | Administration` section layout) and the web visual-design-system decision `06_UI_UX_GUIDELINES.md` explicitly left open for "whichever phase first builds real Admin Backoffice screens." *(That design decision has since been made by Phase 34A, W-5, DEC-063; this phase reuses it.)*
 **Phase 36 — Admin Backoffice Business Management Screens** *(formerly 35)* — CRUD/management UI for the business modules, grouped by the same section layout; may be split into sub-phases at its own planning time.
 
