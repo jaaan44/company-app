@@ -1,6 +1,6 @@
 # Phase 34F — Staff Web Portal: Portal as an app — Handoff
 
-**Status: implemented and tested (2026-10-13); awaiting merge, staging deployment and UAT.** UAT-34F-01…07 are `NOT RUN`.
+**Status: merged (PR #111, `b682935`, 2026-10-13); awaiting staging deployment and UAT.** UAT-34F-01…07 are `NOT RUN`.
 
 ## 1. Phase Identification
 
@@ -184,3 +184,13 @@ See §5.
 1. Merge on green CI.
 2. Deploy to staging and run UAT-34F.
 3. Close 34F. Phase 35 (Admin Backoffice) needs its own authorization.
+
+## Addendum — Merge and UAT runbook (2026-10-13)
+
+- **PR #111 merged as `b682935`.** CI was green, including the staging image build with the new manifest and icon check.
+- **Runbook `docs/testing/PHASE_34F_UAT_PREPARATION.md`:**
+  - the deploy `bcdd6f5` → `b682935`, with no migration;
+  - smoke tests for `/app/more`, the manifest and the four icons;
+  - an optional re-seed with the unchanged 34E script (SHA `7b894d2a…`, checked again) to bring back the rejected report for the Return to draft dialog;
+  - UAT-34F-01…07.
+- **Not run:** the deployment and UAT.
