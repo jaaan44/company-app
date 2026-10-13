@@ -4,6 +4,9 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-13 — Phase 30B closed (UAT PASS); Phase 30 complete
+- UAT-30B-01…08 **PASS**, reported by the product owner (physical device, staging `d6dd29a`, combined round). Phase 30B formally closed; Phase 30 (30A + 30B) complete. UAT_LOG, ROADMAP, CURRENT_STATE and the 30B handoff updated.
+
 ### 2026-10-13 — Combined UAT preparation completed on staging
 - Operator ran runbook §2–§6: staging deployed at `d6dd29a`; host nginx `client_max_body_size 12m` for the Company App site (3 MB upload reaches Laravel); APK at `d6dd29a` built, permission gate passed (no new permission), installed; UAT30B accounts and the 31–33 data seeded and verified. Details in TEST_STATUS. All UAT remains `NOT RUN`.
 
