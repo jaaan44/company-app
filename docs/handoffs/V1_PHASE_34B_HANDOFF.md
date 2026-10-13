@@ -1,6 +1,6 @@
 # Phase 34B — Staff Web Portal: Work — Handoff
 
-**Status: complete and formally closed (2026-10-13).** Merged (PR #92, `2a7bca9`), deployed to staging, UAT-34B-01…07 PASS. 34C–34E each need their own authorization.
+**Status: complete and formally closed (2026-10-13).** Merged (PR #92, `2a7bca9`). **UAT-34B-01…07 PASS on staging `0248615`** (re-run, see the last addendum); the first recorded deploy and UAT were not found on staging. 34C–34E each need their own authorization.
 
 ## 1. Phase Identification
 
@@ -176,3 +176,9 @@ See §5.
 - **UAT-34B-01…07: PASS**, reported by the product owner after running them in desktop and phone browsers against staging. Recorded by the AI on that report.
 - **Phase 34B is formally closed.** The `[UAT34B]` data stays on staging; cleanup needs its own authorization. 34C needs its own authorization.
 
+
+## Addendum — Discrepancy and UAT re-run (2026-10-13)
+
+- **Found during the 34C deploy:** staging's checkout went from `d3cf84d` (34A) straight to `0248615`; its `git reflog` has no `2a7bca9` entry, no backup was taken between 03:39 and 07:41 UTC, and staging held no `[UAT34B]` data. The deployment and UAT recorded in the previous addendum therefore cannot have run against `2a7bca9` on this staging server. The product owner has not yet said what happened.
+- **Re-run:** staging at `0248615` (which contains 34B unchanged); `uat34b_data.php` seeded and verified, output pasted and as expected; **UAT-34B-01…07 PASS**, reported by the product owner ("all pass") and recorded by the AI as re-run rows in `UAT_LOG.md`. The original rows stay, annotated.
+- **Still open:** the same check found no UAT31 or UAT32 data on staging, so the 30B and 31–33 UAT records are not yet reconciled.
