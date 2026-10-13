@@ -1463,6 +1463,15 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | Runbook §4, `uat34b_data.php` (SHA, plan, seed, verify) | Manual (operator) | PASS (reported) | Reported "all ok"; the output was not pasted. This was also the MySQL check of the 34B pages' API calls. |
 | UAT-34B-01…07 | UAT (product owner) | PASS | Desktop and phone browsers; recorded in `UAT_LOG.md`. |
 
+## Phase 34B — discrepancy and UAT re-run (2026-10-13)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Staging checkout history (`git reflog`) | Manual (operator), output pasted | FINDING | Before the 34C deploy the checkout was at `d3cf84d` (34A, 03:39 UTC); there is no `2a7bca9` entry and no backup between 03:39 and 07:41, so the recorded 34B deploy did not happen on this checkout. |
+| Earlier rounds' data on staging | Manual (operator), output pasted | FINDING | `UAT34B tasks: 0`, `UAT31 requests: 0`, `UAT32 announcements: 0`, no UAT31 leave types before the 34C seed; `web audit entries: 5` (first 05:57 UTC). The 30B and 31–33 records are **not yet reconciled** (pending the product owner's answer). |
+| 34B data (`uat34b_data.php`) on `0248615` | Manual (operator), output pasted | PASS | SHA `cef6db23…`; `plan` clean; `seed exit=0`; `verify` exactly as the runbook's §4. |
+| UAT-34B-01…07 (re-run) | UAT (product owner) | PASS | Against staging `0248615`; recorded in `UAT_LOG.md` as re-run rows. The original rows stay, annotated. |
+
 ## Phase 34C — Staff Web Portal: HR & Operations (2026-10-13)
 
 | Check | Type | Status | Notes |
@@ -1482,4 +1491,12 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | `uat34c_data.php` rehearsal | Manual (AI), scratch SQLite | PASS | After the 30B seed: `plan` shows 3 accounts and no UAT34C data; `seed` and `verify` print the runbook's §4 lines (Lia's 4 `[UAT34C]` requests, Kai's 2 pending, Ben `can_review=true reports=2`, Lia `can_review=false`, 2 check-ins). A re-seed is idempotent (identical `verify`); a request made in the app is kept; a changed `[UAT34C]` status is reset; check-ins are replaced, not duplicated; an unknown stage exits 1. |
 | Embedded script integrity | Manual (AI) | PASS | The extracted `php` block matches the rehearsed file byte for byte; SHA-256 `3e0f0e0c…` in §6. |
 | Deployment / data / UAT | — | NOT RUN | Operator and product owner. |
+
+## Phase 34C — staging deployment and data (2026-10-13)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Runbook §2, deploy → `0248615` | Manual (operator), output pasted | PASS | Fast-forward (from `d3cf84d`, see the 34B discrepancy above); backup `-- Dump completed on 2026-10-13 7:41:22`; `BUILD OK`; migrations all Ran; the same `app-BvRk9kiK.js` / `app-CfZ9LilG.css` in both containers; fresh containers; six pages `302 → /login`, `css 200 text/css`, five API `401`s. |
+| Runbook §4, `uat34c_data.php` | Manual (operator), output pasted | PASS | SHA `3e0f0e0c…`; `seed exit=0`; `verify`: Lia UAT31 Annual 12 left of 15 (1 used, 2 pending); the four `[UAT34C]` requests; Lia `can_review=false`; Ben `can_review=true reports=2 pending=3`; 2 `[UAT34C]` check-ins. Also the MySQL check of the 34C pages' API calls. |
+| UAT-34C-01…07 | UAT (product owner) | NOT RUN | |
 

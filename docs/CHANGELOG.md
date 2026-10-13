@@ -4,6 +4,12 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-13 — Phase 34B UAT re-run; 34C deployed
+- **Discrepancy:** the 34C deploy showed staging had never been moved to `2a7bca9` (34B) and held no UAT34B, UAT31 or UAT32 data. The earlier 34B deploy and UAT records are annotated, not removed.
+- **34B:** UAT-34B-01…07 re-run on staging `0248615` with freshly seeded UAT34B data: **PASS** (product owner).
+- **34C:** deployed to staging at `0248615`, UAT34C data seeded and verified (outputs pasted). UAT-34C `NOT RUN`.
+- **Open:** the 30B and 31–33 UAT records are not yet reconciled with staging's data.
+
 ### 2026-10-13 — Phase 34C merged; UAT runbook
 - PR #101 merged as `0248615` (CI green, including the staging image build). New `docs/testing/PHASE_34C_UAT_PREPARATION.md` covers the deploy `2a7bca9` → `0248615`, a rehearsed data script (`uat34c_data.php`, no accounts or passwords) and UAT-34C-01…07. UAT `NOT RUN`.
 
