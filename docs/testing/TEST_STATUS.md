@@ -1473,4 +1473,13 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | Browser checks (Playwright + Chromium, axe-core 4.10.2) | Manual (AI), local server, scratch SQLite | PASS | 67/67 in light and dark, as a staff member and as her manager: leave overview, form validation then a request (the last day follows the first; the balance hint), Cancel with Keep it then a reason (focus moves into the field), My status change confirmed (`aria-pressed`), both histories, the Team entry and list, Approve with a note (history "Approved by …") and Reject (a too-short reason refused), 320 px on 6 pages, no JS errors, **axe AA 0 violations** on 13 page states × 2. |
 | Staging image build | CI | Pending | `staging-images.yml` on the PR. |
 | MySQL / staging / UAT | — | NOT RUN | UAT-34C-01…07 `NOT RUN`. |
+| Staging image build | CI | PASS | "Build staging images" and "Backend quality gates" green on PR #101, merged as `0248615`. |
+
+## Phase 34C — UAT preparation (2026-10-13)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `uat34c_data.php` rehearsal | Manual (AI), scratch SQLite | PASS | After the 30B seed: `plan` shows 3 accounts and no UAT34C data; `seed` and `verify` print the runbook's §4 lines (Lia's 4 `[UAT34C]` requests, Kai's 2 pending, Ben `can_review=true reports=2`, Lia `can_review=false`, 2 check-ins). A re-seed is idempotent (identical `verify`); a request made in the app is kept; a changed `[UAT34C]` status is reset; check-ins are replaced, not duplicated; an unknown stage exits 1. |
+| Embedded script integrity | Manual (AI) | PASS | The extracted `php` block matches the rehearsed file byte for byte; SHA-256 `3e0f0e0c…` in §6. |
+| Deployment / data / UAT | — | NOT RUN | Operator and product owner. |
 

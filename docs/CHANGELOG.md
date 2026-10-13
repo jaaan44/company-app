@@ -4,6 +4,9 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-13 — Phase 34C merged; UAT runbook
+- PR #101 merged as `0248615` (CI green, including the staging image build). New `docs/testing/PHASE_34C_UAT_PREPARATION.md` covers the deploy `2a7bca9` → `0248615`, a rehearsed data script (`uat34c_data.php`, no accounts or passwords) and UAT-34C-01…07. UAT `NOT RUN`.
+
 ### 2026-10-13 — Phase 34C: Staff Web Portal, HR & Operations
 - **Web pages, all through the existing API, mirroring the mobile screens:**
   - Leave: balances, my requests, Request leave, and my request with a confirmed Cancel;
