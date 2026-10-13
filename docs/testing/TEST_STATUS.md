@@ -1518,6 +1518,8 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | Pint / PHPStan | Automated | PASS | Clean. No dependency change. |
 | Mutation checks | Manual (AI) | PASS | 10/10 caught (route, helper, resource and migration mappings; see the handoff §11). |
 | Upgrade rehearsal (SQLite) | Manual (AI) | PASS | `main`'s migrations and seeder (23 permissions, 45 migrations) plus a probe grant of `tasks.manage` to Manager; then the new `migrate`: 35 permissions, no old names, the probe moved onto `tasks.create/.update/.delete`. Re-seed: no change. Rollback: 23, with the probe back. Re-migrate: the same as the first run. |
+| Staging image build | CI | PASS | Green on PR #115, merged as `999380e`. |
+| `p35a_check.php` rehearsal | Manual (AI), scratch SQLite | PASS | Before the migration: 45 migrations, 23 permissions, the old names. After: 46, 35, 17/17 new. The role lines are identical between the two runs. Read-only; an unknown stage exits 1. The extracted `php` block matches the rehearsed file (SHA `66b1b4b1…`). |
 | MySQL / staging / UAT | — | NOT RUN | UAT-35A-01…04 `NOT RUN`. |
 
 ## Phase 34F — Staff Web Portal: Portal as an app (2026-10-13, DEC-064)

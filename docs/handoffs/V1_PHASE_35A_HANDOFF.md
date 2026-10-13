@@ -1,6 +1,6 @@
 # Phase 35A — Granular Permissions — Handoff
 
-**Status: implemented and tested (2026-10-13); awaiting merge, staging deployment and UAT.** UAT-35A-01…04 are `NOT RUN`.
+**Status: merged (PR #115, `999380e`, 2026-10-13); awaiting staging deployment and UAT.** UAT-35A-01…04 are `NOT RUN`.
 
 ## 1. Phase Identification
 
@@ -147,3 +147,13 @@ See §5.
 2. Deploy and run UAT-35A.
 3. Close 35A.
 4. 35B (Admin Backoffice Foundation) needs its own authorization.
+
+## Addendum — Merge and UAT runbook (2026-10-13)
+
+- **PR #115 merged as `999380e`.** CI was green, including the staging image build.
+- **Runbook `docs/testing/PHASE_35A_UAT_PREPARATION.md`:**
+  - the read-only check script `p35a_check.php` (SHA `66b1b4b1…`), run before (Block 0) and after (Block 6) the deploy, with a comparison of the role lines;
+  - the deploy `b682935` → `999380e`, with an explicit `migrate --force` (Block 5), since staging does not migrate automatically;
+  - a rollback section;
+  - UAT-35A-01…04.
+- **Not run:** the deployment and UAT.
