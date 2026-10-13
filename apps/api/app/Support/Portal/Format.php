@@ -463,6 +463,99 @@ final class Format
         };
     }
 
+    /**
+     * An inbox row's time (Phase 32 R-3), company time: "09:12" today,
+     * "Yesterday", "Mon 12 Oct", or "12 Oct 2025" in another year.
+     */
+    public static function inboxTime(string $iso, string $companyDate, string $utcOffset): string
+    {
+        $at = CarbonImmutable::parse($iso)->setTimezone($utcOffset);
+        $today = CarbonImmutable::parse($companyDate);
+
+        return match (true) {
+            $at->toDateString() === $companyDate => $at->format('H:i'),
+            $at->toDateString() === $today->subDay()->toDateString() => 'Yesterday',
+            $at->year === $today->year => self::dayMonth($at),
+            default => (string) self::date($at->toDateString()),
+        };
+    }
+
+    /** A chat's day separator (R-4): "Today", "Yesterday", "Mon 12 Oct", or "12 Oct 2025". */
+    public static function chatDay(string $date, string $companyDate): string
+    {
+        $d = CarbonImmutable::parse($date);
+        $today = CarbonImmutable::parse($companyDate);
+
+        return match (true) {
+            $date === $companyDate => 'Today',
+            $date === $today->subDay()->toDateString() => 'Yesterday',
+            $d->year === $today->year => self::dayMonth($d),
+            default => (string) self::date($date),
+        };
+    }
+
+    /** "12 Oct 2026 09:12" in company time (an announcement's dates, R-7). */
+    public static function dateTime(string $iso, string $utcOffset): string
+    {
+        $at = CarbonImmutable::parse($iso)->setTimezone($utcOffset);
+
+        return self::date($at->toDateString()).' '.$at->format('H:i');
+    }
+
+    /**
+     * A conversation's name (R-3): the group name, the project name, or —
+     * for a direct chat — everyone but me.
+     *
+     * @param  array<string, mixed>  $conversation
+     */
+    public static function conversationTitle(array $conversation, ?string $myStaffId): string
+    {
+        return match ($conversation['type'] ?? null) {
+            'group' => $conversation['name'] ?? 'Group',
+            'project' => $conversation['project']['name'] ?? $conversation['name'] ?? 'Project chat',
+            default => (function () use ($conversation, $myStaffId): string {
+                $others = collect($conversation['members'] ?? [])
+                    ->pluck('staff')
+                    ->reject(fn ($s) => ($s['public_id'] ?? null) === $myStaffId)
+                    ->pluck('name');
+
+                return $others->isEmpty() ? ($conversation['name'] ?? 'Conversation') : $others->implode(', ');
+            })(),
+        };
+    }
+
+    /**
+     * Group and project chats name each sender (R-4).
+     *
+     * @param  array<string, mixed>  $conversation
+     */
+    public static function showsSenderNames(array $conversation): bool
+    {
+        return in_array($conversation['type'] ?? null, ['group', 'project'], true);
+    }
+
+    /**
+     * The inbox row's preview (R-3): "You: …" for mine, "Grace: …" in a
+     * group, the text alone in a direct chat; "No messages yet".
+     *
+     * @param  array<string, mixed>  $conversation
+     */
+    public static function lastMessagePreview(array $conversation, ?string $myStaffId): string
+    {
+        $m = $conversation['last_message'] ?? null;
+        if ($m === null) {
+            return 'No messages yet';
+        }
+        $text = trim((string) preg_replace('/\s+/u', ' ', (string) $m['body']));
+        if (($m['sender']['public_id'] ?? null) === $myStaffId) {
+            return 'You: '.$text;
+        }
+
+        return self::showsSenderNames($conversation)
+            ? explode(' ', (string) $m['sender']['name'])[0].': '.$text
+            : $text;
+    }
+
     private static function humanize(?string $value, string $fallback): string
     {
         if ($value === null || $value === '') {

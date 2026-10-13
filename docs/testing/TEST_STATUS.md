@@ -1472,6 +1472,17 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | 34B data (`uat34b_data.php`) on `0248615` | Manual (operator), output pasted | PASS | SHA `cef6db23…`; `plan` clean; `seed exit=0`; `verify` exactly as the runbook's §4. |
 | UAT-34B-01…07 (re-run) | UAT (product owner) | PASS | Against staging `0248615`; recorded in `UAT_LOG.md` as re-run rows. The original rows stay, annotated. |
 
+## Phase 34D — Staff Web Portal: Communication (2026-10-13)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Backend tests | Automated | PASS | 20 new: `CommunicationPagesTest` 18, `FormatTest` +2. 1,354/1,354. |
+| Pint / PHPStan | Automated | PASS | Clean. No Composer or npm dependency change. |
+| Mutation checks | Manual (AI) | PASS | 7 run. 6 caught at first (myself excluded from New message, a chat marked read, a notification marked read on open, "You:" previews, Load earlier, Mark all read only with unread). The survivor (blank text sent) exposed a missing assertion; with it, the mutation is caught. |
+| Browser checks (Playwright + Chromium, axe-core 4.10.2) | Manual (AI), local server, scratch SQLite | PASS | 49/49 in light and dark: Home's links, a notification opening its chat, the inbox, a chat with Send (field cleared), **a reply sent by a second signed-in browser appearing within the poll (14 s both runs)**, New message without myself and opening the direct chat, announcements and Acknowledge, Mark all read, 320 px on 5 pages, no JS errors, **axe AA 0 violations** on 7 page states × 2. |
+| Staging image build | CI | Pending | `staging-images.yml` on the PR. |
+| MySQL / staging / UAT | — | NOT RUN | UAT-34D-01…06 `NOT RUN`. |
+
 ## Phase 34C — Staff Web Portal: HR & Operations (2026-10-13)
 
 | Check | Type | Status | Notes |

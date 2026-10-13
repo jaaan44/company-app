@@ -144,4 +144,37 @@ class FormatTest extends TestCase
         $this->assertSame('Off duty', Format::operationalStatus('off_duty'));
         $this->assertSame('Unknown status', Format::operationalStatus(null));
     }
+
+    public function test_inbox_and_chat_times(): void
+    {
+        $this->assertSame('09:12', Format::inboxTime('2026-10-13T01:12:00+00:00', '2026-10-13', '+08:00'));
+        $this->assertSame('00:05', Format::inboxTime('2026-10-12T16:05:00+00:00', '2026-10-13', '+08:00'));
+        $this->assertSame('Yesterday', Format::inboxTime('2026-10-12T10:40:00+00:00', '2026-10-13', '+08:00'));
+        $this->assertSame('Tue 1 Sep', Format::inboxTime('2026-09-01T00:00:00+00:00', '2026-10-13', '+08:00'));
+        $this->assertSame('30 Dec 2025', Format::inboxTime('2025-12-30T00:00:00+00:00', '2026-01-02', '+08:00'));
+        $this->assertSame('Today', Format::chatDay('2026-10-13', '2026-10-13'));
+        $this->assertSame('Yesterday', Format::chatDay('2026-10-12', '2026-10-13'));
+        $this->assertSame('Mon 5 Oct', Format::chatDay('2026-10-05', '2026-10-13'));
+        $this->assertSame('31 Dec 2025', Format::chatDay('2025-12-31', '2026-01-02'));
+        $this->assertSame('12 Oct 2026 09:30', Format::dateTime('2026-10-12T01:30:00+00:00', '+08:00'));
+    }
+
+    public function test_conversation_titles_and_previews(): void
+    {
+        $members = [['staff' => ['public_id' => 'ME', 'name' => 'Lia Ramos']], ['staff' => ['public_id' => 'K', 'name' => 'Kai Tan']]];
+        $direct = ['type' => 'direct', 'name' => null, 'members' => $members, 'last_message' => ['body' => "See you\n  at the dock", 'sender' => ['public_id' => 'K', 'name' => 'Kai Tan']]];
+        $group = ['type' => 'group', 'name' => 'Crew', 'members' => $members, 'last_message' => ['body' => 'Hi', 'sender' => ['public_id' => 'K', 'name' => 'Kai Tan']]];
+        $project = ['type' => 'project', 'name' => null, 'project' => ['name' => 'Plant 2'], 'members' => $members, 'last_message' => ['body' => 'Done', 'sender' => ['public_id' => 'ME', 'name' => 'Lia Ramos']]];
+
+        $this->assertSame('Kai Tan', Format::conversationTitle($direct, 'ME'));
+        $this->assertSame('Crew', Format::conversationTitle($group, 'ME'));
+        $this->assertSame('Plant 2', Format::conversationTitle($project, 'ME'));
+        $this->assertSame('Conversation', Format::conversationTitle(['type' => 'direct', 'members' => [$members[0]]], 'ME'));
+        $this->assertSame('See you at the dock', Format::lastMessagePreview($direct, 'ME'));
+        $this->assertSame('Kai: Hi', Format::lastMessagePreview($group, 'ME'));
+        $this->assertSame('You: Done', Format::lastMessagePreview($project, 'ME'));
+        $this->assertSame('No messages yet', Format::lastMessagePreview(['type' => 'group', 'last_message' => null], 'ME'));
+        $this->assertTrue(Format::showsSenderNames($project));
+        $this->assertFalse(Format::showsSenderNames($direct));
+    }
 }

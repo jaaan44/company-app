@@ -73,24 +73,24 @@
                 @endif
                 @if ($home['messages'] !== null)
                     @php($unread = $home['messages']['unread_count'])
-                    <div class="rounded-xl border border-line bg-raised p-5">
-                        <p class="text-sm text-muted">Messages</p>
+                    <a href="{{ route('portal.messages') }}" class="block rounded-xl border border-line bg-raised p-5 hover:bg-hover" aria-label="Messages: {{ $unread === 0 ? 'no unread messages' : $unread.' unread' }}">
+                        <span class="block text-sm text-muted">Messages</span>
                         @if ($unread === 0)
-                            <p class="mt-2">No unread messages</p>
+                            <span class="mt-2 block">No unread messages</span>
                         @else
-                            <p class="text-3xl font-semibold">{{ $unread }} <span class="text-base font-normal text-muted">unread</span></p>
+                            <span class="block text-3xl font-semibold">{{ $unread }} <span class="text-base font-normal text-muted">unread</span></span>
                         @endif
-                    </div>
+                    </a>
                 @endif
                 @php($unreadNotifications = $home['notifications']['unread_count'])
-                <div class="rounded-xl border border-line bg-raised p-5">
-                    <p class="text-sm text-muted">Notifications</p>
+                <a href="{{ route('portal.notifications') }}" class="block rounded-xl border border-line bg-raised p-5 hover:bg-hover" aria-label="Notifications: {{ $unreadNotifications === 0 ? 'no unread notifications' : $unreadNotifications.' unread' }}">
+                    <span class="block text-sm text-muted">Notifications</span>
                     @if ($unreadNotifications === 0)
-                        <p class="mt-2">No unread notifications</p>
+                        <span class="mt-2 block">No unread notifications</span>
                     @else
-                        <p class="text-3xl font-semibold">{{ $unreadNotifications }} <span class="text-base font-normal text-muted">unread</span></p>
+                        <span class="block text-3xl font-semibold">{{ $unreadNotifications }} <span class="text-base font-normal text-muted">unread</span></span>
                     @endif
-                </div>
+                </a>
             </div>
         </section>
 
@@ -102,15 +102,18 @@
                 @else
                     <ul class="divide-y divide-line">
                         @foreach ($home['announcements']['latest'] as $announcement)
-                            <li wire:key="announcement-{{ $announcement['public_id'] }}" class="py-3">
-                                <p class="font-medium">{{ $announcement['title'] }}</p>
-                                @if ($announcement['published_at'] ?? null)
-                                    <p class="text-sm text-muted">{{ Format::dayMonth(CarbonImmutable::parse($announcement['published_at'])->setTimezone($day['utc_offset'])) }}</p>
-                                @endif
+                            <li wire:key="announcement-{{ $announcement['public_id'] }}">
+                                <a href="{{ route('portal.announcement', $announcement['public_id']) }}" class="block min-h-11 py-3 hover:bg-hover">
+                                    <span class="block font-medium">{{ $announcement['title'] }}</span>
+                                    @if ($announcement['published_at'] ?? null)
+                                        <span class="block text-sm text-muted">{{ Format::dayMonth(CarbonImmutable::parse($announcement['published_at'])->setTimezone($day['utc_offset'])) }}</span>
+                                    @endif
+                                </a>
                             </li>
                         @endforeach
                     </ul>
                 @endif
+                <a href="{{ route('portal.announcements') }}" class="mt-2 inline-flex min-h-11 items-center text-accent-ink underline-offset-4 hover:underline">All announcements</a>
             </section>
         @endif
     @endif
