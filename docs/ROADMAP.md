@@ -139,7 +139,7 @@ Cross-module dashboard and administrative reports. Preceded by a product-owner-r
 - **34C — HR & Operations** *(**complete, formally closed 2026-10-13**: PR #101, `0248615`; UAT `PASS` on staging; see `docs/handoffs/V1_PHASE_34C_HANDOFF.md`)*: Leave (including Team requests) and My status.
 - **34D — Communication** *(**complete, formally closed 2026-10-13**: PR #105, `fd57c7c`; UAT `PASS` on staging; see `docs/handoffs/V1_PHASE_34D_HANDOFF.md`)*: Messages, Notifications and Announcements.
 - **34E — Reports** *(**complete, formally closed 2026-10-13**: PR #108, `bcdd6f5`; UAT `PASS` on staging; see `docs/handoffs/V1_PHASE_34E_HANDOFF.md`)*: Service and incident reports with uploads.
-- **34F — Portal as an app** *(added and authorized 2026-10-13, DEC-064; **implemented, awaiting merge, staging deployment and UAT**; see `docs/handoffs/V1_PHASE_34F_HANDOFF.md`)*: the app's tabs and More page, an app bar, the app's look, toasts and in-app dialogs, navigation without full reloads, and an installable manifest. No new function.
+- **34F — Portal as an app** *(added and authorized 2026-10-13, DEC-064; **merged as `b682935` (PR #111), awaiting staging deployment and UAT**; runbook `docs/testing/PHASE_34F_UAT_PREPARATION.md`; see `docs/handoffs/V1_PHASE_34F_HANDOFF.md`)*: the app's tabs and More page, an app bar, the app's look, toasts and in-app dialogs, navigation without full reloads, and an installable manifest. No new function.
 
 ---
 

@@ -1518,7 +1518,8 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | Pint / PHPStan / Composer | Automated | PASS | Clean; `composer validate --strict` and `composer audit --locked` clean. No dependency change. `npm run build` OK. |
 | Mutation checks | Manual (AI) | PASS | 6 on the layout, all caught: New message not under Messages, My profile without its back arrow, More always current, a page's own back arrow ignored, no toast, a fixed app bar title. |
 | Browser checks (Playwright + Chromium, axe-core 4.10.2) | Manual (AI), local server, scratch SQLite | PASS | 94/94 in light and dark. Phone (390 px, touch): bottom tabs; moving between tabs, More, back arrows, saves and redirects with **no page reload**; More's order; FAB vs pill; the "Work logged." toast above the tab bar, hiding after 4.5 s; the Delete dialog as a bottom sheet with Cancel focused, Escape and Cancel keeping the log, Delete removing it, and **no browser dialog**; a report submitted through the dialog; content clear of the tab bar; no horizontal scroll at 320 px on 8 pages; manifest and four icons served; no JS errors. Desktop (1280 px): sidebar, pill, a centred dialog. **axe AA: 0 violations** on 6 states × 2 schemes. Screenshots reviewed. |
-| Staging image build | CI | pending | Now also checks `manifest.json` and an icon in the nginx image. |
+| Staging image build | CI | PASS | Green on PR #111, merged as `b682935`; now also checks `manifest.json` and an icon in the nginx image. |
+| Runbook `PHASE_34F_UAT_PREPARATION.md` | Manual (AI) | PASS | Written after merge. The optional 34E re-seed's extracted script still hashes to `7b894d2a…` on `main`. The smoke-test URLs and the UAT wording were checked against the code. |
 | MySQL / staging / UAT | — | NOT RUN | UAT-34F-01…07 `NOT RUN`. |
 
 ## Phase 34D — staging deployment, data and UAT (2026-10-13)
