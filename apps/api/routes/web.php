@@ -55,6 +55,14 @@ Route::middleware(['auth', 'account.active'])->prefix('app')->name('portal.')->g
     Route::get('status', fn () => $page('My status', 'portal.my-status'))->name('status');
     Route::get('status/changes', fn () => $page('All status changes', 'portal.status-history'))->name('status.changes');
     Route::get('status/check-ins', fn () => $page('All check-ins', 'portal.status-history', ['kind' => 'check-ins']))->name('status.check-ins');
+
+    // Phase 34D — Communication.
+    Route::get('messages', fn () => $page('Messages', 'portal.messages'))->name('messages');
+    Route::get('messages/new', fn () => $page('New message', 'portal.new-message'))->name('messages.new');
+    Route::get('messages/{publicId}', fn (string $publicId) => $page('Conversation', 'portal.chat', ['publicId' => $publicId]))->name('chat');
+    Route::get('notifications', fn () => $page('Notifications', 'portal.notifications'))->name('notifications');
+    Route::get('announcements', fn () => $page('Announcements', 'portal.announcements'))->name('announcements');
+    Route::get('announcements/{publicId}', fn (string $publicId) => $page('Announcement', 'portal.announcement-show', ['publicId' => $publicId]))->name('announcement');
 });
 
 // Deliberately outside the account.active gate: revoking one's own session

@@ -85,6 +85,12 @@ CSV export inherits the identical scoping as its JSON counterpart — no export 
   - my operational status (`POST /me/status`).
   - **No check-in is possible from the browser** (W-7): the portal never calls `POST /me/check-ins` and never asks for the browser's location.
   - The leave form's and decision panel's checks repeat the API's for usability only; a refusal (`403`, `409`, `422`) shows in the API's words.
+- **Since 34D the portal also writes**, through the same endpoints as the mobile app:
+  - messages (`POST /conversations/{id}/messages`), read state (`POST /conversations/{id}/read`), and a direct chat (`POST /conversations/direct`);
+  - notifications read (`POST /me/notifications/{id}/read`, `/read-all`) and announcement acknowledgements (`POST /me/announcements/{id}/acknowledge`).
+  - Only a conversation's members can read or write it; the API answers `404` to anyone else, and the portal shows "This conversation is no longer available." No administrator view of others' messages exists (DEC-039).
+  - A notification opens its source only by the source id the API returns for **my** notification; the page never takes a source from the browser.
+  - The chat's 15 s poll is a normal session request under CSRF, made only while the page is open.
 
 ## Authentication
 

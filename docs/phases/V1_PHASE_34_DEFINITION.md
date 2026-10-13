@@ -1,6 +1,6 @@
 # Phase 34 — Staff Web Portal (Laravel) — Specification
 
-**Status:** Revision 1 (2026-10-13). **Decisions W-1…W-10 approved "as recommended" by the product owner on 2026-10-13 (DEC-063).** **34A and 34B authorized, implemented and closed** (§11–§12); **34C authorized, implemented and closed** (§13; handoff `docs/handoffs/V1_PHASE_34C_HANDOFF.md`). 34D–34E are **not authorized**: each needs its own authorization (W-10). Revision 0 was the draft reviewed in PR #89.
+**Status:** Revision 1 (2026-10-13). **Decisions W-1…W-10 approved "as recommended" by the product owner on 2026-10-13 (DEC-063).** **34A and 34B authorized, implemented and closed** (§11–§12); **34C authorized, implemented and closed** (§13); **34D authorized and implemented** (§14; handoff `docs/handoffs/V1_PHASE_34D_HANDOFF.md`). 34E is **not authorized**: each needs its own authorization (W-10). Revision 0 was the draft reviewed in PR #89.
 
 **Requested by the product owner (2026-10-12):** "a laravel based frontend (basically similar function with the flutter frontend)". This draft reads that as: **the same staff functions as the Flutter app, in a web browser, built with Laravel**, for the same accounts and the same rules.
 
@@ -267,3 +267,39 @@ Run these with `docs/testing/PHASE_34A_UAT_PREPARATION.md`.
 - **UAT-34C-05:** Reject with a reason (a too-short reason is refused); a colleague can't open a team request.
 - **UAT-34C-06:** My status: change it and see the phone show the same; the histories and check-ins match the phone; no check-in from the browser.
 - **UAT-34C-07:** dark mode, 200% zoom, a phone browser and keyboard on the new pages.
+
+## 14. Sub-phase 34D as implemented (2026-10-13)
+
+**Authorized** by the product owner ("proceed with 34D"). No API, migration or permission change.
+
+**Screens** (each a Livewire component calling `/api/v1` in-process, mirroring the mobile Phase 32 screen named):
+- **Messages** `/app/messages` (R-3):
+  - my conversations, newest activity first, 20 per page;
+  - each shows the name (the group, the project, or the other person), the last message ("You: …", "Grace: …" in a group, or "No messages yet"), its time in company time ("09:12", "Yesterday", "Mon 12 Oct") and an unread count;
+  - **New message**.
+- **New message** `/app/messages/new`: the active staff directory, searchable, without myself. Choosing a colleague find-or-creates our direct chat and opens it.
+- **Conversation** `/app/messages/{id}` (R-4, R-5):
+  - messages oldest to newest with day separators (Today, Yesterday, "Mon 12 Oct"); mine on the right; sender names in group and project chats; 30 per page, with **Load earlier messages**;
+  - **Send** is confirmed by the API (1–4,000 characters, trimmed; blank text is ignored). On failure the text stays, with "Couldn't send. Try again.";
+  - the page checks for new messages **every 15 s while it is open** (`wire:poll.15s`, slowed down by the browser in a background tab). It marks the chat read when it opens and whenever a newer message appears.
+  - Someone else's or an unknown conversation: "This conversation is no longer available." (the API answers `404` to a non-member).
+- **Notifications** `/app/notifications` (R-6):
+  - newest first, 20 per page; unread ones bold, with a dot and "Unread" for screen readers;
+  - opening one marks it read (a failure is quiet) and then opens its source: an announcement, or the conversation;
+  - **Mark all read** ("All marked read.");
+  - works without a staff profile (R-9).
+- **Announcements** `/app/announcements` (R-7):
+  - newest first, 20 per page, with the published date and **New** until acknowledged.
+  - **Announcement** `/app/announcements/{id}`: the title, "Published by · 12 Oct 2026 09:30", the full body as plain text, and **Acknowledge**, then "Acknowledged on …" from the API.
+- **Home** (R-8): the Messages and Notifications tiles and the latest announcements now link to their pages, plus **All announcements**.
+- **Navigation:** … Leave, My status, **Messages**, **Notifications**, **Announcements**, Staff directory, My profile.
+
+**Not in 34D** (as R-10): attachments in messages, editing or deleting messages, groups and members, project chats started from the web, announcement management, read receipts, typing indicators, push, sound, and a navigation badge.
+
+**UAT scenarios (all `NOT RUN`):**
+- **UAT-34D-01:** Messages inbox matching the phone (names, previews, times, unread counts); Home's Messages tile opens it.
+- **UAT-34D-02:** a chat: day separators, Send (the phone shows it), a reply sent from the phone appears on the web within about 15 s, and the unread count clears.
+- **UAT-34D-03:** New message to a colleague opens the direct chat; doing it again opens the same chat.
+- **UAT-34D-04:** Notifications: unread ones bold; opening one marks it read and opens its announcement or chat; Mark all read; an account without a profile still sees its notifications.
+- **UAT-34D-05:** Announcements: New until acknowledged; the detail; Acknowledge, then the phone shows it acknowledged; Home's links.
+- **UAT-34D-06:** dark mode, 200% zoom, a phone browser and keyboard on the new pages.

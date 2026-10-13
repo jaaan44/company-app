@@ -26,6 +26,9 @@
                             ['portal.clients', 'Clients', ['portal.clients', 'portal.client']],
                             ['portal.leave', 'Leave', ['portal.leave*']],
                             ['portal.status', 'My status', ['portal.status*']],
+                            ['portal.messages', 'Messages', ['portal.messages*', 'portal.chat']],
+                            ['portal.notifications', 'Notifications', ['portal.notifications']],
+                            ['portal.announcements', 'Announcements', ['portal.announcement*']],
                             ['portal.directory', 'Staff directory', ['portal.directory', 'portal.staff']],
                             ['portal.profile', 'My profile', ['portal.profile']],
                         ] as [$name, $label, $patterns])

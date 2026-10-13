@@ -702,5 +702,6 @@ No migration, route or permission change.
   - Shared Blade components: `x-portal.chip`, `pager`, `search`, `back`, `info-row`, `error`.
 - **34C screens** (implemented): Leave (balances, my requests, Request leave, my request with Cancel), Team requests and a team request (Approve / Reject), My status (Change status, recent changes and check-ins) with All status changes and All check-ins. Check-ins are read-only on the web (W-7).
   - Shared Blade component `x-portal.leave-row`; partials `livewire.portal.partials.{status-rows,check-in-rows}`.
-- **34D–34E** (Communication, Reports) are planned in `docs/phases/V1_PHASE_34_DEFINITION.md` and not yet authorized.
+- **34D screens** (implemented): Messages (inbox, a conversation with Send and a 15 s `wire:poll` while open, New message), Notifications (open → mark read → source; Mark all read), Announcements and an announcement (Acknowledge). Home's Messages and Notifications tiles and announcements link to them.
+- **34E** (Reports) is planned in `docs/phases/V1_PHASE_34_DEFINITION.md` and not yet authorized.
 

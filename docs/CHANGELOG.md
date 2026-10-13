@@ -4,6 +4,14 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-13 — Phase 34D: Staff Web Portal, Communication
+- **Web pages, all through the existing API, mirroring the mobile Phase 32 screens:**
+  - Messages: the inbox, a conversation (Send confirmed, Load earlier messages, checked every 15 s while open, marked read), and New message;
+  - Notifications: open → mark read → its announcement or chat; Mark all read; works without a profile;
+  - Announcements and an announcement with Acknowledge.
+- **Home:** the Messages and Notifications tiles and the latest announcements link to their pages, plus All announcements. **Navigation** adds Messages, Notifications and Announcements.
+- **Tests:** 20 new; 1,334 → 1,354/1,354. 49/49 browser checks, including a reply from a second browser appearing within the 15 s poll, and axe AA with no violations. UAT-34D-01…06 `NOT RUN`.
+
 ### 2026-10-13 — Phase 34C closed (UAT PASS)
 - UAT-34C-01…07 **PASS** on staging `0248615`, reported by the product owner. Phase 34C, Staff Web Portal: HR & Operations, is formally closed. The 30B and 31–33 records remain to be reconciled.
 

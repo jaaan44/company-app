@@ -254,6 +254,7 @@ The visual-design foundation for Flutter is below (DEC-046). **The web equivalen
   - muted (Cancelled, Inactive, On hold).
 
   A status concept looks the same on every web page ("Status presentation" below).
+- **Chat (34D):** my messages sit on the right in the accent-soft colour; others' on the left with a border. Each shows its time, and the sender's name in group and project chats (screen readers always hear "You" or the sender). Day separators are centred headings. Unread counts are text in a badge with " unread" for screen readers; an unread notification is bold, with a dot and "Unread" for screen readers.
 - **Confirmations (34C):** a decision that can't be undone from the page (Cancel request, Approve, Reject) opens an inline panel in place of its buttons: the question as a heading, the body when there is one, the text field (focused), and the confirm button next to Keep it / Back. Destructive confirms use the danger colour. No browser dialog is used for these, so the reason or note can be typed in the same place.
 
 ## Mobile Visual-Design Foundation (resolved, DEC-046)
