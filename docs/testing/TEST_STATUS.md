@@ -1491,8 +1491,16 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | Pint / PHPStan | Automated | PASS | Clean. No Composer or npm dependency change. |
 | Mutation checks | Manual (AI) | PASS | 8 run. 5 caught at first (PDFs download, the 10 MB limit, a future incident time, closed projects hidden, a refused file is `404`). Two survivors (editing needs "mine"; Return to draft only when rejected) exposed missing tests: a manager reading a report's draft, and no Return to draft on a draft. With them, both are caught. The third (blank optional text sent as `''`) is equivalent: Laravel's `ConvertEmptyStringsToNull` makes it `null`. |
 | Browser checks (Playwright + Chromium, axe-core 4.10.2) | Manual (AI), local server, scratch SQLite | PASS | 49/49 in light and dark: both lists; the service form's messages, client search, project and draft; **real uploads** through Livewire (a `.txt` refused, a PNG and a PDF added); the photo rendered and served `inline` as `image/png`; the PDF downloaded as `supplier-quote.pdf`; remove; Submit; Return to draft; an incident reported with a photo; 320 px on 5 pages; no JS errors; **axe AA 0 violations** on 7 page states × 2. Found and fixed: the component's `upload()` method clashed with Livewire's own client-side `$wire.upload`, so the form never reached it; it is now `addFile()`. |
-| Staging image build | CI | Pending | `staging-images.yml` on the PR. |
+| Staging image build | CI | PASS | Green on PR #108, merged as `bcdd6f5`. |
 | MySQL / staging / UAT | — | NOT RUN | UAT-34E-01…06 `NOT RUN`. |
+
+## Phase 34E — UAT preparation (2026-10-13)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| `uat34e_data.php` rehearsal | Manual (AI), scratch SQLite | PASS | After the 30B seed: `plan` shows the accounts and no UAT34E data; `seed` and `verify` print the runbook's §4 lines (except the PHP limits, which come from the container's `uploads.ini` on staging). A re-seed is idempotent, and a file attached to a seeded report is deleted with it ("1 old file(s) removed"); an unknown stage exits 1. |
+| Embedded script integrity | Manual (AI) | PASS | The extracted `php` block matches the rehearsed file byte for byte; SHA-256 `7b894d2a…` in §6. |
+| Deployment / data / UAT | — | NOT RUN | Operator and product owner. |
 
 ## Phase 34D — staging deployment, data and UAT (2026-10-13)
 

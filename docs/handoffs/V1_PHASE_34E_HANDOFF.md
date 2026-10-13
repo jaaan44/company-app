@@ -1,6 +1,6 @@
 # Phase 34E — Staff Web Portal: Reports — Handoff
 
-**Status: implemented (2026-10-13), awaiting merge, staging deployment and UAT.** UAT-34E-01…06 are `NOT RUN`. This is the last web sub-phase of Phase 34.
+**Status: merged (PR #108, `bcdd6f5`, 2026-10-13), awaiting staging deployment and UAT.** UAT-34E-01…06 are `NOT RUN`. This is the last web sub-phase of Phase 34.
 
 ## 1. Phase Identification
 
@@ -145,3 +145,13 @@ See §5.
 1. Merge on green CI.
 2. Deploy to staging and run UAT-34E.
 3. Close Phase 34. The next phase on the roadmap (35, Admin Backoffice) needs its own authorization.
+
+## Addendum — Merge and UAT runbook (2026-10-13)
+
+- **PR #108 merged as `bcdd6f5`.** CI was green, including the staging image build.
+- **Runbook `docs/testing/PHASE_34E_UAT_PREPARATION.md`:**
+  - the deploy `fd57c7c` → `bcdd6f5`, with no migration;
+  - the data script `uat34e_data.php` (SHA-256 `7b894d2a…`), which reuses the UAT30B accounts and makes no password. It seeds a client and project, a rejected service report and a resolved incident for Lia. Its `verify` also prints the container's PHP upload limits;
+  - UAT-34E-01…06, including a real upload through the host nginx.
+- **The script was rehearsed on scratch SQLite.**
+- **Not run:** the deployment and UAT.
