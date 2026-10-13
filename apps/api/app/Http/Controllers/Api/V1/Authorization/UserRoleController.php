@@ -1,0 +1,98 @@
+<?php
+
+namespace App\Http\Controllers\Api\V1\Authorization;
+
+use App\Http\Controllers\Controller;
+use App\Models\Role;
+use App\Models\User;
+use App\Services\Audit\AuditLogger;
+use App\Support\Audit\AuditActions;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+
+/**
+ * Users and roles (Phase 35C, DEC-065 P-5): every sign-in account with its
+ * role, and an Administrator changing an account's role. Behind
+ * `can:authorization.manage`. Two guards: you can't change your own role,
+ * and the last Administrator can't be given another role.
+ */
+class UserRoleController extends Controller
+{
+    public function __construct(private readonly AuditLogger $auditLogger) {}
+
+    public function index(Request $request): JsonResponse
+    {
+        $request->validate(['q' => ['sometimes', 'nullable', 'string', 'max:100']]);
+        $q = trim((string) $request->input('q', ''));
+
+        $page = User::query()->with('role')
+            ->when($q !== '', fn ($query) => $query->where(fn ($inner) => $inner
+                ->where('name', 'like', '%'.addcslashes($q, '%_\\').'%')
+                ->orWhere('email', 'like', '%'.addcslashes($q, '%_\\').'%')))
+            ->orderBy('name')->orderBy('id')
+            ->paginate(25);
+
+        return response()->json([
+            'data' => collect($page->items())->map(fn (User $user) => $this->userData($user, $request))->all(),
+            'meta' => [
+                'current_page' => $page->currentPage(),
+                'last_page' => $page->lastPage(),
+                'total' => $page->total(),
+                'roles' => Role::query()->whereIn('name', [Role::ADMINISTRATOR, Role::MANAGER, Role::STAFF])->get(['name', 'label'])
+                    ->sortBy(fn (Role $role) => array_search($role->name, [Role::ADMINISTRATOR, Role::MANAGER, Role::STAFF], true))
+                    ->values()->map(fn (Role $role) => ['name' => $role->name, 'label' => $role->label])->all(),
+            ],
+        ]);
+    }
+
+    public function update(Request $request, User $user): JsonResponse
+    {
+        $data = $request->validate([
+            'role' => ['required', 'string', Rule::in([Role::ADMINISTRATOR, Role::MANAGER, Role::STAFF])],
+        ]);
+
+        if ($user->is($request->user())) {
+            throw ValidationException::withMessages(['role' => 'You can\'t change your own role.']);
+        }
+
+        $before = $user->role?->name;
+        $role = Role::query()->where('name', $data['role'])->firstOrFail();
+
+        if ($before === Role::ADMINISTRATOR && $role->name !== Role::ADMINISTRATOR
+            && User::query()->whereRelation('role', 'name', Role::ADMINISTRATOR)->count() <= 1) {
+            throw ValidationException::withMessages(['role' => 'There must always be at least one Administrator.']);
+        }
+
+        if ($before !== $role->name) {
+            $user->role()->associate($role)->save();
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::USER_ROLE_CHANGED,
+                'user',
+                $user->public_id,
+                ['role'],
+                ['role' => $before],
+                ['role' => $role->name],
+            );
+        }
+
+        return response()->json(['data' => $this->userData($user->load('role'), $request)]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function userData(User $user, Request $request): array
+    {
+        return [
+            'public_id' => $user->public_id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'status' => $user->status->value,
+            'role' => $user->role === null ? null : ['name' => $user->role->name, 'label' => $user->role->label],
+            'is_me' => $user->is($request->user()),
+        ];
+    }
+}

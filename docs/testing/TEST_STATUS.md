@@ -1510,6 +1510,16 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | Embedded script integrity | Manual (AI) | PASS | The extracted `php` block matches the rehearsed file byte for byte; SHA-256 `7b894d2a…` in §6. |
 | Deployment / data / UAT | — | NOT RUN | Operator and product owner. |
 
+## Phases 35B + 35C — Admin Backoffice and Roles & permissions (2026-10-13, DEC-065)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Backend tests | Automated | PASS | 28 new: `RolesAndUsersApiTest` 11, `AdminBackofficePagesTest` 17. Two auth tests moved from `/home` to `/admin`, plus a redirect test. 1,390 → 1,419/1,419. |
+| Pint / PHPStan / Composer / build | Automated | PASS | Clean. No dependency change. |
+| Mutation checks | Manual (AI) | PASS | 11 run. 10 caught at first. One survivor (Roles and Users pages without their own `authorization.manage`, still refused by the API) led to a new test, and is now caught. |
+| Browser checks (Playwright + Chromium, axe-core 4.10.2) | Manual (AI), local server, scratch SQLite | PASS | 79/79, desktop and phone, light and dark: Dashboard and period; sections; Roles ticking, Save dialog, Undo, Reset; Users; Audit log; drawer; 320 px on 6 pages; Manager refused; no JS errors or browser dialogs; **axe AA 0 violations** on 18 scans (10 light, 8 dark). Found and fixed: the role dialog named the old role. |
+| MySQL / staging / UAT | — | NOT RUN | UAT-35BC-01…08 `NOT RUN`. |
+
 ## Phase 35A — Granular permissions (2026-10-13, DEC-065)
 
 | Check | Type | Status | Notes |

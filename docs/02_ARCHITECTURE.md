@@ -725,3 +725,14 @@ No migration, route or permission change.
   - `StaffResource`'s `user` block follows `staff.update`, and `AnnouncementResource`'s acknowledgement count follows `announcements.view-all`.
 - **Data migration** `2026_10_13_000000_split_manage_permissions` moves existing grants onto the new names; the seeder holds the catalog for fresh installs.
 - **Not changed:** the API, its responses, the default grants, the relationship rules and the eight `hasRole(Administrator)` checks (P-4).
+
+## 45. Admin Backoffice (Phases 35B and 35C — implemented; DEC-065)
+
+- **Where:** `/admin` in `apps/api`, behind `auth`, `account.active` and `can:admin.access`; `/home` redirects there. Roles and Users also need `can:authorization.manage`.
+- **How:** the portal's pattern (DEC-063 W-1).
+  - Livewire components `App\Livewire\Admin\{Dashboard,Roles,Users,AuditLog}` call `/api/v1` in-process through `InternalApi`, using `CallsInternalApi`.
+  - There's one wrapper view, `admin.page`, and a section view, `admin.section`.
+- **Layout:** `components/layouts/admin.blade.php`, sharing `partials.app-head`, the tokens and the `x-portal.*` components with the portal. It has a sidebar, and on phones a drawer (`dialog.admin-drawer`).
+- **Sections:** `App\Support\Admin\Sections` (title, icon, the permissions that show it, and its items, either live or "Coming in Phase 36").
+- **Permissions API:** `App\Http\Controllers\Api\V1\Authorization\{RoleController,UserRoleController}` and `App\Support\Authorization\PermissionCatalog` (the module grouping, locked permissions, editable roles, defaults and the view rule).
+- **Not changed:** the permission mechanism (DEC-028). Administrator keeps `Gate::before`, one role per user, and no schema change.

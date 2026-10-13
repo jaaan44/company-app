@@ -960,3 +960,11 @@ Internet → Cloudflare (proxied, SSL/TLS "Full (strict)")
 **Superseded/reaffirmed:**
 - DEC-028 and DEC-004 are reaffirmed: three fixed roles, one role per user, and the Administrator `Gate::before`.
 - The `.manage` permissions of DEC-030 (staff), DEC-031 (clients), DEC-033 (projects), DEC-034 (tasks) and DEC-037 (announcements) are **superseded** by the split.
+
+**DEC-065 addendum (2026-10-13), 35B and 35C:**
+- **35B is approved as recommended** (B-1…B-6, `docs/phases/V1_PHASE_35B_DEFINITION.md`): the Backoffice is at `/admin` (`/home` redirects), desktop-first with a phone drawer, with a read-only Dashboard from `GET /api/v1/dashboard`, a page per section, and the Audit log in 35C.
+- **35C is authorized in the same message**, with one UAT for both ("finish phase 35 in one go").
+- **New API:** `GET /roles`, `PUT /roles/{role}/permissions`, `GET /users` and `PUT /users/{user}/role`, all behind `authorization.manage`.
+  - A write must come with its view.
+  - Administrator, locked permissions, your own role and the last Administrator are refused.
+  - New audit actions: `role.permissions_updated` and `user.role_changed`.

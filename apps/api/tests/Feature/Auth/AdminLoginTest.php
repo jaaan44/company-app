@@ -44,7 +44,7 @@ class AdminLoginTest extends TestCase
             ->assertRedirect(route('portal.home'));
 
         $this->assertAuthenticatedAs($user);
-        $this->get('/home')->assertOk();
+        $this->get('/admin')->assertOk();
     }
 
     public function test_session_id_is_regenerated_after_successful_login(): void
@@ -95,7 +95,7 @@ class AdminLoginTest extends TestCase
             ->assertRedirect(route('portal.home'));
 
         $this->assertAuthenticatedAs($user);
-        $this->get('/home')->assertForbidden();
+        $this->get('/admin')->assertForbidden();
     }
 
     public function test_suspended_admin_account_cannot_log_in(): void
@@ -198,7 +198,7 @@ class AdminLoginTest extends TestCase
             ->call('login');
 
         $this->assertGuest();
-        $this->get('/home')->assertRedirect('/login');
+        $this->get('/admin')->assertRedirect('/login');
     }
 
     public function test_login_is_rate_limited_after_repeated_failures(): void
@@ -236,12 +236,12 @@ class AdminLoginTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_unauthenticated_user_cannot_access_the_home_placeholder(): void
+    public function test_unauthenticated_user_cannot_access_the_admin_backoffice(): void
     {
-        $this->get('/home')->assertRedirect('/login');
+        $this->get('/admin')->assertRedirect('/login');
     }
 
-    public function test_suspended_account_loses_access_to_the_home_placeholder_mid_session(): void
+    public function test_suspended_account_loses_access_to_the_admin_backoffice_mid_session(): void
     {
         $user = User::factory()->administrator()->create();
         $this->actingAs($user);
@@ -258,17 +258,22 @@ class AdminLoginTest extends TestCase
         // only, not a production behavior.
         $this->app['auth']->forgetGuards();
 
-        $this->get('/home')->assertRedirect('/login');
+        $this->get('/admin')->assertRedirect('/login');
         $this->assertGuest();
     }
 
-    public function test_authenticated_admin_can_view_the_home_placeholder(): void
+    public function test_authenticated_admin_can_view_the_admin_backoffice(): void
     {
         $user = User::factory()->administrator()->create();
 
         $this->actingAs($user)
-            ->get('/home')
+            ->get('/admin')
             ->assertOk()
-            ->assertSee($user->name);
+            ->assertSee('Dashboard');
+    }
+
+    public function test_the_old_home_address_leads_to_the_admin_backoffice(): void
+    {
+        $this->get('/home')->assertRedirect('/admin');
     }
 }

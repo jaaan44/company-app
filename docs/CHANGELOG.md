@@ -4,6 +4,25 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-13 — Phases 35B + 35C: Admin Backoffice and Roles & permissions (DEC-065)
+- **Approved:** 35B as recommended (B-1…B-6), with 35C authorized in the same message, and one UAT for both.
+- **35B:**
+  - `/admin` (`/home` redirects) in the portal's look: a sidebar, and a drawer on phones;
+  - a Dashboard from the existing dashboard API, with a period;
+  - a page per section listing what Phase 36 will add;
+  - permission-aware navigation.
+- **35C:**
+  - **Roles & permissions:** tick what Managers and Staff can view, add, edit and delete. Writes include view, Save lists every change, and there's Undo and Reset to defaults.
+  - **Users and roles:** change an account's role. You can't change your own, or remove the last Administrator.
+  - **Audit log:** read-only.
+  - **API:** four new endpoints behind `authorization.manage`, which stays locked to Administrator. Every change is audited.
+- **Tests:**
+  - 28 new automated tests, 1,390 → 1,419/1,419;
+  - 79/79 browser checks, with axe AA showing no violations;
+  - 11/11 mutations caught after one added test;
+  - one bug (the role dialog's wording) found in the browser and fixed.
+- **UAT:** UAT-35BC-01…08 `NOT RUN`.
+
 ### 2026-10-13 — Phase 35A deployed and closed (UAT PASS)
 - Staging deployed at `999380e`, with the permission migration run on MySQL (output pasted). The role grants were identical before and after. UAT-35A-01…04 **PASS**, reported by the product owner. Phase 35A, Granular permissions, is formally closed.
 

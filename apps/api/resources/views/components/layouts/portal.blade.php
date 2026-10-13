@@ -51,7 +51,7 @@
             </nav>
             <div class="space-y-1 border-t border-line p-3">
                 @can('admin.access')
-                    <a href="{{ route('home') }}" data-no-navigate class="flex min-h-12 items-center gap-4 rounded-full px-4 hover:bg-hover"><x-portal.icon name="admin" /> Admin</a>
+                    <a href="{{ route('admin.dashboard') }}" data-no-navigate class="flex min-h-12 items-center gap-4 rounded-full px-4 hover:bg-hover"><x-portal.icon name="admin" /> Admin</a>
                 @endcan
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf

@@ -97,6 +97,19 @@ dialog.app-dialog::backdrop {
     }
 }
 
+/* Phase 35B: the Admin Backoffice's phone menu, a drawer from the left. */
+dialog.admin-drawer {
+    margin: 0 auto 0 0;
+    height: 100%;
+    max-height: none;
+    width: min(20rem, 85vw);
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+}
+
+dialog.admin-drawer::backdrop {
+    background: rgb(0 0 0 / 0.5);
+}
+
 [x-cloak] {
     display: none !important;
 }

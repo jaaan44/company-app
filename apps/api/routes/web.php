@@ -3,6 +3,7 @@
 use App\Enums\AuditSource;
 use App\Http\Controllers\Portal\ReportFileController;
 use App\Services\Audit\AuditLogger;
+use App\Support\Admin\Sections;
 use App\Support\Audit\AuditActions;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -15,8 +16,23 @@ Route::middleware('guest')->group(function (): void {
     Route::get('login', fn () => view('auth.login'))->name('login');
 });
 
-Route::middleware(['auth', 'account.active', 'can:admin.access'])->group(function (): void {
-    Route::get('home', fn () => view('home'))->name('home');
+// Admin Backoffice (Phase 35B/35C, DEC-065): Administrators only
+// (`admin.access`). `/home`, the former placeholder, now leads to it.
+Route::redirect('home', '/admin')->name('home');
+
+Route::middleware(['auth', 'account.active', 'can:admin.access'])->prefix('admin')->name('admin.')->group(function (): void {
+    $page = fn (string $title, string $component, array $params = []) => view('admin.page', ['title' => $title, 'livewire' => $component, 'params' => $params]);
+    Route::get('/', fn () => $page('Dashboard', 'admin.dashboard'))->name('dashboard');
+
+    // Phase 35C: Administration.
+    Route::middleware('can:authorization.manage')->group(function () use ($page): void {
+        Route::get('administration/roles', fn () => $page('Roles & permissions', 'admin.roles'))->name('roles');
+        Route::get('administration/users', fn () => $page('Users and roles', 'admin.users'))->name('users');
+    });
+    Route::get('administration/audit-log', fn () => $page('Audit log', 'admin.audit-log'))->name('audit-log');
+
+    Route::get('{section}', fn (string $section) => view('admin.section', ['key' => $section]))
+        ->whereIn('section', array_keys(Sections::ALL))->name('section');
 });
 
 // Staff Web Portal (Phase 34A, DEC-063): every active account, whatever
