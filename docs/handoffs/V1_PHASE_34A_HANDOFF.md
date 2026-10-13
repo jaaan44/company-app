@@ -1,6 +1,6 @@
 # Phase 34A — Staff Web Portal: Foundation — Handoff
 
-**Status: implemented and merged (PR #89, `d3cf84d`); awaiting staging deployment and UAT.** UAT-34A-01…06 are `NOT RUN`. 34B–34E are **not authorized** (DEC-063 W-10).
+**Status: complete and formally closed (2026-10-13).** Merged (PR #89, `d3cf84d`), deployed to staging, UAT-34A-01…06 PASS. UAT-34A-01…06 are `NOT RUN`. 34B–34E are **not authorized** (DEC-063 W-10).
 
 ## 1. Phase Identification
 
@@ -194,4 +194,12 @@ See §5.
   - the deploy `d6dd29a` → `d3cf84d`, with no migration, the `BUILD OK` rule, a check that both containers carry the same assets, and smoke tests including the CSS served as `text/css`;
   - UAT-34A-01…06 in a desktop and a phone browser. 34A-05 ends Kai's web sessions, then suspends and restores his account, with exact commands.
 - **Not run:** the staging deployment and UAT.
+
+## Addendum — Deployment, UAT and Formal Closure (2026-10-13)
+
+- **Deployed:** staging `d6dd29a` → `d3cf84d` by the operator, following the runbook §2.
+  - `BUILD OK`; the new asset stage ran on the VPS.
+  - The checks and smoke tests were reported OK.
+- **UAT-34A-01…06: PASS**, reported by the product owner after running them in a desktop browser and a phone browser against staging. Recorded by the AI on that report.
+- **Phase 34A is formally closed.** 34B–34E each need their own authorization.
 

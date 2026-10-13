@@ -4,6 +4,9 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-13 — Phase 34A closed (UAT PASS)
+- Staging deployed at `d3cf84d`. UAT-34A-01…06 **PASS**, reported by the product owner in desktop and phone browsers. Phase 34A, the Staff Web Portal foundation, is formally closed. UAT_LOG, TEST_STATUS, ROADMAP, CURRENT_STATE and the handoff updated.
+
 ### 2026-10-13 — Phase 34A merged; UAT runbook
 - PR #89 merged as `d3cf84d`, CI green, including the first staging-image build. New `docs/testing/PHASE_34A_UAT_PREPARATION.md` covers the deploy and UAT-34A-01…06. UAT `NOT RUN`.
 
