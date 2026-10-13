@@ -30,7 +30,7 @@
 
     <div class="mt-6 overflow-hidden rounded-xl border border-line bg-raised">
         @can('admin.access')
-            <a href="{{ route('home') }}" data-no-navigate class="chevron flex min-h-14 items-center gap-4 border-b border-line px-5 py-3 hover:bg-hover">
+            <a href="{{ route('admin.dashboard') }}" data-no-navigate class="chevron flex min-h-14 items-center gap-4 border-b border-line px-5 py-3 hover:bg-hover">
                 <x-portal.icon name="admin" class="size-6 text-muted" /> <span class="font-medium">Admin</span>
             </a>
         @endcan

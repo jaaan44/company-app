@@ -228,6 +228,15 @@ Principles:
 - **Responsive**, but optimized for desktop/tablet use by administrative and management roles — not required to be as thumb-friendly as the mobile app.
 - **Permission-aware UI.** Navigation items, actions, and buttons for capabilities the current user lacks should not appear (not just be disabled) unless a disabled state with explanation is genuinely useful (e.g. "requires HR Administrator role" tooltip) — decided per case, but hiding is the default.
 - **Consistent forms.** Shared form conventions (validation display, required-field marking, save/cancel placement) across modules — a leave-approval form and a client-edit form should feel like the same product.
+- **As built (Phases 35B and 35C, DEC-065):**
+  - **Shell:** `/admin` uses the portal's look (tokens, toasts, in-app dialogs, icons, navigation without reloads).
+  - **Navigation:** a 16 rem sidebar with the sections in the order above, the current one marked; Staff portal and Log out at the bottom. On phones, a menu button opens the same list as a drawer from the left (Close focused, Escape closes).
+  - **Section pages:** each lists its screens. Future ones show a muted "Coming in Phase 36" pill.
+  - **Dashboard:** cards in a 1/2/3-column grid, with a From/To period form.
+  - **Roles & permissions:**
+    - a card per module, with its rule note;
+    - a labelled Manager and Staff checkbox per permission (screen readers hear the permission too);
+    - a sticky bar with Save changes (a dialog listing "Can now" / "No longer"), Undo changes and Reset to defaults.
 
 The visual-design foundation for Flutter is below (DEC-046). **The web equivalent, for the Staff Web Portal and later the Admin Backoffice, was decided in Phase 34A (DEC-063 W-5); see "Web Visual-Design Foundation" next.**
 

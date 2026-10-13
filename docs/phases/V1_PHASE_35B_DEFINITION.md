@@ -1,6 +1,6 @@
 # Phase 35B — Admin Backoffice Foundation — Definition
 
-**Status:** PROPOSED (2026-10-13). Authorized to start by the product owner ("proceed with 35B"). Decisions B-1…B-6 await approval; **no code has been written.**
+**Status:** APPROVED and implemented together with 35C (2026-10-13). Product owner: "approve as recommended, and also can you just finish phase 35 in one go and just do that UAT at the end." B-1…B-6 are as recommended; see §9.
 **Place:** the second of 35A–35C (DEC-065). 35A is closed. 35C (the Roles & permissions screen) builds on this shell.
 
 ---
@@ -123,3 +123,34 @@ Phase 36 then fills the sections with management screens, and 35C adds Administr
 3. Test as in §6.
 4. Update the docs, then stop for merge, deployment and UAT, as with every sub-phase.
 5. 35C needs its own authorization.
+
+## 9. As implemented (2026-10-13), together with 35C
+
+- **Approval:** B-1…B-6 as recommended. 35C was authorized in the same message, and one UAT covers 35B and 35C (UAT-35BC-01…08, all `NOT RUN`).
+- **35B:**
+  - **`/admin`** (B-1):
+    - the Dashboard;
+    - eight section pages at `/admin/{section}`;
+    - `/home` now redirects to `/admin`;
+    - the portal's Admin link points to `/admin`.
+  - **Layout** `components/layouts/admin.blade.php` (B-2):
+    - the same head, tokens, toasts and icons as the portal;
+    - a sidebar from `md`, and a drawer (`<dialog>`) from a menu button on phones;
+    - the app bar's back arrow, through `x-portal.back`.
+  - **Dashboard** (B-3):
+    - `App\Livewire\Admin\Dashboard` reads `GET /api/v1/dashboard` with an optional period;
+    - the API's 422 shows under the period fields.
+    - **Deviation:** the API returns every section to every caller (zero when not visible), so every card shows. Hiding cards would need an API change.
+  - **Sections** (B-4): `App\Support\Admin\Sections`, one list for the navigation and the pages.
+    - A section shows only to someone holding one of its permissions.
+    - Operations and Reports need `admin.access` (their screens and APIs are Administrator-only today, P-4).
+    - Administration needs `authorization.manage`.
+    - Each planned item says "Coming in Phase 36".
+  - **Navigation** (B-6):
+    - `/admin` links use Livewire navigation (`resources/js/app.js` now covers `/app` and `/admin`);
+    - Staff portal and Admin are full page loads (`data-no-navigate`).
+- **35C** (`docs/phases/V1_PERMISSIONS_PROPOSAL.md` §12):
+  - Roles & permissions;
+  - Users and roles;
+  - **Audit log** (B-5).
+- **Removed:** the old placeholder view `home.blade.php` and its unused layout `components/layouts/app.blade.php`.

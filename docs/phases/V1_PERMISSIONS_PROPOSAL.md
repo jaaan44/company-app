@@ -231,3 +231,45 @@ On staging no role holds any of the five (only Administrator, through `Gate::bef
 - **UAT-35A-02:** as Staff (Lia), in the app and the portal: tasks, changing a task's status, projects, clients, the directory and announcements work as before.
 - **UAT-35A-03:** as Manager (Ben): all tasks, all projects, team leave and the directory work as before.
 - **UAT-35A-04:** as an Administrator: sign-in to the Admin Backoffice works, and the portal shows Admin.
+
+## 12. Sub-phase 35C as implemented (2026-10-13), together with 35B
+
+**Authorized:** "approve as recommended, and also can you just finish phase 35 in one go and just do that UAT at the end".
+
+**API** (all behind `auth:sanctum`, `account.active` and `can:authorization.manage`):
+- **`GET /api/v1/roles`:**
+  - Administrator (not editable; it lists every permission), Manager and Staff, with their permissions;
+  - `meta`: the modules with each permission's label and the view it needs, the locked permissions, the Administrator-only note, and the defaults.
+- **`PUT /api/v1/roles/{role}/permissions`** `{permissions: [...]}` replaces Manager's or Staff's permissions. It refuses (422):
+  - Administrator;
+  - unknown names;
+  - locked names (`admin.access`, `authorization.manage`);
+  - duplicates;
+  - a write without its view ("“Delete tasks” also needs “View all tasks”.").
+
+  Each real change writes one audit entry, `role.permissions_updated` (entity `role`, before/after with `removed`/`added`).
+- **`GET /api/v1/users?q=`:** every account with its role, 25 per page by name, searching name or email (`%` and `_` taken literally), with `is_me`; `meta.roles` lists the three roles.
+- **`PUT /api/v1/users/{user}/role`** `{role}` refuses (422) your own account and the last Administrator. It audits `user.role_changed` (entity `user`, before/after role).
+
+**Catalog:** `App\Support\Authorization\PermissionCatalog`:
+- the modules, `LOCKED`, `EDITABLE_ROLES`, `DEFAULTS` (equal to the seeder) and the ticking rule `normalize()`;
+- a test pins that every seeded permission appears exactly once.
+
+**Screens** (`App\Livewire\Admin\*`, through `InternalApi`; portal writes are audited as `web`):
+- **Roles & permissions** (`/admin/administration/roles`):
+  - a card per module, with its note and a Manager and a Staff checkbox per permission;
+  - ticking a write ticks its view, and unticking a view clears its writes;
+  - **Save changes** opens a dialog listing every "Can now" / "No longer" per role, then saves with a toast;
+  - **Undo changes** and **Reset to defaults** are also there;
+  - the locked permissions and the Administrator-only rules are listed at the top;
+  - the page also needs `can:authorization.manage`.
+- **Users and roles** (`/admin/administration/users`):
+  - search, and a role menu per account with **Change role** and a confirmation ("Make Lia Ramos Manager?");
+  - your own row shows "You can't change your own role.";
+  - the page also needs `can:authorization.manage`.
+- **Audit log** (`/admin/administration/audit-log`, B-5):
+  - `GET /api/v1/audit-logs`, 25 per page, newest first, filterable by action;
+  - each entry shows when (company time), who, the entity, the source and expandable before/after;
+  - the API keeps it Administrator-only.
+
+**UAT scenarios** (35B and 35C together, all `NOT RUN`): UAT-35BC-01…08 in `docs/testing/UAT_LOG.md`.

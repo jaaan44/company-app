@@ -4,6 +4,8 @@ use App\Http\Controllers\Api\V1\Announcements\AnnouncementController;
 use App\Http\Controllers\Api\V1\Announcements\MyAnnouncementController;
 use App\Http\Controllers\Api\V1\Audit\AuditLogController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
+use App\Http\Controllers\Api\V1\Authorization\RoleController;
+use App\Http\Controllers\Api\V1\Authorization\UserRoleController;
 use App\Http\Controllers\Api\V1\Clients\ClientController;
 use App\Http\Controllers\Api\V1\Clients\ContactController;
 use App\Http\Controllers\Api\V1\Dashboard\DashboardController;
@@ -661,4 +663,16 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
 // is null instead of a 403. See docs/phases/V1_PHASE_28_DEFINITION.md §6.1.
 Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
     Route::get('me/profile', [MyProfileController::class, 'show'])->name('me.profile');
+});
+
+// Roles & permissions, and Users and roles (Phase 35C, DEC-065): what
+// each role holds, an Administrator changing what Manager or Staff hold,
+// and changing an account's role. `authorization.manage` is held only by
+// Administrator and can never be granted (PermissionCatalog::LOCKED).
+// Every change is audited (`role.permissions_updated`, `user.role_changed`).
+Route::middleware(['auth:sanctum', 'account.active', 'can:authorization.manage'])->group(function (): void {
+    Route::get('roles', [RoleController::class, 'index'])->name('roles.index');
+    Route::put('roles/{role:name}/permissions', [RoleController::class, 'updatePermissions'])->name('roles.permissions.update');
+    Route::get('users', [UserRoleController::class, 'index'])->name('users.index');
+    Route::put('users/{user:public_id}/role', [UserRoleController::class, 'update'])->name('users.role.update');
 });

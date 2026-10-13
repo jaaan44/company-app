@@ -1,4 +1,4 @@
-{{-- An inline icon (Phase 34F): Material Icons paths (Apache License 2.0), drawn in currentColor, decorative unless labelled by its control. --}}
+{{-- An inline icon (Phase 34F; admin icons Phase 35B): Material Icons paths (Apache License 2.0), drawn in currentColor, decorative unless labelled by its control. --}}
 @props(['name', 'class' => 'size-6'])
 @php
     $paths = [
@@ -21,6 +21,11 @@
         'add' => 'M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z',
         'logout' => 'M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z',
         'admin' => 'M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z',
+        'dashboard' => 'M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z',
+        'chart' => 'M5 9.2h3V19H5V9.2zM10.6 5h2.8v14h-2.8V5zm5.6 8H19v6h-2.8v-6z',
+        'menu' => 'M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z',
+        'close' => 'M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z',
+        'portal' => 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z',
     ];
 @endphp
 <svg {{ $attributes->merge(['class' => $class.' shrink-0']) }} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="{{ $paths[$name] ?? $paths['more'] }}"/></svg>

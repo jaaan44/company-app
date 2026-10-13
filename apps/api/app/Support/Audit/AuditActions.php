@@ -96,4 +96,9 @@ final class AuditActions
     public const string REPORT_EXPORTED = 'report.exported';
 
     public const string AUDIT_LOG_EXPORTED = 'audit_log.exported';
+
+    // Phase 35C (DEC-065): the Roles & permissions screen and Users and roles.
+    public const string ROLE_PERMISSIONS_UPDATED = 'role.permissions_updated';
+
+    public const string USER_ROLE_CHANGED = 'user.role_changed';
 }
