@@ -3,13 +3,14 @@
 namespace App\Enums;
 
 /**
- * Which front door an audited action came through (Phase 21, DEC-044).
- * This API has exactly two — Sanctum/mobile and the session-based Admin
- * Backoffice (05_SECURITY_MODEL.md §Authentication) — no third value is
- * meaningful in V1.
+ * Which front door an audited action came through (Phase 21, DEC-044):
+ * the Sanctum/mobile API, the Admin Backoffice, or (Phase 34A, DEC-063)
+ * the browser: the shared web login and the Staff Web Portal, whose
+ * screens call the API in-process (App\Services\Portal\InternalApi).
  */
 enum AuditSource: string
 {
     case Api = 'api';
     case Admin = 'admin';
+    case Web = 'web';
 }

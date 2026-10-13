@@ -18,6 +18,21 @@
 # imagick, redis, or other extension is added, since nothing in this
 # codebase uses one (02_ARCHITECTURE.md §0/§6 — no Redis/queue/image
 # processing anywhere).
+# Front-end assets (Phase 34A, DEC-063 W-5): the Staff Web Portal's CSS
+# and JS are built by Vite + Tailwind in this throwaway Node stage; only
+# the built files (public/build) reach the final image, so there is no
+# Node at runtime. The same stage appears in docker/nginx/Dockerfile.staging
+# (nginx serves the files; PHP reads public/build/manifest.json for
+# @vite), and BuildKit reuses its cache between the two builds. The build
+# fetches nothing but npm packages (no web fonts; see vite.config.js).
+FROM node:22-alpine AS assets
+WORKDIR /build
+COPY apps/api/package.json apps/api/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY apps/api/vite.config.js ./
+COPY apps/api/resources/ ./resources/
+RUN npm run build
+
 FROM php:8.4-fpm
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -54,6 +69,7 @@ RUN composer install \
 # .env*, .git, vendor/, node_modules/, tests caches, and dev-only
 # storage contents never enter the image.
 COPY apps/api/ ./
+COPY --from=assets /build/public/build ./public/build
 
 # Build the real (optimized) autoloader now that app/ exists, and run
 # the package-discovery step --no-scripts skipped above.

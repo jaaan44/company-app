@@ -4,8 +4,20 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-13 — Phase 34A: Staff Web Portal foundation (DEC-063)
+- **Approved:** decisions W-1…W-10 ("as recommended") and 34A only. The draft plan became `docs/phases/V1_PHASE_34_DEFINITION.md`. The roadmap inserts Phase 34 and renumbers the later phases (35–39).
+- **Web:**
+  - one login for every active account, landing on `/app`; the Admin Backoffice stays `admin.access`-only;
+  - Home, My profile and the Staff directory (with a colleague page) as Livewire components;
+  - every screen calls `/api/v1` in-process through `App\Services\Portal\InternalApi`, with no rule of its own;
+  - `AuditSource::Web` for the web login and portal writes;
+  - `/` redirects to `/app`, and the `welcome` view is removed.
+- **Design:** Tailwind v4 tokens (light and dark, AA contrast), no web fonts.
+- **Build:** a Node asset stage in both staging Dockerfiles. New `.github/workflows/staging-images.yml` builds and checks both images on every relevant change.
+- **Tests:** 31 new and 4 updated; 1,284/1,284. 50/50 browser checks, including axe AA with no violations. UAT-34A-01…06 `NOT RUN`.
+
 ### 2026-10-13 — Draft: Staff Web Portal specification (planning only)
-- New `docs/phases/V1_STAFF_WEB_PORTAL_PLAN.md`: a Laravel (Blade + Livewire) web portal with the mobile app's staff functions. Ten decisions (W-1…W-10) with recommendations, a feature map, an architecture sketch, sub-phases 34A–34E and a test plan. **Not authorized; no code, configuration or roadmap change.** A temporary in-process API dispatch spike test (deleted, never committed) informed W-1.
+- New `docs/phases/V1_STAFF_WEB_PORTAL_PLAN.md` (renamed `V1_PHASE_34_DEFINITION.md` on approval): a Laravel (Blade + Livewire) web portal with the mobile app's staff functions. Ten decisions (W-1…W-10) with recommendations, a feature map, an architecture sketch, sub-phases 34A–34E and a test plan. **Not authorized; no code, configuration or roadmap change.** A temporary in-process API dispatch spike test (deleted, never committed) informed W-1.
 
 ### 2026-10-13 — Phase 33 closed (UAT PASS)
 - UAT-33-01…08 **PASS**, reported by the product owner (physical device, staging `d6dd29a`, combined round). Phase 33 — Service & Incident Reports with photos (Mobile) — formally closed. UAT_LOG, ROADMAP, CURRENT_STATE and the handoff updated.

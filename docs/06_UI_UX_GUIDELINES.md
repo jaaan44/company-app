@@ -229,7 +229,23 @@ Principles:
 - **Permission-aware UI.** Navigation items, actions, and buttons for capabilities the current user lacks should not appear (not just be disabled) unless a disabled state with explanation is genuinely useful (e.g. "requires HR Administrator role" tooltip) — decided per case, but hiding is the default.
 - **Consistent forms.** Shared form conventions (validation display, required-field marking, save/cancel placement) across modules — a leave-approval form and a client-edit form should feel like the same product.
 
-The visual-design foundation below (color, typography, spacing, components) is written for the Flutter mobile app specifically, since that's what Phase 23 audited. The Admin Backoffice (Blade + Livewire, server-rendered, no client-side design-system package) remains out of this document's resolved-foundation scope — its own visual conventions are a decision for whichever phase first builds real Admin Backoffice screens beyond the existing login form.
+The visual-design foundation for Flutter is below (DEC-046). **The web equivalent, for the Staff Web Portal and later the Admin Backoffice, was decided in Phase 34A (DEC-063 W-5); see "Web Visual-Design Foundation" next.**
+
+## Web Visual-Design Foundation (resolved, DEC-063)
+
+- **Toolkit:** Tailwind CSS v4 via Vite, server-rendered Blade + Livewire (DEC-019). There is no client-side component library. Alpine (bundled with Livewire) is used only for small conveniences, such as Copy buttons.
+- **Tokens** (`apps/api/resources/css/app.css`):
+  - `surface`, `raised`, `ink`, `muted`, `line`, `hover`, `accent`, `on-accent`, `accent-ink`, `accent-soft` and `danger`, each with a light and a dark value; dark follows the browser's `prefers-color-scheme`.
+  - They are the web counterparts of the mobile color roles; the indigo accent matches the app's seed color.
+  - Every text and surface pair meets WCAG 2.2 AA. Axe scans of the 34A pages in light and dark found no violations.
+- **Type:** the system font stack. No web fonts, so no third-party request.
+- **Layout:**
+  - one centered column, at most `5xl` wide, with a 16 px gutter;
+  - cards for sections;
+  - grids collapse to one column on narrow screens;
+  - no horizontal scrolling at 320 px (200% zoom of a 640 px window).
+- **Interaction:** every target is at least 44 px tall (`min-h-11`); focus is always visible (a 3 px accent outline); there's a skip link and a labelled main navigation with `aria-current`.
+- **States, wording and order:** the same as the mobile screens they mirror (no-profile, error with "Try again", empty lists). Status chips follow the "Status presentation" rule below when the first status screens arrive (34B onward).
 
 ## Mobile Visual-Design Foundation (resolved, DEC-046)
 
@@ -334,5 +350,5 @@ No custom font family — the platform default is retained; a custom font is a f
 
 - Specific screen layouts/wireframes for any business module (Tasks, Schedule, Messages, Clients, Projects, Staff, Work Logs, Leave, Service Reports, Incident Reports, Announcements, Location/Check-in, Settings, or any other) — produced when each module's own UI phase is actually designed/built.
 - A shared/reusable Flutter widget component library (e.g. an actual `StatusChip` class) — the Components table above is a set of conventions to follow, not code that exists yet.
-- The Admin Backoffice's own visual-design system — this document's resolved foundation (color/typography/spacing/components) covers the Flutter mobile app only; a future phase should make the equivalent decision for Blade/Livewire screens when one first needs it.
+- ~~The Admin Backoffice's own visual-design system~~ — **resolved by Phase 34A (DEC-063 W-5)**; see "Web Visual-Design Foundation".
 - Detailed accessibility compliance certification (e.g. a formal WCAG audit/certification process) — the Accessibility Baseline above is a practical engineering/design target, deliberately not framed as certification.

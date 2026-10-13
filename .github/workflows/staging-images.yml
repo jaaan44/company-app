@@ -1,0 +1,61 @@
+name: Staging images
+
+# Phase 34A (DEC-063): build both staging images on every change that can
+# affect them, so a broken Dockerfile, .dockerignore or asset build fails
+# here instead of on the VPS (the Phase 33 `uploads.ini` build failure,
+# PR #83, was first seen there). Nothing is pushed or deployed.
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/api/**'
+      - 'docker/**'
+      - '.dockerignore'
+      - 'docker-compose.staging.yml'
+      - '.github/workflows/staging-images.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/api/**'
+      - 'docker/**'
+      - '.dockerignore'
+      - 'docker-compose.staging.yml'
+      - '.github/workflows/staging-images.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build staging images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Build the app (PHP-FPM) image
+        run: docker build -f docker/php/Dockerfile.staging -t company-app-api:ci .
+
+      - name: Build the nginx image
+        run: docker build -f docker/nginx/Dockerfile.staging -t company-app-nginx:ci .
+
+      - name: Check the app image
+        run: |
+          docker run --rm company-app-api:ci sh -c '
+            set -e
+            test -f public/build/manifest.json
+            php -r "exit(ini_get(\"upload_max_filesize\") === \"12M\" && ini_get(\"post_max_size\") === \"13M\" ? 0 : 1);"
+            test ! -e .env
+            test ! -d node_modules
+            echo "app image OK"'
+
+      # `nginx -t` is not run: the config's upstream `app` only resolves
+      # inside the Compose network.
+      - name: Check the nginx image
+        run: |
+          docker run --rm company-app-nginx:ci sh -c '
+            set -e
+            test -f /var/www/html/public/build/manifest.json
+            ls /var/www/html/public/build/assets/*.css
+            grep -q "client_max_body_size 12m" /etc/nginx/conf.d/default.conf
+            echo "nginx image OK"'

@@ -1,3 +1,3 @@
-<x-layouts.app title="Sign in — Company App Admin">
+<x-layouts.guest title="Sign in">
     @livewire('auth.login-form')
-</x-layouts.app>
+</x-layouts.guest>

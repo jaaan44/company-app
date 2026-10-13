@@ -68,7 +68,23 @@
 # docker/php/Dockerfile.staging), so this Dockerfile can COPY both the
 # small `public/` directory and the single vhost file both environments
 # share.
+# Front-end assets (Phase 34A, DEC-063 W-5): the Staff Web Portal's CSS
+# and JS are built by Vite + Tailwind in this throwaway Node stage; only
+# the built files (public/build) reach the final image, so there is no
+# Node at runtime. The same stage appears in docker/nginx/Dockerfile.staging
+# (nginx serves the files; PHP reads public/build/manifest.json for
+# @vite), and BuildKit reuses its cache between the two builds. The build
+# fetches nothing but npm packages (no web fonts; see vite.config.js).
+FROM node:22-alpine AS assets
+WORKDIR /build
+COPY apps/api/package.json apps/api/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY apps/api/vite.config.js ./
+COPY apps/api/resources/ ./resources/
+RUN npm run build
+
 FROM nginx:1.27-alpine
 
 COPY apps/api/public/ /var/www/html/public/
+COPY --from=assets /build/public/build /var/www/html/public/build
 COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf

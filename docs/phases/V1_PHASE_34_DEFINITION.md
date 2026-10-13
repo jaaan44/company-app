@@ -1,6 +1,6 @@
-# Staff Web Portal (Laravel) — Draft Specification
+# Phase 34 — Staff Web Portal (Laravel) — Specification
 
-**Status:** **Draft, revision 0 (2026-10-13). Not authorized.** A planning document only: no code, no configuration and no roadmap change is made by it. It needs the product owner's decisions on §4 (W-1…W-10) and an explicit authorization naming the first sub-phase before any work starts (CLAUDE.md §1, §3, §8).
+**Status:** Revision 1 (2026-10-13). **Decisions W-1…W-10 approved "as recommended" by the product owner on 2026-10-13 (DEC-063).** **34A authorized and implemented** (§11; handoff `docs/handoffs/V1_PHASE_34A_HANDOFF.md`). 34B–34E are **not authorized**: each needs its own authorization (W-10). Revision 0 was the draft reviewed in PR #89.
 
 **Requested by the product owner (2026-10-12):** "a laravel based frontend (basically similar function with the flutter frontend)". This draft reads that as: **the same staff functions as the Flutter app, in a web browser, built with Laravel**, for the same accounts and the same rules.
 
@@ -150,3 +150,37 @@ On the product owner's approval of W-1…W-10 (as recommended or amended) and au
 - update ROADMAP numbering (W-9), `02_ARCHITECTURE.md`, `05_SECURITY_MODEL.md` and `06_UI_UX_GUIDELINES.md` (the web design system);
 - turn this draft into `docs/phases/V1_PHASE_34_DEFINITION.md` with the 34A UAT scenarios;
 - implement 34A only, and stop for review.
+
+## 11. Sub-phase 34A as implemented (2026-10-13)
+
+**Built:**
+- `App\Services\Portal\InternalApi` and `PortalApiException` (W-1);
+- `AuditSource::Web`, with the request-derived default in `AuditLogger::recordForRequest` (W-6);
+- the shared login, landing on `/app`, with the "no Admin Backoffice access" refusal removed (W-3/W-4);
+- `/` redirecting to `/app`, and the unused `welcome` page deleted;
+- `/app` (Home), `/app/profile` (My profile), `/app/staff` (Staff directory) and `/app/staff/{publicId}` (a colleague), behind `auth` and `account.active`;
+- the portal and guest layouts: skip link, main navigation with `aria-current`, an "Admin" link for `admin.access`, and Log out;
+- Tailwind tokens and Vite without web fonts (W-5);
+- the Node stage in both staging Dockerfiles, and `.github/workflows/staging-images.yml`.
+
+**Mirrors mobile:**
+- **Home:** the greeting, Today with company times and "+N more today", the Needs-attention counts, and the latest announcements. As on mobile before the target screens existed (Phase 27 R-1), Home's tiles and rows don't link anywhere yet; they will link once 34B and 34D build those screens.
+- **My profile:** Work, Employment and Account sections with copy buttons, read-only.
+- **Directory:** active staff only, 25 per page, name search kept in the URL, and a colleague's page.
+- **Wording and states:** the same text and the same no-profile states as mobile.
+
+**UAT scenarios (all `NOT RUN`):**
+- **UAT-34A-01:** sign-in for staff, managers, administrators and an account without a profile; landing; the Admin link only for administrators.
+- **UAT-34A-02:** Home.
+- **UAT-34A-03:** My profile, including copy.
+- **UAT-34A-04:** Staff directory, search, pages and a colleague.
+- **UAT-34A-05:**
+  - a suspended account is signed out on its next page;
+  - a session that ends returns to the login page with the message;
+  - Log out.
+- **UAT-34A-06:**
+  - dark mode, 200% zoom and a phone browser;
+  - keyboard only, including the skip link.
+
+Run these with `docs/testing/PHASE_34A_UAT_PREPARATION.md`.
+

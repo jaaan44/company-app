@@ -307,6 +307,9 @@ git checkout <new release commit or tag>
 docker compose -p company-app -f docker-compose.staging.yml exec mysql \
   sh -c 'mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' > /home/deploy/backups/company-app-$(date +%Y%m%d-%H%M%S).sql
 
+# Since Phase 34A both images also build the web assets in a Node stage
+# (npm ci + vite build); the first build after that change takes a few
+# minutes longer. Go on only after a clean build.
 docker compose -p company-app -f docker-compose.staging.yml --env-file .env.staging build app nginx
 docker compose -p company-app -f docker-compose.staging.yml --env-file .env.staging up -d
 docker compose -p company-app -f docker-compose.staging.yml exec app php artisan migrate --force

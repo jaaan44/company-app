@@ -104,6 +104,7 @@ Status: **Principles, implemented for a growing set of endpoints as of Phase 4/5
 ## Authentication
 
 - **Implemented as of Phase 4** (DEC-022): Laravel Sanctum personal access tokens, `Authorization: Bearer <token>`. The Admin Backoffice does not call this API (see `02_ARCHITECTURE.md` §1) and is therefore not part of this token scheme.
+- **Since Phase 34A (DEC-063):** the Staff Web Portal calls this same API **in-process**, as the signed-in web session user. `auth:sanctum` reads the `web` guard, so no token is involved. The contract is unchanged and shared: a change to an endpoint's JSON affects the mobile app and the portal alike.
 - All endpoints require authentication by default; the only current exception is `POST /api/v1/auth/login` itself (and the pre-existing, deliberately public `GET /api/v1/health`).
 - Endpoints implemented so far: `POST /api/v1/auth/login` (public, rate-limited), `POST /api/v1/auth/logout` (authenticated — revokes only the current token), `GET /api/v1/auth/me` (authenticated — also enforces account status via `account.active` middleware).
 
