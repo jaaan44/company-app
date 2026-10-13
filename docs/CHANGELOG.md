@@ -4,6 +4,9 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-13 — Phase 31 closed (UAT PASS)
+- UAT-31-01…08 **PASS**, reported by the product owner (physical device, staging `d6dd29a`, combined round). Phase 31 — Leave (Mobile) — formally closed. UAT_LOG, ROADMAP, CURRENT_STATE and the handoff updated.
+
 ### 2026-10-13 — Phase 30B closed (UAT PASS); Phase 30 complete
 - UAT-30B-01…08 **PASS**, reported by the product owner (physical device, staging `d6dd29a`, combined round). Phase 30B formally closed; Phase 30 (30A + 30B) complete. UAT_LOG, ROADMAP, CURRENT_STATE and the 30B handoff updated.
 
