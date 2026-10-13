@@ -4,6 +4,13 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-13 — Phase 35A merged; UAT runbook
+- PR #115 merged as `999380e` (CI green). New `docs/testing/PHASE_35A_UAT_PREPARATION.md` covers:
+  - a read-only check script (`p35a_check.php`, rehearsed), run before and after the deploy;
+  - the deploy `b682935` → `999380e`, with the first migration since Phase 24;
+  - a rollback section;
+  - UAT-35A-01…04.
+
 ### 2026-10-13 — Phase 35A: granular permissions (DEC-065)
 - **The proposal was approved** ("approve as recommended"), and Phase 35 is now 35A–35C. **35A is implemented**; 35B and 35C are not authorized.
 - **The split:**
