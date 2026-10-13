@@ -15,10 +15,15 @@
             <div class="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
                 <a href="{{ route('portal.home') }}" class="text-lg font-semibold">Company App</a>
 
-                <nav aria-label="Main" class="order-3 w-full sm:order-none sm:w-auto">
+                <nav aria-label="Main" class="order-3 w-full">
                     <ul class="flex flex-wrap gap-1">
                         @foreach ([
                             ['portal.home', 'Home', ['portal.home']],
+                            ['portal.tasks', 'Tasks', ['portal.tasks', 'portal.task']],
+                            ['portal.schedule', 'Schedule', ['portal.schedule', 'portal.schedule-entry']],
+                            ['portal.work-logs', 'Work logs', ['portal.work-logs*']],
+                            ['portal.projects', 'Projects', ['portal.projects', 'portal.project']],
+                            ['portal.clients', 'Clients', ['portal.clients', 'portal.client']],
                             ['portal.directory', 'Staff directory', ['portal.directory', 'portal.staff']],
                             ['portal.profile', 'My profile', ['portal.profile']],
                         ] as [$name, $label, $patterns])

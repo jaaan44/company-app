@@ -73,6 +73,12 @@ CSV export inherits the identical scoping as its JSON counterpart — no export 
   - The mobile API stays `api`.
 - **Sessions and CSRF:** Laravel's `web` stack (CSRF on every form and Livewire request), with the session cookie `Secure` on staging and `HttpOnly` and `SameSite=Lax` by default.
 - **No third-party resource** is loaded by any page: no web fonts and no CDN. Assets are built into the images.
+- **Since 34B the portal also writes**, always through the same API endpoints the mobile app uses, with no rule of its own:
+  - task status (`PATCH /tasks/{id}`);
+  - work logs (`POST`, `PATCH` and `DELETE /me/work-logs…`).
+  - A write the API audits records `source: web`.
+  - Every form is a Livewire request under CSRF.
+  - The work-log form's checks repeat the API's for usability only; the API stays authoritative.
 
 ## Authentication
 

@@ -22,13 +22,29 @@ Route::middleware(['auth', 'account.active', 'can:admin.access'])->group(functio
 // its role. Each screen is a Livewire component that reads and writes
 // only through the existing /api/v1 (App\Services\Portal\InternalApi),
 // so the API's permissions and rules decide what each person may see.
+// Every portal `{publicId}` is a public ULID-style id (DEC-017): letters
+// and digits only, so nothing else ever reaches an in-process API path.
+Route::pattern('publicId', '[0-9A-Za-z]{1,64}');
+
 Route::middleware(['auth', 'account.active'])->prefix('app')->name('portal.')->group(function (): void {
     Route::view('/', 'portal.home')->name('home');
     Route::view('profile', 'portal.profile')->name('profile');
     Route::view('staff', 'portal.directory')->name('directory');
-    Route::get('staff/{publicId}', fn (string $publicId) => view('portal.staff', ['publicId' => $publicId]))
-        ->where('publicId', '[0-9A-Za-z]{1,64}')
-        ->name('staff');
+    Route::get('staff/{publicId}', fn (string $publicId) => view('portal.staff', ['publicId' => $publicId]))->name('staff');
+
+    // Phase 34B — Work.
+    $page = fn (string $title, string $component, array $params = []) => view('portal.page', ['title' => $title, 'livewire' => $component, 'params' => $params]);
+    Route::get('tasks', fn () => $page('Tasks', 'portal.tasks'))->name('tasks');
+    Route::get('tasks/{publicId}', fn (string $publicId) => $page('Task', 'portal.task-show', ['publicId' => $publicId]))->name('task');
+    Route::get('work-logs', fn () => $page('My work logs', 'portal.work-logs'))->name('work-logs');
+    Route::get('work-logs/new', fn () => $page('Log work', 'portal.work-log-form', ['task' => request()->query('task')]))->name('work-logs.new');
+    Route::get('work-logs/{publicId}/edit', fn (string $publicId) => $page('Edit work log', 'portal.work-log-form', ['publicId' => $publicId]))->name('work-logs.edit');
+    Route::get('projects', fn () => $page('Projects', 'portal.projects'))->name('projects');
+    Route::get('projects/{publicId}', fn (string $publicId) => $page('Project', 'portal.project-show', ['publicId' => $publicId]))->name('project');
+    Route::get('clients', fn () => $page('Clients', 'portal.clients'))->name('clients');
+    Route::get('clients/{publicId}', fn (string $publicId) => $page('Client', 'portal.client-show', ['publicId' => $publicId]))->name('client');
+    Route::get('schedule', fn () => $page('Schedule', 'portal.schedule'))->name('schedule');
+    Route::get('schedule/entries/{publicId}', fn (string $publicId) => $page('Schedule', 'portal.schedule-entry-show', ['publicId' => $publicId]))->name('schedule-entry');
 });
 
 // Deliberately outside the account.active gate: revoking one's own session

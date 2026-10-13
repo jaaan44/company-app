@@ -53,4 +53,57 @@ class FormatTest extends TestCase
         $this->assertSame('Amelia Ramos', Format::distinctFullName(['first_name' => 'Amelia', 'last_name' => 'Ramos', 'display_name' => 'Lia Ramos']));
         $this->assertNull(Format::distinctFullName(['first_name' => 'Kai', 'last_name' => 'Tan', 'display_name' => 'Kai Tan']));
     }
+
+    public function test_task_due_labels_like_mobile(): void
+    {
+        $today = '2026-10-13';
+        $this->assertNull(Format::taskDueLabel(['due_date' => null, 'status' => 'todo'], $today));
+        $this->assertSame('Due today', Format::taskDueLabel(['due_date' => '2026-10-13', 'status' => 'todo'], $today));
+        $this->assertSame('Overdue · 1 Oct', Format::taskDueLabel(['due_date' => '2026-10-01', 'status' => 'blocked'], $today));
+        $this->assertSame('Due 2 Nov', Format::taskDueLabel(['due_date' => '2026-11-02', 'status' => 'todo'], $today));
+        $this->assertSame('Due 3 Jan 2027', Format::taskDueLabel(['due_date' => '2027-01-03', 'status' => 'todo'], $today));
+        $this->assertSame('Due 1 Oct', Format::taskDueLabel(['due_date' => '2026-10-01', 'status' => 'completed'], $today), 'a closed task is never overdue');
+        $this->assertSame('overdue', Format::taskDueState(['due_date' => '2026-12-01', 'status' => 'todo', 'is_overdue' => true, 'is_due_today' => false], $today), 'the list\'s own flags win');
+    }
+
+    public function test_durations_and_day_labels(): void
+    {
+        $this->assertSame('45 min', Format::duration(45));
+        $this->assertSame('2 h', Format::duration(120));
+        $this->assertSame('1 h 30 min', Format::duration(90));
+        $this->assertSame('Today', Format::dayLabel('2026-10-13', '2026-10-13'));
+        $this->assertSame('Yesterday', Format::dayLabel('2026-10-12', '2026-10-13'));
+        $this->assertSame('Wed 14 Oct', Format::dayLabel('2026-10-14', '2026-10-13'));
+        $this->assertSame('Tomorrow', Format::dayLabel('2026-10-14', '2026-10-13', withTomorrow: true));
+        $this->assertSame('Tue 7 Oct 2025', Format::dayLabel('2025-10-07', '2026-10-13'));
+        $this->assertSame('13 – 19 Oct', Format::weekRange('2026-10-13', '2026-10-19'));
+        $this->assertSame('28 Oct – 3 Nov', Format::weekRange('2026-10-28', '2026-11-03'));
+    }
+
+    public function test_schedule_items_on_company_days(): void
+    {
+        $meeting = ['is_all_day' => false, 'starts_at' => '2026-10-13T15:00:00+00:00', 'ends_at' => '2026-10-14T01:00:00+00:00'];
+        // 23:00 Tue – 09:00 Wed Manila: on both days, each with its own label.
+        $this->assertTrue(Format::overlapsDay($meeting, '2026-10-13', '+08:00'));
+        $this->assertTrue(Format::overlapsDay($meeting, '2026-10-14', '+08:00'));
+        $this->assertFalse(Format::overlapsDay($meeting, '2026-10-15', '+08:00'));
+        $this->assertSame('23:00 – until Wed 14 Oct', Format::itemTimeOn($meeting, '2026-10-13', '+08:00'));
+        $this->assertSame('From Tue 13 Oct – 09:00', Format::itemTimeOn($meeting, '2026-10-14', '+08:00'));
+        // Ending exactly at midnight belongs to the day before only.
+        $toMidnight = ['is_all_day' => false, 'starts_at' => '2026-10-13T14:00:00+00:00', 'ends_at' => '2026-10-13T16:00:00+00:00'];
+        $this->assertFalse(Format::overlapsDay($toMidnight, '2026-10-14', '+08:00'));
+        $this->assertSame('Wed 14 Oct · 09:00 – 10:30', Format::entryWhen(['is_all_day' => false, 'starts_at' => '2026-10-14T01:00:00+00:00', 'ends_at' => '2026-10-14T02:30:00+00:00'], '+08:00'));
+        $this->assertSame('Task · Blocked', Format::scheduleLabel(['source_type' => 'task', 'task_status' => 'blocked']));
+        $this->assertSame('Leave', Format::scheduleLabel(['source_type' => 'leave']));
+    }
+
+    public function test_addresses_and_tones(): void
+    {
+        $this->assertSame(['1 Dock Rd', 'Pasig, NCR 1600', 'PH'], Format::addressLines(['address_line1' => '1 Dock Rd', 'address_line2' => ' ', 'city' => 'Pasig', 'state_province' => 'NCR', 'postal_code' => '1600', 'country' => 'PH']));
+        $this->assertSame([], Format::addressLines([]));
+        $this->assertSame('danger', Format::tone('blocked'));
+        $this->assertSame('success', Format::tone('completed'));
+        $this->assertSame('muted', Format::tone('cancelled'));
+        $this->assertSame('neutral', Format::tone('todo'));
+    }
 }

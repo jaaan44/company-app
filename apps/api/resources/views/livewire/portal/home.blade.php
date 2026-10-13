@@ -42,9 +42,13 @@
                 @else
                     <ul class="divide-y divide-line">
                         @foreach ($today['items'] as $item)
-                            <li wire:key="today-{{ $item['public_id'] }}" class="py-3">
-                                <p class="font-medium">{{ $item['title'] }}</p>
-                                <p class="text-sm text-muted">{{ Format::todayLabel($item) }} · {{ Format::todayTime($item, $day) }}</p>
+                            <li wire:key="today-{{ $item['public_id'] }}">
+                                {{-- As on mobile (Phase 29A R-6 / 30A R-10): a task opens the task, a meeting its entry. --}}
+                                <a href="{{ ($item['source_type'] ?? null) === 'task' ? route('portal.task', $item['public_id']) : route('portal.schedule-entry', $item['public_id']) }}"
+                                   class="block min-h-11 py-3 hover:bg-hover">
+                                    <span class="block font-medium">{{ $item['title'] }}</span>
+                                    <span class="block text-sm text-muted">{{ Format::todayLabel($item) }} · {{ Format::todayTime($item, $day) }}</span>
+                                </a>
                             </li>
                         @endforeach
                     </ul>
@@ -60,12 +64,12 @@
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 @if ($home['tasks'] !== null)
                     @php($tasks = $home['tasks'])
-                    <div class="rounded-xl border border-line bg-raised p-5" aria-label="My tasks: {{ $tasks['open_count'] }} open, {{ $tasks['overdue_count'] }} overdue, {{ $tasks['due_today_count'] }} due today">
-                        <p class="text-sm text-muted">My tasks</p>
-                        <p class="text-3xl font-semibold">{{ $tasks['open_count'] }} <span class="text-base font-normal text-muted">open</span></p>
-                        <p class="mt-1 text-sm {{ $tasks['overdue_count'] > 0 ? 'font-semibold text-danger' : 'text-muted' }}">{{ $tasks['overdue_count'] }} overdue</p>
-                        <p class="text-sm text-muted">{{ $tasks['due_today_count'] }} due today</p>
-                    </div>
+                    <a href="{{ route('portal.tasks') }}" class="block rounded-xl border border-line bg-raised p-5 hover:bg-hover" aria-label="My tasks: {{ $tasks['open_count'] }} open, {{ $tasks['overdue_count'] }} overdue, {{ $tasks['due_today_count'] }} due today">
+                        <span class="block text-sm text-muted">My tasks</span>
+                        <span class="block text-3xl font-semibold">{{ $tasks['open_count'] }} <span class="text-base font-normal text-muted">open</span></span>
+                        <span class="mt-1 block text-sm {{ $tasks['overdue_count'] > 0 ? 'font-semibold text-danger' : 'text-muted' }}">{{ $tasks['overdue_count'] }} overdue</span>
+                        <span class="block text-sm text-muted">{{ $tasks['due_today_count'] }} due today</span>
+                    </a>
                 @endif
                 @if ($home['messages'] !== null)
                     @php($unread = $home['messages']['unread_count'])

@@ -245,7 +245,15 @@ The visual-design foundation for Flutter is below (DEC-046). **The web equivalen
   - grids collapse to one column on narrow screens;
   - no horizontal scrolling at 320 px (200% zoom of a 640 px window).
 - **Interaction:** every target is at least 44 px tall (`min-h-11`); focus is always visible (a 3 px accent outline); there's a skip link and a labelled main navigation with `aria-current`.
-- **States, wording and order:** the same as the mobile screens they mirror (no-profile, error with "Try again", empty lists). Status chips follow the "Status presentation" rule below when the first status screens arrive (34B onward).
+- **States, wording and order:** the same as the mobile screens they mirror (no-profile, error with "Try again", empty lists).
+- **Status chips (34B):** `x-portal.chip`. The text label is always present, and the tone comes from one mapping in `App\Support\Portal\Format::tone()`:
+  - neutral (To do);
+  - info (In progress, Active, Planned, Pending, Submitted);
+  - danger (Blocked, Rejected);
+  - success (Completed, Approved, Reviewed, Resolved);
+  - muted (Cancelled, Inactive, On hold).
+
+  A status concept looks the same on every web page ("Status presentation" below).
 
 ## Mobile Visual-Design Foundation (resolved, DEC-046)
 
