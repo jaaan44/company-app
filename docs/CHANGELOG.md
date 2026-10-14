@@ -4,6 +4,21 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-14 — Phase 35D: add, edit and delete in the staff portal (DEC-065)
+- **What staff can now do in the web portal,** if their role allows it:
+  - add, edit and delete **tasks** (a project lead can do this in their own projects);
+  - add, edit and delete **projects**, with members and milestones;
+  - add, edit and delete **clients**, with contacts;
+  - write, publish, archive and delete **announcements**.
+- **Lists:** Mine/All tabs on Tasks and Projects.
+- **Unchanged:** nothing new appears without a permission, and there's no API change.
+- **Tests:**
+  - 12 new automated tests, 1,419 → 1,431/1,431;
+  - 57/57 browser checks, with axe AA showing no violations;
+  - 12/12 mutations caught;
+  - two bugs found by the tests and fixed (a route parameter clash; the project sent on edit).
+- **UAT:** UAT-35D-01…08 `NOT RUN`.
+
 ### 2026-10-14 — UAT-35BC finding: Roles screen note; 35D proposed
 - **The finding:** during UAT, Staff given add, edit and delete on tasks still couldn't create tasks. The API allows it, but no portal or app screen exists yet (DEC-065 P-6).
 - **The fix:** the Roles & permissions screen now says so, which the proposal promised but 35C missed.

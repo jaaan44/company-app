@@ -53,14 +53,23 @@ Route::middleware(['auth', 'account.active'])->prefix('app')->name('portal.')->g
     // Phase 34B — Work.
     $page = fn (string $title, string $component, array $params = []) => view('portal.page', ['title' => $title, 'livewire' => $component, 'params' => $params]);
     Route::get('tasks', fn () => $page('Tasks', 'portal.tasks'))->name('tasks');
+    Route::get('tasks/new', fn () => $page('New task', 'portal.task-form', ['forProject' => request()->query('project')]))->name('tasks.new'); // Phase 35D
     Route::get('tasks/{publicId}', fn (string $publicId) => $page('Task', 'portal.task-show', ['publicId' => $publicId]))->name('task');
+    Route::get('tasks/{publicId}/edit', fn (string $publicId) => $page('Edit task', 'portal.task-form', ['publicId' => $publicId]))->name('tasks.edit');
     Route::get('work-logs', fn () => $page('My work logs', 'portal.work-logs'))->name('work-logs');
     Route::get('work-logs/new', fn () => $page('Log work', 'portal.work-log-form', ['task' => request()->query('task')]))->name('work-logs.new');
     Route::get('work-logs/{publicId}/edit', fn (string $publicId) => $page('Edit work log', 'portal.work-log-form', ['publicId' => $publicId]))->name('work-logs.edit');
     Route::get('projects', fn () => $page('Projects', 'portal.projects'))->name('projects');
+    Route::get('projects/new', fn () => $page('New project', 'portal.project-form'))->name('projects.new'); // Phase 35D
     Route::get('projects/{publicId}', fn (string $publicId) => $page('Project', 'portal.project-show', ['publicId' => $publicId]))->name('project');
+    Route::get('projects/{publicId}/edit', fn (string $publicId) => $page('Edit project', 'portal.project-form', ['publicId' => $publicId]))->name('projects.edit');
     Route::get('clients', fn () => $page('Clients', 'portal.clients'))->name('clients');
+    Route::get('clients/new', fn () => $page('New client', 'portal.client-form'))->name('clients.new'); // Phase 35D
     Route::get('clients/{publicId}', fn (string $publicId) => $page('Client', 'portal.client-show', ['publicId' => $publicId]))->name('client');
+    Route::get('clients/{publicId}/edit', fn (string $publicId) => $page('Edit client', 'portal.client-form', ['publicId' => $publicId]))->name('clients.edit');
+    Route::get('clients/{publicId}/contacts/new', fn (string $publicId) => $page('New contact', 'portal.contact-form', ['clientId' => $publicId]))->name('contacts.new');
+    Route::get('clients/{publicId}/contacts/{contactId}/edit', fn (string $publicId, string $contactId) => $page('Edit contact', 'portal.contact-form', ['clientId' => $publicId, 'publicId' => $contactId]))
+        ->where('contactId', '[0-9A-Za-z]{1,64}')->name('contacts.edit');
     Route::get('schedule', fn () => $page('Schedule', 'portal.schedule'))->name('schedule');
     Route::get('schedule/entries/{publicId}', fn (string $publicId) => $page('Schedule', 'portal.schedule-entry-show', ['publicId' => $publicId]))->name('schedule-entry');
 
@@ -80,6 +89,11 @@ Route::middleware(['auth', 'account.active'])->prefix('app')->name('portal.')->g
     Route::get('messages/{publicId}', fn (string $publicId) => $page('Conversation', 'portal.chat', ['publicId' => $publicId]))->name('chat');
     Route::get('notifications', fn () => $page('Notifications', 'portal.notifications'))->name('notifications');
     Route::get('announcements', fn () => $page('Announcements', 'portal.announcements'))->name('announcements');
+    // Phase 35D: Announcements → Manage (registered before announcements/{publicId}).
+    Route::get('announcements/manage', fn () => $page('Manage announcements', 'portal.announcements-manage'))->name('announcements.manage');
+    Route::get('announcements/manage/new', fn () => $page('New announcement', 'portal.announcement-form'))->name('announcements.manage.new');
+    Route::get('announcements/manage/{publicId}', fn (string $publicId) => $page('Announcement', 'portal.announcement-manage', ['publicId' => $publicId]))->name('announcements.manage.show');
+    Route::get('announcements/manage/{publicId}/edit', fn (string $publicId) => $page('Edit draft', 'portal.announcement-form', ['publicId' => $publicId]))->name('announcements.manage.edit');
     Route::get('announcements/{publicId}', fn (string $publicId) => $page('Announcement', 'portal.announcement-show', ['publicId' => $publicId]))->name('announcement');
 
     // Phase 34E — Reports.

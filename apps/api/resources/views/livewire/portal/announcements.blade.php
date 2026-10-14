@@ -1,6 +1,9 @@
 @php use App\Support\Portal\Format; @endphp
 <div>
     <h1 class="sr-only">Announcements</h1>
+    @if ($mayManage)
+        <p class="mb-4"><a href="{{ route('portal.announcements.manage') }}" class="inline-flex min-h-11 items-center rounded-full border border-line bg-raised px-4 font-medium hover:bg-hover">Manage announcements</a></p>
+    @endif
 
     @if ($noProfile)
         <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>

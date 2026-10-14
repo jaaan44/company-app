@@ -968,3 +968,10 @@ Internet → Cloudflare (proxied, SSL/TLS "Full (strict)")
   - A write must come with its view.
   - Administrator, locked permissions, your own role and the last Administrator are refused.
   - New audit actions: `role.permissions_updated` and `user.role_changed`.
+
+**DEC-065 addendum (2026-10-14), 35D:**
+- **The finding:** in UAT-35BC, Staff given add, edit and delete still couldn't act; the screens didn't exist (P-6).
+- **The decision:**
+  - option A, chosen by the product owner: **web portal only**;
+  - D-1…D-8 approved as recommended: tasks, projects (members and milestones), clients (contacts) and announcements, shown to holders and, where the API allows, project leads, with Mine/All lists and a separate UAT.
+- **No API change.** Staff records stay with Phase 36.

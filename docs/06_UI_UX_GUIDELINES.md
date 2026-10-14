@@ -266,6 +266,13 @@ The visual-design foundation for Flutter is below (DEC-046). **The web equivalen
   A status concept looks the same on every web page ("Status presentation" below).
 - **Chat (34D):** my messages sit on the right in the accent-soft colour; others' on the left with a border. Each shows its time, and the sender's name in group and project chats (screen readers always hear "You" or the sender). Day separators are centred headings. Unread counts are text in a badge with " unread" for screen readers; an unread notification is bold, with a dot and "Unread" for screen readers.
 - **Files (34E):** a photo shows as a thumbnail with its name and size, and **Open photo** opens it in a new tab; a PDF shows its name and size with **Download**. The file input says what is allowed ("JPEG, PNG or PDF, up to 10 MB"), and Livewire's "Preparing the file…" and "Uploading…" are announced while they run. Destructive report actions (Submit, Delete draft, Return to draft, Remove) are confirmed with the mobile app's wording; since 34F in an in-app dialog, not the browser's.
+- **Add, edit and delete (35D):**
+  - **New:** a list's "+" FAB (pill on wider screens).
+  - **Edit and Delete:** on the item's page.
+  - **Forms:** full pages with labelled fields, messages under each field and the API's own message above. Saving redirects with a toast.
+  - **Deletes and removals:** confirmed in the in-app dialog, with the reason a delete may be refused.
+  - **Mine/All:** a segmented control, only for those who may see everything.
+  - **Nothing new** appears for someone without the permission.
 - **Feedback (34F):**
   - a confirmation message shows as a **toast** above the tab bar (`role="status"`, hides after 4.5 s);
   - a confirmation that needs no typing is an **in-app dialog** (`x-portal.confirm`, a modal `<dialog>`). It is a sheet from the bottom on phones and centred on wider screens. The question is its heading, the body follows, **Cancel** has focus, Escape closes it, and destructive confirms use the danger colour.

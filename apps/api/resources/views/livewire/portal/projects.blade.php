@@ -2,6 +2,18 @@
 <div>
     <h1 class="sr-only">Projects</h1>
 
+    @if ($mayAdd)
+        <x-portal.fab :href="route('portal.projects.new')" label="New project" />
+    @endif
+    @if ($mayViewAll)
+        <div role="group" aria-label="Whose projects" class="mb-4 inline-flex rounded-md border border-line bg-raised p-1">
+            @foreach (['mine' => 'Mine', 'all' => 'All'] as $value => $label)
+                <button type="button" wire:click="showScope('{{ $value }}')" aria-pressed="{{ $currentScope === $value ? 'true' : 'false' }}"
+                        class="inline-flex min-h-11 items-center rounded px-4 {{ $currentScope === $value ? 'bg-accent-soft font-semibold text-accent-ink' : 'hover:bg-hover' }}">{{ $label }}</button>
+            @endforeach
+        </div>
+    @endif
+
     @if ($noProfile)
         <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
     @else
@@ -10,7 +22,7 @@
         @if ($errorMessage)
             <x-portal.error :message="$errorMessage" />
         @elseif (count($projects) === 0)
-            <p class="rounded-lg border border-line bg-raised p-4">{{ $query === '' ? "You aren't a member of any projects yet." : 'No project matches "'.$query.'".' }}</p>
+            <p class="rounded-lg border border-line bg-raised p-4">{{ $query === '' ? ($currentScope === 'all' ? 'No projects yet.' : "You aren't a member of any projects yet.") : 'No project matches "'.$query.'".' }}</p>
         @else
             <ul class="divide-y divide-line rounded-xl border border-line bg-raised">
                 @foreach ($projects as $project)
