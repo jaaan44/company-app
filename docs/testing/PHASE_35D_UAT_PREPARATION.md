@@ -126,7 +126,7 @@ CSS=$(curl -s $B/login | grep -o '/build/assets/app-[A-Za-z0-9_-]*\.css' | head 
 
 **UAT-35D-03: A project lead without the task permissions**
 1. Admin: **Reset to defaults**, then **Save**.
-2. As your Administrator in the **portal** (`/app`), open **More → Projects → UAT34E Dock repairs**. On Lia's row in **Members**, click **Make lead**.
+2. As your Administrator in the **portal** (`/app`), open **More → Projects**, then **All**, then **UAT34E Dock repairs**. On Lia's row in **Members**, click **Make lead**.
 3. Lia:
    - **Tasks** shows the "+";
    - **New task** offers only **UAT34E Dock repairs** (and no "No project");
