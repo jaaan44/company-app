@@ -4,6 +4,11 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-14 — UAT-35BC finding: Roles screen note; 35D proposed
+- **The finding:** during UAT, Staff given add, edit and delete on tasks still couldn't create tasks. The API allows it, but no portal or app screen exists yet (DEC-065 P-6).
+- **The fix:** the Roles & permissions screen now says so, which the proposal promised but 35C missed.
+- **Proposed:** **35D**, add, edit and delete screens in the staff web portal (option A, chosen by the product owner), with decisions D-1…D-8.
+
 ### 2026-10-13 — Phases 35B + 35C merged; UAT runbook
 - PR #119 merged as `680444e` (CI green). New `docs/testing/PHASE_35BC_UAT_PREPARATION.md` covers:
   - the deploy `999380e` → `680444e`, with no migration and no data script;
