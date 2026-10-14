@@ -4,6 +4,11 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-14 — Phase 35D merged; UAT runbook
+- PR #122 merged as `2ca6092` (CI green). New `docs/testing/PHASE_35D_UAT_PREPARATION.md` covers:
+  - the deploy `680444e` → `2ca6092`, with no migration;
+  - UAT-35D-01…08.
+
 ### 2026-10-14 — Phase 35D: add, edit and delete in the staff portal (DEC-065)
 - **What staff can now do in the web portal,** if their role allows it:
   - add, edit and delete **tasks** (a project lead can do this in their own projects);
