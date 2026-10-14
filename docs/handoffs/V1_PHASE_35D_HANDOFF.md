@@ -1,6 +1,6 @@
 # Phase 35D — Add, Edit and Delete in the Staff Portal — Handoff
 
-**Status: implemented and tested (2026-10-14); awaiting merge, staging deployment and UAT.** UAT-35D-01…08 are `NOT RUN`. The deploy also ships the Roles screen note (PR #121).
+**Status: merged (PR #122, `2ca6092`, 2026-10-14); awaiting staging deployment and UAT.** UAT-35D-01…08 are `NOT RUN`. The deploy also ships the Roles screen note (PR #121).
 
 ## 1. Phase Identification
 
@@ -140,3 +140,11 @@ See §5.
 1. Merge on green CI.
 2. Deploy and run UAT-35D, and finish UAT-35BC.
 3. Close Phase 35.
+
+## Addendum — Merge and UAT runbook (2026-10-14)
+
+- **PR #122 merged as `2ca6092`.** CI was green.
+- **Runbook `docs/testing/PHASE_35D_UAT_PREPARATION.md`:**
+  - the deploy `680444e` → `2ca6092`, with no migration;
+  - UAT-35D-01…08: Administrator grants on Roles & permissions, Lia using them in the portal, the project-lead case, and Reset to defaults at the end.
+- **Not run:** the deployment and UAT.

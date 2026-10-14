@@ -1518,7 +1518,8 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | Pint / PHPStan / build | Automated | PASS | Clean. |
 | Mutation checks | Manual (AI) | PASS | 12 run. 11 caught at first; one survivor (members management for View-only holders) led to a new assertion, and is now caught. |
 | Browser checks (Playwright + Chromium, axe-core 4.10.2) | Manual (AI), local server, scratch SQLite | PASS | 57/57, at 390 px (light) and 1280 px (dark), plus a Manager with the defaults. Every flow in the handoff §11; a refused project delete shows the API's reason; no JS errors or browser dialogs; **axe AA 0 violations** on 18 scans. |
-| MySQL / staging / UAT | — | NOT RUN | UAT-35D-01…08 `NOT RUN`. |
+| Staging image build | CI | PASS | Green on PR #122, merged as `2ca6092`. |
+| MySQL / staging / UAT | — | NOT RUN | UAT-35D-01…08 `NOT RUN`; runbook `PHASE_35D_UAT_PREPARATION.md`. |
 
 ## Phases 35B + 35C — Admin Backoffice and Roles & permissions (2026-10-13, DEC-065)
 
