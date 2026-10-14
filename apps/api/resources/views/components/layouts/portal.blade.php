@@ -3,7 +3,7 @@
     // Phase 34F (F-1): the mobile app's five tabs; every other portal page belongs to More.
     $tabs = [
         ['portal.home', 'Home', 'home', ['portal.home']],
-        ['portal.tasks', 'Tasks', 'tasks', ['portal.tasks', 'portal.task']],
+        ['portal.tasks', 'Tasks', 'tasks', ['portal.tasks', 'portal.tasks.*', 'portal.task']],
         ['portal.schedule', 'Schedule', 'schedule', ['portal.schedule', 'portal.schedule-entry']],
         ['portal.messages', 'Messages', 'messages', ['portal.messages', 'portal.messages.*', 'portal.chat']],
     ];

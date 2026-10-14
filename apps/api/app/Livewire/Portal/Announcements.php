@@ -3,6 +3,7 @@
 namespace App\Livewire\Portal;
 
 use App\Livewire\Portal\Concerns\CallsInternalApi;
+use App\Livewire\Portal\Concerns\WritesThroughApi;
 use App\Services\Portal\PortalApiException;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Url;
@@ -16,6 +17,7 @@ use Livewire\Component;
 class Announcements extends Component
 {
     use CallsInternalApi;
+    use WritesThroughApi;
 
     public const PAGE_SIZE = 20;
 
@@ -43,6 +45,7 @@ class Announcements extends Component
             'announcements' => $result['data'] ?? [],
             'meta' => $result['meta'] ?? null,
             'companyDay' => $result['meta']['company_day'] ?? null,
+            'mayManage' => $this->may('announcements.view-all'),
         ]);
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Livewire\Portal;
 
 use App\Livewire\Portal\Concerns\CallsInternalApi;
+use App\Livewire\Portal\Concerns\WritesThroughApi;
 use App\Services\Portal\PortalApiException;
 use App\Support\Portal\Format;
 use Illuminate\Contracts\View\View;
@@ -20,6 +21,7 @@ use Livewire\Component;
 class TaskShow extends Component
 {
     use CallsInternalApi;
+    use WritesThroughApi;
 
     /** The statuses the portal offers (mobile R-4): never Cancelled. */
     public const SELECTABLE = ['todo', 'in_progress', 'blocked', 'completed'];
@@ -68,6 +70,19 @@ class TaskShow extends Component
         }
     }
 
+    /** Phase 35D (D-5): Delete, after the in-app confirmation; the API's own rules decide. */
+    public function delete(): void
+    {
+        $this->generalError = null;
+        try {
+            $this->api()->send('DELETE', $this->path());
+            session()->flash('status', 'Task deleted.');
+            $this->redirect(route('portal.tasks'), navigate: true);
+        } catch (PortalApiException $e) {
+            $this->applyWriteFailure($e, [], "Couldn't delete the task. Please try again.");
+        }
+    }
+
     public function render(): View
     {
         $this->errorMessage = null;
@@ -92,7 +107,25 @@ class TaskShow extends Component
             }
         }
 
-        return view('livewire.portal.task-show', ['task' => $task, 'companyDay' => $companyDay]);
+        // D-3: Edit for holders of tasks.update and the task's project lead; Delete for tasks.delete.
+        $mayEdit = false;
+        if ($task !== null) {
+            $mayEdit = $this->may('tasks.update');
+            if (! $mayEdit && ($task['project']['public_id'] ?? null) !== null) {
+                try {
+                    $mayEdit = ($this->api()->get('/projects/'.rawurlencode($task['project']['public_id']))['data']['my_role'] ?? null) === 'project_lead';
+                } catch (PortalApiException) {
+                    $mayEdit = false;
+                }
+            }
+        }
+
+        return view('livewire.portal.task-show', [
+            'task' => $task,
+            'companyDay' => $companyDay,
+            'mayEdit' => $mayEdit,
+            'mayDelete' => $task !== null && $this->may('tasks.delete'),
+        ]);
     }
 
     private function path(): string

@@ -22,6 +22,20 @@
             };
         @endphp
         <h1 class="text-2xl font-semibold">{{ $task['title'] }}</h1>
+        @if ($mayEdit || $mayDelete)
+            <div class="mt-3 flex flex-wrap gap-2">
+                @if ($mayEdit)
+                    <a href="{{ route('portal.tasks.edit', $task['public_id']) }}" class="inline-flex min-h-11 items-center rounded-full border border-line px-4 font-medium hover:bg-hover">Edit task</a>
+                @endif
+                @if ($mayDelete)
+                    <x-portal.confirm title="Delete this task?" body="Only a task that is still To do, with no work logged, can be deleted. Otherwise cancel it instead." confirm="Delete" action="delete()" :danger="true"
+                                      class="inline-flex min-h-11 items-center rounded-full border border-line px-4 font-medium text-danger hover:bg-hover">Delete task</x-portal.confirm>
+                @endif
+            </div>
+            @if ($generalError)
+                <p role="alert" class="mt-3 font-medium text-danger">{{ $generalError }}</p>
+            @endif
+        @endif
         <p class="mt-2 flex flex-wrap items-center gap-3">
             <x-portal.chip :tone="Format::tone($task['status'])">{{ Format::taskStatus($task['status']) }}</x-portal.chip>
             <span>Priority: {{ Format::priority($task['priority']) }}</span>

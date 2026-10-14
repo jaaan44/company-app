@@ -1,5 +1,8 @@
 <div>
     <h1 class="sr-only">Clients</h1>
+    @if ($mayAdd)
+        <x-portal.fab :href="route('portal.clients.new')" label="New client" />
+    @endif
     <x-portal.search id="client-search" label="Find a client" placeholder="Search by name or code" />
 
     @if ($errorMessage)

@@ -736,3 +736,14 @@ No migration, route or permission change.
 - **Sections:** `App\Support\Admin\Sections` (title, icon, the permissions that show it, and its items, either live or "Coming in Phase 36").
 - **Permissions API:** `App\Http\Controllers\Api\V1\Authorization\{RoleController,UserRoleController}` and `App\Support\Authorization\PermissionCatalog` (the module grouping, locked permissions, editable roles, defaults and the view rule).
 - **Not changed:** the permission mechanism (DEC-028). Administrator keeps `Gate::before`, one role per user, and no schema change.
+
+## 46. Add, edit and delete in the staff portal (Phase 35D — implemented; DEC-065)
+
+- **New Livewire components** in `App\Livewire\Portal`: `TaskForm`, `ProjectForm`, `ClientForm`, `ContactForm`, `AnnouncementsManage`, `AnnouncementManage` and `AnnouncementForm`.
+- **Changed:** `Tasks`, `TaskShow`, `Projects`, `ProjectShow`, `Clients`, `ClientShow` and `Announcements`.
+- **`Concerns\WritesThroughApi`:**
+  - `may($permission)` (`Auth::user()->can()`) decides only what is **shown**;
+  - every write goes through `/api/v1` via `InternalApi`, so the API's permissions, lead rules and data rules decide;
+  - `applyWriteFailure()` maps 422 fields and shows 403, 404 and 409 messages.
+- **Leads** are recognised from the project's `my_role` (`GET /projects`, `GET /projects/{id}`).
+- **Routes:** under `/app`, with every `{id}` limited to letters and digits. The `announcements/manage…` routes come before `announcements/{publicId}`.

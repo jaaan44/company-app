@@ -1510,6 +1510,16 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | Embedded script integrity | Manual (AI) | PASS | The extracted `php` block matches the rehearsed file byte for byte; SHA-256 `7b894d2a…` in §6. |
 | Deployment / data / UAT | — | NOT RUN | Operator and product owner. |
 
+## Phase 35D — Add, edit and delete in the staff portal (2026-10-14, DEC-065)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| Backend tests | Automated | PASS | 12 new in `ManagePagesTest`: defaults show nothing new; tasks (including a lead, an API refusal and the "assignee must be a member" rule); projects with members and milestones; clients and contacts; announcements; refusals. 1,419 → 1,431/1,431. |
+| Pint / PHPStan / build | Automated | PASS | Clean. |
+| Mutation checks | Manual (AI) | PASS | 12 run. 11 caught at first; one survivor (members management for View-only holders) led to a new assertion, and is now caught. |
+| Browser checks (Playwright + Chromium, axe-core 4.10.2) | Manual (AI), local server, scratch SQLite | PASS | 57/57, at 390 px (light) and 1280 px (dark), plus a Manager with the defaults. Every flow in the handoff §11; a refused project delete shows the API's reason; no JS errors or browser dialogs; **axe AA 0 violations** on 18 scans. |
+| MySQL / staging / UAT | — | NOT RUN | UAT-35D-01…08 `NOT RUN`. |
+
 ## Phases 35B + 35C — Admin Backoffice and Roles & permissions (2026-10-13, DEC-065)
 
 | Check | Type | Status | Notes |

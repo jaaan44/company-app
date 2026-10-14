@@ -3,6 +3,7 @@
 namespace App\Livewire\Portal;
 
 use App\Livewire\Portal\Concerns\CallsInternalApi;
+use App\Livewire\Portal\Concerns\WritesThroughApi;
 use App\Services\Portal\PortalApiException;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Url;
@@ -16,6 +17,7 @@ use Livewire\Component;
 class Clients extends Component
 {
     use CallsInternalApi;
+    use WritesThroughApi;
 
     public const PAGE_SIZE = 25;
 
@@ -57,6 +59,7 @@ class Clients extends Component
             'clients' => $result['data'] ?? [],
             'meta' => $result['meta'] ?? null,
             'query' => $query,
+            'mayAdd' => $this->may('clients.create'),
         ]);
     }
 }
