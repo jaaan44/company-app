@@ -154,6 +154,7 @@ class AdminBackofficePagesTest extends TestCase
 
         Livewire::test(Roles::class)
             ->assertSet('grants.staff', ['organization.view', 'staff.view', 'staff-status.view', 'clients.view', 'leave-types.view'])
+            ->assertSee("Add, edit and delete need screens that aren't built yet", false)
             ->assertSeeInOrder(['Always Administrators only', 'Access the Admin Backoffice', "Manage users' roles and permissions"])
             ->assertSeeInOrder(['Tasks', 'A project lead can always add and edit', 'View all tasks', 'Add tasks in any project'])
             ->assertDontSee('value="admin.access"', false)

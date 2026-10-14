@@ -200,3 +200,10 @@ See §5.
   - smoke tests for `/admin`, the `/home` redirect and the new API;
   - UAT-35BC-01…08, including a real permission change (Staff's "View clients and contacts", undone by Reset to defaults) and a role change that is set back.
 - **Not run:** the deployment and UAT.
+
+## Addendum — UAT finding and the Roles screen note (2026-10-14)
+
+- **What the product owner found:** during UAT they gave Staff add, edit, delete and view on tasks, but Staff couldn't create tasks.
+- **Why:** the permissions work in the API, but the portal and app have no add, edit or delete screens (P-6). The proposal (§8) said the Roles screen would state this, and it didn't.
+- **Fix:** a note on Roles & permissions, "Add, edit and delete need screens that aren't built yet", pinned by a test. It ships with the next deploy.
+- **Next:** the screens themselves are proposed as **35D** (`docs/phases/V1_PHASE_35D_DEFINITION.md`, web portal only, option A, chosen by the product owner).
