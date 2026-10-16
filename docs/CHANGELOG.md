@@ -4,6 +4,17 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-16 — Phase 37 authorized (web only); definition proposed
+- **Proposed:** `docs/phases/V1_PHASE_37_DEFINITION.md`, based on a 360 px phone audit of the staff portal. Its scope:
+  - Keep me signed in;
+  - no dead ends (an expired session goes to sign-in and back; branded error pages);
+  - an offline banner;
+  - gzip, caching and security headers;
+  - the `per_page` cap and search escaping;
+  - phone-first polish.
+- **The Flutter app is paused.**
+- **Awaiting approval:** H-1…H-9. Docs only.
+
 ### 2026-10-16 — Phase 36 complete (UAT PASS)
 - **Deployed:** staging runs `0797e0c`; the deploy output was pasted.
 - **UAT:** UAT-36BD-01…08 **PASS**, reported by the product owner.

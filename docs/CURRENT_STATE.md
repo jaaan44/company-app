@@ -8,7 +8,7 @@
 - **36B HR, 36C Work & Operations and 36D Reports:** UAT-36BD **PASS**.
 - Every Backoffice item is live.
 - **Staging runs `0797e0c`** (deploy output pasted).
-- **The next roadmap phase (37, Mobile/Web/Admin Integration & UX Hardening) is not authorized.**
+- **Phase 37 is authorized (2026-10-16) for the web only:** the Flutter app is paused, and layouts are mobile-first for staff on phones. Its definition, `docs/phases/V1_PHASE_37_DEFINITION.md`, proposes decisions H-1…H-9 and **awaits the product owner's approval**. No code has been written yet.
 - **Phase 34D — Staff Web Portal: Communication is complete and formally closed (2026-10-13)**: merged as `fd57c7c` (PR #105), UAT-34D-01…06 **PASS** (product owner).
 - **Phase 34C — Staff Web Portal: HR & Operations is complete and formally closed (2026-10-13)**: merged as `0248615` (PR #101), deployed to staging, UAT-34C-01…07 **PASS** (product owner). **Discrepancy (2026-10-13):** the 34C deploy showed staging had never run 34B (`2a7bca9`) and held no UAT34B, UAT31 or UAT32 data; UAT-34B was **re-run on `0248615`: PASS**. The 30B and 31–33 UAT records were **reconciled on 2026-10-16**: the product owner withdrew them as not verified.
 - **Phase 34B — Staff Web Portal: Work is complete and formally closed (2026-10-13)**: merged as `2a7bca9` (PR #92), UAT-34B-01…07 **PASS** on staging `0248615` (re-run; the first recorded deploy was not found on staging). 34A is also closed.
