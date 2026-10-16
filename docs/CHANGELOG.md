@@ -4,6 +4,10 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-16 — Phase 36 authorized; definition proposed
+- **Proposed:** `docs/phases/V1_PHASE_36_DEFINITION.md`, which splits the phase into 36A People & sign-in accounts (the only sub-phase with an API change), 36B HR, 36C Work & Operations and 36D Reports.
+- **Awaiting approval:** decisions M-1…M-9. Docs only.
+
 ### 2026-10-16 — 30B and 31–33 UAT records reconciled
 - **What changed:** the product owner withdrew the 32 combined-round results (UAT-30B, 31, 32 and 33, 01…08 each) as not verified ("i choose C"). They are `NOT RUN` again. Each row keeps its original PASS record in its notes.
 - **Why:** on 2026-10-13 the 34C deploy found none of that round's 31 or 32 data on staging.
