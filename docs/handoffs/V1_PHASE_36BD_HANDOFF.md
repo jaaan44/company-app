@@ -1,6 +1,6 @@
 # Phases 36B–36D — HR, Work & Operations, Reports (Admin Backoffice) — Handoff
 
-**Status: merged (PR #131, `0797e0c`, 2026-10-16); awaiting staging deployment and one UAT.** UAT-36BD-01…08 are `NOT RUN`. There is **no migration** and **no API change**.
+**Status: complete and formally closed (2026-10-16).** Merged (PR #131, `0797e0c`), deployed to staging, UAT-36BD-01…08 **PASS**. UAT-36BD-01…08 are `NOT RUN`. There is **no migration** and **no API change**.
 
 ## 1. Phase Identification
 
@@ -153,4 +153,16 @@ See §5.
   - a setup step in which Lia creates the `[UAT36BD]` leave requests, work log, service reports and incident in the portal;
   - UAT-36BD-01…08.
 - **Not run:** the deployment and UAT.
+
+## Addendum — Deployment, UAT and Formal Closure (2026-10-16)
+
+- **Deployed:** staging runs `0797e0c`. The output was pasted:
+  - the fast-forward started from `ea77505`;
+  - the backup was complete (`-- Dump completed`);
+  - `BUILD OK`, with no migration pending;
+  - the caches were built and the containers recreated;
+  - the smoke tests were as expected.
+- **UAT-36BD-01…08: PASS**, reported by the product owner ("all PASS"). Recorded by the AI on that report.
+- **36B–36D are formally closed, and with 36A, Phase 36 is complete.** The `[UAT36BD]` records stay on staging; cleaning them up needs its own authorization.
+- **Next:** Phase 37 (Mobile/Web/Admin Integration & UX Hardening) needs its own authorization.
 
