@@ -14,9 +14,9 @@ use App\Models\User;
 final class Sections
 {
     /**
-     * key => [title, icon, permissions (any of), summary, items: list<[label, description, route|null, coming|null]>]
+     * key => [title, icon, permissions (any of), summary, items: list<[label, description, route name|[route name, params]|null, coming|null]>]
      *
-     * @var array<string, array{title: string, icon: string, permissions: list<string>, summary: string, items: list<array{0: string, 1: string, 2: ?string, 3: ?string}>}>
+     * @var array<string, array{title: string, icon: string, permissions: list<string>, summary: string, items: list<array{0: string, 1: string, 2: string|array{0: string, 1: array<string, string>}|null, 3: ?string}>}>
      */
     public const ALL = [
         'people' => [
@@ -37,7 +37,7 @@ final class Sections
             'permissions' => ['clients.view', 'clients.create', 'clients.update', 'clients.delete'],
             'summary' => 'The company\'s clients and their contacts.',
             'items' => [
-                ['Clients and contacts', 'Add, edit and remove clients and their contacts.', null, 'Phase 36'],
+                ['Clients and contacts', 'Add, edit and remove clients and their contacts (the staff portal).', 'portal.clients', null],
             ],
         ],
         'work' => [
@@ -46,10 +46,10 @@ final class Sections
             'permissions' => ['projects.view', 'projects.create', 'projects.update', 'projects.delete', 'projects.members', 'tasks.view', 'tasks.create', 'tasks.update', 'tasks.delete', 'work-logs.view', 'work-logs.manage'],
             'summary' => 'Projects, tasks, logged work and the schedule.',
             'items' => [
-                ['Projects', 'Projects, their members and milestones.', null, 'Phase 36'],
-                ['Tasks', 'Add, assign, edit and remove tasks.', null, 'Phase 36'],
-                ['Work logs', 'Review and correct logged work.', null, 'Phase 36'],
-                ['Schedule', 'Everyone\'s schedule entries.', null, 'Phase 36'],
+                ['Projects', 'Projects, their members and milestones (the staff portal, All projects).', ['portal.projects', ['scope' => 'all']], null],
+                ['Tasks', 'Add, assign, edit and remove tasks (the staff portal, All tasks).', ['portal.tasks', ['scope' => 'all']], null],
+                ['Work logs', 'Review, correct and remove logged work.', 'admin.work-logs', null],
+                ['Schedule', 'Everyone\'s schedule entries.', 'admin.schedule', null],
             ],
         ],
         'hr' => [
@@ -58,9 +58,9 @@ final class Sections
             'permissions' => ['leave-types.view', 'leave-types.manage', 'leave-requests.view', 'leave-requests.manage'],
             'summary' => 'Leave requests, leave types and balances.',
             'items' => [
-                ['Leave requests', 'All requests, and requests on someone\'s behalf.', null, 'Phase 36'],
-                ['Leave types', 'The kinds of leave and their rules.', null, 'Phase 36'],
-                ['Leave balances', 'Each person\'s allowance and what is used.', null, 'Phase 36'],
+                ['Leave requests', 'All requests, and requests on someone\'s behalf.', 'admin.leave-requests', null],
+                ['Leave types', 'The kinds of leave, paid or unpaid.', 'admin.leave-types', null],
+                ['Leave balances', 'Each person\'s allowance and what is used.', 'admin.leave-balances', null],
             ],
         ],
         'operations' => [
@@ -69,8 +69,8 @@ final class Sections
             'permissions' => ['admin.access'],
             'summary' => 'Service reports and incidents.',
             'items' => [
-                ['Service reports', 'Review, approve and reject service reports.', null, 'Phase 36'],
-                ['Incidents', 'Assign, investigate, resolve and close incidents.', null, 'Phase 36'],
+                ['Service reports', 'Review and reject submitted service reports.', 'admin.service-reports', null],
+                ['Incidents', 'Assign, investigate, resolve and close incidents.', 'admin.incidents', null],
             ],
         ],
         'communication' => [
@@ -79,7 +79,7 @@ final class Sections
             'permissions' => ['announcements.view-all', 'announcements.create', 'announcements.publish', 'announcements.delete'],
             'summary' => 'Company announcements.',
             'items' => [
-                ['Announcements', 'Write, publish, archive and remove announcements.', null, 'Phase 36'],
+                ['Announcements', 'Write, publish, archive and remove announcements (the staff portal).', 'portal.announcements.manage', null],
             ],
         ],
         'reports' => [
@@ -88,11 +88,13 @@ final class Sections
             'permissions' => ['admin.access'],
             'summary' => 'Reports with CSV export.',
             'items' => [
-                ['Staff', 'The staff directory report.', null, 'Phase 36'],
-                ['Projects and tasks', 'Project and task reports.', null, 'Phase 36'],
-                ['Work logs', 'Time logged, by person and project.', null, 'Phase 36'],
-                ['Leave', 'Leave taken and requested.', null, 'Phase 36'],
-                ['Service reports and incidents', 'Operations reports.', null, 'Phase 36'],
+                ['Staff', 'The staff directory report.', ['admin.reports.show', ['report' => 'staff']], null],
+                ['Projects', 'Projects by status and client.', ['admin.reports.show', ['report' => 'projects']], null],
+                ['Tasks', 'Tasks by status, priority and overdue.', ['admin.reports.show', ['report' => 'tasks']], null],
+                ['Work logs', 'Time logged, by person and project.', ['admin.reports.show', ['report' => 'work-logs']], null],
+                ['Leave', 'Leave taken and requested.', ['admin.reports.show', ['report' => 'leave']], null],
+                ['Service reports', 'Service reports by status and date.', ['admin.reports.show', ['report' => 'service-reports']], null],
+                ['Incidents', 'Incidents by status, severity and date.', ['admin.reports.show', ['report' => 'incidents']], null],
             ],
         ],
         'administration' => [
@@ -111,7 +113,7 @@ final class Sections
     /**
      * The sections this user may see, in order.
      *
-     * @return array<string, array{title: string, icon: string, permissions: list<string>, summary: string, items: list<array{0: string, 1: string, 2: ?string, 3: ?string}>}>
+     * @return array<string, array{title: string, icon: string, permissions: list<string>, summary: string, items: list<array{0: string, 1: string, 2: string|array{0: string, 1: array<string, string>}|null, 3: ?string}>}>
      */
     public static function visibleTo(?User $user): array
     {

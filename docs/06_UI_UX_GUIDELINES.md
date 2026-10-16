@@ -244,6 +244,12 @@ Principles:
   - **A refusal** shows the API's message, plus what to do instead ("set their status to Separated", "set it to Inactive").
   - **A temporary password** appears once in a highlighted panel, in a monospace box with Copy, saying it won't be shown again and what the person does next.
   - **Choose your password** uses the sign-in page's layout, with Log out. **Change password** is a portal page linked from My profile.
+- **As built (Phases 36B–36D, DEC-066):**
+  - **Lists** default to what needs attention: pending leave, submitted service reports, open incidents. Each has filters for status, type, dates and person.
+  - **Decisions** (approve, reject, cancel, mark reviewed, the incident steps) open a small form in place. A reason is required where the API requires one; otherwise there is an optional note.
+  - **Person pickers** share one search component.
+  - **Report tables** scroll sideways inside a labelled, focusable region on a phone. **Download CSV** sits beside the filters.
+  - **Audit log:** a person's name and a record ID are links that filter the log, each at least 24 px tall.
 
 The visual-design foundation for Flutter is below (DEC-046). **The web equivalent, for the Staff Web Portal and later the Admin Backoffice, was decided in Phase 34A (DEC-063 W-5); see "Web Visual-Design Foundation" next.**
 

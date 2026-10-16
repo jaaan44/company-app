@@ -166,6 +166,12 @@ CSV export inherits the identical scoping as its JSON counterpart — no export 
 - This is centralized in one middleware plus `User::isActive()`, not scattered per-controller checks (CLAUDE.md §7).
 - **Since Phase 36A (DEC-066), Administrators suspend and reactivate accounts** (`PUT /users/{id}/status`). Suspending also deletes the account's tokens and database sessions at once. You can't suspend your own account.
 
+## Backoffice HR, Work, Operations and Reports (Phases 36B–36D, DEC-066)
+
+- **No new rule.** Each screen calls the API as the signed-in Administrator, so the API's permissions, scoping and audit apply unchanged.
+- **CSV downloads** go through the API's export, which audits each one (`report.exported`). The download route accepts only the seven report keys and drops unknown filter values.
+- **Report files** (photos, PDFs) open through the portal's existing file route, which streams the API's authorized download.
+
 ## Passwords (Phase 36A, DEC-066)
 
 - **Creating an account or resetting its password** generates a temporary password on the server (`Passwords::temporary()`, about 92 bits).

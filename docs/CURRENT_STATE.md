@@ -3,7 +3,14 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** **Phase 36 (Admin Backoffice Business Management Screens, DEC-066) is in progress.** **36A, People & sign-in accounts, is complete and formally closed (2026-10-16):** merged as `ea77505` (PR #127), deployed to staging, UAT-36A-01…08 **PASS** (product owner). **Staging runs `ea77505`** (deploy output pasted; backup, migration and caches confirmed by a re-run). **Next, per M-2:** 36B HR, 36C Work & Operations and 36D Reports in one go, with one UAT; not started. Phase 35 (35A–35D) is complete.
+**Current phase:** **Phase 36 (DEC-066):**
+- **36A** (People & sign-in accounts) is complete and closed (2026-10-16). Staging runs `ea77505`.
+- **36B HR, 36C Work & Operations and 36D Reports: implemented in one go (2026-10-16), awaiting merge, deployment and one UAT (UAT-36BD-01…08).** They cover:
+  - leave requests (decide, cancel, request for someone), leave types and leave balances;
+  - work log corrections, schedule entries, service report review and the incident workflow;
+  - the seven reports with CSV download;
+  - Audit log filters.
+- Every Backoffice item is now live. There is no API change and no migration. See `docs/handoffs/V1_PHASE_36BD_HANDOFF.md`.
 - **Phase 34D — Staff Web Portal: Communication is complete and formally closed (2026-10-13)**: merged as `fd57c7c` (PR #105), UAT-34D-01…06 **PASS** (product owner).
 - **Phase 34C — Staff Web Portal: HR & Operations is complete and formally closed (2026-10-13)**: merged as `0248615` (PR #101), deployed to staging, UAT-34C-01…07 **PASS** (product owner). **Discrepancy (2026-10-13):** the 34C deploy showed staging had never run 34B (`2a7bca9`) and held no UAT34B, UAT31 or UAT32 data; UAT-34B was **re-run on `0248615`: PASS**. The 30B and 31–33 UAT records were **reconciled on 2026-10-16**: the product owner withdrew them as not verified.
 - **Phase 34B — Staff Web Portal: Work is complete and formally closed (2026-10-13)**: merged as `2a7bca9` (PR #92), UAT-34B-01…07 **PASS** on staging `0248615` (re-run; the first recorded deploy was not found on staging). 34A is also closed.

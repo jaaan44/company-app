@@ -756,3 +756,17 @@ No migration, route or permission change.
 - **The same pattern as 35D:** every read and write goes through `/api/v1` via `InternalApi`; `may()` decides only what is shown.
 - **A one-time secret** (the temporary password) is held in a **protected** component property, so it is rendered once and never serialized into Livewire's snapshot.
 - **Routes:** `/admin/people/staff[/new|/{id}[/edit]]`, `/admin/people/organization` and `/admin/administration/users/new`, each behind its permission. `Route::pattern('publicId')` now precedes the Backoffice routes too.
+
+## 48. HR, Work, Operations and Reports in the Backoffice (Phases 36B–36D — implemented; DEC-066)
+
+- **New Livewire screens** in `App\Livewire\Admin`:
+  - HR: `LeaveRequests`, `LeaveRequestRecord`, `LeaveRequestForm`, `LeaveTypes`, `LeaveBalances`;
+  - Work: `WorkLogs`, `ScheduleEntries`, `ScheduleEntryForm`;
+  - Operations: `OperationsReports`, `ServiceReportRecord`, `IncidentRecord`;
+  - Reports: `ReportView`;
+  - `AuditLog` gained filters.
+- **The same pattern as 35D and 36A:** every read and write goes through `/api/v1` via `InternalApi`. **There is no API change.**
+- **`App\Support\Admin\Reports`:** each report's API path, filters and columns. `Reports::query()` keeps only known filter values.
+- **`App\Http\Controllers\Admin\ReportExportController`** streams the API's export (`InternalApi::raw`) unchanged, like the portal's `ReportFileController`.
+- **`Sections`:** an item's route may be `[name, params]`, which links the Work items to the portal's All tabs. No item says "Coming" any more.
+- **Routes:** `/admin/hr/…`, `/admin/work/…`, `/admin/operations/…` and `/admin/reports/{report}[/export]`, where `{report}` is limited to the seven keys.

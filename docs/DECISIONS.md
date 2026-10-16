@@ -996,3 +996,16 @@ Internet → Cloudflare (proxied, SSL/TLS "Full (strict)")
 - DEC-065 (locked `authorization.manage`; P-5's "never your own account, never the last Administrator") is reaffirmed and extended to reset and suspend.
 - DEC-022 and DEC-044 are reaffirmed: account states and the audit catalog, which gains `user.created`, `user.password_reset`, `user.status_changed` and `user.password_changed`.
 - The Phase 21 gap in 05 ("staff suspension … not yet audited") is closed.
+
+**DEC-066 addendum (2026-10-16), 36B–36D:**
+- **Authorized:** "go", built in one go with one UAT (M-2).
+- **No API change.** Each screen uses the existing endpoints, and the API's rules and messages decide.
+- **Projects, tasks, clients and announcements** link to the 35D portal screens (M-6). A Backoffice section item may now carry route parameters, for example the portal's "All" tab (`?scope=all`).
+- **Reports:** one screen for all seven reports, configured in `App\Support\Admin\Reports`. **Download CSV** streams the API's own export, which is audited (`report.exported`), through `admin.reports.export`.
+- **Audit log:**
+  - filters by date (UTC days, as the API filters), by person and by record ID;
+  - a person's name or a record ID in an entry filters to it;
+  - record type is not offered, because its values are inconsistent (`user` and `User`).
+- **Known API behaviour shown as it is:**
+  - creating a schedule entry needs a staff profile, so an Administrator without one gets the API's refusal;
+  - resolving an incident needs a resolution and a corrective (or immediate) action, and the API names one missing field at a time, in its own wording.

@@ -183,6 +183,11 @@ Status: **Principles, implemented for a growing set of endpoints as of Phase 4/5
 - **Refusals** are 422 with field messages: your own account (`user` or `status`), a taken email, an already-linked staff record (`staff_id`), and the password rules.
 - **An account that must change its password** gets **403** "Set your password on the web first." on every other route. `POST /auth/login` answers **422** on `email` with "Set your password on the web first, then sign in here." (only for the correct password).
 
+## Backoffice Use of the API (Phases 36B–36D)
+
+- **No endpoint changed.** The Backoffice screens use the existing leave, work-log, schedule, service-report, incident, report and audit-log endpoints.
+- **Report CSVs** come from the existing `GET /reports/{report}/export`, called in-process and streamed unchanged.
+
 ## Explicitly Not Decided Here
 
 - Rate limiting thresholds for future write-heavy endpoints beyond authentication (see `05_SECURITY_MODEL.md` for the Phase 4 authentication thresholds now in place).

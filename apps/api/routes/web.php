@@ -1,8 +1,10 @@
 <?php
 
 use App\Enums\AuditSource;
+use App\Http\Controllers\Admin\ReportExportController;
 use App\Http\Controllers\Portal\ReportFileController;
 use App\Services\Audit\AuditLogger;
+use App\Support\Admin\Reports;
 use App\Support\Admin\Sections;
 use App\Support\Audit\AuditActions;
 use Illuminate\Support\Facades\Auth;
@@ -49,6 +51,29 @@ Route::middleware(['auth', 'account.active', 'can:admin.access'])->prefix('admin
     Route::get('people/staff/{publicId}', fn (string $publicId) => $page('Staff record', 'admin.staff-record', ['publicId' => $publicId]))->middleware('can:staff.view')->name('staff.show');
     Route::get('people/staff/{publicId}/edit', fn (string $publicId) => $page('Edit staff record', 'admin.staff-form', ['publicId' => $publicId]))->middleware('can:staff.update')->name('staff.edit');
     Route::get('people/organization', fn () => $page('Departments, teams and positions', 'admin.organization'))->middleware('can:organization.view')->name('organization');
+
+    // Phase 36B: HR.
+    Route::get('hr/leave-requests', fn () => $page('Leave requests', 'admin.leave-requests'))->name('leave-requests');
+    Route::get('hr/leave-requests/new', fn () => $page('Request leave for someone', 'admin.leave-request-form'))->middleware('can:leave-requests.manage')->name('leave-requests.new');
+    Route::get('hr/leave-requests/{publicId}', fn (string $publicId) => $page('Leave request', 'admin.leave-request-record', ['publicId' => $publicId]))->name('leave-requests.show');
+    Route::get('hr/leave-types', fn () => $page('Leave types', 'admin.leave-types'))->middleware('can:leave-types.view')->name('leave-types');
+    Route::get('hr/leave-balances', fn () => $page('Leave balances', 'admin.leave-balances'))->name('leave-balances');
+
+    // Phase 36C: Work and Operations (projects, tasks, clients and
+    // announcements are the 35D portal screens, M-6).
+    Route::get('work/work-logs', fn () => $page('Work logs', 'admin.work-logs'))->name('work-logs');
+    Route::get('work/schedule', fn () => $page('Schedule', 'admin.schedule-entries'))->name('schedule');
+    Route::get('work/schedule/new', fn () => $page('New schedule entry', 'admin.schedule-entry-form'))->name('schedule.new');
+    Route::get('work/schedule/{publicId}', fn (string $publicId) => $page('Edit schedule entry', 'admin.schedule-entry-form', ['publicId' => $publicId]))->name('schedule.edit');
+    Route::get('operations/service-reports', fn () => $page('Service reports', 'admin.operations-reports', ['kind' => 'service']))->name('service-reports');
+    Route::get('operations/service-reports/{publicId}', fn (string $publicId) => $page('Service report', 'admin.service-report-record', ['publicId' => $publicId]))->name('service-reports.show');
+    Route::get('operations/incidents', fn () => $page('Incidents', 'admin.operations-reports', ['kind' => 'incidents']))->name('incidents');
+    Route::get('operations/incidents/{publicId}', fn (string $publicId) => $page('Incident', 'admin.incident-record', ['publicId' => $publicId]))->name('incidents.show');
+
+    // Phase 36D: Reports.
+    Route::get('reports/{report}', fn (string $report) => $page(Reports::all()[$report]['title'].' report', 'admin.report-view', ['report' => $report]))
+        ->whereIn('report', array_keys(Reports::all()))->name('reports.show');
+    Route::get('reports/{report}/export', ReportExportController::class)->whereIn('report', array_keys(Reports::all()))->name('reports.export');
     Route::get('administration/audit-log', fn () => $page('Audit log', 'admin.audit-log'))->name('audit-log');
 
     Route::get('{section}', fn (string $section) => view('admin.section', ['key' => $section]))

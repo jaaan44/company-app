@@ -16,6 +16,7 @@ use App\Models\Task;
 use App\Models\User;
 use App\Services\Portal\InternalApi;
 use App\Services\Portal\PortalApiException;
+use App\Support\Admin\Sections;
 use App\Support\Authorization\PermissionCatalog;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -101,8 +102,15 @@ class AdminBackofficePagesTest extends TestCase
 
     public function test_a_section_page_lists_what_is_coming_and_administration_links_its_screens(): void
     {
+        // Phase 36: every item is live; Work links the portal's All lists.
         $this->actingAs($this->admin, 'web')->get('/admin/work')
-            ->assertSeeInOrder(['Projects', 'Coming in Phase 36', 'Tasks', 'Work logs', 'Schedule']);
+            ->assertSeeInOrder(['Projects', 'Tasks', 'Work logs', 'Schedule'])
+            ->assertSee('href="'.route('portal.tasks', ['scope' => 'all']).'"', false)
+            ->assertSee('href="'.route('admin.work-logs').'"', false)
+            ->assertDontSee('Coming in');
+        foreach (array_keys(Sections::ALL) as $section) {
+            $this->get('/admin/'.$section)->assertOk()->assertDontSee('Coming in');
+        }
         $this->get('/admin/administration')
             ->assertSee('href="'.route('admin.roles').'"', false)
             ->assertSee('href="'.route('admin.users').'"', false)

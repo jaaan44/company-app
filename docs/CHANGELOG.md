@@ -4,6 +4,23 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-16 — Phases 36B–36D: HR, Work & Operations and Reports in the Backoffice (implemented)
+- **HR:**
+  - leave requests (Pending first; Approve with a note, Reject with a reason, Cancel; request leave for someone);
+  - leave types;
+  - leave balances (allowances per person and year).
+- **Work:**
+  - work logs (Correct, Remove);
+  - schedule entries (new, edit, delete; times in company time).
+  - Projects, Tasks, Clients and Announcements open the portal's All screens.
+- **Operations:**
+  - service reports (Mark reviewed, Reject);
+  - incidents (Assign, Reassign, Start investigation, Resolve, Close, Reopen).
+- **Reports:** all seven, with filters and **Download CSV** (the API's audited export).
+- **Audit log:** filters by date, person and record.
+- **Scope:** no API change and no migration.
+- **Tests:** 13 new; the suite is 1,468/1,468; 86/86 browser checks; 12/12 mutations caught.
+
 ### 2026-10-16 — Phase 36A deploy fully confirmed
 - **Confirmed:** a re-run of the runbook confirmed the pre-migration backup, the migration (`Ran`), the caches and the containers on staging `ea77505`.
 
