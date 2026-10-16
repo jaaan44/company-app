@@ -1,6 +1,6 @@
 # Phase 37 — Web Integration & Mobile-First UX Hardening — Handoff
 
-**Status: implemented (2026-10-16), awaiting merge, deployment and UAT.** UAT-37-01…08 are `NOT RUN`. There is **no migration**. The deploy rebuilds both images: nginx gains compression, caching and headers.
+**Status: merged (PR #135, `bbe7291`, 2026-10-16), awaiting deployment and UAT.** UAT-37-01…08 are `NOT RUN`. There is **no migration**. The deploy rebuilds both images: nginx gains compression, caching and headers.
 
 ## 1. Phase Identification
 
@@ -174,3 +174,12 @@ See §5.
 2. Write the runbook.
 3. Deploy, and run UAT-37 on real phones.
 4. Then Phase 38 (UAT) or 39 (release readiness), each needing its own authorization.
+
+## Addendum — Merge and UAT runbook (2026-10-16)
+
+- **PR #135 merged as `bbe7291`.** CI was green, including the new nginx step on the built image: `Content-Encoding: gzip`, `Cache-Control: public, max-age=31536000, immutable` and the four security headers, then `nginx headers OK`.
+- **Runbook `docs/testing/PHASE_37_UAT_PREPARATION.md`:**
+  - the deploy `0797e0c` → `bbe7291`: no migration; backup, build of both images, caches;
+  - smoke tests, including the 404 page and the headers on the container nginx (`127.0.0.1:8012`) and on the public sign-in page;
+  - UAT-37-01…08 on your own iPhone and Android phone and a computer, with Lia, Nina (36A) and the Administrator. No new account.
+- **Not run:** the deployment and UAT.

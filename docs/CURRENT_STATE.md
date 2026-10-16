@@ -3,12 +3,12 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** **Phase 37 (implemented, awaiting merge, deploy and UAT; see below).** **Phase 36, Admin Backoffice Business Management Screens (DEC-066), is complete and formally closed (2026-10-16):**
+**Current phase:** **Phase 37 (merged as `bbe7291`; awaiting deploy and UAT; see below).** **Phase 36, Admin Backoffice Business Management Screens (DEC-066), is complete and formally closed (2026-10-16):**
 - **36A (People & sign-in accounts):** UAT-36A **PASS**.
 - **36B HR, 36C Work & Operations and 36D Reports:** UAT-36BD **PASS**.
 - Every Backoffice item is live.
 - **Staging runs `0797e0c`** (deploy output pasted).
-- **Phase 37, Web Integration & Mobile-First UX Hardening (DEC-067), is implemented (2026-10-16) and awaits merge, deployment and UAT-37.** It is for the web only: **the Flutter app is paused (H-1)**.
+- **Phase 37, Web Integration & Mobile-First UX Hardening (DEC-067), is merged (PR #135, `bbe7291`, 2026-10-16) and awaits deployment and UAT-37** (runbook `docs/testing/PHASE_37_UAT_PREPARATION.md`). It is for the web only: **the Flutter app is paused (H-1)**.
   - **Built:** "Keep me signed in" (30 days); no browser pop-up when a page expires, and a return to the page after sign-in; the app's own error pages; an offline banner; gzip, caching and four security headers; `per_page` capped at 100; literal search wildcards; Audit log company days; and the phone fixes from a walk-through of the eight everyday tasks.
   - **Tested:** 1,484/1,484 tests; 66/66 browser checks with axe AA clean.
   - **Not yet run:** MySQL, staging and UAT. **No migration.**

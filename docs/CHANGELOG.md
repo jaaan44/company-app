@@ -4,6 +4,10 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-16 — Phase 37 merged; UAT runbook
+- **Merged:** PR #135 as `bbe7291`. CI was green, including the nginx header check on the built image.
+- **Runbook:** `docs/testing/PHASE_37_UAT_PREPARATION.md` covers the deploy (no migration; both images rebuilt; header and error-page smoke tests) and UAT-37-01…08 on real phones.
+
 ### 2026-10-16 — Phase 37: web hardening for staff on phones (implemented)
 - **Approved:** "approve as recommended" (H-1…H-9), recorded as **DEC-067**. **The Flutter app is paused.**
 - **Stay signed in:** "Keep me signed in on this device" (30 days, unticked). It ends on sign-out, a password change (new: the remember token is rotated), a reset or a suspension.
