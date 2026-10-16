@@ -5,7 +5,7 @@
 **Product:** Company App — internal operations & communication platform
 **Current phase:** **Phase 36 (DEC-066):**
 - **36A** (People & sign-in accounts) is complete and closed (2026-10-16). Staging runs `ea77505`.
-- **36B HR, 36C Work & Operations and 36D Reports: implemented in one go (2026-10-16), awaiting merge, deployment and one UAT (UAT-36BD-01…08).** They cover:
+- **36B HR, 36C Work & Operations and 36D Reports: merged as `0797e0c` (PR #131, 2026-10-16), awaiting staging deployment and one UAT (UAT-36BD-01…08; runbook `docs/testing/PHASE_36BD_UAT_PREPARATION.md`).** They cover:
   - leave requests (decide, cancel, request for someone), leave types and leave balances;
   - work log corrections, schedule entries, service report review and the incident workflow;
   - the seven reports with CSV download;

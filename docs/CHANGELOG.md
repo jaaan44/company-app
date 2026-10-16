@@ -4,6 +4,10 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-16 — Phases 36B–36D merged; UAT runbook
+- **Merged:** PR #131 as `0797e0c` (CI green).
+- **Runbook:** `docs/testing/PHASE_36BD_UAT_PREPARATION.md` covers the deploy (no migration), a setup step for the test data, and UAT-36BD-01…08.
+
 ### 2026-10-16 — Phases 36B–36D: HR, Work & Operations and Reports in the Backoffice (implemented)
 - **HR:**
   - leave requests (Pending first; Approve with a note, Reject with a reason, Cancel; request leave for someone);
