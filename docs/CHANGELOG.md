@@ -4,6 +4,12 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-16 — Phase 36A closed (UAT PASS)
+- **Deployed:** staging runs `ea77505`; the migration ran on MySQL.
+- **UAT:** UAT-36A-01…08 **PASS**, reported by the product owner.
+- **Not shown:** the backup and cache confirmations were cut from the pasted output.
+- **Closed:** 36A is formally closed. 36B–36D are next (M-2).
+
 ### 2026-10-16 — Phase 36A merged; UAT runbook
 - **Merged:** PR #127 as `ea77505` (CI green).
 - **Runbook:** `docs/testing/PHASE_36A_UAT_PREPARATION.md` covers the deploy `2ca6092` → `ea77505` with one migration, and UAT-36A-01…08.
