@@ -7,7 +7,7 @@
         @foreach ($section['items'] as [$label, $description, $route, $coming])
             <li>
                 @if ($route !== null)
-                    <a href="{{ route($route) }}" class="chevron block min-h-14 px-5 py-3 hover:bg-hover">
+                    <a href="{{ is_array($route) ? route($route[0], $route[1]) : route($route) }}" class="chevron block min-h-14 px-5 py-3 hover:bg-hover">
                         <span class="block font-medium">{{ $label }}</span>
                         <span class="block text-sm text-muted">{{ $description }}</span>
                     </a>

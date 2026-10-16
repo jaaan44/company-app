@@ -1,6 +1,6 @@
 # Phase 36 — Admin Backoffice Business Management Screens — Definition
 
-**Status:** APPROVED (2026-10-16, "approve as recommended": M-1…M-9; DEC-066). **36A complete and formally closed 2026-10-16** (§9; PR #127, `ea77505`; UAT-36A `PASS`). 36B–36D follow, as M-2 says.
+**Status:** APPROVED (2026-10-16, "approve as recommended": M-1…M-9; DEC-066). **36A complete and formally closed 2026-10-16** (§9; PR #127, `ea77505`; UAT-36A `PASS`). **36B–36D implemented** (§10; authorized "go"), awaiting merge, deployment and one UAT. 36B–36D follow, as M-2 says.
 **Roadmap line:** "CRUD/management UI for the business modules, grouped by the same section layout; may be split into sub-phases at its own planning time."
 
 ---
@@ -140,3 +140,53 @@ Every "Coming in Phase 36" item in the Admin Backoffice (`/admin`) becomes a wor
 - A "last active Administrator" check on suspend was unreachable: only an active Administrator can call it, and never on their own account. It was removed.
 
 **UAT:** UAT-36A-01…08, `NOT RUN`, in `docs/testing/UAT_LOG.md`.
+
+## 10. As implemented — 36B–36D (2026-10-16)
+
+**No API change.** All screens are in `App\Livewire\Admin`, through `InternalApi`.
+
+**36B HR:**
+- **`LeaveRequests`** (`/admin/hr/leave-requests`):
+  - Pending by default; filters for status, type and dates;
+  - **Request leave for someone** (`LeaveRequestForm`, with `leave-requests.manage`): person, type, dates, reason.
+- **`LeaveRequestRecord`:**
+  - details and history (company time);
+  - Approve (optional note) and Reject (a reason) while pending;
+  - Cancel (`leave-requests.manage`) while pending or approved.
+- **`LeaveTypes`:** edited in place (name, code, paid, status, order, description); a type in use can't be removed, and the screen suggests Inactive.
+- **`LeaveBalances`:** a person (searched, or `?staff=`) and a year; each paid type's allowance and notes, with used, pending and left; unpaid types say "no balance".
+
+**36C Work and Operations:**
+- **`WorkLogs`:** filters for person and dates; **Correct** (date, hours and minutes, description) in place, and **Remove**. The person, task and project stay fixed.
+- **`ScheduleEntries` and `ScheduleEntryForm`:**
+  - from a date, filtered by activity;
+  - new and edit: title, activity, all day or times in company time, project (new only), people, description; Delete.
+- **`OperationsReports`** (`kind` service or incidents):
+  - service reports: Submitted by default;
+  - incidents: **Open** by default, meaning reported plus under investigation (two API calls merged);
+  - filters for severity and dates.
+- **`ServiceReportRecord`:** details, files (through the portal's file route), history, and **Mark reviewed** (optional note) or **Reject** (a reason) while submitted.
+- **`IncidentRecord`:**
+  - details, files and history;
+  - the actions the status allows: Assign or Reassign (a person), Start investigation, Resolve (resolution and corrective action), Close and Reopen, each with an optional note.
+- **Work section links:** Projects and Tasks open the portal's **All** tabs. Clients and Announcements open the portal's screens.
+
+**36D Reports:**
+- **`ReportView`** (`/admin/reports/{report}`), configured in `App\Support\Admin\Reports`:
+  - the seven reports (staff, projects, tasks, work logs, leave, service reports, incidents);
+  - filters, 25 rows per page, in a table that scrolls sideways on a phone;
+  - **Download CSV** (`ReportExportController`, the API's own audited export, with the same filters).
+- **Audit log:** filters for dates, person (click a name) and record (type an ID, or click one), and Clear filters.
+
+**Shared pieces:**
+- `Concerns\PicksStaff`, with `partials/staff-picker`;
+- `partials/report-files-history`.
+
+**Every "Coming in Phase 36" item is now live.**
+
+**What testing found:**
+- **Resolving an incident needs more than expected.** It needs a resolution, and a corrective action unless an immediate action is recorded. The form now says so, and the API's message shows on the field.
+- **Two layout fixes:** filter selects could widen a 320 px page, and the audit log's inline links were under 24 px tall. Both are fixed.
+- **Missing test:** a mutation showed nothing checked that "Open" incidents include those under investigation. The assertion was added.
+
+**UAT:** UAT-36BD-01…08, `NOT RUN`, in `docs/testing/UAT_LOG.md`.
