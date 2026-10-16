@@ -1,6 +1,6 @@
 # Phases 36B–36D — HR, Work & Operations, Reports (Admin Backoffice) — Handoff
 
-**Status: implemented; awaiting merge, deployment and one UAT.** UAT-36BD-01…08 are `NOT RUN`. There is **no migration** and **no API change**.
+**Status: merged (PR #131, `0797e0c`, 2026-10-16); awaiting staging deployment and one UAT.** UAT-36BD-01…08 are `NOT RUN`. There is **no migration** and **no API change**.
 
 ## 1. Phase Identification
 
@@ -144,3 +144,13 @@ See §5.
 3. Deploy and run UAT-36BD.
 4. Close Phase 36.
 5. Then Phase 37 (integration and UX hardening) needs its own authorization.
+
+## Addendum — Merge and UAT runbook (2026-10-16)
+
+- **PR #131 merged as `0797e0c`.** CI was green.
+- **Runbook `docs/testing/PHASE_36BD_UAT_PREPARATION.md`:**
+  - the deploy `ea77505` → `0797e0c`: no migration; backup, build, caches, smoke tests;
+  - a setup step in which Lia creates the `[UAT36BD]` leave requests, work log, service reports and incident in the portal;
+  - UAT-36BD-01…08.
+- **Not run:** the deployment and UAT.
+
