@@ -3,14 +3,12 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** **Phase 36 (DEC-066):**
-- **36A** (People & sign-in accounts) is complete and closed (2026-10-16). Staging runs `ea77505`.
-- **36B HR, 36C Work & Operations and 36D Reports: merged as `0797e0c` (PR #131, 2026-10-16), awaiting staging deployment and one UAT (UAT-36BD-01…08; runbook `docs/testing/PHASE_36BD_UAT_PREPARATION.md`).** They cover:
-  - leave requests (decide, cancel, request for someone), leave types and leave balances;
-  - work log corrections, schedule entries, service report review and the incident workflow;
-  - the seven reports with CSV download;
-  - Audit log filters.
-- Every Backoffice item is now live. There is no API change and no migration. See `docs/handoffs/V1_PHASE_36BD_HANDOFF.md`.
+**Current phase:** **none active.** **Phase 36, Admin Backoffice Business Management Screens (DEC-066), is complete and formally closed (2026-10-16):**
+- **36A (People & sign-in accounts):** UAT-36A **PASS**.
+- **36B HR, 36C Work & Operations and 36D Reports:** UAT-36BD **PASS**.
+- Every Backoffice item is live.
+- **Staging runs `0797e0c`** (deploy output pasted).
+- **The next roadmap phase (37, Mobile/Web/Admin Integration & UX Hardening) is not authorized.**
 - **Phase 34D — Staff Web Portal: Communication is complete and formally closed (2026-10-13)**: merged as `fd57c7c` (PR #105), UAT-34D-01…06 **PASS** (product owner).
 - **Phase 34C — Staff Web Portal: HR & Operations is complete and formally closed (2026-10-13)**: merged as `0248615` (PR #101), deployed to staging, UAT-34C-01…07 **PASS** (product owner). **Discrepancy (2026-10-13):** the 34C deploy showed staging had never run 34B (`2a7bca9`) and held no UAT34B, UAT31 or UAT32 data; UAT-34B was **re-run on `0248615`: PASS**. The 30B and 31–33 UAT records were **reconciled on 2026-10-16**: the product owner withdrew them as not verified.
 - **Phase 34B — Staff Web Portal: Work is complete and formally closed (2026-10-13)**: merged as `2a7bca9` (PR #92), UAT-34B-01…07 **PASS** on staging `0248615` (re-run; the first recorded deploy was not found on staging). 34A is also closed.
@@ -21,7 +19,7 @@
 - **Phase 30B — Status & Check-in: complete, formally closed 2026-10-13.** UAT-30B-01…08 **withdrawn as not verified** (2026-10-16, product owner; now `NOT RUN`, phone screens left for Phase 38). **Phase 30 is complete.**
 - Phase 30A is formally closed (2026-10-12). **Staging is assumed to run `2ca6092` (Phase 35D); not verified.**
 **Phase status:** Staging is **deployed and reachable over HTTPS** at `https://company-staging.storm-ark.com` (infrastructure verified by the operator; **real-device UAT passed**, Gate 2F, 2026-09-23). Live deployment refined the Gate 1 model: the verified path is Internet → Cloudflare (proxied, Full (strict)) → **shared** DigitalOcean Cloud Firewall (inbound 80/443 Cloudflare-scoped) → **shared** host Nginx (TLS, Let's Encrypt cert `company-staging.storm-ark.com`, HTTP → HTTPS redirect) → `127.0.0.1:8012` → Company App Docker nginx → Laravel (`APP_URL` HTTPS, `SESSION_SECURE_COOKIE=true`, `trustProxies(at: '*')`). Recorded as **DEC-051** (refines DEC-050). See `docs/DEPLOYMENT_STAGING.md` §13/§7a and the Phase 26 handoff addendum.
-**Last completed phase:** Phase 35 — Granular permissions, Admin Backoffice and staff-portal editing (35A–35D, formally closed 2026-10-16). Before it, Phase 34 — Staff Web Portal (34A–34F; 34B by its UAT re-run on `0248615`) and Phases 30B–33. **Open, non-blocking:** the deferred UAT password rotation from 29B; UAT data on staging (cleanup needs its own authorization).
+**Last completed phase:** Phase 36 — Admin Backoffice Business Management Screens (36A–36D, formally closed 2026-10-16). Before it, Phase 35 — Granular permissions, Admin Backoffice and staff-portal editing (35A–35D), and before that, Phase 34 — Staff Web Portal (34A–34F; 34B by its UAT re-run on `0248615`) and Phases 30B–33. **Open, non-blocking:** the deferred UAT password rotation from 29B; UAT data on staging (cleanup needs its own authorization).
 **Next planned phase:** **Phase 35 — Admin Backoffice Foundation** (`docs/ROADMAP.md`), which needs its own authorization and a specification first. The roadmap was renumbered by DEC-063: Admin Backoffice 35–36, Integration 37, UAT 38, Release Readiness 39. **Open, non-blocking:** UAT data stays on staging (cleanup needs its own authorization); the host nginx backup `/etc/nginx/sites-available/company-staging.storm-ark.com.bak-uat3133` can be removed by the operator at will; CI now builds the staging images (`staging-images.yml`, Phase 34A).
 
 ## Current Objective

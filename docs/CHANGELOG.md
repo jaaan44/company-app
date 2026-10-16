@@ -4,6 +4,12 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-16 — Phase 36 complete (UAT PASS)
+- **Deployed:** staging runs `0797e0c`; the deploy output was pasted.
+- **UAT:** UAT-36BD-01…08 **PASS**, reported by the product owner.
+- **Closed:** 36B–36D are formally closed, and with 36A, Phase 36 is complete.
+- **Next:** Phase 37 needs its own authorization.
+
 ### 2026-10-16 — Phases 36B–36D merged; UAT runbook
 - **Merged:** PR #131 as `0797e0c` (CI green).
 - **Runbook:** `docs/testing/PHASE_36BD_UAT_PREPARATION.md` covers the deploy (no migration), a setup step for the test data, and UAT-36BD-01…08.
