@@ -13,6 +13,11 @@ use Livewire\Component;
  * role, searchable, 25 per page, and changing an account's role after an
  * in-app confirmation. PUT /api/v1/users/{id}/role refuses your own account
  * and the last Administrator, and audits each change.
+ *
+ * Phase 36A (DEC-066 M-3…M-5): New account, Reset password and
+ * Suspend / Reactivate. A reset's temporary password is shown once, in
+ * the response that made it; it is never public, so never in Livewire's
+ * snapshot.
  */
 class Users extends Component
 {
@@ -26,6 +31,11 @@ class Users extends Component
     public ?string $savedMessage = null;
 
     public int $toastNonce = 0;
+
+    /** The account just reset (without its password). */
+    public ?array $resetAccount = null;
+
+    protected ?string $temporaryPassword = null;
 
     public function updatedSearch(): void
     {
@@ -58,6 +68,54 @@ class Users extends Component
         }
     }
 
+    public function resetPassword(string $publicId): void
+    {
+        $this->errorMessage = null;
+        $this->resetAccount = null;
+        if (! preg_match('/^[0-9A-Za-z]{1,64}$/', $publicId)) {
+            return;
+        }
+        try {
+            $account = $this->api()->send('POST', "/users/{$publicId}/reset-password")['data'];
+            $this->temporaryPassword = $account['temporary_password'];
+            unset($account['temporary_password']);
+            $this->resetAccount = $account;
+        } catch (PortalApiException $e) {
+            $this->accountFailure($e, 'user', 'Something went wrong resetting the password.');
+        }
+    }
+
+    public function setStatus(string $publicId, string $status): void
+    {
+        $this->errorMessage = null;
+        if (! preg_match('/^[0-9A-Za-z]{1,64}$/', $publicId)) {
+            return;
+        }
+        try {
+            $user = $this->api()->send('PUT', "/users/{$publicId}/status", json: ['status' => $status])['data'];
+            $this->savedMessage = $user['status'] === 'active' ? "{$user['name']} can sign in again." : "{$user['name']} is suspended and signed out everywhere.";
+            $this->toastNonce++;
+        } catch (PortalApiException $e) {
+            $this->accountFailure($e, 'status', 'Something went wrong changing the account.');
+        }
+    }
+
+    public function dismissReset(): void
+    {
+        $this->resetAccount = null;
+    }
+
+    private function accountFailure(PortalApiException $e, string $field, string $fallback): void
+    {
+        if ($e->status === 422) {
+            $this->errorMessage = $e->firstErrorFor($field) ?? $e->getMessage();
+        } elseif ($e->isNotFound()) {
+            $this->errorMessage = 'That account no longer exists.';
+        } else {
+            $this->failed($e, $fallback, 'Only Administrators can manage accounts.');
+        }
+    }
+
     public function render(): View
     {
         $result = null;
@@ -70,6 +128,7 @@ class Users extends Component
         return view('livewire.admin.users', [
             'users' => $result['data'] ?? [],
             'meta' => $result['meta'] ?? null,
+            'temporaryPassword' => $this->temporaryPassword,
         ]);
     }
 }

@@ -101,4 +101,13 @@ final class AuditActions
     public const string ROLE_PERMISSIONS_UPDATED = 'role.permissions_updated';
 
     public const string USER_ROLE_CHANGED = 'user.role_changed';
+
+    // Phase 36A (DEC-066): sign-in accounts. Passwords are never recorded.
+    public const string USER_CREATED = 'user.created';
+
+    public const string USER_PASSWORD_RESET = 'user.password_reset';
+
+    public const string USER_STATUS_CHANGED = 'user.status_changed';
+
+    public const string USER_PASSWORD_CHANGED = 'user.password_changed';
 }

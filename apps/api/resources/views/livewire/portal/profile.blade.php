@@ -51,6 +51,7 @@
                 <x-portal.info-row label="Role" :value="Format::role($user['role'])" />
             </dl>
         </section>
-        <p class="text-sm text-muted">To change these details, contact an administrator.</p>
+        <a href="{{ route('portal.password') }}" class="mb-4 inline-flex min-h-11 items-center rounded-full border border-line px-5 font-medium text-accent-ink hover:bg-hover">Change password</a>
+        <p class="text-sm text-muted">To change your email or role, contact an administrator.</p>
     @endif
 </div>

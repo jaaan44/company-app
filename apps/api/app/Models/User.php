@@ -17,6 +17,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 /**
  * @property AccountStatus $status
+ * @property bool $must_change_password
  * @property int|null $role_id
  */
 #[Fillable(['name', 'email', 'password'])]
@@ -35,6 +36,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'status' => AccountStatus::class,
+            'must_change_password' => 'boolean',
         ];
     }
 

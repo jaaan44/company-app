@@ -231,12 +231,19 @@ Principles:
 - **As built (Phases 35B and 35C, DEC-065):**
   - **Shell:** `/admin` uses the portal's look (tokens, toasts, in-app dialogs, icons, navigation without reloads).
   - **Navigation:** a 16 rem sidebar with the sections in the order above, the current one marked; Staff portal and Log out at the bottom. On phones, a menu button opens the same list as a drawer from the left (Close focused, Escape closes).
-  - **Section pages:** each lists its screens. Future ones show a muted "Coming in Phase 36" pill.
+  - **Section pages:** each lists its screens. Future ones show a muted "Coming in Phase 36" pill, which goes as each screen ships (People and Users and roles in 36A).
   - **Dashboard:** cards in a 1/2/3-column grid, with a From/To period form.
   - **Roles & permissions:**
     - a card per module, with its rule note;
     - a labelled Manager and Staff checkbox per permission (screen readers hear the permission too);
     - a sticky bar with Save changes (a dialog listing "Can now" / "No longer"), Undo changes and Reset to defaults.
+- **As built (Phase 36A, DEC-066):**
+  - **Lists** (Staff records, Users and roles) have search, a filter where useful, the main action as a button at the top right, and chips for states (Separated, No sign-in, Suspended, Must choose a password).
+  - **A record page** shows the details, then one card per concern (Sign-in account, Status, Check-ins), each only for those who may see it. Edit and Delete sit at the top.
+  - **Department, team and position editing** happens in place above its list, rather than on a separate page.
+  - **A refusal** shows the API's message, plus what to do instead ("set their status to Separated", "set it to Inactive").
+  - **A temporary password** appears once in a highlighted panel, in a monospace box with Copy, saying it won't be shown again and what the person does next.
+  - **Choose your password** uses the sign-in page's layout, with Log out. **Change password** is a portal page linked from My profile.
 
 The visual-design foundation for Flutter is below (DEC-046). **The web equivalent, for the Staff Web Portal and later the Admin Backoffice, was decided in Phase 34A (DEC-063 W-5); see "Web Visual-Design Foundation" next.**
 

@@ -132,7 +132,7 @@ class PortalPagesTest extends TestCase
             ->assertSeeInOrder(['Manager', 'Ben Cruz', 'Company email', 'lia.ramos@company.test', 'Copy email', 'Company phone', '+63 900 000 0042', 'Copy phone'])
             ->assertSeeInOrder(['Employee number', 'EMP-0042', 'Hire date', '1 Mar 2024'])
             ->assertSeeInOrder(['Login email', 'lia@company-app.test', 'Role', 'Staff'])
-            ->assertSee('To change these details, contact an administrator.');
+            ->assertSee('To change your email or role, contact an administrator.');
     }
 
     public function test_profile_without_a_staff_profile(): void

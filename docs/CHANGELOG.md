@@ -4,6 +4,21 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-16 — Phase 36A: People and sign-in accounts (implemented)
+- **Approved:** DEC-066 (M-1…M-9, "approve as recommended").
+- **Sign-in accounts:**
+  - API: `POST /users` (a temporary password returned once), `POST /users/{id}/reset-password`, `PUT /users/{id}/status` and `PUT /me/password`;
+  - migration `users.must_change_password`;
+  - a new or reset account must choose its password on the web first, and the phone app says so;
+  - four new audit actions, never with a password.
+- **Admin Backoffice:**
+  - People → Staff records (list, new, edit, record page with sign-in account, status correction, check-ins and delete);
+  - Departments, teams and positions;
+  - Users and roles gains New account, Reset password and Suspend / Reactivate.
+- **Portal:** Change password (My profile) and Choose your password.
+- **Tests:** 24 new (`AccountsApiTest` 11, `PeopleAdminPagesTest` 13); the suite is 1,455/1,455; 71/71 browser checks; 12/12 mutations caught.
+- **Also fixed:** a leftover "NOT RUN" sentence in the 35BC and 35D handoff status lines.
+
 ### 2026-10-16 — Phase 36 authorized; definition proposed
 - **Proposed:** `docs/phases/V1_PHASE_36_DEFINITION.md`, which splits the phase into 36A People & sign-in accounts (the only sub-phase with an API change), 36B HR, 36C Work & Operations and 36D Reports.
 - **Awaiting approval:** decisions M-1…M-9. Docs only.

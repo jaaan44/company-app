@@ -747,3 +747,12 @@ No migration, route or permission change.
   - `applyWriteFailure()` maps 422 fields and shows 403, 404 and 409 messages.
 - **Leads** are recognised from the project's `my_role` (`GET /projects`, `GET /projects/{id}`).
 - **Routes:** under `/app`, with every `{id}` limited to letters and digits. The `announcements/manage…` routes come before `announcements/{publicId}`.
+
+## 47. People and sign-in accounts (Phase 36A — implemented; DEC-066)
+
+- **Accounts API:** `AccountController` (create, reset password, status) and `MyPasswordController` (`PUT /me/password`). Passwords come from `App\Support\Auth\Passwords` (generate, rules, end sign-ins).
+- **Must change password:** the `users.must_change_password` flag, enforced centrally in `EnsureAccountIsActive`, which allows only `/password` and `PUT /me/password`, and by both sign-ins.
+- **Admin screens** in `App\Livewire\Admin`: `StaffList`, `StaffForm`, `StaffRecord`, `Organization` and `AccountForm`, plus `Users` (reset and suspend). `App\Livewire\Account\ChangePassword` serves both `/password` and `/app/profile/password`.
+- **The same pattern as 35D:** every read and write goes through `/api/v1` via `InternalApi`; `may()` decides only what is shown.
+- **A one-time secret** (the temporary password) is held in a **protected** component property, so it is rendered once and never serialized into Livewire's snapshot.
+- **Routes:** `/admin/people/staff[/new|/{id}[/edit]]`, `/admin/people/organization` and `/admin/administration/users/new`, each behind its permission. `Route::pattern('publicId')` now precedes the Backoffice routes too.

@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Account\MyPasswordController;
 use App\Http\Controllers\Api\V1\Announcements\AnnouncementController;
 use App\Http\Controllers\Api\V1\Announcements\MyAnnouncementController;
 use App\Http\Controllers\Api\V1\Audit\AuditLogController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
+use App\Http\Controllers\Api\V1\Authorization\AccountController;
 use App\Http\Controllers\Api\V1\Authorization\RoleController;
 use App\Http\Controllers\Api\V1\Authorization\UserRoleController;
 use App\Http\Controllers\Api\V1\Clients\ClientController;
@@ -675,4 +677,18 @@ Route::middleware(['auth:sanctum', 'account.active', 'can:authorization.manage']
     Route::put('roles/{role:name}/permissions', [RoleController::class, 'updatePermissions'])->name('roles.permissions.update');
     Route::get('users', [UserRoleController::class, 'index'])->name('users.index');
     Route::put('users/{user:public_id}/role', [UserRoleController::class, 'update'])->name('users.role.update');
+
+    // Phase 36A (DEC-066 M-3…M-5): create an account, reset its password
+    // (a temporary password returned once), suspend or reactivate it.
+    Route::post('users', [AccountController::class, 'store'])->name('users.store');
+    Route::post('users/{user:public_id}/reset-password', [AccountController::class, 'resetPassword'])->name('users.reset-password');
+    Route::put('users/{user:public_id}/status', [AccountController::class, 'updateStatus'])->name('users.status.update');
+});
+
+// Change my password (Phase 36A, DEC-066 M-4/M-8): every account, given
+// its current password. The only API route an account that must change
+// its password may use (EnsureAccountIsActive). Throttled against
+// guessing the current password.
+Route::middleware(['auth:sanctum', 'account.active', 'throttle:6,1'])->group(function (): void {
+    Route::put('me/password', [MyPasswordController::class, 'update'])->name('me.password.update');
 });

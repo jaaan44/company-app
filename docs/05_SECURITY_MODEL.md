@@ -164,10 +164,26 @@ CSV export inherits the identical scoping as its JSON counterpart — no export 
 - Active may authenticate normally. Suspended and inactive may not start a new session/token — enforced explicitly in `AuthController::login` (API) and `LoginForm::login` (Admin), returning a generic-but-honest message rather than a raw 500 or misleading "invalid credentials."
 - **A suspended/inactive account also loses already-authenticated access**, not just the ability to log in again: a single `App\Http\Middleware\EnsureAccountIsActive` (alias `account.active`) is applied to `GET /api/v1/auth/me` and the Admin `/home` placeholder. For the API it revokes the current Sanctum token and returns `403`; for the Admin session it logs the user out and redirects to `/login`. Deliberately not applied to either surface's logout route — revoking one's own access is always allowed.
 - This is centralized in one middleware plus `User::isActive()`, not scattered per-controller checks (CLAUDE.md §7).
+- **Since Phase 36A (DEC-066), Administrators suspend and reactivate accounts** (`PUT /users/{id}/status`). Suspending also deletes the account's tokens and database sessions at once. You can't suspend your own account.
+
+## Passwords (Phase 36A, DEC-066)
+
+- **Creating an account or resetting its password** generates a temporary password on the server (`Passwords::temporary()`, about 92 bits).
+  - It is returned once, in that response, and shown once to the Administrator.
+  - It is stored only as a bcrypt hash, and is never logged, audited, put in the session or URL, or kept in Livewire's snapshot.
+- **`users.must_change_password`:**
+  - until the person chooses their own password, `EnsureAccountIsActive` allows only "Choose your password" and `PUT /me/password`;
+  - the phone sign-in is refused, with a message shown only to someone holding the correct temporary password, so it discloses nothing new.
+- **A reset ends every sign-in** (tokens, the remember token, and database sessions).
+- **Changing your own password:**
+  - it needs the current one and is throttled to 6 per minute;
+  - it keeps only the phone token in use and ends the others;
+  - the rules: at least 12 characters, at most 72 bytes (bcrypt), not the email address, not the current password.
+- **Audit:** `user.created`, `user.password_reset`, `user.status_changed` and `user.password_changed`, never with a password.
 
 ## Administrative Access
 
-- Administrative actions (staff suspension, role changes, settings changes, data exports) are higher-risk and are candidates for stricter checks (e.g. requiring a specific elevated permission, and always audit-logged). **Implemented as of Phase 21:** data exports (every Phase 20 report export, and the Audit Log's own export) and every Staff/Organization/Client/Project/Task/Announcement/attachment mutation named in DEC-044's event catalog are audit-logged. **Staff suspension and role changes are not yet audited** — no mutation endpoint exists anywhere in the application for either (`users.status`/`users.role_id` can currently only be set at account creation); this is a documented, pre-existing gap the Phase 21 consistency audit surfaced, not something this phase's own scope authorized it to fix by building new User-management endpoints. See DEC-044's Known Limitation.
+- Administrative actions (staff suspension, role changes, settings changes, data exports) are higher-risk and are candidates for stricter checks (e.g. requiring a specific elevated permission, and always audit-logged). **Implemented as of Phase 21:** data exports (every Phase 20 report export, and the Audit Log's own export) and every Staff/Organization/Client/Project/Task/Announcement/attachment mutation named in DEC-044's event catalog are audit-logged. **Update (Phases 35C and 36A): role changes (`user.role_changed`) and suspension (`user.status_changed`) now have endpoints and are audited.** *Original note:* **Staff suspension and role changes are not yet audited** — no mutation endpoint exists anywhere in the application for either (`users.status`/`users.role_id` can currently only be set at account creation); this is a documented, pre-existing gap the Phase 21 consistency audit surfaced, not something this phase's own scope authorized it to fix by building new User-management endpoints. See DEC-044's Known Limitation.
 - **Since Phase 34A (DEC-063) the login is shared and no longer checks `admin.access`; the route chain below still does.** **Implemented as of Phase 5 (DEC-028), retiring the Phase 4 transitional `is_admin` flag (DEC-024):** the Admin Backoffice's access chain is `auth` → `account.active` → `can:admin.access` → `/home` (`routes/web.php`), enforced both at login (`App\Livewire\Auth\LoginForm`) and on every subsequent request to `/home` via Laravel's built-in `can` route middleware — not a one-time login-only check. `is_admin` no longer exists on `users`; there is no remaining reference to it in application authorization logic.
 
 ## API Access
