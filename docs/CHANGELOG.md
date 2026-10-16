@@ -4,6 +4,11 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-16 — Phase 37 complete (UAT PASS)
+- **UAT:** UAT-37-01…08 **PASS** on staging `bbe7291`, reported by the product owner ("ALL PASSED").
+- **Closed:** Phase 37 is formally closed. The `[UAT37]` records stay on staging.
+- **Next:** Phase 38 or 39 needs its own authorization; the Flutter app stays paused.
+
 ### 2026-10-16 — Phase 37 deployed to staging
 - **Staging runs `bbe7291`** (deploy output pasted): fast-forward from `0797e0c`, backup completed, `BUILD OK`, no migration, caches built, containers recreated. The smoke tests passed, including the 404 page and gzip, the `/build/` cache and the four security headers on the container and the public site.
 - **UAT-37-01…08:** not yet reported.
