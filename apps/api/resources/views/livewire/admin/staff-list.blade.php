@@ -29,7 +29,7 @@
         </div>
 
         @if ($staff === [])
-            <p class="rounded-xl border border-line bg-raised p-5 text-muted">No staff records match.</p>
+            <x-portal.empty>No staff records match.</x-portal.empty>
         @else
             <p class="mb-2 text-sm text-muted">{{ $meta['total'] ?? count($staff) }} {{ ($meta['total'] ?? count($staff)) === 1 ? 'record' : 'records' }}</p>
             <ul class="divide-y divide-line overflow-hidden rounded-xl border border-line bg-raised">

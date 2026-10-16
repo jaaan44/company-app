@@ -11,6 +11,7 @@ use App\Models\Project;
 use App\Models\Staff;
 use App\Models\Task;
 use App\Models\WorkLog;
+use App\Support\Http\PerPage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -62,7 +63,7 @@ class WorkLogController extends Controller
             ->when($request->filled('to'), fn ($query) => $query->whereDate('work_date', '<=', $request->date('to')))
             ->orderByDesc('work_date')
             ->orderByDesc('created_at')
-            ->paginate($request->integer('per_page', 50));
+            ->paginate(PerPage::from($request, 50));
 
         return WorkLogResource::collection($workLogs);
     }

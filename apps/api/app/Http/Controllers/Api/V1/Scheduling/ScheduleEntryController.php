@@ -12,6 +12,7 @@ use App\Http\Resources\ScheduleEntryResource;
 use App\Models\Project;
 use App\Models\ScheduleEntry;
 use App\Models\Staff;
+use App\Support\Http\PerPage;
 use App\Support\Scheduling\ScheduleEntryTiming;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -56,7 +57,7 @@ class ScheduleEntryController extends Controller
             ->when($request->filled('from'), fn ($query) => $query->whereDate('ends_at', '>=', $request->date('from')))
             ->when($request->filled('to'), fn ($query) => $query->whereDate('starts_at', '<=', $request->date('to')))
             ->orderBy('starts_at')
-            ->paginate($request->integer('per_page', 50));
+            ->paginate(PerPage::from($request, 50));
 
         return ScheduleEntryResource::collection($entries);
     }

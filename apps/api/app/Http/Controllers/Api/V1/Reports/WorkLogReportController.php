@@ -11,6 +11,7 @@ use App\Models\WorkLog;
 use App\Services\Audit\AuditLogger;
 use App\Services\Reporting\WorkLogVisibility;
 use App\Support\Audit\AuditActions;
+use App\Support\Http\PerPage;
 use App\Support\Reporting\CsvExport;
 use App\Support\Reporting\PublicIdResolver;
 use Illuminate\Database\Eloquent\Builder;
@@ -39,7 +40,7 @@ class WorkLogReportController extends Controller
 
     public function index(Request $request): AnonymousResourceCollection
     {
-        return WorkLogResource::collection($this->filteredQuery($request)->paginate($request->integer('per_page', 50)));
+        return WorkLogResource::collection($this->filteredQuery($request)->paginate(PerPage::from($request, 50)));
     }
 
     public function export(Request $request): StreamedResponse

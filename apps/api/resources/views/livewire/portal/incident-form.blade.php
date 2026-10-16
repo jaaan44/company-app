@@ -32,9 +32,9 @@
 
             <fieldset>
                 <legend class="mb-1 text-sm font-semibold">Severity</legend>
-                <div class="flex flex-wrap gap-4">
+                <div class="flex flex-wrap gap-2">
                     @foreach (F::SEVERITIES as $s)
-                        <label class="inline-flex min-h-11 items-center gap-2">
+                        <label class="inline-flex min-h-11 items-center gap-2 rounded-full border border-line px-4 has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:checked]:font-medium">
                             <input type="radio" name="severity" value="{{ $s }}" wire:model="severity" class="size-5"> {{ Format::severity($s) }}
                         </label>
                     @endforeach
@@ -56,7 +56,7 @@
                 @error('occurredAt') <p id="occurred-error" class="mt-1 text-sm font-medium text-danger">{{ $message }}</p> @enderror
             </fieldset>
 
-            @include('livewire.portal.partials.report-field', ['id' => 'location', 'label' => 'Location (optional)', 'model' => 'location', 'error' => 'location', 'type' => 'text', 'max' => F::MAX_SHORT])
+            @include('livewire.portal.partials.report-field', ['id' => 'location', 'label' => 'Location (optional)', 'model' => 'location', 'error' => 'location', 'input' => 'text', 'max' => F::MAX_SHORT])
             @include('livewire.portal.partials.report-field', ['id' => 'description', 'label' => 'What happened', 'model' => 'description', 'error' => 'description', 'max' => F::MAX_LONG, 'rows' => 5])
             @include('livewire.portal.partials.report-field', ['id' => 'immediate', 'label' => 'Immediate action taken (optional)', 'model' => 'immediateAction', 'error' => 'immediateAction', 'max' => F::MAX_TEXT])
             @include('livewire.portal.partials.report-field', ['id' => 'people', 'label' => 'People involved (optional)', 'model' => 'peopleInvolved', 'error' => 'peopleInvolved', 'max' => F::MAX_TEXT])

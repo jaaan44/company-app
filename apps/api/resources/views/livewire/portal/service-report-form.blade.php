@@ -73,7 +73,7 @@
             @include('livewire.portal.partials.report-field', ['id' => 'findings', 'label' => 'Findings (optional)', 'model' => 'findings', 'error' => 'findings', 'max' => F::MAX_TEXT])
             @include('livewire.portal.partials.report-field', ['id' => 'recommendations', 'label' => 'Recommendations (optional)', 'model' => 'recommendations', 'error' => 'recommendations', 'max' => F::MAX_TEXT])
             @include('livewire.portal.partials.report-field', ['id' => 'follow-up', 'label' => 'Follow-up actions (optional)', 'model' => 'followUpActions', 'error' => 'followUpActions', 'max' => F::MAX_TEXT])
-            @include('livewire.portal.partials.report-field', ['id' => 'site-rep', 'label' => 'Site representative (optional)', 'model' => 'siteRepresentative', 'error' => 'siteRepresentative', 'type' => 'text', 'max' => F::MAX_SHORT])
+            @include('livewire.portal.partials.report-field', ['id' => 'site-rep', 'label' => 'Site representative (optional)', 'model' => 'siteRepresentative', 'error' => 'siteRepresentative', 'input' => 'text', 'max' => F::MAX_SHORT])
 
             <div class="flex flex-wrap items-center gap-3">
                 <button type="submit" wire:loading.attr="disabled" wire:target="save"

@@ -10,6 +10,7 @@ use App\Http\Requests\Projects\UpdateProjectMilestoneRequest;
 use App\Http\Resources\ProjectMilestoneResource;
 use App\Models\Project;
 use App\Models\ProjectMilestone;
+use App\Support\Http\PerPage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -46,7 +47,7 @@ class ProjectMilestoneController extends Controller
             // Unique tie-breaker (Phase 29C, R-19): milestones due on the same
             // date would otherwise page unpredictably.
             ->orderBy('id')
-            ->paginate($request->integer('per_page', 50));
+            ->paginate(PerPage::from($request, 50));
 
         return ProjectMilestoneResource::collection($milestones);
     }

@@ -116,15 +116,13 @@
 
             @if ($canEdit)
                 <form wire:submit="addFile" class="mt-4 border-t border-line pt-4">
-                    <label for="report-file" class="mb-1 block text-sm font-semibold">Add a photo or PDF (JPEG, PNG or PDF, up to 10 MB)</label>
+                    <label for="report-file" class="mb-1 block text-sm font-semibold">Add a photo or PDF</label>
+                    <p class="mb-2 text-sm text-muted">JPEG, PNG or PDF, up to 10 MB. It uploads as soon as you choose it.</p>
                     <input id="report-file" type="file" wire:model="file" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
                            @error('file') aria-invalid="true" aria-describedby="report-file-error" @enderror
                            class="block w-full text-sm file:mr-3 file:min-h-11 file:rounded-md file:border file:border-line file:bg-raised file:px-4">
                     @error('file') <p id="report-file-error" class="mt-1 text-sm font-medium text-danger">{{ $message }}</p> @enderror
-                    <p wire:loading wire:target="file" class="mt-2 text-sm text-muted">Preparing the file…</p>
-                    <button type="submit" wire:loading.attr="disabled" wire:target="file,addFile"
-                            class="mt-3 inline-flex min-h-11 items-center rounded-md bg-accent px-4 font-medium text-on-accent hover:opacity-90 disabled:opacity-60">Upload</button>
-                    <span wire:loading wire:target="addFile" class="ml-2 text-sm text-muted">Uploading…</span>
+                    <p wire:loading wire:target="file,addFile" role="status" class="mt-2 text-sm text-muted">Uploading…</p>
                 </form>
             @endif
         </section>

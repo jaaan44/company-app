@@ -10,6 +10,7 @@ use App\Models\Staff;
 use App\Services\Audit\AuditLogger;
 use App\Services\Reporting\LeaveRequestVisibility;
 use App\Support\Audit\AuditActions;
+use App\Support\Http\PerPage;
 use App\Support\Reporting\CsvExport;
 use App\Support\Reporting\PublicIdResolver;
 use Illuminate\Database\Eloquent\Builder;
@@ -36,7 +37,7 @@ class LeaveRequestReportController extends Controller
 
     public function index(Request $request): AnonymousResourceCollection
     {
-        return LeaveRequestResource::collection($this->filteredQuery($request)->paginate($request->integer('per_page', 50)));
+        return LeaveRequestResource::collection($this->filteredQuery($request)->paginate(PerPage::from($request, 50)));
     }
 
     public function export(Request $request): StreamedResponse

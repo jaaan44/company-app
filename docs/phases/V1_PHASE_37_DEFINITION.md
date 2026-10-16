@@ -1,6 +1,6 @@
 # Phase 37 — Web Integration & Mobile-First UX Hardening — Definition
 
-**Status:** PROPOSED (2026-10-16). The product owner authorized Phase 37: "go ahead but i would like you to skip the mobile flutter part. i want to prioritize mvp for web based frontend but make sure mobile first responsiveness is prioritized for staff who will use it with mobile phones". Decisions H-1…H-9 need approval before any code is written.
+**Status:** APPROVED (2026-10-16) and implemented (§9). The product owner authorized Phase 37: "go ahead but i would like you to skip the mobile flutter part. i want to prioritize mvp for web based frontend but make sure mobile first responsiveness is prioritized for staff who will use it with mobile phones", then approved H-1…H-9 with "approve as recommended" (recorded as DEC-067).
 **Roadmap line (before this change):** "Mobile/Web/Admin Integration & UX Hardening — cross-cutting polish and real-device/cross-browser verification across both surfaces…; revisit a shared loading/empty/error-state library."
 
 ---
@@ -129,3 +129,45 @@ Every staff portal page (21 pages) was checked at **360 × 740** in Chromium wit
 3. Test as in §6.
 4. Update the docs and the handoff.
 5. Stop for merge, deployment and UAT.
+
+## 9. As Implemented (2026-10-16)
+
+**All of §3 is implemented.** Handoff: `docs/handoffs/V1_PHASE_37_HANDOFF.md`.
+
+1. **Stay signed in (H-2):**
+   - `LoginForm` has a "Keep me signed in on this device" checkbox, unticked, with "For 30 days. Leave it off on a shared phone or computer.";
+   - it sets the `web` guard's remember duration to 30 days before `Auth::attempt(…, $remember)`;
+   - signing out cycles the remember token (Laravel's own logout), and a reset or suspension clears it (`Passwords::endSignIns`, 36A);
+   - **changing your own password now rotates it** (`MyPasswordController`), so a remembered browser elsewhere is signed out.
+2. **No dead ends (H-3, H-4):**
+   - `resources/js/app.js` intercepts Livewire requests. A 419 or 401 reloads the page instead of Livewire's browser dialog; with the session gone, the reload lands on the sign-in page.
+   - **Sign-in returns you to the page you asked for** (`redirectIntended`), with "Please sign in to continue." above the form.
+   - **Error pages:** `resources/views/errors/{403,404,419,429,500,503}.blade.php` on a self-contained `errors/layout` (no database, session or Livewire).
+3. **Offline:**
+   - `partials/connection-banner` sits in the portal, Admin and sign-in layouts, hidden until needed;
+   - it shows "You're offline. Changes won't be saved until you reconnect." on the `offline` event or when a Livewire request never reaches the server;
+   - it shows "Something went wrong on our side. Please try again." on a 5xx, in place of Livewire's error modal;
+   - it hides when the connection returns or the next request succeeds.
+4. **nginx (H-5):**
+   - `docker/nginx/default.conf` adds gzip (HTML, CSS, JS, JSON, the manifest, SVG, text) and the four headers on every response;
+   - `/build/` adds `Cache-Control: public, max-age=31536000, immutable`;
+   - the staging image job checks all of this on the built image.
+5. **API (H-7):**
+   - `App\Support\Http\PerPage::from()` keeps `per_page` between 1 and 100, used by 35 list endpoints. `/me/tasks` keeps its own cap of 50, and `/users` its fixed 25.
+   - `App\Support\Database\Like` escapes `%`, `_` and `!` with `ESCAPE '!'` (the same on SQLite and MySQL), in the six `q` searches: staff, users, clients, contacts, projects and tasks.
+   - The Audit log's `from`/`to` are company days.
+   - **The incident resolve messages** are now plain: "Describe the resolution before resolving this incident." and "Give a corrective action (or record the immediate action taken) before resolving this incident."
+   - The portal's Chat reads its messages 100 at a time, so "Load earlier messages" still reaches 600. The Admin's staff and organisation lists ask for 100 instead of 200.
+6. **The phone walk-through (H-6)** of the eight tasks at 360 px (Pixel, light) and 390 px (iPhone, dark) found and fixed:
+   - **the incident form's long fields were one-line inputs.** The shared field partial's `$type` parameter was overridden by the form's own `$type` property, so it was renamed `$input`;
+   - **the severity choices** were 20 px radios; they are now 44 px pills;
+   - **a report photo needed a second tap** on Upload; it now uploads as soon as it is chosen ("Uploading…" is announced);
+   - **the sign-in fields** gained `inputmode="email"`, `autocapitalize="none"`, `spellcheck="false"` and `enterkeyhint` (next, go).
+7. **The small items from 34–36 (G-7):**
+   - an Administrator can **link an existing sign-in account** to a staff record (search accounts without a staff record) and **unlink** it, after a confirmation;
+   - the severity pills, the Audit log's company days and the resolve messages, as above.
+8. **H-8:** `x-portal.empty` replaces 11 copies of the empty-list markup.
+
+**Deviations:**
+- **H-3:** the expired session goes to `/login` through the reload, not `/login?expired=1`, and the sign-in page says "Please sign in to continue." rather than "Your session ended. Please sign in again." The page doesn't know whether the session expired or was never there, and the effect is the same.
+- **The Backoffice** got the same error pages and banner, but no other phone polish (it stays a desktop tool, H-9).

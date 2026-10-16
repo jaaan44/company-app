@@ -290,6 +290,18 @@ The visual-design foundation for Flutter is below (DEC-046). **The web equivalen
   - a confirmation message shows as a **toast** above the tab bar (`role="status"`, hides after 4.5 s);
   - a confirmation that needs no typing is an **in-app dialog** (`x-portal.confirm`, a modal `<dialog>`). It is a sheet from the bottom on phones and centred on wider screens. The question is its heading, the body follows, **Cancel** has focus, Escape closes it, and destructive confirms use the danger colour.
   - The browser's own dialogs are no longer used.
+- **Phones first (37, DEC-067):** the staff portal is the product for staff on phones (the Flutter app is paused).
+  - **Sign-in:** "Keep me signed in on this device" (unticked; "For 30 days. Leave it off on a shared phone or computer."). The email field uses `inputmode="email"` with no auto-capitalisation or spell-check; `enterkeyhint` is next, then go. After sign-in you return to the page you asked for ("Please sign in to continue.").
+  - **Connection banner:** a bar across the top (danger colour, `role="status"`).
+    - It says "You're offline. Changes won't be saved until you reconnect." when the phone is offline or a tap didn't reach the server.
+    - It says "Something went wrong on our side. Please try again." on a server error.
+    - It goes when things recover.
+  - **No browser dialogs, even when a page expires:** the page reloads, and the sign-in page brings the person back.
+  - **Error pages** (403, 404, 419, 429, 500, 503): the app's mark, a short title, one plain sentence and a full-width **Go to Home** (**Continue** for an expired page). Light and dark; no technical details.
+  - **Empty lists:** `x-portal.empty`, a bordered card with one muted sentence.
+  - **Choice pills:** a short single choice, like an incident's severity, is a row of 44 px pills, with the chosen one in accent-soft. Not 20 px radios.
+  - **Long text** fields are multi-line (`textarea`).
+  - **A file uploads as soon as it is chosen**, with "Uploading…" announced. There is no separate Upload button.
 - **Icons (34F):** inline SVG Material shapes (`x-portal.icon`), always beside a text label and hidden from screen readers.
 - **Confirmations (34C):** a decision that can't be undone from the page (Cancel request, Approve, Reject) opens an inline panel in place of its buttons: the question as a heading, the body when there is one, the text field (focused), and the confirm button next to Keep it / Back. Destructive confirms use the danger colour. No browser dialog is used for these, so the reason or note can be typed in the same place.
 

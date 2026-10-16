@@ -10,6 +10,7 @@ use App\Models\Project;
 use App\Services\Audit\AuditLogger;
 use App\Services\Reporting\ProjectVisibility;
 use App\Support\Audit\AuditActions;
+use App\Support\Http\PerPage;
 use App\Support\Reporting\CsvExport;
 use App\Support\Reporting\PublicIdResolver;
 use Illuminate\Database\Eloquent\Builder;
@@ -36,7 +37,7 @@ class ProjectReportController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         return ProjectResource::collection(
-            $this->filteredQuery($request)->withCount('memberships')->paginate($request->integer('per_page', 50))
+            $this->filteredQuery($request)->withCount('memberships')->paginate(PerPage::from($request, 50))
         );
     }
 

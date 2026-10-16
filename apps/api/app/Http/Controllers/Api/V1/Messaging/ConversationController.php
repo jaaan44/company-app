@@ -14,6 +14,7 @@ use App\Models\Conversation;
 use App\Models\Notification;
 use App\Models\Staff;
 use App\Support\CompanyDay;
+use App\Support\Http\PerPage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -55,7 +56,7 @@ class ConversationController extends Controller
             // Unique tie-breaker (Phase 32, R-2a): conversations without
             // messages otherwise tie.
             ->orderByDesc('id')
-            ->paginate($request->integer('per_page', 50));
+            ->paginate(PerPage::from($request, 50));
 
         return ConversationResource::collection($conversations)
             ->additional(['meta' => ['company_day' => CompanyDay::meta()]]);

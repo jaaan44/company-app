@@ -31,7 +31,7 @@
     @if ($errorMessage && ! $meta)
         <x-portal.error :message="$errorMessage" />
     @elseif ($rows === [])
-        <p class="rounded-xl border border-line bg-raised p-5 text-muted">Nothing matches these filters.</p>
+        <x-portal.empty>Nothing matches these filters.</x-portal.empty>
     @else
         <p class="mb-2 text-sm text-muted">{{ $meta['total'] ?? count($rows) }} {{ ($meta['total'] ?? count($rows)) === 1 ? 'row' : 'rows' }}. The CSV has every matching row and more columns.</p>
         <div class="overflow-x-auto rounded-xl border border-line bg-raised" tabindex="0" role="region" aria-label="{{ $definition['title'] }} report rows">

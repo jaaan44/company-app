@@ -186,6 +186,29 @@ CSV export inherits the identical scoping as its JSON counterpart — no export 
   - it keeps only the phone token in use and ends the others;
   - the rules: at least 12 characters, at most 72 bytes (bcrypt), not the email address, not the current password.
 - **Audit:** `user.created`, `user.password_reset`, `user.status_changed` and `user.password_changed`, never with a password.
+- **Since Phase 37:** changing your own password also rotates the remember token, so "Keep me signed in" ends on every other browser.
+
+## Web Sessions, Error Pages and Headers (Phase 37, DEC-067)
+
+- **"Keep me signed in on this device"** (H-2):
+  - **The cookie:** unticked by default; when ticked, Laravel's remember cookie lasts **30 days**. It is `HttpOnly`, `SameSite=Lax`, and `Secure` where `SESSION_SECURE_COOKIE=true` (staging).
+  - **What ends it:** signing out, changing your password, a reset or a suspension. Each replaces or clears `users.remember_token`, so an old cookie signs nobody in. `EnsureAccountIsActive` still refuses a suspended or must-change account on every request.
+  - **The risk** is a lost phone that was left signed in, which these controls bound. The sign-in page tells people to leave it off on a shared device.
+- **An expired page or session** reloads to the sign-in page, never a browser dialog. The return address is the page the person asked for, which Laravel's `auth` middleware keeps in the session. There is no `?redirect=` parameter for anyone to supply.
+- **Error pages** show a title, one sentence and a link. They never show an exception, a stack trace or a path, whatever `APP_DEBUG` says for HTTP errors. A 500 from a non-HTTP exception shows Laravel's debug page only where `APP_DEBUG=true`, which is never on staging.
+- **Headers from the app's nginx:**
+
+  | Header | Value |
+  |---|---|
+  | `X-Content-Type-Options` | `nosniff` |
+  | `Referrer-Policy` | `strict-origin-when-cross-origin` |
+  | `X-Frame-Options` | `SAMEORIGIN` |
+  | `Permissions-Policy` | `camera=(self), geolocation=(self), microphone=(), payment=(), usb=()` |
+
+  - **Not yet:** a Content-Security-Policy (Phase 39, release readiness). HSTS belongs to the host's TLS nginx.
+- **Lists and searches:**
+  - `per_page` is capped at 100, which bounds the cost of a single request;
+  - `LIKE` wildcards in `q` are escaped, so a search can't widen itself or force a full pattern scan with `%`.
 
 ## Administrative Access
 

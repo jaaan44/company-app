@@ -212,13 +212,13 @@ class ReportPagesTest extends TestCase
             ->assertSee('Edit')->assertSee('Submit')->assertSee('Delete draft')->assertDontSee('Return to draft')
             ->assertSeeInOrder(['Submit this report?', "Your manager will review it. You can't edit it after submitting."])
             ->assertSee('<dialog', false)->assertSee('$refs.dialog.close(); $wire.submitReport()', false)
-            ->assertSee('Photos and files (0)')->assertSee('Upload');
+            ->assertSee('Photos and files (0)')->assertSee('It uploads as soon as you choose it.');
 
         Livewire::test(ReportShow::class, ['publicId' => $draft->public_id])
             ->call('submitReport')
             ->assertSee('Report submitted.')
             ->assertSee('Submitted')
-            ->assertDontSee('Delete draft')->assertDontSee('Upload');
+            ->assertDontSee('Delete draft')->assertDontSee('Add a photo or PDF');
 
         $this->assertSame(ServiceReportStatus::Submitted, $draft->fresh()->status);
     }
@@ -253,7 +253,7 @@ class ReportPagesTest extends TestCase
         $this->actingAs($managerUser, 'web')->get('/app/reports/service/'.$draft->public_id)->assertOk()
             ->assertSee('Replaced the seals.')
             ->assertDontSee(route('portal.service-report.edit', $draft->public_id), false)
-            ->assertDontSee('Delete draft')->assertDontSee('Upload');
+            ->assertDontSee('Delete draft')->assertDontSee('Add a photo or PDF');
         $this->get('/app/reports/service/'.$rejected->public_id)->assertOk()->assertDontSee('Return to draft');
     }
 
@@ -275,13 +275,12 @@ class ReportPagesTest extends TestCase
         $this->actingAs($this->user, 'web');
 
         $page = Livewire::test(ReportShow::class, ['publicId' => $draft->public_id])
+            // Phase 37: choosing a file uploads it; no separate Upload tap.
             ->set('file', UploadedFile::fake()->image('door.jpg', 640, 480))
-            ->call('addFile')
             ->assertHasNoErrors()
             ->assertSee('File added.')
             ->assertSee('door.jpg')
             ->set('file', UploadedFile::fake()->createWithContent('quote.pdf', "%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n"))
-            ->call('addFile')
             ->assertSee('quote.pdf')
             ->assertSee('Photos and files (2)');
 
@@ -352,6 +351,11 @@ class ReportPagesTest extends TestCase
         $this->actingAs($this->user, 'web');
 
         $form = Livewire::test(IncidentForm::class)
+            // Phase 37: the long fields are multi-line, the severity choices thumb-sized.
+            ->assertSeeHtml('<textarea id="description"')->assertSeeHtml('<textarea id="immediate"')
+            ->assertSeeHtml('<textarea id="people"')->assertSeeHtml('<textarea id="witnesses"')
+            ->assertSeeHtml('<input id="location" type="text"')
+            ->assertSeeHtml('inline-flex min-h-11 items-center gap-2 rounded-full')
             ->assertSet('date', '2026-10-13')->assertSet('time', '10:00')->assertSet('severity', 'medium')
             ->set('time', '11:30')
             ->call('save')

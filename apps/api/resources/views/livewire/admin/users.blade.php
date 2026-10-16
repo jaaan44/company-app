@@ -34,7 +34,7 @@
         @endif
 
         @if ($users === [])
-            <p class="rounded-xl border border-line bg-raised p-5 text-muted">No accounts match.</p>
+            <x-portal.empty>No accounts match.</x-portal.empty>
         @else
             <ul class="divide-y divide-line overflow-hidden rounded-xl border border-line bg-raised">
                 @foreach ($users as $user)

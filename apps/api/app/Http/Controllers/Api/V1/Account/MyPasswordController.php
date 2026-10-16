@@ -10,6 +10,7 @@ use App\Support\Auth\Passwords;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\PersonalAccessToken;
 
@@ -17,7 +18,8 @@ use Laravel\Sanctum\PersonalAccessToken;
  * PUT /api/v1/me/password (Phase 36A, DEC-066 M-4/M-8): anyone changes
  * their own password, given the current one. It clears "must change
  * password" and ends the account's other phone sign-ins; the sign-in in
- * use stays. Audited without the password.
+ * use stays, and so does this web session, but every "Keep me signed in"
+ * cookie stops working (Phase 37). Audited without the password.
  */
 class MyPasswordController extends Controller
 {
@@ -44,6 +46,8 @@ class MyPasswordController extends Controller
 
         $user->password = $data['password'];
         $user->must_change_password = false;
+        // Phase 37 (DEC-067 H-2): "Keep me signed in" on other devices ends.
+        $user->setRememberToken(Str::random(60));
         $user->save();
 
         // A phone request keeps the token it used; a web request has none.

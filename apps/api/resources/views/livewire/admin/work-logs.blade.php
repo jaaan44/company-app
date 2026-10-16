@@ -25,7 +25,7 @@
         @endif
 
         @if ($logs === [])
-            <p class="rounded-xl border border-line bg-raised p-5 text-muted">No work logs match.</p>
+            <x-portal.empty>No work logs match.</x-portal.empty>
         @else
             <p class="mb-2 text-sm text-muted">{{ $meta['total'] ?? count($logs) }} {{ ($meta['total'] ?? count($logs)) === 1 ? 'log' : 'logs' }}</p>
             <ul class="divide-y divide-line overflow-hidden rounded-xl border border-line bg-raised">

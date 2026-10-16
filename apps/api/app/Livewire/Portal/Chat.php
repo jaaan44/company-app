@@ -4,6 +4,7 @@ namespace App\Livewire\Portal;
 
 use App\Livewire\Portal\Concerns\CallsInternalApi;
 use App\Services\Portal\PortalApiException;
+use App\Support\Http\PerPage;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -101,10 +102,21 @@ class Chat extends Component
         if (! $this->noProfile && $this->errorMessage === null) {
             try {
                 $conversation = $this->api()->get($this->path())['data'] ?? null;
-                $page = $this->api()->get($this->path().'/messages', ['per_page' => self::PAGE_SIZE * $this->pages, 'page' => 1]);
-                $messages = array_reverse($page['data'] ?? []);
-                $meta = $page['meta'] ?? null;
-                $newest = $page['data'][0]['public_id'] ?? null;
+                // Newest first, PAGE_SIZE × pages of them, fetched 100 at a
+                // time (the API's page-size cap since Phase 37).
+                $wanted = self::PAGE_SIZE * $this->pages;
+                $rows = [];
+                for ($apiPage = 1; count($rows) < $wanted; $apiPage++) {
+                    $page = $this->api()->get($this->path().'/messages', ['per_page' => min($wanted, PerPage::MAX), 'page' => $apiPage]);
+                    $rows = array_merge($rows, $page['data'] ?? []);
+                    $meta = $page['meta'] ?? null;
+                    if ($apiPage >= ($meta['last_page'] ?? 1)) {
+                        break;
+                    }
+                }
+                $rows = array_slice($rows, 0, $wanted);
+                $messages = array_reverse($rows);
+                $newest = $rows[0]['public_id'] ?? null;
                 if ($newest !== null && $newest !== $this->readUpTo) {
                     $this->api()->send('POST', $this->path().'/read');
                     $this->readUpTo = $newest;

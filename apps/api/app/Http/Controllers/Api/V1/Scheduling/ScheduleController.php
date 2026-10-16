@@ -15,6 +15,7 @@ use App\Models\Role;
 use App\Models\ScheduleEntry;
 use App\Models\Task;
 use App\Support\CompanyTimezone;
+use App\Support\Http\PerPage;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -333,7 +334,7 @@ class ScheduleController extends Controller
     private function paginateItems(Collection $items, Request $request): LengthAwarePaginator
     {
         $page = max(1, $request->integer('page', 1));
-        $perPage = max(1, $request->integer('per_page', 50));
+        $perPage = max(1, PerPage::from($request, 50));
         $slice = $items->slice(($page - 1) * $perPage, $perPage)->values();
 
         return new LengthAwarePaginator(

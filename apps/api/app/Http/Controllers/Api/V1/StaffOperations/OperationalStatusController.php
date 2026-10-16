@@ -8,6 +8,7 @@ use App\Http\Requests\StaffOperations\StoreOperationalStatusRequest;
 use App\Http\Resources\OperationalStatusResource;
 use App\Models\Staff;
 use App\Support\CompanyTimezone;
+use App\Support\Http\PerPage;
 use App\Support\Reporting\OverdueTasks;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -65,7 +66,7 @@ class OperationalStatusController extends Controller
                 // same second otherwise have no defined order, so a paged
                 // client could see one twice or never.
                 ->orderByDesc('id')
-                ->paginate($request->integer('per_page', 20))
+                ->paginate(PerPage::from($request, 20))
         );
     }
 

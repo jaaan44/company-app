@@ -63,7 +63,7 @@
         @endif
 
         @if ($items === [])
-            <p class="rounded-xl border border-line bg-raised p-5 text-muted">No {{ $current }} yet.</p>
+            <x-portal.empty>No {{ $current }} yet.</x-portal.empty>
         @else
             <ul class="divide-y divide-line overflow-hidden rounded-xl border border-line bg-raised">
                 @foreach ($items as $item)

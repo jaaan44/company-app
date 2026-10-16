@@ -167,6 +167,36 @@ class PeopleAdminPagesTest extends TestCase
             ->assertSee('lia.sign-in@company.test')->assertSee('Manage the account')->assertDontSee('Create a sign-in account');
     }
 
+    public function test_an_existing_sign_in_account_can_be_linked_and_unlinked(): void
+    {
+        $lia = Staff::factory()->create(['first_name' => 'Lia', 'last_name' => 'Ramos']);
+        $free = User::factory()->staff()->create(['name' => 'Lia Ramos', 'email' => 'lia.r@company.test']);
+        $taken = User::factory()->staff()->create(['name' => 'Lia Other', 'email' => 'lia.o@company.test']);
+        Staff::factory()->create(['user_id' => $taken->id]);
+        $this->actingAs($this->admin, 'web');
+
+        $page = Livewire::test(StaffRecord::class, ['publicId' => $lia->public_id])
+            ->assertSee('Or link an existing account')
+            ->set('accountSearch', 'l')->assertDontSee('lia.r@company.test')
+            ->set('accountSearch', 'lia')->assertSee('lia.r@company.test')->assertDontSee('lia.o@company.test')
+            ->set('accountSearch', 'nobody')->assertSee('No account without a staff record matches "nobody".', false)
+            ->set('accountSearch', 'lia')
+            ->call('linkAccount', $free->public_id)
+            ->assertSet('accountSearch', '')->assertSet('savedMessage', 'Sign-in account linked.')
+            ->assertSee('lia.r@company.test')->assertSee('Unlink')->assertDontSee('Or link an existing account');
+        $this->assertSame($free->id, $lia->fresh()->user_id);
+
+        $page->call('linkAccount', 'not a valid id!');
+        $this->assertSame($free->id, $lia->fresh()->user_id);
+
+        $page->call('unlinkAccount')->assertSet('savedMessage', 'Sign-in account unlinked.')->assertSee('No sign-in account');
+        $this->assertNull($lia->fresh()->user_id);
+        $this->assertModelExists($free);
+
+        $page->call('linkAccount', $taken->public_id);
+        $this->assertNull($lia->fresh()->user_id);
+    }
+
     public function test_deleting_a_staff_record_with_history_shows_why_and_one_without_is_deleted(): void
     {
         $ben = Staff::factory()->create();

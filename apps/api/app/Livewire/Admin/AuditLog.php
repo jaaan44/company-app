@@ -16,7 +16,7 @@ use ReflectionClass;
  * first, 25 per page, filterable by action. Read-only; the API allows it
  * to Administrators only.
  *
- * Phase 36D: also by dates (UTC days, as the API filters), by person (an
+ * Phase 36D: also by dates (company days since Phase 37), by person (an
  * entry's actor) and by record (its id); clicking a person or a record id
  * shows only their entries.
  */

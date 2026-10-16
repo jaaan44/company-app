@@ -12,6 +12,7 @@ use App\Models\Task;
 use App\Services\Audit\AuditLogger;
 use App\Services\Reporting\TaskVisibility;
 use App\Support\Audit\AuditActions;
+use App\Support\Http\PerPage;
 use App\Support\Reporting\CsvExport;
 use App\Support\Reporting\OverdueTasks;
 use App\Support\Reporting\PublicIdResolver;
@@ -42,7 +43,7 @@ class TaskReportController extends Controller
 
     public function index(Request $request): AnonymousResourceCollection
     {
-        return TaskResource::collection($this->filteredQuery($request)->paginate($request->integer('per_page', 50)));
+        return TaskResource::collection($this->filteredQuery($request)->paginate(PerPage::from($request, 50)));
     }
 
     public function export(Request $request): StreamedResponse

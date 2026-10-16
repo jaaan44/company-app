@@ -9,6 +9,7 @@ use App\Http\Resources\LeaveRequestResource;
 use App\Models\LeaveRequest;
 use App\Models\Staff;
 use App\Support\CompanyDay;
+use App\Support\Http\PerPage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -63,7 +64,7 @@ class MyTeamLeaveRequestController extends Controller
             $query->orderByDesc('start_date')->orderByDesc('id');
         }
 
-        return LeaveRequestResource::collection($query->paginate($request->integer('per_page', 50)))
+        return LeaveRequestResource::collection($query->paginate(PerPage::from($request, 50)))
             ->additional(['meta' => [
                 'can_review' => $canReview,
                 'direct_reports_count' => $canReview ? Staff::query()->where('manager_id', $staff->id)->count() : 0,

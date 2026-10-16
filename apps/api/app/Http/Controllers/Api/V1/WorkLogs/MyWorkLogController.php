@@ -12,6 +12,7 @@ use App\Models\Staff;
 use App\Models\Task;
 use App\Models\WorkLog;
 use App\Support\CompanyTimezone;
+use App\Support\Http\PerPage;
 use App\Support\Reporting\OverdueTasks;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -63,7 +64,7 @@ class MyWorkLogController extends Controller
             // second on the same date otherwise have no defined order, so a
             // paginated client could see one twice or never.
             ->orderByDesc('id')
-            ->paginate($request->integer('per_page', 50));
+            ->paginate(PerPage::from($request, 50));
 
         // The company day (Phase 29B, R-12) — additive: the paginator's own
         // `meta` keys are unchanged. Clients take "today" from here, never

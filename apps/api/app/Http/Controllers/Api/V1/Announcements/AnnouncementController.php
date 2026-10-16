@@ -14,6 +14,7 @@ use App\Models\Department;
 use App\Models\Team;
 use App\Services\Audit\AuditLogger;
 use App\Support\Audit\AuditActions;
+use App\Support\Http\PerPage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -53,7 +54,7 @@ class AnnouncementController extends Controller
             ->when($request->filled('audience_type'), fn ($query) => $query->where('audience_type', $request->string('audience_type')))
             ->orderByDesc('published_at')
             ->orderByDesc('updated_at')
-            ->paginate($request->integer('per_page', 50));
+            ->paginate(PerPage::from($request, 50));
 
         return AnnouncementResource::collection($announcements);
     }

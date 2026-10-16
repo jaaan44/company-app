@@ -48,14 +48,14 @@ class ResolveIncidentReportRequest extends FormRequest
             $resolution = $this->has('resolution') ? $this->input('resolution') : $report->resolution;
 
             if (blank($resolution)) {
-                $validator->errors()->add('resolution', 'A resolution is required before this incident report can be resolved.');
+                $validator->errors()->add('resolution', 'Describe the resolution before resolving this incident.');
             }
 
             $correctiveAction = $this->has('corrective_action') ? $this->input('corrective_action') : $report->corrective_action;
             $immediateAction = $this->has('immediate_action_taken') ? $this->input('immediate_action_taken') : $report->immediate_action_taken;
 
             if (blank($correctiveAction) && blank($immediateAction)) {
-                $validator->errors()->add('corrective_action', 'At least one of corrective_action or immediate_action_taken is required before this incident report can be resolved.');
+                $validator->errors()->add('corrective_action', 'Give a corrective action (or record the immediate action taken) before resolving this incident.');
             }
         });
     }

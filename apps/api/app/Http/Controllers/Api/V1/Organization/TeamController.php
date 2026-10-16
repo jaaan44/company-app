@@ -11,6 +11,7 @@ use App\Models\Department;
 use App\Models\Team;
 use App\Services\Audit\AuditLogger;
 use App\Support\Audit\AuditActions;
+use App\Support\Http\PerPage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -47,7 +48,7 @@ class TeamController extends Controller
             )
             ->orderBy('sort_order')
             ->orderBy('name')
-            ->paginate($request->integer('per_page', 50));
+            ->paginate(PerPage::from($request, 50));
 
         return TeamResource::collection($teams);
     }

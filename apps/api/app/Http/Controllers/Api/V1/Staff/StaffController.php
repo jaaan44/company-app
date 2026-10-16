@@ -14,6 +14,8 @@ use App\Models\Team;
 use App\Models\User;
 use App\Services\Audit\AuditLogger;
 use App\Support\Audit\AuditActions;
+use App\Support\Database\Like;
+use App\Support\Http\PerPage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -67,23 +69,14 @@ class StaffController extends Controller
                 $request->filled('manager'),
                 fn ($query) => $query->where('manager_id', $this->resolveId(Staff::class, $request->string('manager')->toString()) ?? -1)
             )
-            ->when($request->filled('q'), function ($query) use ($request) {
-                $term = '%'.$request->string('q')->toString().'%';
-
-                $query->where(function ($query) use ($term) {
-                    $query->where('first_name', 'like', $term)
-                        ->orWhere('last_name', 'like', $term)
-                        ->orWhere('preferred_name', 'like', $term)
-                        ->orWhere('employee_number', 'like', $term);
-                });
-            })
+            ->when($request->filled('q'), fn ($query) => Like::anyContains($query, ['first_name', 'last_name', 'preferred_name', 'employee_number'], $request->string('q')->toString()))
             ->orderBy('last_name')
             ->orderBy('first_name')
             // Unique tie-breaker (Phase 28, R-6): without it, staff with
             // the same name have no defined order, so a paginated client
             // could see one twice or never. Visible order is unchanged.
             ->orderBy('id')
-            ->paginate($request->integer('per_page', 50));
+            ->paginate(PerPage::from($request, 50));
 
         return StaffResource::collection($staff);
     }

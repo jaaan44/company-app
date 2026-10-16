@@ -26,7 +26,7 @@
         </div>
 
         @if ($entries === [])
-            <p class="rounded-xl border border-line bg-raised p-5 text-muted">No schedule entries match.</p>
+            <x-portal.empty>No schedule entries match.</x-portal.empty>
         @else
             <ul class="divide-y divide-line overflow-hidden rounded-xl border border-line bg-raised">
                 @foreach ($entries as $entry)
