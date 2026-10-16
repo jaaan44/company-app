@@ -1,6 +1,6 @@
 # Phase 37 — Web Integration & Mobile-First UX Hardening — Handoff
 
-**Status: merged (PR #135, `bbe7291`, 2026-10-16), awaiting deployment and UAT.** UAT-37-01…08 are `NOT RUN`. There is **no migration**. The deploy rebuilds both images: nginx gains compression, caching and headers.
+**Status: merged (PR #135, `bbe7291`) and deployed to staging (2026-10-16), awaiting UAT.** UAT-37-01…08 are `NOT RUN`. There is **no migration**. The deploy rebuilds both images: nginx gains compression, caching and headers.
 
 ## 1. Phase Identification
 
@@ -183,3 +183,8 @@ See §5.
   - smoke tests, including the 404 page and the headers on the container nginx (`127.0.0.1:8012`) and on the public sign-in page;
   - UAT-37-01…08 on your own iPhone and Android phone and a computer, with Lia, Nina (36A) and the Administrator. No new account.
 - **Not run:** the deployment and UAT.
+
+## Addendum — Deployment (2026-10-16)
+
+- **Deployed (2026-10-16, output pasted):** staging runs `bbe7291`. Fast-forward from `0797e0c`; backup `company-app-20261016-160326.sql` (167,997 bytes, `-- Dump completed on 2026-10-16 16:03:27`); `BUILD OK` (both images); migration `[6] Ran`, nothing pending; three caches; app and nginx recreated and `Up`, MySQL `healthy`; smoke tests: `app`, `app/tasks`, `admin` `302 -> /login`, `api staff 401`, `<title>Page not found — Company App` with `404`, the Keep me signed in checkbox present; headers on the container nginx (`app-DRD5upZk.css`): `200`, `Content-Encoding: gzip`, `Cache-Control: public, max-age=31536000, immutable` and the four security headers; on the public sign-in page (`HTTP/2 200`) the four security headers, each once.
+- **UAT-37-01…08:** not yet reported; still `NOT RUN`.

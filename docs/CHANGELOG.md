@@ -4,6 +4,10 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-16 — Phase 37 deployed to staging
+- **Staging runs `bbe7291`** (deploy output pasted): fast-forward from `0797e0c`, backup completed, `BUILD OK`, no migration, caches built, containers recreated. The smoke tests passed, including the 404 page and gzip, the `/build/` cache and the four security headers on the container and the public site.
+- **UAT-37-01…08:** not yet reported.
+
 ### 2026-10-16 — Phase 37 merged; UAT runbook
 - **Merged:** PR #135 as `bbe7291`. CI was green, including the nginx header check on the built image.
 - **Runbook:** `docs/testing/PHASE_37_UAT_PREPARATION.md` covers the deploy (no migration; both images rebuilt; header and error-page smoke tests) and UAT-37-01…08 on real phones.

@@ -160,7 +160,7 @@ Cross-module dashboard and administrative reports. Preceded by a product-owner-r
 ### Release Preparation (re-baselined)
 *Sequential, depends on the phases above*
 
-**Phase 37 — Web Integration & Mobile-First UX Hardening** *(formerly "Mobile/Web/Admin Integration & UX Hardening", formerly 36; **implemented 2026-10-16** under DEC-067, `docs/phases/V1_PHASE_37_DEFINITION.md`, see `docs/handoffs/V1_PHASE_37_HANDOFF.md`; merged as `bbe7291` (PR #135); **awaiting deployment and UAT-37**)*. The web app is made dependable for staff on phones:
+**Phase 37 — Web Integration & Mobile-First UX Hardening** *(formerly "Mobile/Web/Admin Integration & UX Hardening", formerly 36; **implemented 2026-10-16** under DEC-067, `docs/phases/V1_PHASE_37_DEFINITION.md`, see `docs/handoffs/V1_PHASE_37_HANDOFF.md`; merged as `bbe7291` (PR #135) and deployed to staging; **awaiting UAT-37**)*. The web app is made dependable for staff on phones:
 - stay signed in;
 - no dead ends or browser pop-ups;
 - an offline banner;
