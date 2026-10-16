@@ -3,9 +3,25 @@
     <h1 class="sr-only">Users and roles</h1>
 
     @if ($noProfile || ($errorMessage && ! $meta))
-        <x-portal.error :message="$errorMessage ?? 'Only Administrators can change roles.'" />
+        <x-portal.error :message="$errorMessage ?? 'Only Administrators can manage accounts.'" />
     @else
-        <p class="mb-4 text-muted">A person's role decides what they can do, as set on <a href="{{ route('admin.roles') }}" class="text-accent-ink underline underline-offset-4">Roles &amp; permissions</a>. A change applies from their next action.</p>
+        <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+            <p class="min-w-0 flex-1 basis-72 text-muted">Everyone who can sign in. A person's role decides what they can do, as set on <a href="{{ route('admin.roles') }}" class="text-accent-ink underline underline-offset-4">Roles &amp; permissions</a>. A change applies from their next action.</p>
+            <a href="{{ route('admin.users.new') }}" class="inline-flex min-h-11 items-center gap-2 rounded-full bg-accent px-5 font-medium text-on-accent hover:opacity-90">
+                <x-portal.icon name="add" class="size-5" /> New account
+            </a>
+        </div>
+
+        @if ($resetAccount)
+            <div class="mb-4">
+                @if ($temporaryPassword)
+                    @include('livewire.admin.partials.temporary-password', ['heading' => 'Password reset for '.$resetAccount['name'], 'account' => $resetAccount, 'password' => $temporaryPassword])
+                @else
+                    <p role="status" class="rounded-xl border border-line bg-raised p-5">The password for {{ $resetAccount['name'] }} was reset. The temporary password is no longer shown; reset again if it wasn't passed on.</p>
+                @endif
+                <button type="button" wire:click="dismissReset" class="mt-2 inline-flex min-h-11 items-center rounded-full px-4 font-medium text-accent-ink hover:bg-hover">Done</button>
+            </div>
+        @endif
 
         <div class="mb-4">
             <label for="user-search" class="block text-sm font-medium">Search by name or email</label>
@@ -27,9 +43,35 @@
                         <span class="min-w-0 flex-1 basis-56">
                             <span class="block font-medium">{{ $user['name'] }} @if ($user['is_me']) <span class="text-sm font-normal text-muted">(you)</span> @endif</span>
                             <span class="block break-all text-sm text-muted">{{ $user['email'] }}</span>
-                            @if ($user['status'] !== 'active')
-                                <x-portal.chip tone="muted">{{ ucfirst($user['status']) }}</x-portal.chip>
-                            @endif
+                            <span class="mt-1 flex flex-wrap gap-2">
+                                @if ($user['status'] !== 'active')
+                                    <x-portal.chip tone="danger">{{ ucfirst($user['status']) }}</x-portal.chip>
+                                @endif
+                                @if ($user['must_change_password'] ?? false)
+                                    <x-portal.chip tone="info">Must choose a password</x-portal.chip>
+                                @endif
+                                @if ($user['staff'] ?? null)
+                                    <a href="{{ route('admin.staff.show', $user['staff']['public_id']) }}" class="text-sm text-accent-ink underline underline-offset-4">Staff record</a>
+                                @else
+                                    <x-portal.chip tone="muted">No staff record</x-portal.chip>
+                                @endif
+                            </span>
+                            @unless ($user['is_me'])
+                                <span class="mt-1 flex flex-wrap gap-1">
+                                    <x-portal.confirm :title="'Reset '.$user['name'].'\'s password?'" body="They're signed out everywhere and get a temporary password, shown to you once. They choose their own at their next sign-in." confirm="Reset password"
+                                                      :action="'resetPassword(\''.$user['public_id'].'\')'"
+                                                      class="inline-flex min-h-11 items-center rounded-md px-3 text-sm text-accent-ink hover:bg-hover">Reset password<span class="sr-only"> for {{ $user['name'] }}</span></x-portal.confirm>
+                                    @if ($user['status'] === 'active')
+                                        <x-portal.confirm :title="'Suspend '.$user['name'].'?'" body="They're signed out everywhere and can't sign in until you reactivate the account. Nothing is deleted." confirm="Suspend"
+                                                          :action="'setStatus(\''.$user['public_id'].'\', \'suspended\')'" :danger="true"
+                                                          class="inline-flex min-h-11 items-center rounded-md px-3 text-sm text-danger hover:bg-hover">Suspend<span class="sr-only"> {{ $user['name'] }}</span></x-portal.confirm>
+                                    @else
+                                        <x-portal.confirm :title="'Reactivate '.$user['name'].'?'" body="They can sign in again with their password." confirm="Reactivate"
+                                                          :action="'setStatus(\''.$user['public_id'].'\', \'active\')'"
+                                                          class="inline-flex min-h-11 items-center rounded-md px-3 text-sm text-accent-ink hover:bg-hover">Reactivate<span class="sr-only"> {{ $user['name'] }}</span></x-portal.confirm>
+                                    @endif
+                                </span>
+                            @endunless
                         </span>
                         @if ($user['is_me'])
                             <span class="text-sm">{{ $user['role']['label'] ?? 'No role' }} <span class="block text-muted">You can't change your own role.</span></span>

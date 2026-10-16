@@ -8,6 +8,11 @@ use App\Support\Audit\AuditActions;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
+// Every portal and Backoffice `{publicId}` is a public ULID-style id
+// (DEC-017): letters and digits only, so nothing else ever reaches an
+// in-process API path.
+Route::pattern('publicId', '[0-9A-Za-z]{1,64}');
+
 // The site root opens the Staff Web Portal (Phase 34A, DEC-063 W-2);
 // guests are sent on to the login page by its `auth` middleware.
 Route::redirect('/', '/app');
@@ -15,6 +20,13 @@ Route::redirect('/', '/app');
 Route::middleware('guest')->group(function (): void {
     Route::get('login', fn () => view('auth.login'))->name('login');
 });
+
+// Choose your password (Phase 36A, DEC-066 M-4): the only page an account
+// created or reset by an Administrator reaches until it has chosen its own
+// password (EnsureAccountIsActive sends it here).
+Route::middleware(['auth', 'account.active'])->get('password', fn () => Auth::user()?->must_change_password
+    ? view('auth.choose-password')
+    : redirect()->route('portal.home'))->name('password.choose');
 
 // Admin Backoffice (Phase 35B/35C, DEC-065): Administrators only
 // (`admin.access`). `/home`, the former placeholder, now leads to it.
@@ -28,7 +40,15 @@ Route::middleware(['auth', 'account.active', 'can:admin.access'])->prefix('admin
     Route::middleware('can:authorization.manage')->group(function () use ($page): void {
         Route::get('administration/roles', fn () => $page('Roles & permissions', 'admin.roles'))->name('roles');
         Route::get('administration/users', fn () => $page('Users and roles', 'admin.users'))->name('users');
+        Route::get('administration/users/new', fn () => $page('New sign-in account', 'admin.account-form', ['staff' => request()->query('staff')]))->name('users.new'); // Phase 36A
     });
+
+    // Phase 36A: People.
+    Route::get('people/staff', fn () => $page('Staff records', 'admin.staff-list'))->middleware('can:staff.view')->name('staff');
+    Route::get('people/staff/new', fn () => $page('New staff record', 'admin.staff-form'))->middleware('can:staff.create')->name('staff.new');
+    Route::get('people/staff/{publicId}', fn (string $publicId) => $page('Staff record', 'admin.staff-record', ['publicId' => $publicId]))->middleware('can:staff.view')->name('staff.show');
+    Route::get('people/staff/{publicId}/edit', fn (string $publicId) => $page('Edit staff record', 'admin.staff-form', ['publicId' => $publicId]))->middleware('can:staff.update')->name('staff.edit');
+    Route::get('people/organization', fn () => $page('Departments, teams and positions', 'admin.organization'))->middleware('can:organization.view')->name('organization');
     Route::get('administration/audit-log', fn () => $page('Audit log', 'admin.audit-log'))->name('audit-log');
 
     Route::get('{section}', fn (string $section) => view('admin.section', ['key' => $section]))
@@ -39,14 +59,12 @@ Route::middleware(['auth', 'account.active', 'can:admin.access'])->prefix('admin
 // its role. Each screen is a Livewire component that reads and writes
 // only through the existing /api/v1 (App\Services\Portal\InternalApi),
 // so the API's permissions and rules decide what each person may see.
-// Every portal `{publicId}` is a public ULID-style id (DEC-017): letters
-// and digits only, so nothing else ever reaches an in-process API path.
-Route::pattern('publicId', '[0-9A-Za-z]{1,64}');
 
 Route::middleware(['auth', 'account.active'])->prefix('app')->name('portal.')->group(function (): void {
     Route::view('/', 'portal.home')->name('home');
     Route::view('more', 'portal.more')->name('more'); // Phase 34F (F-1)
     Route::view('profile', 'portal.profile')->name('profile');
+    Route::get('profile/password', fn () => view('portal.page', ['title' => 'Change password', 'livewire' => 'account.change-password', 'params' => []]))->name('password'); // Phase 36A
     Route::view('staff', 'portal.directory')->name('directory');
     Route::get('staff/{publicId}', fn (string $publicId) => view('portal.staff', ['publicId' => $publicId]))->name('staff');
 

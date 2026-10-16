@@ -1,6 +1,6 @@
 # Phase 35D — Add, Edit and Delete in the Staff Portal — Handoff
 
-**Status: complete and formally closed (2026-10-16).** Merged (PR #122, `2ca6092`), UAT-35D-01…08 **PASS**. UAT-35D-01…08 are `NOT RUN`. The deploy also ships the Roles screen note (PR #121).
+**Status: complete and formally closed (2026-10-16).** Merged (PR #122, `2ca6092`), UAT-35D-01…08 **PASS**. The deploy also shipped the Roles screen note (PR #121).
 
 ## 1. Phase Identification
 

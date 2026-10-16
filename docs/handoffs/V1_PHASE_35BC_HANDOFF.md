@@ -1,6 +1,6 @@
 # Phases 35B and 35C — Admin Backoffice Foundation and Roles & Permissions — Handoff
 
-**Status: complete and formally closed (2026-10-16).** Merged (PR #119, `680444e`), UAT-35BC-01…08 **PASS**. One UAT covers both, UAT-35BC-01…08, all `NOT RUN`. With them, Phase 35 (35A–35C) is implemented.
+**Status: complete and formally closed (2026-10-16).** Merged (PR #119, `680444e`), UAT-35BC-01…08 **PASS** (one UAT for both).
 
 ## 1. Phase Identification
 

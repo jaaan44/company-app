@@ -1,6 +1,6 @@
 # Phase 36 — Admin Backoffice Business Management Screens — Definition
 
-**Status:** PROPOSED (2026-10-16). The product owner authorized Phase 36 ("Go ahead i authorize"). This definition splits the phase into sub-phases and lists the decisions (M-1…M-9) that need approval before any code is written.
+**Status:** APPROVED (2026-10-16, "approve as recommended": M-1…M-9; DEC-066). **36A implemented** (§9); awaiting merge, deployment and UAT. 36B–36D follow, as M-2 says.
 **Roadmap line:** "CRUD/management UI for the business modules, grouped by the same section layout; may be split into sub-phases at its own planning time."
 
 ---
@@ -98,3 +98,45 @@ Every "Coming in Phase 36" item in the Admin Backoffice (`/admin`) becomes a wor
 4. Update the docs and the handoff.
 5. Stop for merge, deployment and UAT.
 6. Then 36B–36D, as M-2 says.
+
+## 9. As implemented — 36A (2026-10-16)
+
+**API (additive):**
+- **Migration** `2026_10_16_000000_add_must_change_password_to_users_table`: a `boolean` column, default `false`. Existing accounts are unaffected.
+- **`App\Support\Auth\Passwords`:**
+  - `temporary()`: four groups of four characters from an alphabet without 0/O/1/l/I, about 92 bits;
+  - `rules()` (M-8);
+  - `endSignIns()`: deletes tokens, clears the remember token, and deletes database sessions.
+- **`AccountController`** (behind `can:authorization.manage`):
+  - `POST /users` → 201 with `temporary_password`;
+  - `POST /users/{id}/reset-password` → 200 with `temporary_password`, ending every sign-in;
+  - `PUT /users/{id}/status` (`active` | `suspended`; suspending ends every sign-in).
+  - Your own account is refused for reset and status.
+- **`MyPasswordController`:** `PUT /me/password` (`throttle:6,1`). It needs the current password, clears the flag, and keeps the phone token in use while ending the others. A change made on the web therefore signs the phone out.
+- **`EnsureAccountIsActive`:** an account that must change its password reaches only `password.choose` and `api.v1.me.password.update`. The API answers 403 "Set your password on the web first."; the web redirects to `/password`.
+- **Sign-in:** `AuthController::login` refuses must-change accounts with a 422 on `email`, audited with the reason `must_change_password`. `LoginForm` sends them to `/password`.
+- **Users list** (`GET /users`) now includes `must_change_password` and `staff`.
+
+**Screens:**
+- **`/password`, "Choose your password":** the guest layout, with Log out.
+- **`/app/profile/password`, "Change password":** linked from My profile. Both use `App\Livewire\Account\ChangePassword`.
+- **People → Staff records** (`/admin/people/staff`, `StaffList`): search, a status filter, and New staff record.
+- **New / Edit staff record** (`StaffForm`): every staff field, plus department, team, position and a manager search.
+- **A staff record** (`StaffRecord`):
+  - details, Edit and Delete (409 explained, with "set their status to Separated");
+  - **Sign-in account:** Manage the account, or Create a sign-in account;
+  - **Status** with "Correct the status";
+  - **Check-ins** with Remove, 10 per page.
+- **People → Departments, teams and positions** (`Organization`): one tab each, with New, Edit and Remove; a refusal is explained, with "set it to Inactive".
+- **Administration → Users and roles:**
+  - New account (`AccountForm`, optionally for a staff record, prefilled from it);
+  - per account: **Reset password**, **Suspend** / **Reactivate**;
+  - chips for Suspended, Must choose a password, and No staff record.
+- **The temporary password** is shown once in a panel with Copy. It is a non-public Livewire property, so it never enters the page snapshot, the session or a URL.
+- **Sections:** the People items and Users and roles are live.
+
+**What testing found:**
+- The staff status and check-in lists carry no `company_day`, so times are shown in the company timezone directly.
+- A "last active Administrator" check on suspend was unreachable: only an active Administrator can call it, and never on their own account. It was removed.
+
+**UAT:** UAT-36A-01…08, `NOT RUN`, in `docs/testing/UAT_LOG.md`.

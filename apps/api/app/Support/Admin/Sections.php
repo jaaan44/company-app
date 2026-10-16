@@ -25,10 +25,10 @@ final class Sections
             'permissions' => ['staff.view', 'staff.create', 'staff.update', 'staff.delete', 'organization.view', 'organization.manage', 'staff-status.manage', 'location.view', 'location.manage'],
             'summary' => 'Staff records and how the company is organised.',
             'items' => [
-                ['Staff records', 'Add, edit and remove staff, and link their sign-in accounts.', null, 'Phase 36'],
-                ['Departments, teams and positions', 'The company structure.', null, 'Phase 36'],
-                ['Staff status', 'Correct a staff member\'s status.', null, 'Phase 36'],
-                ['Location check-ins', 'Review and correct check-ins.', null, 'Phase 36'],
+                ['Staff records', 'Add, edit and remove staff, and give them sign-in accounts.', 'admin.staff', null],
+                ['Departments, teams and positions', 'The company structure.', 'admin.organization', null],
+                ['Staff status', 'Open a staff record to correct their status.', 'admin.staff', null],
+                ['Location check-ins', 'Open a staff record to review and remove check-ins.', 'admin.staff', null],
             ],
         ],
         'clients' => [
@@ -102,7 +102,7 @@ final class Sections
             'summary' => 'Who can do what, and a record of changes.',
             'items' => [
                 ['Roles & permissions', 'Choose what Managers and Staff can view, add, edit and delete.', 'admin.roles', null],
-                ['Users and roles', 'Change which role a person\'s account has.', 'admin.users', null],
+                ['Users and roles', 'Create sign-in accounts, change roles, reset passwords and suspend accounts.', 'admin.users', null],
                 ['Audit log', 'Every recorded change: who, what and when.', 'admin.audit-log', null],
             ],
         ],

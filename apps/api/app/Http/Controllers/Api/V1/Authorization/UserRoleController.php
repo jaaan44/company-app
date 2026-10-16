@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Authorization;
 
+use App\Http\Controllers\Api\V1\Authorization\Concerns\PresentsAccounts;
 use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\User;
@@ -20,6 +21,8 @@ use Illuminate\Validation\ValidationException;
  */
 class UserRoleController extends Controller
 {
+    use PresentsAccounts;
+
     public function __construct(private readonly AuditLogger $auditLogger) {}
 
     public function index(Request $request): JsonResponse
@@ -27,7 +30,7 @@ class UserRoleController extends Controller
         $request->validate(['q' => ['sometimes', 'nullable', 'string', 'max:100']]);
         $q = trim((string) $request->input('q', ''));
 
-        $page = User::query()->with('role')
+        $page = User::query()->with(['role', 'staff'])
             ->when($q !== '', fn ($query) => $query->where(fn ($inner) => $inner
                 ->where('name', 'like', '%'.addcslashes($q, '%_\\').'%')
                 ->orWhere('email', 'like', '%'.addcslashes($q, '%_\\').'%')))
@@ -35,7 +38,7 @@ class UserRoleController extends Controller
             ->paginate(25);
 
         return response()->json([
-            'data' => collect($page->items())->map(fn (User $user) => $this->userData($user, $request))->all(),
+            'data' => collect($page->items())->map(fn (User $user) => $this->accountData($user, $request))->all(),
             'meta' => [
                 'current_page' => $page->currentPage(),
                 'last_page' => $page->lastPage(),
@@ -78,21 +81,6 @@ class UserRoleController extends Controller
             );
         }
 
-        return response()->json(['data' => $this->userData($user->load('role'), $request)]);
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function userData(User $user, Request $request): array
-    {
-        return [
-            'public_id' => $user->public_id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'status' => $user->status->value,
-            'role' => $user->role === null ? null : ['name' => $user->role->name, 'label' => $user->role->label],
-            'is_me' => $user->is($request->user()),
-        ];
+        return response()->json(['data' => $this->accountData($user->load('role'), $request)]);
     }
 }

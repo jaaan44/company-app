@@ -76,6 +76,24 @@ class AuthController extends Controller
             ]);
         }
 
+        // Phase 36A (DEC-066 M-4): a new or reset account chooses its own
+        // password on the web first. Only someone holding the correct
+        // (temporary) password ever sees this message.
+        if ($user->must_change_password) {
+            $this->auditLogger->recordForRequest(
+                $request,
+                AuditActions::AUTH_LOGIN_FAILED,
+                entityType: 'User',
+                entityPublicId: $user->public_id,
+                actor: null,
+                after: ['reason' => 'must_change_password'],
+            );
+
+            throw ValidationException::withMessages([
+                'email' => ['Set your password on the web first, then sign in here.'],
+            ]);
+        }
+
         $token = $user->createToken('mobile')->plainTextToken;
 
         $this->auditLogger->recordForRequest(

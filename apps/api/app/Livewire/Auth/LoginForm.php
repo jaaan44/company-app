@@ -96,7 +96,9 @@ class LoginForm extends Component
             actor: $user,
         );
 
-        $this->redirect(route('portal.home'), navigate: false);
+        // Phase 36A (DEC-066 M-4): a new or reset account chooses its own
+        // password before anything else.
+        $this->redirect(route($user->must_change_password ? 'password.choose' : 'portal.home'), navigate: false);
     }
 
     private function auditLoginFailed(AuditLogger $auditLogger, ?User $user, ?string $reason = null): void

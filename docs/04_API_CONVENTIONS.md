@@ -174,6 +174,15 @@ Status: **Principles, implemented for a growing set of endpoints as of Phase 4/5
 - Don't invent a new envelope, error shape, or pagination style per module — reuse what's established here and in the Core Architecture phase.
 - Any deviation from these conventions in a real endpoint must be justified in that phase's handoff, not silently introduced.
 
+## Sign-in Accounts and Passwords (Phase 36A, DEC-066)
+
+- **`POST /api/v1/users`** `{name, email, role, staff_id?}` → **201**: the account, plus `temporary_password`. This is the **only** response that ever contains a password, and it is never repeated.
+- **`POST /api/v1/users/{public_id}/reset-password`** → **200**: the account plus a new `temporary_password`.
+- **`PUT /api/v1/users/{public_id}/status`** `{status: active|suspended}`.
+- **`PUT /api/v1/me/password`** `{current_password, password, password_confirmation}` → **200** `{data: {message}}`. Throttled to 6 per minute.
+- **Refusals** are 422 with field messages: your own account (`user` or `status`), a taken email, an already-linked staff record (`staff_id`), and the password rules.
+- **An account that must change its password** gets **403** "Set your password on the web first." on every other route. `POST /auth/login` answers **422** on `email` with "Set your password on the web first, then sign in here." (only for the correct password).
+
 ## Explicitly Not Decided Here
 
 - Rate limiting thresholds for future write-heavy endpoints beyond authentication (see `05_SECURITY_MODEL.md` for the Phase 4 authentication thresholds now in place).
