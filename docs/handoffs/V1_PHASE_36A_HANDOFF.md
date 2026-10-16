@@ -198,7 +198,7 @@ See §5.
   - `BUILD OK`;
   - the migration showed `Pending`, then `DONE` on MySQL;
   - the smoke tests were as expected, including `accounts that must change: 0`.
-- **Not shown:** the backup check, `migrate:status` after the run, the caches and `$C ps`, because the paste was cut. A follow-up check was given but its output wasn't reported back.
+- **Confirmed later by a re-run of the runbook (13:08 UTC):** a pre-migration backup (`company-app-20261016-113122.sql`) exists. The re-run's own backup has `-- Dump completed`. The migration shows `Ran` (`Nothing to migrate`), the three caches succeeded, the containers are `Up`, and the smoke tests passed, with `accounts that must change: 0` after UAT.
 - **UAT-36A-01…08: PASS**, reported by the product owner ("all passed"). Recorded by the AI on that report.
 - **36A is formally closed.** The `[UAT36A]` records and Nina's account stay on staging; cleaning them up needs its own authorization.
 - **Next (M-2):** 36B HR, 36C Work & Operations and 36D Reports, in one go with one UAT.

@@ -4,6 +4,9 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-16 — Phase 36A deploy fully confirmed
+- **Confirmed:** a re-run of the runbook confirmed the pre-migration backup, the migration (`Ran`), the caches and the containers on staging `ea77505`.
+
 ### 2026-10-16 — Phase 36A closed (UAT PASS)
 - **Deployed:** staging runs `ea77505`; the migration ran on MySQL.
 - **UAT:** UAT-36A-01…08 **PASS**, reported by the product owner.
