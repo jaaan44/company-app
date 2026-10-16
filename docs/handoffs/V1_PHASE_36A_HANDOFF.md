@@ -1,6 +1,6 @@
 # Phase 36A — People & Sign-in Accounts — Handoff
 
-**Status: merged (PR #127, `ea77505`, 2026-10-16); awaiting staging deployment and UAT.** UAT-36A-01…08 are `NOT RUN`. The deploy **includes one migration**.
+**Status: complete and formally closed (2026-10-16).** Merged (PR #127, `ea77505`), deployed to staging, UAT-36A-01…08 **PASS**. UAT-36A-01…08 are `NOT RUN`. The deploy **includes one migration**.
 
 ## 1. Phase Identification
 
@@ -191,3 +191,14 @@ See §5.
   - her temporary and chosen passwords go only into the password manager and the sign-in fields.
 - **Not run:** the deployment and UAT.
 
+## Addendum — Deployment, UAT and Formal Closure (2026-10-16)
+
+- **Deployed:** staging now runs `ea77505`. The output was pasted:
+  - the fast-forward started from `2ca6092`, which also confirms the 35D deploy;
+  - `BUILD OK`;
+  - the migration showed `Pending`, then `DONE` on MySQL;
+  - the smoke tests were as expected, including `accounts that must change: 0`.
+- **Not shown:** the backup check, `migrate:status` after the run, the caches and `$C ps`, because the paste was cut. A follow-up check was given but its output wasn't reported back.
+- **UAT-36A-01…08: PASS**, reported by the product owner ("all passed"). Recorded by the AI on that report.
+- **36A is formally closed.** The `[UAT36A]` records and Nina's account stay on staging; cleaning them up needs its own authorization.
+- **Next (M-2):** 36B HR, 36C Work & Operations and 36D Reports, in one go with one UAT.

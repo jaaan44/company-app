@@ -1,6 +1,6 @@
 # Phase 36 — Admin Backoffice Business Management Screens — Definition
 
-**Status:** APPROVED (2026-10-16, "approve as recommended": M-1…M-9; DEC-066). **36A implemented** (§9); awaiting merge, deployment and UAT. 36B–36D follow, as M-2 says.
+**Status:** APPROVED (2026-10-16, "approve as recommended": M-1…M-9; DEC-066). **36A complete and formally closed 2026-10-16** (§9; PR #127, `ea77505`; UAT-36A `PASS`). 36B–36D follow, as M-2 says.
 **Roadmap line:** "CRUD/management UI for the business modules, grouped by the same section layout; may be split into sub-phases at its own planning time."
 
 ---
