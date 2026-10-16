@@ -4,6 +4,10 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-16 — Phase 36A merged; UAT runbook
+- **Merged:** PR #127 as `ea77505` (CI green).
+- **Runbook:** `docs/testing/PHASE_36A_UAT_PREPARATION.md` covers the deploy `2ca6092` → `ea77505` with one migration, and UAT-36A-01…08.
+
 ### 2026-10-16 — Phase 36A: People and sign-in accounts (implemented)
 - **Approved:** DEC-066 (M-1…M-9, "approve as recommended").
 - **Sign-in accounts:**

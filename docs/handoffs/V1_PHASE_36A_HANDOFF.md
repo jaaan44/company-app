@@ -1,6 +1,6 @@
 # Phase 36A — People & Sign-in Accounts — Handoff
 
-**Status: implemented; awaiting merge, deployment and UAT.** UAT-36A-01…08 are `NOT RUN`. The deploy **includes one migration**.
+**Status: merged (PR #127, `ea77505`, 2026-10-16); awaiting staging deployment and UAT.** UAT-36A-01…08 are `NOT RUN`. The deploy **includes one migration**.
 
 ## 1. Phase Identification
 
@@ -181,3 +181,13 @@ See §5.
 2. Write the runbook.
 3. Deploy and run UAT-36A.
 4. Then 36B–36D in one go (M-2).
+
+## Addendum — Merge and UAT runbook (2026-10-16)
+
+- **PR #127 merged as `ea77505`.** CI was green.
+- **Runbook `docs/testing/PHASE_36A_UAT_PREPARATION.md`:**
+  - the deploy `2ca6092` → `ea77505`: backup, build, **`migrate --force`**, caches, and smoke tests including "accounts that must change: 0";
+  - UAT-36A-01…08 on screens, with a test person `[UAT36A] Nina Novak` (`uat36a.nina@company-app.test`) created during UAT;
+  - her temporary and chosen passwords go only into the password manager and the sign-in fields.
+- **Not run:** the deployment and UAT.
+
