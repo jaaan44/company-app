@@ -1,6 +1,6 @@
 # Phases 35B and 35C — Admin Backoffice Foundation and Roles & Permissions — Handoff
 
-**Status: merged (PR #119, `680444e`, 2026-10-13); awaiting staging deployment and UAT.** One UAT covers both, UAT-35BC-01…08, all `NOT RUN`. With them, Phase 35 (35A–35C) is implemented.
+**Status: complete and formally closed (2026-10-16).** Merged (PR #119, `680444e`), UAT-35BC-01…08 **PASS**. One UAT covers both, UAT-35BC-01…08, all `NOT RUN`. With them, Phase 35 (35A–35C) is implemented.
 
 ## 1. Phase Identification
 
@@ -207,3 +207,9 @@ See §5.
 - **Why:** the permissions work in the API, but the portal and app have no add, edit or delete screens (P-6). The proposal (§8) said the Roles screen would state this, and it didn't.
 - **Fix:** a note on Roles & permissions, "Add, edit and delete need screens that aren't built yet", pinned by a test. It ships with the next deploy.
 - **Next:** the screens themselves are proposed as **35D** (`docs/phases/V1_PHASE_35D_DEFINITION.md`, web portal only, option A, chosen by the product owner).
+
+## Addendum — UAT and Formal Closure (2026-10-16)
+
+- **UAT: PASS**, reported by the product owner ("pass", in reply to a request covering UAT-35BC-01…08 and UAT-35D-01…08). Recorded by the AI on that report.
+- **Not recorded:** the deploy outputs (`999380e` → `680444e` → `2ca6092`) weren't pasted, so staging's SHA is unverified by the AI.
+- **Formally closed.** With 35A, **Phase 35 (35A–35D) is complete.** UAT data stays on staging; cleanup needs its own authorization.

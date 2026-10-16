@@ -1,6 +1,6 @@
 # Phase 35D — Add, Edit and Delete in the Staff Portal — Handoff
 
-**Status: merged (PR #122, `2ca6092`, 2026-10-14); awaiting staging deployment and UAT.** UAT-35D-01…08 are `NOT RUN`. The deploy also ships the Roles screen note (PR #121).
+**Status: complete and formally closed (2026-10-16).** Merged (PR #122, `2ca6092`), UAT-35D-01…08 **PASS**. UAT-35D-01…08 are `NOT RUN`. The deploy also ships the Roles screen note (PR #121).
 
 ## 1. Phase Identification
 
@@ -148,3 +148,10 @@ See §5.
   - the deploy `680444e` → `2ca6092`, with no migration;
   - UAT-35D-01…08: Administrator grants on Roles & permissions, Lia using them in the portal, the project-lead case, and Reset to defaults at the end.
 - **Not run:** the deployment and UAT.
+
+## Addendum — UAT and Formal Closure (2026-10-16)
+
+- **UAT: PASS**, reported by the product owner ("pass", in reply to a request covering UAT-35BC-01…08 and UAT-35D-01…08). Recorded by the AI on that report.
+- **Not recorded:** the deploy outputs (`999380e` → `680444e` → `2ca6092`) weren't pasted, so staging's SHA is unverified by the AI.
+- **Formally closed.** With 35A, **Phase 35 (35A–35D) is complete.** UAT data stays on staging; cleanup needs its own authorization.
+- **Fixed at closure: the Roles screen note.** It still said add, edit and delete screens "aren't built yet", which stopped being true with 35D. It now says they work in the staff web portal for tasks, projects, clients and announcements, but not in the mobile app or for the other modules (`resources/views/livewire/admin/roles.blade.php`). Its test now checks the new wording and that the old wording is gone. Pint, PHPStan and the suite passed (1,431/1,431). **This change is wording only. It reaches staging with the next deployment and needs no new UAT.**

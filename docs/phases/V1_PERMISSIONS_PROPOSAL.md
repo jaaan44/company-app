@@ -1,6 +1,6 @@
 # Proposal — Granular Permissions and a Roles & Permissions Screen
 
-**Status:** APPROVED (2026-10-13, "approve as recommended": P-1…P-7 as recommended; DEC-065). **35A authorized and implemented** (§11); 35B and 35C need their own authorization.
+**Status:** APPROVED (2026-10-13, "approve as recommended": P-1…P-7 as recommended; DEC-065). **Phase 35 (35A–35D) complete and formally closed 2026-10-16** (§11, §12; 35D in `V1_PHASE_35D_DEFINITION.md`).
 **Requested by the product owner:** "write a proposal for options 1 and 2". This came after asking "is it part of the roadmap to allow roles for each user type? like roles for allowing an employee to add, edit, view and delete tasks etc?"
 **Options proposed:**
 - **Option 1:** finer permissions, so that add, edit and delete are separate.

@@ -4,6 +4,12 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-16 — Phase 35 closed (UAT PASS)
+- **UAT:** UAT-35BC-01…08 and UAT-35D-01…08 **PASS**, reported by the product owner.
+- **Not recorded:** the deploy outputs weren't pasted, so staging is assumed to run `2ca6092`.
+- **Closed:** Phases 35B, 35C and 35D are formally closed, and with 35A, **Phase 35 is complete**.
+- **Fixed:** the Admin Roles screen note. It no longer says add, edit and delete screens "aren't built yet"; it now names where they work (the web portal: tasks, projects, clients and announcements). It is wording only and reaches staging with the next deploy.
+
 ### 2026-10-14 — Phase 35D merged; UAT runbook
 - PR #122 merged as `2ca6092` (CI green). New `docs/testing/PHASE_35D_UAT_PREPARATION.md` covers:
   - the deploy `680444e` → `2ca6092`, with no migration;

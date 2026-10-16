@@ -1,6 +1,6 @@
 # Phase 35D — Add, Edit and Delete in the Staff Portal — Definition
 
-**Status:** APPROVED (2026-10-14, "approve as recommended": D-1…D-8) and **implemented** (§9). Awaiting merge, deployment and UAT.
+**Status:** APPROVED (2026-10-14, "approve as recommended": D-1…D-8) and **implemented** (§9). **Complete and formally closed 2026-10-16** (PR #122, UAT-35D-01…08 `PASS`).
 **Why:** during UAT-35BC the product owner gave Staff add, edit, delete and view on tasks, but Staff still couldn't create tasks. The permissions work in the API (35A), but neither the portal nor the app has add, edit or delete screens (DEC-065 P-6). The Roles & permissions screen now says so.
 
 ---
