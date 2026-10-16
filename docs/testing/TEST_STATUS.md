@@ -1519,7 +1519,8 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | Mutation checks | Manual (AI) | PASS | 12 run. 11 caught at first; one survivor (members management for View-only holders) led to a new assertion, and is now caught. |
 | Browser checks (Playwright + Chromium, axe-core 4.10.2) | Manual (AI), local server, scratch SQLite | PASS | 57/57, at 390 px (light) and 1280 px (dark), plus a Manager with the defaults. Every flow in the handoff §11; a refused project delete shows the API's reason; no JS errors or browser dialogs; **axe AA 0 violations** on 18 scans. |
 | Staging image build | CI | PASS | Green on PR #122, merged as `2ca6092`. |
-| MySQL / staging / UAT | — | NOT RUN | UAT-35D-01…08 `NOT RUN`; runbook `PHASE_35D_UAT_PREPARATION.md`. |
+| Staging deployment `680444e` → `2ca6092` | Manual (operator) | Not recorded | Deploy output not pasted; the staging SHA is unverified by the AI. |
+| UAT-35D-01…08 | UAT (product owner) | PASS | Reported "pass"; recorded in `UAT_LOG.md`. |
 
 ## Phases 35B + 35C — Admin Backoffice and Roles & permissions (2026-10-13, DEC-065)
 
@@ -1530,7 +1531,8 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | Mutation checks | Manual (AI) | PASS | 11 run. 10 caught at first. One survivor (Roles and Users pages without their own `authorization.manage`, still refused by the API) led to a new test, and is now caught. |
 | Browser checks (Playwright + Chromium, axe-core 4.10.2) | Manual (AI), local server, scratch SQLite | PASS | 79/79, desktop and phone, light and dark: Dashboard and period; sections; Roles ticking, Save dialog, Undo, Reset; Users; Audit log; drawer; 320 px on 6 pages; Manager refused; no JS errors or browser dialogs; **axe AA 0 violations** on 18 scans (10 light, 8 dark). Found and fixed: the role dialog named the old role. |
 | Staging image build | CI | PASS | Green on PR #119, merged as `680444e`. |
-| MySQL / staging / UAT | — | NOT RUN | UAT-35BC-01…08 `NOT RUN`; runbook `PHASE_35BC_UAT_PREPARATION.md`. |
+| Staging deployment `999380e` → `680444e` | Manual (operator) | Not recorded | Deploy output not pasted; the staging SHA is unverified by the AI. |
+| UAT-35BC-01…08 | UAT (product owner) | PASS | Reported "pass" (with 35D); recorded in `UAT_LOG.md`. The round's finding (permissions with no screens) led to the Roles screen note and 35D. |
 
 ## Phase 35A — Granular permissions (2026-10-13, DEC-065)
 

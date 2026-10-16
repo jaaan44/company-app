@@ -1,6 +1,6 @@
 # Phase 35B — Admin Backoffice Foundation — Definition
 
-**Status:** APPROVED and implemented together with 35C (2026-10-13). Product owner: "approve as recommended, and also can you just finish phase 35 in one go and just do that UAT at the end." B-1…B-6 are as recommended; see §9.
+**Status:** APPROVED and implemented together with 35C (2026-10-13). Product owner: "approve as recommended, and also can you just finish phase 35 in one go and just do that UAT at the end." B-1…B-6 are as recommended; see §9. **Complete and formally closed 2026-10-16** (PR #119, UAT-35BC-01…08 `PASS`).
 **Place:** the second of 35A–35C (DEC-065). 35A is closed. 35C (the Roles & permissions screen) builds on this shell.
 
 ---

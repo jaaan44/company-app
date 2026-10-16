@@ -11,8 +11,8 @@
         </p>
 
         <div role="note" class="mb-4 rounded-xl border border-line bg-accent-soft p-4 text-sm text-accent-ink">
-            <p class="font-semibold">Add, edit and delete need screens that aren't built yet</p>
-            <p class="mt-1">These permissions take effect straight away in the system, but the staff portal and the mobile app don't yet have add, edit or delete screens. Managers and Staff can't use them until those screens arrive (Phase 35D, web portal). Viewing permissions work now.</p>
+            <p class="font-semibold">Where add, edit and delete can be used</p>
+            <p class="mt-1">These permissions take effect straight away. Managers and Staff can use them for tasks, projects, clients and announcements in the staff web portal, on a computer or a phone browser. The mobile app doesn't have add, edit or delete screens, and screens for the other modules come in a later phase. Viewing permissions work everywhere.</p>
         </div>
 
         <section class="mb-6 rounded-xl border border-line bg-raised p-5" aria-labelledby="always-admin">
