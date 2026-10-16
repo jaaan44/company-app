@@ -158,3 +158,10 @@ The combined UAT runbook for 30B + 31–33 (DEC-059). After UAT and closure, the
 - **UAT-33-01…08: PASS**, reported by the product owner after running each scenario on a physical Android 12+ device against staging. Recorded by the AI on that report.
 - **Phase 33 is formally closed.** UAT data stays on staging; any cleanup needs its own authorization.
 
+## Addendum — UAT withdrawn as not verified (2026-10-16)
+
+- **What was found:** on 2026-10-13 the 34C deploy found none of the combined round's 31 or 32 test data on staging, and the round couldn't be reconciled with the server.
+- **The decision:** the product owner withdrew **UAT-33-01…08** as not verified ("i choose C"). The rows are `NOT RUN` again, with the original record kept in their notes.
+- **The phase stays closed.** Its code is merged and its automated checks passed.
+- **Not covered:** the phone-app screens are untested by the product owner until the Phase 38 UAT. The server side has since passed UAT through the web portal (34B–34E).
+

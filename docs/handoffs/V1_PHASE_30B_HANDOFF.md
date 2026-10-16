@@ -199,3 +199,10 @@ Nothing further begins until explicitly authorized (`CLAUDE.md` §8).
 - **Phase 30B is formally closed, and with it Phase 30** (30A closed 2026-10-12).
 - **Open, non-blocking:** UAT30B data stays on staging (cleanup needs its own authorization); the deferred UAT password rotation from 29B.
 
+## Addendum — UAT withdrawn as not verified (2026-10-16)
+
+- **What was found:** on 2026-10-13 the 34C deploy found none of the combined round's 31 or 32 test data on staging, and the round couldn't be reconciled with the server.
+- **The decision:** the product owner withdrew **UAT-30B-01…08** as not verified ("i choose C"). The rows are `NOT RUN` again, with the original record kept in their notes.
+- **The phase stays closed.** Its code is merged and its automated checks passed.
+- **Not covered:** the phone-app screens are untested by the product owner until the Phase 38 UAT. The server side has since passed UAT through the web portal (34B–34E).
+

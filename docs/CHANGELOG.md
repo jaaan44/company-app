@@ -4,6 +4,12 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-16 — 30B and 31–33 UAT records reconciled
+- **What changed:** the product owner withdrew the 32 combined-round results (UAT-30B, 31, 32 and 33, 01…08 each) as not verified ("i choose C"). They are `NOT RUN` again. Each row keeps its original PASS record in its notes.
+- **Why:** on 2026-10-13 the 34C deploy found none of that round's 31 or 32 data on staging.
+- **What stays:** the phases stay closed, with their code merged and automated checks passed.
+- **Still to do:** the phone-app screens are left for the Phase 38 UAT; the server side has passed UAT through the web portal.
+
 ### 2026-10-16 — Phase 35 closed (UAT PASS)
 - **UAT:** UAT-35BC-01…08 and UAT-35D-01…08 **PASS**, reported by the product owner.
 - **Not recorded:** the deploy outputs weren't pasted, so staging is assumed to run `2ca6092`.

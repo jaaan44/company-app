@@ -1415,7 +1415,7 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 
 | Item | Type | Status | Notes |
 |---|---|---|---|
-| UAT-30B-01…08, UAT-31-01…08, UAT-32-01…08, UAT-33-01…08 | UAT (product owner) | PASS | 32 scenarios on a physical Android 12+ device against staging `d6dd29a`, APK SHA-256 `0470A31A…A55E9D`; results reported by the product owner, recorded in `UAT_LOG.md`. Not reported: whether UAT-33-02's 00:00–07:59 Manila window was tried (automated tests cover it); UAT-33-06's oversized-image case is not reachable from the phone (photos are scaled to 2560 px). The final `exposure` output was not pasted. |
+| UAT-30B-01…08, UAT-31-01…08, UAT-32-01…08, UAT-33-01…08 | UAT (product owner) | **WITHDRAWN 2026-10-16** (now `NOT RUN`) | Withdrawn by the product owner as not verified; see "Phase 34B — discrepancy and UAT re-run". Original record: 32 scenarios on a physical Android 12+ device against staging `d6dd29a`, APK SHA-256 `0470A31A…A55E9D`; results reported by the product owner, recorded in `UAT_LOG.md`. Not reported: whether UAT-33-02's 00:00–07:59 Manila window was tried (automated tests cover it); UAT-33-06's oversized-image case is not reachable from the phone (photos are scaled to 2560 px). The final `exposure` output was not pasted. |
 
 ## Phase 34A — Staff Web Portal: Foundation (2026-10-13, DEC-063)
 
@@ -1468,7 +1468,7 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | Check | Type | Status | Notes |
 |---|---|---|---|
 | Staging checkout history (`git reflog`) | Manual (operator), output pasted | FINDING | Before the 34C deploy the checkout was at `d3cf84d` (34A, 03:39 UTC); there is no `2a7bca9` entry and no backup between 03:39 and 07:41, so the recorded 34B deploy did not happen on this checkout. |
-| Earlier rounds' data on staging | Manual (operator), output pasted | FINDING | `UAT34B tasks: 0`, `UAT31 requests: 0`, `UAT32 announcements: 0`, no UAT31 leave types before the 34C seed; `web audit entries: 5` (first 05:57 UTC). The 30B and 31–33 records are **not yet reconciled** (pending the product owner's answer). |
+| Earlier rounds' data on staging | Manual (operator), output pasted | FINDING | `UAT34B tasks: 0`, `UAT31 requests: 0`, `UAT32 announcements: 0`, no UAT31 leave types before the 34C seed; `web audit entries: 5` (first 05:57 UTC). **Reconciled 2026-10-16:** the product owner chose to withdraw the 30B and 31–33 PASS results as not verified (option C). They are `NOT RUN` again, and the phone screens are left for the Phase 38 UAT. |
 | 34B data (`uat34b_data.php`) on `0248615` | Manual (operator), output pasted | PASS | SHA `cef6db23…`; `plan` clean; `seed exit=0`; `verify` exactly as the runbook's §4. |
 | UAT-34B-01…07 (re-run) | UAT (product owner) | PASS | Against staging `0248615`; recorded in `UAT_LOG.md` as re-run rows. The original rows stay, annotated. |
 
