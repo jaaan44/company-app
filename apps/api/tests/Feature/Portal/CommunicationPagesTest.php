@@ -181,6 +181,25 @@ class CommunicationPagesTest extends TestCase
         $this->assertSame(1, Notification::query()->where('type', NotificationType::MessageReceived)->count()); // Kai's
     }
 
+    public function test_earlier_messages_load_past_the_apis_100_per_page(): void
+    {
+        $kai = $this->colleague('Kai');
+        $direct = $this->conversation([$this->staff, $kai]);
+        foreach (range(1, 130) as $n) {
+            $this->message($direct, $kai, sprintf('Message %03d', $n), Carbon::parse('2026-10-10 00:00:00', 'UTC')->addMinutes($n)->toDateTimeString());
+        }
+        $this->actingAs($this->user, 'web');
+
+        $chat = Livewire::test(Chat::class, ['publicId' => $direct->public_id])
+            ->assertSee('Message 130')->assertSee('Message 101')->assertDontSee('Message 100')->assertSee('Load earlier messages');
+        foreach (range(2, 4) as $pages) {
+            $chat->call('loadEarlier')->assertSet('pages', $pages);
+        }
+        $chat->assertSee('Message 011')->assertDontSee('Message 010')->assertSeeInOrder(['Message 011', 'Message 130'])
+            ->call('loadEarlier')
+            ->assertSee('Message 001')->assertDontSee('Load earlier messages');
+    }
+
     public function test_a_failed_send_keeps_the_text(): void
     {
         $this->app->instance(InternalApi::class, new class extends InternalApi

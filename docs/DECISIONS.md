@@ -1009,3 +1009,37 @@ Internet → Cloudflare (proxied, SSL/TLS "Full (strict)")
 - **Known API behaviour shown as it is:**
   - creating a schedule entry needs a staff profile, so an Administrator without one gets the API's refusal;
   - resolving an incident needs a resolution and a corrective (or immediate) action, and the API names one missing field at a time, in its own wording.
+
+### DEC-067 — Phase 37: the web app is the product for staff; mobile-first hardening; the Flutter app paused
+
+**Status:** Accepted (2026-10-16), product owner: "go ahead but i would like you to skip the mobile flutter part. i want to prioritize mvp for web based frontend but make sure mobile first responsiveness is prioritized for staff who will use it with mobile phones", then "approve as recommended" for `docs/phases/V1_PHASE_37_DEFINITION.md` (H-1…H-9).
+**Context:**
+- A 360 px audit of the staff portal found the layouts sound.
+- The gaps were in behaviour:
+  - a 2-hour sign-in;
+  - Livewire's browser "page expired" dialog;
+  - Laravel's plain error pages;
+  - silent taps while offline;
+  - no compression, caching or security headers;
+  - uncapped `per_page`;
+  - unescaped search wildcards;
+  - a few small items from 34–36.
+**Decision:**
+1. **H-1:** the Flutter app is **paused** (no code, APK or app UAT) until the product owner decides otherwise. The web app is the product for staff. The phone-app UATs of 30B and 31–33 wait with it.
+2. **H-2:** **"Keep me signed in on this device"**, unticked by default, lasts **30 days** (`LoginForm::REMEMBER_MINUTES`). Signing out, a password change, a reset or a suspension ends it.
+3. **H-3:** an expired page or session never shows a browser pop-up. The page reloads; if the session is gone, that lands on the sign-in page ("Please sign in to continue."), which returns the person to the page afterwards.
+4. **H-4:** the app's own error pages for 403, 404, 419, 429, 500 and 503: a title, one sentence and **Go to Home** (419: **Continue**, to sign-in). They are self-contained and never show technical details.
+5. **H-5:** the app's nginx sends gzip, a one-year immutable cache for `/build/*`, and four headers: `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options` and `Permissions-Policy` (camera and geolocation for `self`). **No CSP yet** (Phase 39). HSTS stays with the host's TLS nginx.
+6. **H-6:** fix what the 360 px walk-through of the eight everyday tasks finds, and nothing else (listed in the handoff).
+7. **H-7:**
+   - `per_page` is capped at 100 on every list (a larger value gets 100, not an error); a value under 1 gets 1;
+   - `%`, `_` and the escape character `!` are taken literally in every `q` search;
+   - the Audit log's `from`/`to` are company days.
+8. **H-8:** no shared component library. Only an empty-state component (`x-portal.empty`) where the same markup repeated, and the connection banner.
+9. **H-9:** one delivery and one UAT, on the product owner's own iPhone and Android phone, plus a desktop browser for the Backoffice.
+**Rationale:** Staff use the web app on phones through the day. Staying signed in, never being stranded, and knowing when a tap didn't reach the server matter more to them than new screens. A CSP done carelessly would break Livewire on phones, so it waits for release readiness.
+**Superseded/reaffirmed:**
+- **DEC-048's mobile-first build order** (the Flutter app before the Backoffice) is superseded: the web app now leads, and the Flutter app is paused.
+- **The DEC-066 addendum's "Audit log filters by UTC days"** is superseded by company days.
+- **The 29A cap of 50 on `/me/tasks`** is unchanged: an endpoint may keep a smaller cap of its own.
+- DEC-022 (the `web` guard) and DEC-066 (a reset or suspension ends every sign-in) are reaffirmed, now including the remember cookie.

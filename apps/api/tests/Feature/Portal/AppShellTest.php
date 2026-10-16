@@ -60,7 +60,10 @@ class AppShellTest extends TestCase
 
     public function test_more_lists_the_pages_in_the_mobile_order(): void
     {
-        $this->actingAs($this->user, 'web')->get('/app/more')
+        $response = $this->actingAs($this->user, 'web')->get('/app/more');
+        // No toast: the only status region is the hidden connection banner (Phase 37).
+        $this->assertSame(1, substr_count((string) $response->getContent(), 'role="status"'));
+        $response->assertSee('id="connection-banner" role="status" aria-live="polite" hidden', false)
             ->assertOk()
             ->assertSeeInOrder([
                 'My profile', 'My status', 'Announcements', 'Company news', 'Notifications',
@@ -69,7 +72,6 @@ class AppShellTest extends TestCase
                 'Projects', 'Clients', 'Company clients and contacts', 'Log out',
             ])
             ->assertSee('<title>More — Company App</title>', false)
-            ->assertDontSee('role="status"', false)
             ->assertDontSee('font-medium">Admin</span>', false);
     }
 

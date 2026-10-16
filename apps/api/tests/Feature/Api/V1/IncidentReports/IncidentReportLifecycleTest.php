@@ -613,7 +613,7 @@ class IncidentReportLifecycleTest extends TestCase
         ]);
 
         $this->postJson("/api/v1/incident-reports/{$report->public_id}/resolve", ['corrective_action' => 'Fixed it.'])
-            ->assertUnprocessable()->assertJsonValidationErrors('resolution');
+            ->assertUnprocessable()->assertJsonValidationErrors(['resolution' => 'Describe the resolution before resolving this incident.']);
     }
 
     public function test_resolving_requires_corrective_action_or_immediate_action_taken(): void
@@ -627,7 +627,7 @@ class IncidentReportLifecycleTest extends TestCase
         ]);
 
         $this->postJson("/api/v1/incident-reports/{$report->public_id}/resolve", ['resolution' => 'All fixed.'])
-            ->assertUnprocessable()->assertJsonValidationErrors('corrective_action');
+            ->assertUnprocessable()->assertJsonValidationErrors(['corrective_action' => 'Give a corrective action (or record the immediate action taken) before resolving this incident.']);
     }
 
     public function test_resolving_does_not_require_root_cause(): void

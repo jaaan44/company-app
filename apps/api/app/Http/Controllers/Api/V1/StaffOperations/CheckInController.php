@@ -10,6 +10,7 @@ use App\Models\Role;
 use App\Models\Staff;
 use App\Models\StaffCheckIn;
 use App\Support\CompanyTimezone;
+use App\Support\Http\PerPage;
 use App\Support\Reporting\OverdueTasks;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -82,7 +83,7 @@ class CheckInController extends Controller
                 // same second otherwise have no defined order, so a paged
                 // client could see one twice or never.
                 ->orderByDesc('id')
-                ->paginate($request->integer('per_page', 20))
+                ->paginate(PerPage::from($request, 20))
         );
     }
 

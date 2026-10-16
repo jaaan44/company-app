@@ -20,11 +20,11 @@
                 </select>
             </div>
             <div>
-                <label for="audit-from" class="block text-sm font-medium">From (UTC)</label>
+                <label for="audit-from" class="block text-sm font-medium">From</label>
                 <input id="audit-from" type="date" wire:model.live="from" class="{{ $control }}">
             </div>
             <div>
-                <label for="audit-to" class="block text-sm font-medium">To (UTC)</label>
+                <label for="audit-to" class="block text-sm font-medium">To</label>
                 <input id="audit-to" type="date" wire:model.live="to" class="{{ $control }}">
             </div>
             <div>
@@ -42,7 +42,7 @@
         @endif
 
         @if ($entries === [])
-            <p class="rounded-xl border border-line bg-raised p-5 text-muted">No entries.</p>
+            <x-portal.empty>No entries.</x-portal.empty>
         @else
             <ul class="divide-y divide-line overflow-hidden rounded-xl border border-line bg-raised">
                 @foreach ($entries as $entry)

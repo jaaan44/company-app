@@ -42,7 +42,7 @@
         </div>
 
         @if ($requests === [])
-            <p class="rounded-xl border border-line bg-raised p-5 text-muted">No leave requests match.</p>
+            <x-portal.empty>No leave requests match.</x-portal.empty>
         @else
             <p class="mb-2 text-sm text-muted">{{ $meta['total'] ?? count($requests) }} {{ ($meta['total'] ?? count($requests)) === 1 ? 'request' : 'requests' }}</p>
             <ul class="divide-y divide-line overflow-hidden rounded-xl border border-line bg-raised">

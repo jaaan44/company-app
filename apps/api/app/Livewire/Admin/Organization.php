@@ -170,9 +170,9 @@ class Organization extends Component
         $items = [];
         $departments = [];
         try {
-            $items = $this->api()->get('/'.$this->tab(), ['per_page' => 200])['data'] ?? [];
+            $items = $this->api()->get('/'.$this->tab(), ['per_page' => 100])['data'] ?? [];
             if ($this->tab() !== 'departments' && $this->editing !== null) {
-                $departments = $this->api()->get('/departments', ['per_page' => 200])['data'] ?? [];
+                $departments = $this->api()->get('/departments', ['per_page' => 100])['data'] ?? [];
             }
         } catch (PortalApiException $e) {
             $this->failed($e, 'Something went wrong loading the company structure.', "You don't have access to the company structure.");

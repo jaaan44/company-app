@@ -770,3 +770,25 @@ No migration, route or permission change.
 - **`App\Http\Controllers\Admin\ReportExportController`** streams the API's export (`InternalApi::raw`) unchanged, like the portal's `ReportFileController`.
 - **`Sections`:** an item's route may be `[name, params]`, which links the Work items to the portal's All tabs. No item says "Coming" any more.
 - **Routes:** `/admin/hr/…`, `/admin/work/…`, `/admin/operations/…` and `/admin/reports/{report}[/export]`, where `{report}` is limited to the seven keys.
+
+## 49. Web hardening for phones (Phase 37 — implemented; DEC-067)
+
+- **Sign-in:** `LoginForm` passes `remember` to `Auth::attempt` after setting the `web` guard's remember duration (`REMEMBER_MINUTES`, 30 days), then `redirectIntended` to the portal.
+- **`resources/js/app.js`:** `Livewire.interceptRequest` handles three cases:
+  - a 419 or 401 reloads the page (no browser dialog);
+  - a 5xx shows the connection banner's error line;
+  - a request that never reached the server shows its offline line.
+
+  The `online`/`offline` events toggle the same banner (`partials/connection-banner`, in all three layouts).
+- **Error pages:** `resources/views/errors/*.blade.php` use one self-contained layout (no database, session or Livewire), so they render even when the app is failing.
+- **nginx** (`docker/nginx/default.conf`):
+  - gzip;
+  - four security headers on every response;
+  - a year's immutable cache for the hashed `/build/` files.
+
+  `staging-images.yml` checks them on the built image.
+- **API helpers:**
+  - `App\Support\Http\PerPage::from($request, $default)` (1…100) is used by every list but `/me/tasks` (its own 50) and `/users` (fixed 25);
+  - `App\Support\Database\Like::anyContains($query, $columns, $value)` builds an `OR` of `like ? escape '!'`, identical on SQLite and MySQL.
+- **Callers that asked for more than 100:** Chat pages through the API 100 at a time; the Admin's staff and organisation lists ask for 100.
+- **Shared Blade pieces:** `x-portal.empty` (an empty list). The report field partial's type parameter is `$input`, because a component's own public `$type` property would override it.

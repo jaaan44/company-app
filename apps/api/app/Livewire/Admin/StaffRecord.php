@@ -33,6 +33,9 @@ class StaffRecord extends Component
 
     public int $checkInPage = 1;
 
+    /** Phase 37: search for an existing sign-in account to link. */
+    public string $accountSearch = '';
+
     public ?string $savedMessage = null;
 
     public int $toastNonce = 0;
@@ -69,6 +72,36 @@ class StaffRecord extends Component
             $this->toast('Check-in removed.');
         } catch (PortalApiException $e) {
             $this->applyWriteFailure($e, [], "Couldn't remove the check-in. Please try again.");
+        }
+    }
+
+    /**
+     * Phase 37 (DEC-067, from 36A): link an existing sign-in account that
+     * no staff record has yet, through PATCH /api/v1/staff/{id} `user_id`.
+     */
+    public function linkAccount(string $userId): void
+    {
+        $this->generalError = null;
+        if (! preg_match('/^[0-9A-Za-z]{1,64}$/', $userId)) {
+            return;
+        }
+        try {
+            $this->api()->send('PATCH', '/staff/'.rawurlencode($this->publicId), json: ['user_id' => $userId]);
+            $this->accountSearch = '';
+            $this->toast('Sign-in account linked.');
+        } catch (PortalApiException $e) {
+            $this->applyWriteFailure($e, [], "Couldn't link the account. Please try again.");
+        }
+    }
+
+    public function unlinkAccount(): void
+    {
+        $this->generalError = null;
+        try {
+            $this->api()->send('PATCH', '/staff/'.rawurlencode($this->publicId), json: ['user_id' => null]);
+            $this->toast('Sign-in account unlinked.');
+        } catch (PortalApiException $e) {
+            $this->applyWriteFailure($e, [], "Couldn't unlink the account. Please try again.");
         }
     }
 
@@ -123,7 +156,20 @@ class StaffRecord extends Component
             }
         }
 
+        $accounts = [];
+        if ($staff !== null && ($staff['user'] ?? null) === null && $this->may('authorization.manage') && mb_strlen(trim($this->accountSearch)) >= 2) {
+            try {
+                $accounts = array_values(array_filter(
+                    $this->api()->get('/users', ['q' => trim($this->accountSearch)])['data'] ?? [],
+                    fn (array $account) => $account['staff'] === null,
+                ));
+            } catch (PortalApiException) {
+                $accounts = [];
+            }
+        }
+
         return view('livewire.admin.staff-record', [
+            'accounts' => $accounts,
             'staff' => $staff,
             'statuses' => $statuses,
             'checkIns' => $checkIns,

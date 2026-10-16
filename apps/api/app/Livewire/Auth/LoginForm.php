@@ -6,6 +6,7 @@ use App\Enums\AuditSource;
 use App\Models\User;
 use App\Services\Audit\AuditLogger;
 use App\Support\Audit\AuditActions;
+use Illuminate\Auth\SessionGuard;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -35,6 +36,12 @@ class LoginForm extends Component
     #[Validate('required|string')]
     public string $password = '';
 
+    /** Phase 37 (DEC-067 H-2): "Keep me signed in on this device". */
+    public bool $remember = false;
+
+    /** How long "Keep me signed in" lasts: 30 days, in minutes. */
+    public const REMEMBER_MINUTES = 60 * 24 * 30;
+
     /**
      * Every outcome is audited (Phase 21, DEC-044), mirroring the mobile
      * API's identical AuthController::login() behavior — a failure never
@@ -55,7 +62,12 @@ class LoginForm extends Component
             ]);
         }
 
-        if (! Auth::attempt(['email' => $this->email, 'password' => $this->password])) {
+        $guard = Auth::guard('web');
+        if ($guard instanceof SessionGuard) {
+            $guard->setRememberDuration(self::REMEMBER_MINUTES);
+        }
+
+        if (! Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
             RateLimiter::hit($key, 60);
 
             $this->auditLoginFailed($auditLogger, User::where('email', $this->email)->first(), 'invalid_credentials');
@@ -98,7 +110,13 @@ class LoginForm extends Component
 
         // Phase 36A (DEC-066 M-4): a new or reset account chooses its own
         // password before anything else.
-        $this->redirect(route($user->must_change_password ? 'password.choose' : 'portal.home'), navigate: false);
+        // Phase 37 (DEC-067 H-3): back to the page the person was on when
+        // their session ended, if there was one.
+        if ($user->must_change_password) {
+            $this->redirect(route('password.choose'), navigate: false);
+        } else {
+            $this->redirectIntended(route('portal.home'), navigate: false);
+        }
     }
 
     private function auditLoginFailed(AuditLogger $auditLogger, ?User $user, ?string $reason = null): void

@@ -10,6 +10,8 @@ use App\Http\Resources\ClientResource;
 use App\Models\Client;
 use App\Services\Audit\AuditLogger;
 use App\Support\Audit\AuditActions;
+use App\Support\Database\Like;
+use App\Support\Http\PerPage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -40,19 +42,12 @@ class ClientController extends Controller
         $clients = Client::query()
             ->withCount('contacts')
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')))
-            ->when($request->filled('q'), function ($query) use ($request) {
-                $term = '%'.$request->string('q')->toString().'%';
-
-                $query->where(function ($query) use ($term) {
-                    $query->where('name', 'like', $term)
-                        ->orWhere('client_code', 'like', $term);
-                });
-            })
+            ->when($request->filled('q'), fn ($query) => Like::anyContains($query, ['name', 'client_code'], $request->string('q')->toString()))
             ->orderBy('name')
             // Unique tie-breaker (Phase 29C, R-19): names aren't unique, so
             // equal names would otherwise page unpredictably.
             ->orderBy('id')
-            ->paginate($request->integer('per_page', 50));
+            ->paginate(PerPage::from($request, 50));
 
         return ClientResource::collection($clients);
     }

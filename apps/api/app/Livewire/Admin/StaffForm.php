@@ -182,7 +182,7 @@ class StaffForm extends Component
         if ($ready) {
             try {
                 foreach (array_keys($lists) as $list) {
-                    $lists[$list] = $this->api()->get("/{$list}", ['per_page' => 200])['data'] ?? [];
+                    $lists[$list] = $this->api()->get("/{$list}", ['per_page' => 100])['data'] ?? [];
                 }
             } catch (PortalApiException $e) {
                 $this->failed($e, 'Something went wrong loading departments, teams and positions.', "You don't have access to the company structure.");

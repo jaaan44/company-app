@@ -66,6 +66,17 @@ class ReportShow extends Component
         }
     }
 
+    /**
+     * Phase 37 (DEC-067 H-6): on a phone, choosing a photo uploads it at
+     * once; a separate Upload tap after the camera was easy to miss.
+     */
+    public function updatedFile(): void
+    {
+        if ($this->file !== null) {
+            $this->addFile();
+        }
+    }
+
     public function addFile(): void
     {
         $this->actionMessage = null;

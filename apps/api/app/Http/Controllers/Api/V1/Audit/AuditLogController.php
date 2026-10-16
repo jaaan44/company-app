@@ -9,8 +9,11 @@ use App\Models\AuditLog;
 use App\Models\User;
 use App\Services\Audit\AuditLogger;
 use App\Support\Audit\AuditActions;
+use App\Support\CompanyTimezone;
+use App\Support\Http\PerPage;
 use App\Support\Reporting\CsvExport;
 use App\Support\Reporting\PublicIdResolver;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -39,7 +42,7 @@ class AuditLogController extends Controller
         $this->authorizeAdministrator($request);
 
         return AuditLogResource::collection(
-            $this->filteredQuery($request)->paginate($request->integer('per_page', 50))
+            $this->filteredQuery($request)->paginate(PerPage::from($request, 50))
         );
     }
 
@@ -98,8 +101,10 @@ class AuditLogController extends Controller
 
         return AuditLog::query()
             ->with('actor')
-            ->when($request->filled('from'), fn ($query) => $query->whereDate('created_at', '>=', $request->date('from')))
-            ->when($request->filled('to'), fn ($query) => $query->whereDate('created_at', '<=', $request->date('to')))
+            // Phase 37 (DEC-067): `from` and `to` are company days (DEC-052),
+            // so an evening in Manila is not filed under the next UTC day.
+            ->when($request->filled('from'), fn ($query) => $query->where('created_at', '>=', CarbonImmutable::parse($request->string('from')->toString(), CompanyTimezone::value())->startOfDay()->utc()))
+            ->when($request->filled('to'), fn ($query) => $query->where('created_at', '<', CarbonImmutable::parse($request->string('to')->toString(), CompanyTimezone::value())->startOfDay()->addDay()->utc()))
             ->when(
                 $request->filled('actor'),
                 fn ($query) => $query->where('actor_user_id', PublicIdResolver::resolve(User::class, $request->string('actor')->toString()) ?? -1)

@@ -15,6 +15,7 @@ use App\Http\Resources\LeaveRequestResource;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
 use App\Models\Staff;
+use App\Support\Http\PerPage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -66,7 +67,7 @@ class LeaveRequestController extends Controller
             ->orderByDesc('start_date')
             // Unique tie-breaker (Phase 31, R-2c).
             ->orderByDesc('id')
-            ->paginate($request->integer('per_page', 50));
+            ->paginate(PerPage::from($request, 50));
 
         return LeaveRequestResource::collection($leaveRequests);
     }

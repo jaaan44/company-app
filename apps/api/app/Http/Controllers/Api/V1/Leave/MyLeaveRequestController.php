@@ -13,6 +13,7 @@ use App\Http\Resources\LeaveRequestResource;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
 use App\Support\CompanyDay;
+use App\Support\Http\PerPage;
 use App\Support\Reporting\OverdueTasks;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -60,7 +61,7 @@ class MyLeaveRequestController extends Controller
             // Unique tie-breaker (Phase 31, R-2c): requests starting the
             // same day otherwise have no defined order across pages.
             ->orderByDesc('id')
-            ->paginate($request->integer('per_page', 50));
+            ->paginate(PerPage::from($request, 50));
 
         // The company day (Phase 31, R-2d) — additive: the paginator's own
         // `meta` keys are unchanged.

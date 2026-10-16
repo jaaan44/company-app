@@ -11,6 +11,7 @@ use App\Models\Department;
 use App\Models\Position;
 use App\Services\Audit\AuditLogger;
 use App\Support\Audit\AuditActions;
+use App\Support\Http\PerPage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -48,7 +49,7 @@ class PositionController extends Controller
             )
             ->orderBy('sort_order')
             ->orderBy('title')
-            ->paginate($request->integer('per_page', 50));
+            ->paginate(PerPage::from($request, 50));
 
         return PositionResource::collection($positions);
     }

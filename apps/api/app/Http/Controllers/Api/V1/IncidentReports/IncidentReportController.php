@@ -25,6 +25,7 @@ use App\Models\Staff;
 use App\Models\Task;
 use App\Services\Attachments\AttachmentStorage;
 use App\Support\CompanyDay;
+use App\Support\Http\PerPage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -100,7 +101,7 @@ class IncidentReportController extends Controller
             ->orderByDesc('created_at')
             // Unique tie-breaker (Phase 33, R-2b).
             ->orderByDesc('id')
-            ->paginate($request->integer('per_page', 50));
+            ->paginate(PerPage::from($request, 50));
 
         return IncidentReportResource::collection($reports)
             ->additional(['meta' => ['company_day' => CompanyDay::meta()]]);

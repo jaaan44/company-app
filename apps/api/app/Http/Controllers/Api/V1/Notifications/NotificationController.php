@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\NotificationResource;
 use App\Models\Notification;
 use App\Support\CompanyDay;
+use App\Support\Http\PerPage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -46,7 +47,7 @@ class NotificationController extends Controller
             // Unique tie-breaker (Phase 32, R-2a): an announcement fans out
             // notifications in the same second.
             ->orderByDesc('id')
-            ->paginate($request->integer('per_page', 50));
+            ->paginate(PerPage::from($request, 50));
 
         return NotificationResource::collection($notifications)
             ->additional(['meta' => ['company_day' => CompanyDay::meta()]]);

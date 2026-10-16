@@ -56,10 +56,34 @@
                     <p class="mt-1 flex flex-wrap gap-2">
                         <x-portal.chip :tone="$staff['user']['status'] === 'active' ? 'success' : 'muted'">{{ ucfirst($staff['user']['status']) }}</x-portal.chip>
                     </p>
-                    <a href="{{ route('admin.users', ['q' => $staff['user']['email']]) }}" class="mt-3 inline-flex min-h-11 items-center rounded-full border border-line px-4 font-medium text-accent-ink hover:bg-hover">Manage the account</a>
+                    <div class="mt-3 flex flex-wrap gap-2">
+                        <a href="{{ route('admin.users', ['q' => $staff['user']['email']]) }}" class="inline-flex min-h-11 items-center rounded-full border border-line px-4 font-medium text-accent-ink hover:bg-hover">Manage the account</a>
+                        <x-portal.confirm title="Unlink this sign-in account?" body="The account stays, but it no longer belongs to this staff record: the app shows no tasks, leave or messages for it until it is linked again." confirm="Unlink" action="unlinkAccount()" :danger="true"
+                                          class="inline-flex min-h-11 items-center rounded-full px-4 font-medium text-danger hover:bg-hover">Unlink</x-portal.confirm>
+                    </div>
                 @else
                     <p class="mt-2 text-muted">No sign-in account. They can't use the app or the web.</p>
                     <a href="{{ route('admin.users.new', ['staff' => $staff['public_id']]) }}" class="mt-3 inline-flex min-h-11 items-center rounded-full border border-line px-4 font-medium text-accent-ink hover:bg-hover">Create a sign-in account</a>
+                    <div class="mt-4">
+                        <label for="account-search" class="mb-1 block text-sm font-semibold">Or link an existing account</label>
+                        <input id="account-search" type="search" wire:model.live.debounce.400ms="accountSearch" autocomplete="off" placeholder="Search accounts by name or email"
+                               class="min-h-11 w-full rounded-md border border-line bg-surface px-3 sm:max-w-md">
+                        @if (mb_strlen(trim($accountSearch)) >= 2)
+                            @if ($accounts === [])
+                                <p class="mt-1 text-sm text-muted">No account without a staff record matches "{{ trim($accountSearch) }}".</p>
+                            @else
+                                <ul class="mt-2 divide-y divide-line rounded-md border border-line sm:max-w-md">
+                                    @foreach ($accounts as $account)
+                                        <li wire:key="link-{{ $account['public_id'] }}">
+                                            <button type="button" wire:click="linkAccount(@js($account['public_id']))" class="block min-h-11 w-full px-3 py-2 text-left hover:bg-hover">
+                                                {{ $account['name'] }} <span class="block break-all text-sm text-muted">{{ $account['email'] }}</span>
+                                            </button>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            @endif
+                        @endif
+                    </div>
                 @endif
             </section>
         @endif

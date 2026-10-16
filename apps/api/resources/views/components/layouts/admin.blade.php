@@ -22,6 +22,7 @@
         <title>{{ $title }} — Company App Admin</title>
     </head>
     <body class="min-h-screen bg-surface text-ink antialiased">
+        @include('partials.connection-banner')
         <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-raised focus:px-4 focus:py-2 focus:shadow">Skip to content</a>
 
         {{-- Wider screens: the sections in a sidebar. --}}

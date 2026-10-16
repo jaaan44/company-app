@@ -14,6 +14,8 @@ use App\Models\Staff;
 use App\Models\Task;
 use App\Services\Audit\AuditLogger;
 use App\Support\Audit\AuditActions;
+use App\Support\Database\Like;
+use App\Support\Http\PerPage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -76,15 +78,13 @@ class TaskController extends Controller
                 fn ($query) => $query->where('assignee_staff_id', $this->resolveId(Staff::class, $request->string('assignee')->toString()) ?? -1)
             )
             ->when($request->filled('priority'), fn ($query) => $query->where('priority', $request->string('priority')))
-            ->when($request->filled('q'), function ($query) use ($request) {
-                $query->where('title', 'like', '%'.$request->string('q').'%');
-            })
+            ->when($request->filled('q'), fn ($query) => Like::anyContains($query, ['title'], $request->string('q')->toString()))
             ->orderByDesc('created_at')
             // Unique tie-breaker (Phase 29A, R-9): tasks created in the same
             // second otherwise have no defined order, so a paginated client
             // could see one twice or never. Visible order is unchanged.
             ->orderBy('id')
-            ->paginate($request->integer('per_page', 50));
+            ->paginate(PerPage::from($request, 50));
 
         return TaskResource::collection($tasks);
     }

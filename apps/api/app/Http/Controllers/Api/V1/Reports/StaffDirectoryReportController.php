@@ -10,6 +10,7 @@ use App\Models\Staff;
 use App\Models\Team;
 use App\Services\Audit\AuditLogger;
 use App\Support\Audit\AuditActions;
+use App\Support\Http\PerPage;
 use App\Support\Reporting\CsvExport;
 use App\Support\Reporting\PublicIdResolver;
 use Illuminate\Database\Eloquent\Builder;
@@ -34,7 +35,7 @@ class StaffDirectoryReportController extends Controller
 
     public function index(Request $request): AnonymousResourceCollection
     {
-        return StaffResource::collection($this->filteredQuery($request)->paginate($request->integer('per_page', 50)));
+        return StaffResource::collection($this->filteredQuery($request)->paginate(PerPage::from($request, 50)));
     }
 
     /**

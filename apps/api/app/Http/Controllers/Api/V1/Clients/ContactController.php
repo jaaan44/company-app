@@ -11,6 +11,8 @@ use App\Models\Client;
 use App\Models\Contact;
 use App\Services\Audit\AuditLogger;
 use App\Support\Audit\AuditActions;
+use App\Support\Database\Like;
+use App\Support\Http\PerPage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -50,21 +52,13 @@ class ContactController extends Controller
             )
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')))
             ->when($request->has('is_primary'), fn ($query) => $query->where('is_primary', $request->boolean('is_primary')))
-            ->when($request->filled('q'), function ($query) use ($request) {
-                $term = '%'.$request->string('q')->toString().'%';
-
-                $query->where(function ($query) use ($term) {
-                    $query->where('first_name', 'like', $term)
-                        ->orWhere('last_name', 'like', $term)
-                        ->orWhere('email', 'like', $term);
-                });
-            })
+            ->when($request->filled('q'), fn ($query) => Like::anyContains($query, ['first_name', 'last_name', 'email'], $request->string('q')->toString()))
             ->orderBy('last_name')
             ->orderBy('first_name')
             // Unique tie-breaker (Phase 29C, R-19): two contacts can share a
             // name, which would otherwise page unpredictably.
             ->orderBy('id')
-            ->paginate($request->integer('per_page', 50));
+            ->paginate(PerPage::from($request, 50));
 
         return ContactResource::collection($contacts);
     }

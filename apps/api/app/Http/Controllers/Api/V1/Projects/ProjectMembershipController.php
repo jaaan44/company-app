@@ -13,6 +13,7 @@ use App\Models\Project;
 use App\Models\Staff;
 use App\Services\Audit\AuditLogger;
 use App\Support\Audit\AuditActions;
+use App\Support\Http\PerPage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -51,7 +52,7 @@ class ProjectMembershipController extends Controller
             // Unique tie-breaker (Phase 29C, R-19): members added in the same
             // second would otherwise page unpredictably.
             ->orderBy('id')
-            ->paginate($request->integer('per_page', 50));
+            ->paginate(PerPage::from($request, 50));
 
         return ProjectMembershipResource::collection($memberships);
     }

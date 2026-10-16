@@ -9,6 +9,7 @@ use App\Http\Resources\AnnouncementResource;
 use App\Models\Announcement;
 use App\Models\AnnouncementAcknowledgement;
 use App\Support\CompanyDay;
+use App\Support\Http\PerPage;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
@@ -41,7 +42,7 @@ class MyAnnouncementController extends Controller
             ->orderByDesc('published_at')
             // Unique tie-breaker (Phase 32, R-2a).
             ->orderByDesc('id')
-            ->paginate($request->integer('per_page', 50));
+            ->paginate(PerPage::from($request, 50));
 
         return AnnouncementResource::collection($announcements)
             ->additional(['meta' => ['company_day' => CompanyDay::meta()]]);

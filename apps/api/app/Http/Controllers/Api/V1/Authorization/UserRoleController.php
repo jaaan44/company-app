@@ -8,6 +8,7 @@ use App\Models\Role;
 use App\Models\User;
 use App\Services\Audit\AuditLogger;
 use App\Support\Audit\AuditActions;
+use App\Support\Database\Like;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -31,9 +32,7 @@ class UserRoleController extends Controller
         $q = trim((string) $request->input('q', ''));
 
         $page = User::query()->with(['role', 'staff'])
-            ->when($q !== '', fn ($query) => $query->where(fn ($inner) => $inner
-                ->where('name', 'like', '%'.addcslashes($q, '%_\\').'%')
-                ->orWhere('email', 'like', '%'.addcslashes($q, '%_\\').'%')))
+            ->when($q !== '', fn ($query) => Like::anyContains($query, ['name', 'email'], $q))
             ->orderBy('name')->orderBy('id')
             ->paginate(25);
 

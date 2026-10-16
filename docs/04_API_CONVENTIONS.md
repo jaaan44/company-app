@@ -157,6 +157,7 @@ Status: **Principles, implemented for a growing set of endpoints as of Phase 4/5
 ## Pagination
 
 - Standard Laravel cursor or length-aware paginator. Default page size documented per resource; expose `page`, `per_page` query params, and standard `meta`/`links` blocks from Laravel's paginator.
+- **Since Phase 37 (DEC-067 H-7), `per_page` is kept between 1 and 100** on every list (`App\Support\Http\PerPage`). A larger value gets 100 and a smaller one gets 1, never an error, so no client breaks. Exceptions: `/me/tasks` keeps its own cap of 50 (`422` above it), and `/users` has a fixed page of 25.
 
 ## Filtering & Sorting
 
@@ -187,6 +188,15 @@ Status: **Principles, implemented for a growing set of endpoints as of Phase 4/5
 
 - **No endpoint changed.** The Backoffice screens use the existing leave, work-log, schedule, service-report, incident, report and audit-log endpoints.
 - **Report CSVs** come from the existing `GET /reports/{report}/export`, called in-process and streamed unchanged.
+
+## Searching, Audit Dates and Messages (Phase 37, DEC-067)
+
+- **`q` searches match literally.** `%`, `_` and `!` are escaped (`App\Support\Database\Like`, `ESCAPE '!'`) on staff, users, clients, contacts, projects and tasks. `q=100%` finds "100% Fresh" but not "1000 Fresh".
+- **`GET /audit-logs?from=&to=`** (and its export) take **company days** (DEC-052), like every other date filter, instead of UTC days.
+- **`POST /incident-reports/{id}/resolve`** keeps the same rules and fields, with plain messages:
+  - `resolution`: "Describe the resolution before resolving this incident.";
+  - `corrective_action`: "Give a corrective action (or record the immediate action taken) before resolving this incident."
+- **No response shape changed.**
 
 ## Explicitly Not Decided Here
 

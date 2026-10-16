@@ -39,7 +39,7 @@
         </div>
 
         @if ($reports === [])
-            <p class="rounded-xl border border-line bg-raised p-5 text-muted">Nothing matches.</p>
+            <x-portal.empty>Nothing matches.</x-portal.empty>
         @else
             <p class="mb-2 text-sm text-muted">{{ $meta['total'] ?? count($reports) }} {{ ($meta['total'] ?? count($reports)) === 1 ? 'report' : 'reports' }}</p>
             <ul class="divide-y divide-line overflow-hidden rounded-xl border border-line bg-raised">

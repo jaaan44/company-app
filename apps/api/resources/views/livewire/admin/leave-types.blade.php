@@ -45,7 +45,7 @@
         @endif
 
         @if ($types === [])
-            <p class="rounded-xl border border-line bg-raised p-5 text-muted">No leave types yet.</p>
+            <x-portal.empty>No leave types yet.</x-portal.empty>
         @else
             <ul class="divide-y divide-line overflow-hidden rounded-xl border border-line bg-raised">
                 @foreach ($types as $type)

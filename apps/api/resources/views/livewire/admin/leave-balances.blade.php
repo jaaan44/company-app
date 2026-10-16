@@ -15,7 +15,7 @@
     @if ($errorMessage)
         <x-portal.error :message="$errorMessage" />
     @elseif ($staffId === '')
-        <p class="rounded-xl border border-line bg-raised p-5 text-muted">Choose a person to see their allowances for {{ $year }}.</p>
+        <x-portal.empty>Choose a person to see their allowances for {{ $year }}.</x-portal.empty>
     @elseif ($balances !== null)
         @if ($generalError)
             <p role="alert" class="mb-4 font-medium text-danger">{{ $generalError }}</p>

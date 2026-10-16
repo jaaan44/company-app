@@ -4,6 +4,31 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-16 — Phase 37: web hardening for staff on phones (implemented)
+- **Approved:** "approve as recommended" (H-1…H-9), recorded as **DEC-067**. **The Flutter app is paused.**
+- **Stay signed in:** "Keep me signed in on this device" (30 days, unticked). It ends on sign-out, a password change (new: the remember token is rotated), a reset or a suspension.
+- **No dead ends:**
+  - an expired page or session reloads to sign-in instead of Livewire's browser dialog;
+  - sign-in returns you to the page you asked for;
+  - the app's own error pages for 403, 404, 419, 429, 500 and 503, with Go to Home.
+- **Offline:** a banner when the phone is offline or a tap doesn't reach the server, and another line for a server error.
+- **nginx:** gzip; a one-year immutable cache for `/build/`; `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options` and `Permissions-Policy`. The staging image job checks them.
+- **API:**
+  - `per_page` is kept between 1 and 100;
+  - `%`, `_` and `!` are literal in the six `q` searches;
+  - the Audit log's dates are company days;
+  - the incident resolve messages are in plain words.
+
+  Chat pages through 100 at a time.
+- **Phone fixes from the walk-through:**
+  - the incident form's long fields were one-line inputs (a `$type` name clash), now multi-line;
+  - severity is 44 px pills;
+  - a report photo uploads as soon as it is chosen;
+  - the sign-in fields have phone keyboard hints.
+- **Backoffice:** link an existing sign-in account to a staff record, and unlink it.
+- **Shared:** `x-portal.empty` for empty lists.
+- **Tests:** 16 new and 4 extended; 1,484/1,484. **No migration.**
+
 ### 2026-10-16 — Phase 37 authorized (web only); definition proposed
 - **Proposed:** `docs/phases/V1_PHASE_37_DEFINITION.md`, based on a 360 px phone audit of the staff portal. Its scope:
   - Keep me signed in;
