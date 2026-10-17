@@ -808,3 +808,8 @@ No migration, route or permission change.
 - **Backoffice:**
   - `Admin\Dashboard` passes the visible section keys (`Sections::visibleTo`), so the dashboard links only what the person may open;
   - five list components have `clearFilters()`.
+- **Addendum (37B, approved after review):**
+  - `App\Support\Messaging\UnreadMessages::countFor()` is shared by Home and `GET /conversations/unread-count`;
+  - `App\Support\Portal\Badges::unreadMessages()` reads that endpoint through `InternalApi` when the portal layout renders (null when refused);
+  - `App\Support\Reporting\ReportSort` (`rule()`, `apply()`) gives each report controller an allow-list of sort fields;
+  - `Reports` gains a `sorts` map (column label to sort key), and `ReportView` gains `$sort` (in the URL) and `sortBy()`.

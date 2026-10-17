@@ -1077,3 +1077,7 @@ Internet → Cloudflare (proxied, SSL/TLS "Full (strict)")
 **Superseded/reaffirmed:**
 - **DEC-067 H-8** ("no shared component library") is **superseded in part**: there are now shared control styles and two notice components. There is still no client-side component library and no new dependency.
 - DEC-063 W-5 (tokens, system font, 44 px targets) and DEC-064 (the M3 indigo palette) are reaffirmed.
+
+**Addendum (2026-10-17), product owner: "i approve you recommendations".** The two deferred items are built, as the handoff recommended:
+- **Unread badge:** `GET /api/v1/conversations/unread-count`, the same count as Home, needing a linked staff record. The portal's Messages tab shows it (sidebar and tab bar; "99+" above 99; no badge without a staff record).
+- **Sortable reports:** `?sort=field` / `-field` on the seven reports and their CSV exports, for names, dates and numbers only. Report column headers sort, with `aria-sort`.

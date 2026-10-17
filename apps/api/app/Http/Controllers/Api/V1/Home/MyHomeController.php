@@ -13,6 +13,7 @@ use App\Models\Staff;
 use App\Models\Task;
 use App\Models\User;
 use App\Support\CompanyTimezone;
+use App\Support\Messaging\UnreadMessages;
 use App\Support\Reporting\OverdueTasks;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -295,14 +296,7 @@ class MyHomeController extends Controller
      */
     private function unreadMessageCount(Staff $staff): int
     {
-        return DB::table('messages')
-            ->join('conversation_members', 'conversation_members.conversation_id', '=', 'messages.conversation_id')
-            ->where('conversation_members.staff_id', $staff->id)
-            ->where(function ($query) {
-                $query->whereNull('conversation_members.last_read_message_id')
-                    ->orWhereColumn('messages.id', '>', 'conversation_members.last_read_message_id');
-            })
-            ->count();
+        return UnreadMessages::countFor($staff);
     }
 
     /**

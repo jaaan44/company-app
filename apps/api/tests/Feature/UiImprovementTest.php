@@ -8,8 +8,13 @@ use App\Livewire\Admin\OperationsReports;
 use App\Livewire\Admin\ReportView;
 use App\Livewire\Admin\ScheduleEntries;
 use App\Livewire\Admin\StaffList;
+use App\Models\Conversation;
+use App\Models\ConversationMember;
+use App\Models\Message;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\Staff;
+use App\Models\Task;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -138,5 +143,38 @@ class UiImprovementTest extends TestCase
             ->assertSee('<input type="password" id="password"', false)
             ->assertSee('aria-controls="password"', false)
             ->assertSee('<span class="sr-only"> password</span>', false);
+    }
+
+    // ---- Messages badge and report sorting (Phase 37B, approved after review) ----
+
+    public function test_the_messages_tab_shows_the_unread_count(): void
+    {
+        $user = User::factory()->staff()->create();
+        $me = Staff::factory()->create(['user_id' => $user->id]);
+        $other = Staff::factory()->create();
+        $conversation = Conversation::factory()->create();
+        ConversationMember::factory()->create(['conversation_id' => $conversation->id, 'staff_id' => $me->id]);
+        ConversationMember::factory()->create(['conversation_id' => $conversation->id, 'staff_id' => $other->id]);
+        Message::factory()->count(3)->create(['conversation_id' => $conversation->id, 'sender_staff_id' => $other->id]);
+
+        $this->actingAs($user, 'web')->get('/app/more')->assertOk()
+            ->assertSee('3<span class="sr-only"> unread</span>', false)   // the sidebar
+            ->assertSee('<span class="sr-only">, 3 unread</span>', false); // the tab bar
+
+        // No staff profile: no badge, and the page still opens.
+        $this->actingAs($this->admin, 'web')->get('/app/more')->assertOk()->assertDontSee(' unread</span>', false);
+    }
+
+    public function test_a_report_sorts_by_its_column_headers(): void
+    {
+        Task::factory()->create(['title' => 'Replace valve']);
+        $this->actingAs($this->admin, 'web');
+
+        Livewire::test(ReportView::class, ['report' => 'tasks'])
+            ->assertSeeHtml('aria-sort="none"')
+            ->call('sortBy', 'title')->assertSet('sort', 'title')->assertSeeHtml('aria-sort="ascending"')
+            ->call('sortBy', 'title')->assertSet('sort', '-title')->assertSeeHtml('aria-sort="descending"')
+            ->assertSeeHtml('sort=-title') // the CSV keeps the order
+            ->call('sortBy', 'status')->assertSet('sort', '-title'); // not a sortable column
     }
 }

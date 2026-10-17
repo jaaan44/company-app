@@ -18,9 +18,10 @@ final class Reports
     private const LEAVE_STATUSES = ['pending' => 'Pending', 'approved' => 'Approved', 'rejected' => 'Rejected', 'cancelled' => 'Cancelled'];
 
     /**
-     * key => [title, API path, filters (name => options|'date'|'bool'), columns (label => fn(row): ?string)]
+     * key => [title, API path, filters (name => options|'date'|'bool'), columns (label => fn(row): ?string),
+     * sorts (column label => the API's `sort` key; Phase 37B)]
      *
-     * @return array<string, array{title: string, path: string, filters: array<string, array<string, string>|string>, columns: array<string, callable(array<string, mixed>, string): ?string>}>
+     * @return array<string, array{title: string, path: string, filters: array<string, array<string, string>|string>, columns: array<string, callable(array<string, mixed>, string): ?string>, sorts: array<string, string>}>
      */
     public static function all(): array
     {
@@ -28,6 +29,7 @@ final class Reports
             'staff' => [
                 'title' => 'Staff',
                 'path' => '/reports/staff',
+                'sorts' => ['Name' => 'name', 'Employee no.' => 'employee_number'],
                 'filters' => ['status' => ['active' => 'Active', 'inactive' => 'Inactive', 'separated' => 'Separated']],
                 'columns' => [
                     'Name' => fn (array $r) => $r['display_name'],
@@ -40,6 +42,7 @@ final class Reports
             'projects' => [
                 'title' => 'Projects',
                 'path' => '/reports/projects',
+                'sorts' => ['Project' => 'name', 'Target end' => 'target_end_date'],
                 'filters' => ['status' => ['planned' => 'Planned', 'active' => 'Active', 'on_hold' => 'On hold', 'completed' => 'Completed', 'cancelled' => 'Cancelled']],
                 'columns' => [
                     'Project' => fn (array $r) => $r['name'],
@@ -52,6 +55,7 @@ final class Reports
             'tasks' => [
                 'title' => 'Tasks',
                 'path' => '/reports/tasks',
+                'sorts' => ['Task' => 'title', 'Due' => 'due_date'],
                 'filters' => [
                     'status' => ['todo' => 'To do', 'in_progress' => 'In progress', 'blocked' => 'Blocked', 'completed' => 'Completed', 'cancelled' => 'Cancelled'],
                     'priority' => ['low' => 'Low', 'normal' => 'Normal', 'high' => 'High', 'urgent' => 'Urgent'],
@@ -69,6 +73,7 @@ final class Reports
             'work-logs' => [
                 'title' => 'Work logs',
                 'path' => '/reports/work-logs',
+                'sorts' => ['Date' => 'work_date', 'Time' => 'duration_minutes'],
                 'filters' => ['from' => 'date', 'to' => 'date'],
                 'columns' => [
                     'Date' => fn (array $r) => Format::date($r['work_date']),
@@ -81,6 +86,7 @@ final class Reports
             'leave' => [
                 'title' => 'Leave',
                 'path' => '/reports/leave-requests',
+                'sorts' => ['Dates' => 'start_date', 'Days' => 'total_days'],
                 'filters' => ['from' => 'date', 'to' => 'date', 'status' => self::LEAVE_STATUSES],
                 'columns' => [
                     'Person' => fn (array $r) => $r['staff']['display_name'] ?? null,
@@ -93,6 +99,7 @@ final class Reports
             'service-reports' => [
                 'title' => 'Service reports',
                 'path' => '/reports/service-reports',
+                'sorts' => ['Date' => 'service_date'],
                 'filters' => ['from' => 'date', 'to' => 'date', 'status' => ['draft' => 'Draft', 'submitted' => 'Submitted', 'reviewed' => 'Reviewed', 'rejected' => 'Rejected']],
                 'columns' => [
                     'Date' => fn (array $r) => Format::date($r['service_date']),
@@ -104,6 +111,7 @@ final class Reports
             'incidents' => [
                 'title' => 'Incidents',
                 'path' => '/reports/incident-reports',
+                'sorts' => ['When' => 'occurred_at'],
                 'filters' => [
                     'from' => 'date', 'to' => 'date',
                     'status' => ['reported' => 'Reported', 'under_investigation' => 'Under investigation', 'resolved' => 'Resolved', 'closed' => 'Closed'],
@@ -143,6 +151,12 @@ final class Reports
             if ($ok) {
                 $query[$name] = $value;
             }
+        }
+
+        // Phase 37B: a column the report lets you sort by, ascending or ("-") descending.
+        $sort = $values['sort'] ?? null;
+        if (is_string($sort) && in_array(ltrim($sort, '-'), self::all()[$key]['sorts'] ?? [], true)) {
+            $query['sort'] = $sort;
         }
 
         return $query;

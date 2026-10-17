@@ -18,6 +18,7 @@ use App\Support\Audit\AuditActions;
 use App\Support\Http\PerPage;
 use App\Support\Reporting\CsvExport;
 use App\Support\Reporting\PublicIdResolver;
+use App\Support\Reporting\ReportSort;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -37,6 +38,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class IncidentReportReportController extends Controller
 {
+    /** `?sort=` fields (Phase 37B): sort key => columns. */
+    private const SORTS = ['occurred_at' => ['occurred_at']];
+
     private const WITH_RELATIONS = ['client', 'project', 'task', 'reporter', 'assignedTo', 'participants'];
 
     public function __construct(
@@ -95,9 +99,10 @@ class IncidentReportReportController extends Controller
             'status' => ['sometimes', new Enum(IncidentReportStatus::class)],
             'severity' => ['sometimes', new Enum(IncidentSeverity::class)],
             'incident_type' => ['sometimes', new Enum(IncidentReportType::class)],
+            'sort' => ['sometimes', ReportSort::rule(self::SORTS)],
         ]);
 
-        return $this->visibility->visibleQuery($request)
+        $query = $this->visibility->visibleQuery($request)
             ->with(self::WITH_RELATIONS)
             ->when(
                 $request->filled('client'),
@@ -123,7 +128,8 @@ class IncidentReportReportController extends Controller
             ->when($request->filled('severity'), fn ($query) => $query->where('severity', $request->string('severity')))
             ->when($request->filled('incident_type'), fn ($query) => $query->where('incident_type', $request->string('incident_type')))
             ->when($request->filled('from'), fn ($query) => $query->where('occurred_at', '>=', $request->date('from')))
-            ->when($request->filled('to'), fn ($query) => $query->where('occurred_at', '<=', $request->date('to')))
-            ->orderByDesc('occurred_at');
+            ->when($request->filled('to'), fn ($query) => $query->where('occurred_at', '<=', $request->date('to')));
+
+        return ReportSort::apply($request, $query, self::SORTS, fn (Builder $query) => $query->orderByDesc('occurred_at'));
     }
 }

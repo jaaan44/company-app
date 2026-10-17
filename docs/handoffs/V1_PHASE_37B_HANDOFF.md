@@ -89,7 +89,7 @@ None.
 
 ## 7. API Changes
 
-None.
+None in the first delivery. See the addendum for `GET /conversations/unread-count` and `?sort=` on the reports.
 
 ## 8. Authorization/Security Changes
 
@@ -154,6 +154,24 @@ UAT-37B-01…06 are in `docs/testing/UAT_LOG.md` (NOT RUN): phones (light and da
 ## 15. Documentation Updated
 
 See §5.
+
+## Addendum — the deferred items (2026-10-17)
+
+- **Approval:** "i approve you recommendations", after CI went green. The two deferred items are now built on the same branch.
+- **Unread badge:**
+  - `GET /api/v1/conversations/unread-count` (a new read-only endpoint; needs a linked staff record, `403` otherwise);
+  - its count logic is shared with Home (`UnreadMessages`);
+  - the portal layout reads it through `InternalApi` (`Badges`) and shows it on the Messages tab, in the sidebar and the tab bar.
+- **Sortable reports:**
+  - `?sort=` on the seven report endpoints and their exports (`ReportSort`), for names, dates and numbers;
+  - the Backoffice report headers sort and set `aria-sort`;
+  - the sort is kept in the URL and in the CSV link.
+- **Tests:**
+  - `ReportSortTest` (4);
+  - `UnreadCountTest` (2);
+  - `UiImprovementTest` +2: the badge, and sortable headers.
+- **Schema and authorization:** no migration and no new permission. The badge costs one in-process API call and one COUNT query on each full portal page load.
+- **Not yet run:** CI on this push, the render pass, UAT-37B-07 and 08.
 
 ## 16. Recommended Next Step
 

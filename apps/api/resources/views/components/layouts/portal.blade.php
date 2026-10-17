@@ -13,6 +13,12 @@
     }
     $tabs[] = ['portal.more', 'More', 'more', $onTab ? ['__none__'] : ['portal.*']];
 
+    // Phase 37B (DEC-068): the Messages tab shows how many messages are unread, as the inbox does.
+    $unreadMessages = \App\Support\Portal\Badges::unreadMessages();
+    $badge = fn (string $name) => $name === 'portal.messages' && $unreadMessages !== null
+        ? ($unreadMessages > 99 ? '99+' : (string) $unreadMessages)
+        : null;
+
     // F-2: a page listed on More gets a back arrow to More, unless it sets its own.
     $back = trim($__env->yieldPushContent('appbar-back'));
     $backToMore = $back === '' && request()->routeIs(
@@ -45,6 +51,9 @@
                             <a href="{{ route($name) }}" @if ($current) aria-current="page" @endif
                                class="flex min-h-12 items-center gap-4 rounded-full px-4 {{ $current ? 'bg-accent-soft font-semibold text-accent-ink' : 'hover:bg-hover' }}">
                                 <x-portal.icon :name="$icon" /> {{ $label }}
+                                @if ($count = $badge($name))
+                                    <span class="ml-auto rounded-full bg-accent px-2 text-sm font-semibold text-on-accent tabular-nums"><span class="sr-only">, </span>{{ $count }}<span class="sr-only"> unread</span></span>
+                                @endif
                             </a>
                         </li>
                     @endforeach
@@ -91,8 +100,12 @@
                     <li>
                         <a href="{{ route($name) }}" @if ($current) aria-current="page" @endif
                            class="flex min-h-16 flex-col items-center justify-center gap-1 text-xs {{ $current ? 'font-semibold text-accent-ink' : 'text-muted' }}">
-                            <span class="inline-flex h-8 w-14 items-center justify-center rounded-full {{ $current ? 'bg-accent-soft' : '' }}"><x-portal.icon :name="$icon" /></span>
-                            {{ $label }}
+                            <span class="relative inline-flex h-8 w-14 items-center justify-center rounded-full {{ $current ? 'bg-accent-soft' : '' }}"><x-portal.icon :name="$icon" />
+                                @if ($count = $badge($name))
+                                    <span aria-hidden="true" class="absolute -top-1 right-1 min-w-5 rounded-full bg-accent px-1 text-center text-xs leading-5 font-semibold text-on-accent tabular-nums">{{ $count }}</span>
+                                @endif
+                            </span>
+                            {{ $label }}@if ($count = $badge($name))<span class="sr-only">, {{ $count }} unread</span>@endif
                         </a>
                     </li>
                 @endforeach

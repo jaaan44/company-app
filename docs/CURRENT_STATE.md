@@ -15,7 +15,11 @@
   - tidier section pages and readable Audit log actions;
   - password Show/Hide.
 - **Tested:** CI green on PR #139 (Pint, PHPStan, 1,493/1,493 tests, staging images). **Not yet run:** the render pass and UAT-37B. **No migration, no API change, no new dependency.**
-- **Deferred:** the Messages unread badge and sortable reports (backend).
+- **Addendum (approved after review):**
+  - the Messages unread badge (new `GET /conversations/unread-count`);
+  - sortable report columns (`?sort=` on the seven reports).
+
+  They are on the same branch and await CI.
 - **Details:** `docs/handoffs/V1_PHASE_37B_HANDOFF.md`.
 
 **Phase 37, Web Integration & Mobile-First UX Hardening (DEC-067), is complete and formally closed (2026-10-16):** staging runs `bbe7291`, UAT-37-01…08 **PASS** (product owner). **Phase 36, Admin Backoffice Business Management Screens (DEC-066), is complete and formally closed (2026-10-16):**

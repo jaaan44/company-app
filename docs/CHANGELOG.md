@@ -4,6 +4,12 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-17 — Phase 37B addendum: Messages badge and sortable reports
+- **Approved:** "i approve you recommendations" (recorded in DEC-068's addendum).
+- **Messages badge:** the portal's Messages tab shows the unread count, from a new `GET /api/v1/conversations/unread-count` (the same count as Home).
+- **Sortable reports:** `?sort=field` / `-field` on the seven report endpoints and their CSV exports, for names, dates and numbers. Report column headers in the Backoffice sort, with `aria-sort`.
+- **No migration, no new permission, no new dependency.**
+
 ### 2026-10-17 — Phase 37B: Web UI/UX improvement (implemented)
 - **Approved:** the UI/UX audit's recommendations ("I approve all your recommendations"), recorded as **DEC-068**.
 - **Contrast and consistency:**

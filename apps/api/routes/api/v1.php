@@ -440,6 +440,7 @@ Route::middleware(['auth:sanctum', 'account.active'])->prefix('conversations')->
     Route::get('/', [ConversationController::class, 'index'])->name('index');
     Route::post('direct', [ConversationController::class, 'storeDirect'])->name('store-direct');
     Route::post('group', [ConversationController::class, 'storeGroup'])->name('store-group');
+    Route::get('unread-count', [ConversationController::class, 'myUnreadCount'])->name('unread-count'); // Phase 37B
 
     Route::get('{conversation:public_id}', [ConversationController::class, 'show'])->name('show');
     Route::post('{conversation:public_id}/read', [ConversationController::class, 'markRead'])->name('read');

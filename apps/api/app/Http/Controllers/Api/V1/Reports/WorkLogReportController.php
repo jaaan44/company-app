@@ -14,6 +14,7 @@ use App\Support\Audit\AuditActions;
 use App\Support\Http\PerPage;
 use App\Support\Reporting\CsvExport;
 use App\Support\Reporting\PublicIdResolver;
+use App\Support\Reporting\ReportSort;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -31,6 +32,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class WorkLogReportController extends Controller
 {
+    /** `?sort=` fields (Phase 37B): sort key => columns. */
+    private const SORTS = ['work_date' => ['work_date'], 'duration_minutes' => ['duration_minutes']];
+
     private const WITH_RELATIONS = ['staff', 'task', 'project', 'creator.staff'];
 
     public function __construct(
@@ -83,9 +87,10 @@ class WorkLogReportController extends Controller
             'staff' => ['sometimes', 'string'],
             'project' => ['sometimes', 'string'],
             'task' => ['sometimes', 'string'],
+            'sort' => ['sometimes', ReportSort::rule(self::SORTS)],
         ]);
 
-        return $this->visibility->visibleQuery($request)
+        $query = $this->visibility->visibleQuery($request)
             ->with(self::WITH_RELATIONS)
             ->when(
                 $request->filled('staff'),
@@ -100,8 +105,8 @@ class WorkLogReportController extends Controller
                 fn ($query) => $query->where('task_id', PublicIdResolver::resolve(Task::class, $request->string('task')->toString()) ?? -1)
             )
             ->when($request->filled('from'), fn ($query) => $query->whereDate('work_date', '>=', $request->date('from')))
-            ->when($request->filled('to'), fn ($query) => $query->whereDate('work_date', '<=', $request->date('to')))
-            ->orderByDesc('work_date')
-            ->orderByDesc('created_at');
+            ->when($request->filled('to'), fn ($query) => $query->whereDate('work_date', '<=', $request->date('to')));
+
+        return ReportSort::apply($request, $query, self::SORTS, fn (Builder $query) => $query->orderByDesc('work_date')->orderByDesc('created_at'));
     }
 }

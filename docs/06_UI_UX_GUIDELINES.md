@@ -296,6 +296,8 @@ The visual-design foundation for Flutter is below (DEC-046). **The web equivalen
   - after moving to another page without a reload, focus goes to the page heading (not on Back or Forward);
   - after a failed save, focus goes to the first field marked invalid.
 - **Password fields (37B)** have Show/Hide. They're hidden again on submit.
+- **Messages badge (37B):** the Messages tab shows the unread count in an accent pill ("99+" above 99), in both the sidebar and the tab bar. Screen readers hear "Messages, 3 unread". There is no badge when nothing is unread, or without a staff profile.
+- **Sortable report columns (37B):** a column that can be sorted is a button in its header with ↕, ↑ or ↓. Tapping it sorts ascending, and tapping again reverses it. `aria-sort` says which way it's sorted. The CSV follows the same order.
 - **Chat (37B)** opens at the latest message and follows new ones while you're near the end. The message box stays in view above the tab bar.
 - **States, wording and order:** the same as the mobile screens they mirror (no-profile, error with "Try again", empty lists).
 - **Status chips (34B):** `x-portal.chip`. The text label is always present, and the tone comes from one mapping in `App\Support\Portal\Format::tone()`:

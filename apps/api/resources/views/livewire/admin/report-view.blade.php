@@ -42,7 +42,26 @@
                 <thead class="border-b border-line">
                     <tr>
                         @foreach (array_keys($definition['columns']) as $label)
-                            <th scope="col" class="px-4 py-3 font-semibold">{{ $label }}</th>
+                            @php
+                                // Phase 37B (DEC-068): a sortable column is a button; aria-sort says which way it's sorted.
+                                $key = $definition['sorts'][$label] ?? null;
+                                $direction = match ($sort) {
+                                    $key => 'ascending',
+                                    '-'.$key => 'descending',
+                                    default => null,
+                                };
+                            @endphp
+                            @if ($key === null)
+                                <th scope="col" class="px-4 py-3 font-semibold">{{ $label }}</th>
+                            @else
+                                <th scope="col" class="px-2 py-1 font-semibold" aria-sort="{{ $direction ?? 'none' }}">
+                                    <button type="button" wire:click="sortBy('{{ $key }}')" class="inline-flex min-h-11 items-center gap-1 rounded-md px-2 hover:bg-hover">
+                                        {{ $label }}
+                                        <span aria-hidden="true" class="{{ $direction === null ? 'text-muted' : 'text-accent-ink' }}">{{ $direction === 'descending' ? '↓' : ($direction === 'ascending' ? '↑' : '↕') }}</span>
+                                        <span class="sr-only">{{ $direction === 'ascending' ? ', sort descending' : ', sort ascending' }}</span>
+                                    </button>
+                                </th>
+                            @endif
                         @endforeach
                     </tr>
                 </thead>
