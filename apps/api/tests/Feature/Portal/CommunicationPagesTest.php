@@ -387,7 +387,8 @@ class CommunicationPagesTest extends TestCase
             ->assertSee('href="'.route('portal.messages').'" class="block rounded-xl', false)
             ->assertSee('href="'.route('portal.notifications').'" class="block rounded-xl', false)
             ->assertSee(route('portal.announcement', $announcement->public_id), false)
-            ->assertSee('View all<span class="sr-only"> announcements</span>', false); // mobile redesign: "View all", heard as "View all announcements"
+            // Mobile redesign: "View all", heard as "View all announcements" (Livewire puts a comment marker between the two).
+            ->assertSeeInOrder(['href="'.route('portal.announcements').'"', 'View all', '<span class="sr-only"> announcements</span>'], false);
     }
 
     public function test_an_ended_session_goes_to_login(): void
