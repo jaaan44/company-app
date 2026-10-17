@@ -1652,3 +1652,14 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | UAT-37B-01…06 | UAT (product owner) | NOT RUN | After merge and deployment. |
 | Addendum: badge and sortable reports (`ReportSortTest` 4, `UnreadCountTest` 2, `UiImprovementTest` +2) | Automated, CI | PASS | PR #139, `f46a52e`: **1,501 passed** (6,018 assertions); Pint, PHPStan and the staging images green. Two earlier runs failed. `e95dd97`: PHPStan could not infer the sort helper's model through an untyped closure, so the default order is now an array. `3668f99`: an inline `@php(...)` swallowed a later `@php` block in the report view, so the header uses inline statements only; and the badge test's second user needed `forgetGuards()`. |
 | UAT-37B-07…08 | UAT (product owner) | NOT RUN | After merge and deployment. |
+
+## Phase 37C — Home redesign for phones (2026-10-17)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| CSS build (`npm run build`) | Automated, local | PASS | The new tokens and classes are in the compiled CSS. |
+| Blade structure | Manual (AI), script | PASS | Directives balance; no inline `@php(...)` before a `@php` block. |
+| Static layout preview (Playwright + Chromium) | Manual (AI) | PASS (layout only) | A hand-built copy of the new markup with the compiled CSS: 360, 390 (light and dark) and 1280 px, with no horizontal overflow at any width. **Not the running app** (see `docs/design/README.md`). |
+| Backend tests (`PortalPagesTest` home +3 assertions; `CommunicationPagesTest` "View all") | Automated, CI | NOT RUN | Awaiting CI on the PR. |
+| UAT-37C-01…03 | UAT (product owner) | NOT RUN | After merge and deployment. |
+

@@ -387,7 +387,7 @@ class CommunicationPagesTest extends TestCase
             ->assertSee('href="'.route('portal.messages').'" class="block rounded-xl', false)
             ->assertSee('href="'.route('portal.notifications').'" class="block rounded-xl', false)
             ->assertSee(route('portal.announcement', $announcement->public_id), false)
-            ->assertSee('All announcements');
+            ->assertSee('View all<span class="sr-only"> announcements</span>', false); // mobile redesign: "View all", heard as "View all announcements"
     }
 
     public function test_an_ended_session_goes_to_login(): void

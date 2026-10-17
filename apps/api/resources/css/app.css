@@ -41,6 +41,32 @@
 
     --radius-xl: 1rem;
     --radius-2xl: 1.25rem;
+    --radius-3xl: 1.75rem;
+
+    /*
+     * Home (mobile redesign, docs/design/mobile-home-reference.png): the
+     * hero's navy-to-blue gradient, and one pastel tint and icon colour per
+     * kind of card (tasks rose, messages blue, notifications green,
+     * announcements violet). Used on Home only; the rest of the app keeps
+     * the indigo accent. White on the hero ≥ 6.7:1; each icon ≥ 3:1 on its tint.
+     */
+    --color-hero-from: #163b70;
+    --color-hero-to: #1d4ed8;
+    --color-hero-sub: #dbe7ff;
+    --color-card-rose: #fff5f5;
+    --color-tint-rose: #fee2e2;
+    --color-icon-rose: #dc2626;
+    --color-card-blue: #f3f7ff;
+    --color-tint-blue: #dbeafe;
+    --color-icon-blue: #2563eb;
+    --color-card-green: #f2fbf5;
+    --color-tint-green: #dcfce7;
+    --color-icon-green: #15803d;
+    --color-tint-violet: #ede9fe;
+    --color-icon-violet: #7c3aed;
+
+    --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 6px 20px rgb(15 23 42 / 0.06);
+    --shadow-bar: 0 -4px 20px rgb(15 23 42 / 0.08);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -62,6 +88,24 @@
         --color-success-soft: #123a21;
         --color-warning: #f5bf48;
         --color-warning-soft: #5c4300;
+
+        --color-hero-from: #0f2a52;
+        --color-hero-to: #1d4ed8;
+        --color-hero-sub: #c7d7fe;
+        --color-card-rose: #2a1a1c;
+        --color-tint-rose: #3f1d1d;
+        --color-icon-rose: #fca5a5;
+        --color-card-blue: #18213a;
+        --color-tint-blue: #172554;
+        --color-icon-blue: #93c5fd;
+        --color-card-green: #17261d;
+        --color-tint-green: #14341f;
+        --color-icon-green: #86efac;
+        --color-tint-violet: #2e1065;
+        --color-icon-violet: #c4b5fd;
+
+        --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
+        --shadow-bar: 0 -1px 0 rgb(255 255 255 / 0.06);
     }
 }
 

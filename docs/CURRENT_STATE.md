@@ -3,7 +3,17 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** **Phase 37B — Web UI/UX Improvement (DEC-068): implemented (2026-10-17) on `claude/stoic-wright-paan67`, awaiting CI, a render pass, merge and UAT.**
+**Current phase:** **Phase 37C — Home redesign for phones (DEC-069): implemented (2026-10-17) on `claude/mobile-home-redesign`; awaiting CI, review, merge and UAT-37C.**
+- Home now follows `docs/design/mobile-home-reference.png`:
+  - a navy gradient hero;
+  - Today, Needs-attention and announcements cards;
+  - a pill-style bottom tab bar.
+- Same data and links. Home-only colours. No API or migration change.
+- **Details:** `docs/handoffs/V1_PHASE_37C_HANDOFF.md`.
+
+**Phase 37B (DEC-068)** remains merged (`c72cfef`) and awaits deployment and UAT-37B.
+
+**Phase 37B — Web UI/UX Improvement (DEC-068): implemented (2026-10-17) on `claude/stoic-wright-paan67`, awaiting CI, a render pass, merge and UAT.**
 - **From** a UI/UX audit of the web app, approved in full ("I approve all your recommendations").
 - **Built:**
   - field contrast (a `field` token) and a warning tone;
