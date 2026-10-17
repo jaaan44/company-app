@@ -3,7 +3,7 @@
     <h1 class="sr-only">My profile</h1>
 
     @if ($noProfile)
-        <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
+        <x-portal.no-profile />
     @elseif ($errorMessage)
         <x-portal.error :message="$errorMessage" />
     @elseif ($profile)
@@ -41,7 +41,7 @@
                 </dl>
             </section>
         @else
-            <p class="mb-6 rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
+            <x-portal.no-profile class="mb-6" />
         @endif
 
         <section aria-labelledby="profile-account" class="mb-4 rounded-xl border border-line bg-raised px-5">
@@ -51,7 +51,7 @@
                 <x-portal.info-row label="Role" :value="Format::role($user['role'])" />
             </dl>
         </section>
-        <a href="{{ route('portal.password') }}" class="mb-4 inline-flex min-h-11 items-center rounded-full border border-line px-5 font-medium text-accent-ink hover:bg-hover">Change password</a>
+        <a href="{{ route('portal.password') }}" class="btn btn-secondary mb-4">Change password</a>
         <p class="text-sm text-muted">To change your email or role, contact an administrator.</p>
     @endif
 </div>

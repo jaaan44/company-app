@@ -11,19 +11,19 @@
         @endunless
     </div>
 
-    <div role="group" aria-label="Which reports" class="mb-4 inline-flex rounded-md border border-line bg-raised p-1">
+    <div role="group" aria-label="Which reports" class="mb-4 inline-flex rounded-full border border-line bg-raised p-1">
         @foreach (['service' => 'Service reports', 'incidents' => 'Incidents'] as $value => $label)
             <button type="button" wire:click="show('{{ $value }}')" aria-pressed="{{ $currentType === $value ? 'true' : 'false' }}"
-                    class="inline-flex min-h-11 items-center rounded px-4 {{ $currentType === $value ? 'bg-accent-soft font-semibold text-accent-ink' : 'hover:bg-hover' }}">{{ $label }}</button>
+                    class="inline-flex min-h-11 items-center rounded-full px-4 {{ $currentType === $value ? 'bg-accent-soft font-semibold text-accent-ink' : 'hover:bg-hover' }}">{{ $label }}</button>
         @endforeach
     </div>
 
     @if ($noProfile)
-        <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
+        <x-portal.no-profile />
     @elseif ($errorMessage)
         <x-portal.error :message="$errorMessage" />
     @elseif (count($reports) === 0)
-        <p class="rounded-lg border border-line bg-raised p-4">{{ $currentType === 'incidents' ? 'No incidents reported.' : "You haven't written a service report yet." }}</p>
+        <x-portal.notice>{{ $currentType === 'incidents' ? 'No incidents reported.' : "You haven't written a service report yet." }}</x-portal.notice>
     @else
         <ul class="divide-y divide-line rounded-xl border border-line bg-raised">
             @foreach ($reports as $report)

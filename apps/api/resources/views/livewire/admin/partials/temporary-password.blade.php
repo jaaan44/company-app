@@ -8,7 +8,7 @@
     <div class="mt-3 flex flex-wrap items-center gap-3" x-data="{ copied: false }">
         <code class="rounded-md border border-line bg-raised px-3 py-2 font-mono text-lg tracking-wide text-ink" id="temporary-password">{{ $password }}</code>
         <button type="button" x-on:click="navigator.clipboard?.writeText(@js($password)).then(() => copied = true)"
-                class="inline-flex min-h-11 items-center rounded-full border border-line bg-raised px-4 font-medium hover:bg-hover">
+                class="btn btn-secondary">
             <span x-show="! copied">Copy</span><span x-show="copied" x-cloak>Copied</span>
         </button>
     </div>

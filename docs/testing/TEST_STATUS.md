@@ -1638,3 +1638,15 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | nginx headers | CI (image job) | PASS | Not runnable here (no Docker). On PR #135 (`13bbc9f`), the new `staging-images.yml` step got a 200 for a built CSS file with `Content-Encoding: gzip`, one `Cache-Control: public, max-age=31536000, immutable` and the four security headers: `nginx headers OK`. |
 | Staging deployment `0797e0c` → `bbe7291` | Manual (operator), output pasted | PASS | Fast-forward from `0797e0c`; backup `-- Dump completed on 2026-10-16 16:03:27`; `BUILD OK`; migration `[6] Ran`, nothing pending; three caches; app and nginx recreated and `Up`; `app`, `app/tasks`, `admin` `302 -> /login`; `api staff 401`; the 404 page (`Page not found — Company App`); the checkbox on `/login`; container nginx: `gzip`, the immutable cache and the four headers; public `/login`: the four headers, each once. |
 | UAT-37-01…08 | UAT (product owner) | PASS | Reported "ALL PASSED"; recorded in `UAT_LOG.md`. |
+
+## Phase 37B — Web UI/UX improvement (2026-10-17)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| CSS build (`npm ci && npm run build`) | Automated, local | PASS | Vite 8 and Tailwind 4. The compiled CSS has every new style, the tokens and the expected variant order. |
+| JS syntax (`node --check resources/js/app.js`) and `php -l` on changed PHP | Automated, local | PASS | |
+| Blade structure | Manual (AI), script | PASS | `@if`/`@endif`, `@foreach`, `@error` and notice tags balance in the 76 changed views. |
+| Backend tests (`UiImprovementTest` 8 new, `FormatTest` +2) | Automated | NOT RUN | `composer install` can't complete here: GitHub zip downloads are refused by the network policy. CI on a pull request is the first run. |
+| Pint / PHPStan / Composer | Automated | NOT RUN | Same reason. |
+| Render pass (Playwright + axe, 360 / 768 / 1280 px, light and dark) | Manual (AI) | NOT RUN | Needs a running app, so needs Composer. |
+| UAT-37B-01…06 | UAT (product owner) | NOT RUN | After merge and deployment. |

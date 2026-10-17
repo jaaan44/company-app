@@ -8,19 +8,22 @@
     @else
         <div class="mb-4 flex flex-wrap items-end gap-3">
             <div>
-                <label for="se-from" class="block text-sm font-medium">From</label>
-                <input id="se-from" type="date" wire:model.live="from" class="mt-1 min-h-11 rounded-md border border-line bg-raised px-3">
+                <label for="se-from" class="block text-sm font-semibold">From</label>
+                <input id="se-from" type="date" wire:model.live="from" class="field mt-1">
             </div>
             <div>
-                <label for="se-type" class="block text-sm font-medium">Activity</label>
-                <select id="se-type" wire:model.live="type" class="mt-1 min-h-11 rounded-md border border-line bg-raised px-3">
+                <label for="se-type" class="block text-sm font-semibold">Activity</label>
+                <select id="se-type" wire:model.live="type" class="field mt-1">
                     <option value="">All</option>
                     @foreach (ScheduleEntryForm::TYPES as $value => $label)
                         <option value="{{ $value }}">{{ $label }}</option>
                     @endforeach
                 </select>
             </div>
-            <a href="{{ route('admin.schedule.new') }}" class="ml-auto inline-flex min-h-11 items-center gap-2 rounded-full bg-accent px-5 font-medium text-on-accent hover:opacity-90">
+            @if ($from !== '' || $type !== '')
+                <button type="button" wire:click="clearFilters" class="btn btn-text btn-compact">Clear filters</button>
+            @endif
+            <a href="{{ route('admin.schedule.new') }}" class="btn btn-primary ml-auto">
                 <x-portal.icon name="add" class="size-5" /> New schedule entry
             </a>
         </div>

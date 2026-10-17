@@ -8,11 +8,11 @@
     <h1 class="sr-only">{{ $publicId === null ? 'New task' : 'Edit task' }}</h1>
 
     @if ($notFound)
-        <p class="rounded-lg border border-line bg-raised p-4">This task is no longer available.</p>
+        <x-portal.notice>This task is no longer available.</x-portal.notice>
     @elseif ($errorMessage)
         <x-portal.error :message="$errorMessage" />
     @elseif ($publicId === null && ! $allowNoProject && count($projects) === 0)
-        <p class="rounded-lg border border-line bg-raised p-4">You can add tasks only to projects you lead, and you don't lead any open project.</p>
+        <x-portal.notice>You can add tasks only to projects you lead, and you don't lead any open project.</x-portal.notice>
     @else
         <form wire:submit="save" class="space-y-5 rounded-xl border border-line bg-raised p-5" novalidate>
             @if ($generalError)
@@ -31,7 +31,7 @@
             <div>
                 <label for="project" class="mb-1 block text-sm font-semibold">Project</label>
                 <select id="project" wire:model="project" @error('project') aria-invalid="true" aria-describedby="project-error" @enderror
-                        class="min-h-11 w-full rounded-md border border-line bg-raised px-3">
+                        class="field w-full">
                     @if ($allowNoProject)
                         <option value="">No project (independent task)</option>
                     @else
@@ -50,13 +50,13 @@
                 @if ($assigneeId !== '')
                     <p class="flex flex-wrap items-center gap-3">
                         <span class="font-medium">{{ $assigneeName }}</span>
-                        <button type="button" wire:click="clearAssignee" class="inline-flex min-h-11 items-center rounded-md px-3 text-accent-ink hover:bg-hover">Remove<span class="sr-only"> {{ $assigneeName }} as assignee</span></button>
+                        <button type="button" wire:click="clearAssignee" class="btn btn-text btn-compact">Remove<span class="sr-only"> {{ $assigneeName }} as assignee</span></button>
                     </p>
                 @endif
                 <input id="assignee-search" type="search" wire:model.live.debounce.400ms="assigneeSearch" autocomplete="off"
                        placeholder="{{ $assigneeId === '' ? 'Search by name (optional)' : 'Search to change' }}"
                        @error('assigneeSearch') aria-invalid="true" aria-describedby="assignee-error" @enderror
-                       class="min-h-11 w-full rounded-md border border-line bg-raised px-3">
+                       class="field w-full">
                 @error('assigneeSearch') <p id="assignee-error" class="mt-1 text-sm font-medium text-danger">{{ $message }}</p> @enderror
                 @if ($staffSearchFailed)
                     <p class="mt-1 text-sm text-muted">You can't search the staff directory.</p>
@@ -81,7 +81,7 @@
             <div class="grid gap-5 sm:grid-cols-3">
                 <div>
                     <label for="priority" class="mb-1 block text-sm font-semibold">Priority</label>
-                    <select id="priority" wire:model="priority" class="min-h-11 w-full rounded-md border border-line bg-raised px-3">
+                    <select id="priority" wire:model="priority" class="field w-full">
                         @foreach (TaskForm::PRIORITIES as $value)
                             <option value="{{ $value }}">{{ Format::priority($value) }}</option>
                         @endforeach
@@ -90,7 +90,7 @@
                 </div>
                 <div>
                     <label for="status" class="mb-1 block text-sm font-semibold">Status</label>
-                    <select id="status" wire:model="status" class="min-h-11 w-full rounded-md border border-line bg-raised px-3">
+                    <select id="status" wire:model="status" class="field w-full">
                         @foreach (TaskForm::STATUSES as $value)
                             <option value="{{ $value }}">{{ Format::taskStatus($value) }}</option>
                         @endforeach
@@ -100,7 +100,7 @@
                 <div>
                     <label for="due-date" class="mb-1 block text-sm font-semibold">Due date <span class="font-normal text-muted">(optional)</span></label>
                     <input id="due-date" type="date" wire:model="dueDate" @error('dueDate') aria-invalid="true" aria-describedby="due-error" @enderror
-                           class="min-h-11 w-full rounded-md border border-line bg-raised px-3">
+                           class="field w-full">
                     @error('dueDate') <p id="due-error" class="mt-1 text-sm font-medium text-danger">{{ $message }}</p> @enderror
                 </div>
             </div>
@@ -109,10 +109,10 @@
 
             <div class="flex flex-wrap gap-2">
                 <button type="submit" wire:loading.attr="disabled" wire:target="save"
-                        class="inline-flex min-h-11 items-center rounded-full bg-accent px-5 font-medium text-on-accent hover:opacity-90 disabled:opacity-60">
+                        class="btn btn-primary">
                     {{ $publicId === null ? 'Add task' : 'Save changes' }}
                 </button>
-                <a href="{{ $publicId === null ? route('portal.tasks') : route('portal.task', $publicId) }}" class="inline-flex min-h-11 items-center rounded-full px-5 font-medium text-accent-ink hover:bg-hover">Cancel</a>
+                <a href="{{ $publicId === null ? route('portal.tasks') : route('portal.task', $publicId) }}" class="btn btn-text">Cancel</a>
             </div>
         </form>
     @endif

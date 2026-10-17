@@ -3,8 +3,8 @@
 <form role="search" wire:submit.prevent class="mb-4 flex gap-2" aria-label="{{ $label }}">
     <label for="{{ $id }}" class="sr-only">{{ $placeholder }}</label>
     <input id="{{ $id }}" type="search" wire:model.live.debounce.400ms="search" placeholder="{{ $placeholder }}" autocomplete="off"
-           class="min-h-11 w-full rounded-md border border-line bg-raised px-3">
+           class="field w-full">
     @if (trim($this->search) !== '')
-        <button type="button" wire:click="clearSearch" class="inline-flex min-h-11 shrink-0 items-center rounded-md px-3 hover:bg-hover">Clear search</button>
+        <button type="button" wire:click="clearSearch" class="btn btn-plain btn-compact shrink-0">Clear search</button>
     @endif
 </form>

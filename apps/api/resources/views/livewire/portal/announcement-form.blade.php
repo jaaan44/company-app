@@ -7,9 +7,9 @@
     <h1 class="sr-only">{{ $publicId === null ? 'New announcement' : 'Edit draft' }}</h1>
 
     @if ($notFound)
-        <p class="rounded-lg border border-line bg-raised p-4">This announcement no longer exists.</p>
+        <x-portal.notice>This announcement no longer exists.</x-portal.notice>
     @elseif ($notDraft)
-        <p class="rounded-lg border border-line bg-raised p-4">Only a draft can be edited. Archive this announcement and write a new one instead.</p>
+        <x-portal.notice>Only a draft can be edited. Archive this announcement and write a new one instead.</x-portal.notice>
     @elseif ($errorMessage)
         <x-portal.error :message="$errorMessage" />
     @else
@@ -49,8 +49,8 @@
 
             <div class="flex flex-wrap gap-2">
                 <button type="submit" wire:loading.attr="disabled" wire:target="save"
-                        class="inline-flex min-h-11 items-center rounded-full bg-accent px-5 font-medium text-on-accent hover:opacity-90 disabled:opacity-60">Save draft</button>
-                <a href="{{ $publicId === null ? route('portal.announcements.manage') : route('portal.announcements.manage.show', $publicId) }}" class="inline-flex min-h-11 items-center rounded-full px-5 font-medium text-accent-ink hover:bg-hover">Cancel</a>
+                        class="btn btn-primary">Save draft</button>
+                <a href="{{ $publicId === null ? route('portal.announcements.manage') : route('portal.announcements.manage.show', $publicId) }}" class="btn btn-text">Cancel</a>
             </div>
         </form>
     @endif

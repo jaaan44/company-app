@@ -14,9 +14,9 @@
             <p class="mt-2 text-muted">{{ $body }}</p>
         @endif
         <div class="mt-6 flex flex-wrap justify-end gap-2">
-            <button type="button" x-on:click="$refs.dialog.close()" autofocus class="inline-flex min-h-11 items-center rounded-full px-5 font-medium text-accent-ink hover:bg-hover">{{ $cancel }}</button>
+            <button type="button" x-on:click="$refs.dialog.close()" autofocus class="btn btn-text">{{ $cancel }}</button>
             <button type="button" x-on:click="$refs.dialog.close(); $wire.{{ $action }}"
-                    class="inline-flex min-h-11 items-center rounded-full px-5 font-medium {{ $danger ? 'bg-danger text-raised' : 'bg-accent text-on-accent' }} hover:opacity-90">{{ $confirm }}</button>
+                    class="btn {{ $danger ? 'btn-danger' : 'btn-primary' }}">{{ $confirm }}</button>
         </div>
     </dialog>
 </div>

@@ -4,7 +4,7 @@
 
     @if ($notFound)
         <h1 class="sr-only">Service report</h1>
-        <p class="rounded-lg border border-line bg-raised p-4">This report no longer exists.</p>
+        <x-portal.notice>This report no longer exists.</x-portal.notice>
     @elseif ($errorMessage && ! $report)
         <h1 class="sr-only">Service report</h1>
         <x-portal.error :message="$errorMessage" />
@@ -38,8 +38,8 @@
             <section aria-label="Review" class="mt-6 rounded-xl border border-line bg-raised p-5">
                 @if ($confirming === null)
                     <div class="flex flex-wrap gap-3">
-                        <button type="button" wire:click="ask('review')" class="inline-flex min-h-11 items-center rounded-full bg-accent px-5 font-medium text-on-accent hover:opacity-90">Mark reviewed</button>
-                        <button type="button" wire:click="ask('reject')" class="inline-flex min-h-11 items-center rounded-full border border-line px-5 font-medium text-danger hover:bg-hover">Reject</button>
+                        <button type="button" wire:click="ask('review')" class="btn btn-primary">Mark reviewed</button>
+                        <button type="button" wire:click="ask('reject')" class="btn btn-danger-outline">Reject</button>
                     </div>
                 @else
                     <form wire:submit="confirm" novalidate x-data x-init="$nextTick(() => $refs.text.focus())">
@@ -48,11 +48,11 @@
                         <label for="confirm-text" class="mb-1 mt-3 block text-sm font-semibold">{{ $confirming === 'review' ? 'Note (optional)' : 'Reason' }}</label>
                         <textarea id="confirm-text" x-ref="text" wire:model="text" rows="3" maxlength="1000"
                                   @error('text') aria-invalid="true" aria-describedby="text-error" @enderror
-                                  class="w-full rounded-md border border-line bg-raised px-3 py-2"></textarea>
+                                  class="field w-full"></textarea>
                         @error('text') <p id="text-error" class="mt-1 text-sm font-medium text-danger">{{ $message }}</p> @enderror
                         <div class="mt-3 flex flex-wrap gap-3">
-                            <button type="submit" class="inline-flex min-h-11 items-center rounded-full px-5 font-medium {{ $confirming === 'review' ? 'bg-accent text-on-accent' : 'bg-danger text-raised' }} hover:opacity-90">{{ $confirming === 'review' ? 'Mark reviewed' : 'Reject' }}</button>
-                            <button type="button" wire:click="dismiss" class="inline-flex min-h-11 items-center rounded-full px-5 font-medium text-accent-ink hover:bg-hover">Back</button>
+                            <button type="submit" class="btn {{ $confirming === 'review' ? 'btn-primary' : 'btn-danger' }}">{{ $confirming === 'review' ? 'Mark reviewed' : 'Reject' }}</button>
+                            <button type="button" wire:click="dismiss" class="btn btn-text">Back</button>
                         </div>
                     </form>
                 @endif

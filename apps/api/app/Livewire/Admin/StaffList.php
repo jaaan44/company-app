@@ -37,6 +37,14 @@ class StaffList extends Component
         $this->page = 1;
     }
 
+    /** Phase 37B (DEC-068): back to the list's starting filters. */
+    public function clearFilters(): void
+    {
+        $this->search = '';
+        $this->status = '';
+        $this->page = 1;
+    }
+
     public function goToPage(int $page): void
     {
         $this->page = max(1, $page);

@@ -12,11 +12,11 @@
             </div>
             <div>
                 <label for="wl-from" class="mb-1 block text-sm font-semibold">From</label>
-                <input id="wl-from" type="date" wire:model.live="from" class="min-h-11 rounded-md border border-line bg-surface px-3">
+                <input id="wl-from" type="date" wire:model.live="from" class="field">
             </div>
             <div>
                 <label for="wl-to" class="mb-1 block text-sm font-semibold">To</label>
-                <input id="wl-to" type="date" wire:model.live="to" class="min-h-11 rounded-md border border-line bg-surface px-3">
+                <input id="wl-to" type="date" wire:model.live="to" class="field">
             </div>
         </div>
 
@@ -41,19 +41,19 @@
                                     @include('livewire.portal.partials.field', ['id' => 'wl-date', 'label' => 'Date', 'model' => 'workDate', 'error' => 'workDate', 'type' => 'date'])
                                     <div>
                                         <label for="wl-hours" class="mb-1 block text-sm font-semibold">Hours</label>
-                                        <input id="wl-hours" type="number" min="0" max="24" wire:model="hours" @error('hours') aria-invalid="true" aria-describedby="wl-hours-error" @enderror class="min-h-11 w-24 rounded-md border border-line bg-raised px-3">
+                                        <input id="wl-hours" type="number" min="0" max="24" wire:model="hours" @error('hours') aria-invalid="true" aria-describedby="wl-hours-error" @enderror class="field w-24">
                                     </div>
                                     <div>
                                         <label for="wl-minutes" class="mb-1 block text-sm font-semibold">Minutes</label>
-                                        <input id="wl-minutes" type="number" min="0" max="59" wire:model="minutes" class="min-h-11 w-24 rounded-md border border-line bg-raised px-3">
+                                        <input id="wl-minutes" type="number" min="0" max="59" wire:model="minutes" class="field w-24">
                                     </div>
                                 </div>
                                 @error('hours') <p id="wl-hours-error" class="text-sm font-medium text-danger">{{ $message }}</p> @enderror
                                 @include('livewire.portal.partials.field', ['id' => 'wl-description', 'label' => 'Description', 'model' => 'description', 'error' => 'description', 'textarea' => true, 'rows' => 3, 'max' => 2000])
                                 <p class="text-sm text-muted">The person, task and project can't be changed.</p>
                                 <div class="flex flex-wrap gap-2">
-                                    <button type="submit" class="inline-flex min-h-11 items-center rounded-full bg-accent px-5 font-medium text-on-accent hover:opacity-90">Save correction</button>
-                                    <button type="button" wire:click="cancel" class="inline-flex min-h-11 items-center rounded-full px-5 font-medium text-accent-ink hover:bg-hover">Cancel</button>
+                                    <button type="submit" class="btn btn-primary">Save correction</button>
+                                    <button type="button" wire:click="cancel" class="btn btn-text">Cancel</button>
                                 </div>
                             </form>
                         @else
@@ -69,10 +69,10 @@
                                 </span>
                                 @if ($canManage)
                                     <span class="flex gap-1">
-                                        <button type="button" wire:click="edit(@js($log['public_id']))" class="inline-flex min-h-11 items-center rounded-md px-3 text-sm text-accent-ink hover:bg-hover">Correct<span class="sr-only"> {{ $log['staff']['display_name'] }}'s log of {{ Format::date($log['work_date']) }}</span></button>
+                                        <button type="button" wire:click="edit(@js($log['public_id']))" class="btn btn-text btn-compact text-sm">Correct<span class="sr-only"> {{ $log['staff']['display_name'] }}'s log of {{ Format::date($log['work_date']) }}</span></button>
                                         <x-portal.confirm title="Remove this work log?" body="It disappears from their logs and from reports. This can't be undone." confirm="Remove"
                                                           :action="'remove(\''.$log['public_id'].'\')'" :danger="true"
-                                                          class="inline-flex min-h-11 items-center rounded-md px-3 text-sm text-danger hover:bg-hover">Remove<span class="sr-only"> {{ $log['staff']['display_name'] }}'s log of {{ Format::date($log['work_date']) }}</span></x-portal.confirm>
+                                                          class="btn btn-danger-text btn-compact text-sm">Remove<span class="sr-only"> {{ $log['staff']['display_name'] }}'s log of {{ Format::date($log['work_date']) }}</span></x-portal.confirm>
                                     </span>
                                 @endif
                             </div>

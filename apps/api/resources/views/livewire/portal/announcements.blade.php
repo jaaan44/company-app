@@ -2,15 +2,15 @@
 <div>
     <h1 class="sr-only">Announcements</h1>
     @if ($mayManage)
-        <p class="mb-4"><a href="{{ route('portal.announcements.manage') }}" class="inline-flex min-h-11 items-center rounded-full border border-line bg-raised px-4 font-medium hover:bg-hover">Manage announcements</a></p>
+        <p class="mb-4"><a href="{{ route('portal.announcements.manage') }}" class="btn btn-secondary">Manage announcements</a></p>
     @endif
 
     @if ($noProfile)
-        <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
+        <x-portal.no-profile />
     @elseif ($errorMessage)
         <x-portal.error :message="$errorMessage" />
     @elseif (count($announcements) === 0)
-        <p class="rounded-lg border border-line bg-raised p-4">No announcements yet.</p>
+        <x-portal.notice>No announcements yet.</x-portal.notice>
     @else
         <ul class="divide-y divide-line rounded-xl border border-line bg-raised">
             @foreach ($announcements as $announcement)

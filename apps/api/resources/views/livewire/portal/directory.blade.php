@@ -6,9 +6,9 @@
         <label for="directory-search" class="sr-only">Search by name</label>
         <input id="directory-search" type="search" wire:model.live.debounce.400ms="search"
                placeholder="Search by name" autocomplete="off"
-               class="min-h-11 w-full rounded-md border border-line bg-raised px-3 focus:outline-2 focus:outline-accent">
+               class="field w-full">
         @if ($search !== '')
-            <button type="button" wire:click="clearSearch" class="inline-flex min-h-11 items-center rounded-md px-3 hover:bg-hover">Clear search</button>
+            <button type="button" wire:click="clearSearch" class="btn btn-plain btn-compact">Clear search</button>
         @endif
     </form>
 
@@ -20,9 +20,7 @@
         </div>
 
         @if (count($staff) === 0)
-            <p class="rounded-lg border border-line bg-raised p-4">
-                {{ $query === '' ? 'No active staff yet.' : 'No one matches "'.$query.'".' }}
-            </p>
+            <x-portal.notice>{{ $query === '' ? 'No active staff yet.' : 'No one matches "'.$query.'".' }}</x-portal.notice>
         @else
             <ul class="divide-y divide-line rounded-xl border border-line bg-raised">
                 @foreach ($staff as $person)
@@ -40,10 +38,10 @@
             @if ($meta && $meta['last_page'] > 1)
                 <nav aria-label="Pages" class="mt-4 flex items-center justify-between gap-2">
                     <button type="button" wire:click="goToPage({{ $meta['current_page'] - 1 }})" @disabled($meta['current_page'] <= 1)
-                            class="inline-flex min-h-11 items-center rounded-md px-3 hover:bg-hover disabled:opacity-40">Previous</button>
+                            class="btn btn-plain btn-compact">Previous</button>
                     <span class="text-sm text-muted">Page {{ $meta['current_page'] }} of {{ $meta['last_page'] }}</span>
                     <button type="button" wire:click="goToPage({{ $meta['current_page'] + 1 }})" @disabled($meta['current_page'] >= $meta['last_page'])
-                            class="inline-flex min-h-11 items-center rounded-md px-3 hover:bg-hover disabled:opacity-40">Next</button>
+                            class="btn btn-plain btn-compact">Next</button>
                 </nav>
             @endif
         @endif

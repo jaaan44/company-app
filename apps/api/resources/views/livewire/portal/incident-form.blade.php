@@ -7,9 +7,9 @@
     <h1 class="sr-only">{{ $publicId === null ? 'Report an incident' : 'Edit incident' }}</h1>
 
     @if ($noProfile)
-        <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
+        <x-portal.no-profile />
     @elseif ($notFound)
-        <p class="rounded-lg border border-line bg-raised p-4">This incident can no longer be edited here.</p>
+        <x-portal.notice>This incident can no longer be edited here.</x-portal.notice>
     @elseif ($errorMessage)
         <x-portal.error :message="$errorMessage" />
     @else
@@ -21,7 +21,7 @@
             <div>
                 <label for="incident-type" class="mb-1 block text-sm font-semibold">Type of incident</label>
                 <select id="incident-type" wire:model="type" @error('type') aria-invalid="true" aria-describedby="incident-type-error" @enderror
-                        class="min-h-11 w-full rounded-md border border-line bg-raised px-3">
+                        class="field w-full">
                     <option value="">Choose a type</option>
                     @foreach (F::TYPES as $t)
                         <option value="{{ $t }}">{{ Format::incidentType($t) }}</option>
@@ -46,11 +46,11 @@
                 <div class="flex flex-wrap gap-4">
                     <label class="flex flex-col text-sm">Date
                         <input type="date" wire:model="date" max="{{ $maxDate }}" @error('occurredAt') aria-invalid="true" aria-describedby="occurred-error" @enderror
-                               class="min-h-11 rounded-md border border-line bg-raised px-3 text-base">
+                               class="field text-base">
                     </label>
                     <label class="flex flex-col text-sm">Time
                         <input type="time" wire:model="time" @error('occurredAt') aria-invalid="true" aria-describedby="occurred-error" @enderror
-                               class="min-h-11 rounded-md border border-line bg-raised px-3 text-base">
+                               class="field text-base">
                     </label>
                 </div>
                 @error('occurredAt') <p id="occurred-error" class="mt-1 text-sm font-medium text-danger">{{ $message }}</p> @enderror
@@ -64,8 +64,8 @@
 
             <div class="flex flex-wrap items-center gap-3">
                 <button type="submit" wire:loading.attr="disabled" wire:target="save"
-                        class="inline-flex min-h-11 items-center rounded-md bg-accent px-5 font-medium text-on-accent hover:opacity-90 disabled:opacity-60">{{ $publicId === null ? 'Report incident' : 'Save changes' }}</button>
-                <a href="{{ $publicId ? route('portal.incident', $publicId) : route('portal.reports', ['type' => 'incidents']) }}" class="inline-flex min-h-11 items-center rounded-md px-4 hover:bg-hover">Cancel</a>
+                        class="btn btn-primary">{{ $publicId === null ? 'Report incident' : 'Save changes' }}</button>
+                <a href="{{ $publicId ? route('portal.incident', $publicId) : route('portal.reports', ['type' => 'incidents']) }}" class="btn btn-plain">Cancel</a>
             </div>
         </form>
     @endif

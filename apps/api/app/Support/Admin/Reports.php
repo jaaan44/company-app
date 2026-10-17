@@ -34,7 +34,7 @@ final class Reports
                     'Employee no.' => fn (array $r) => $r['employee_number'],
                     'Department' => fn (array $r) => $r['department']['name'] ?? null,
                     'Position' => fn (array $r) => $r['position']['title'] ?? null,
-                    'Status' => fn (array $r) => ucfirst((string) $r['status']),
+                    'Status' => fn (array $r) => Format::staffStatus($r['status']),
                 ],
             ],
             'projects' => [

@@ -3,25 +3,33 @@
     use App\Livewire\Portal\Chat;
     use Carbon\CarbonImmutable;
 @endphp
-<div wire:poll.15s>
+{{--
+    Phase 37B (DEC-068): the conversation opens at its latest message, and
+    follows new ones (a poll, or your own) while you're near the end; reading
+    earlier messages isn't interrupted. The message box stays in view.
+--}}
+<div wire:poll.15s
+     x-data="{ nearEnd: true, toEnd() { window.scrollTo(0, document.documentElement.scrollHeight) } }"
+     x-init="$nextTick(() => toEnd()); if ($refs.thread) new MutationObserver(() => nearEnd && toEnd()).observe($refs.thread, { childList: true, subtree: true })"
+     x-on:scroll.window.throttle.100ms="nearEnd = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 160">
     <x-portal.back :href="route('portal.messages')">Messages</x-portal.back>
 
     @if ($noProfile)
-        <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
+        <x-portal.no-profile />
     @elseif ($errorMessage)
         <h1 class="sr-only">Conversation</h1>
         @if ($errorMessage === 'This conversation is no longer available.' || $errorMessage === "You don't have access to this conversation.")
-            <p class="rounded-lg border border-line bg-raised p-4">{{ $errorMessage }}</p>
+            <x-portal.notice>{{ $errorMessage }}</x-portal.notice>
         @else
             <x-portal.error :message="$errorMessage" />
         @endif
     @elseif ($conversation)
         <h1 class="mb-4 text-2xl font-semibold">{{ Format::conversationTitle($conversation, $myStaffId) }}</h1>
 
-        <section aria-label="Messages" class="rounded-xl border border-line bg-raised p-4">
+        <section aria-label="Messages" x-ref="thread" class="rounded-xl border border-line bg-raised p-4">
             @if ($hasEarlier)
                 <div class="mb-3 text-center">
-                    <button type="button" wire:click="loadEarlier" class="inline-flex min-h-11 items-center rounded-md px-4 text-accent-ink hover:bg-hover">Load earlier messages</button>
+                    <button type="button" wire:click="loadEarlier" class="btn btn-text">Load earlier messages</button>
                 </div>
             @endif
             @if (count($messages) === 0)
@@ -44,7 +52,7 @@
                             @endphp
                         @endif
                         <li wire:key="message-{{ $message['public_id'] }}" class="flex {{ $mine ? 'justify-end' : 'justify-start' }}">
-                            <div class="max-w-[85%] rounded-lg px-3 py-2 {{ $mine ? 'bg-accent-soft text-ink' : 'border border-line bg-surface' }}">
+                            <div class="max-w-[85%] rounded-xl px-3 py-2 {{ $mine ? 'bg-accent-soft text-ink' : 'border border-line bg-surface' }}">
                                 <p class="text-xs text-muted">
                                     <span class="{{ $mine || ! Format::showsSenderNames($conversation) ? 'sr-only' : 'font-semibold' }}">{{ $mine ? 'You' : $message['sender']['name'] }}{{ $mine || ! Format::showsSenderNames($conversation) ? ', ' : ' · ' }}</span>{{ $at->format('H:i') }}
                                 </p>
@@ -56,17 +64,17 @@
             @endif
         </section>
 
-        <form wire:submit="send" class="mt-4 rounded-xl border border-line bg-raised p-4" novalidate>
+        <form wire:submit="send" x-on:submit="nearEnd = true" class="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-10 mt-4 rounded-xl border border-line bg-raised p-4 shadow-sm md:bottom-4" novalidate>
             <label for="message-body" class="mb-1 block text-sm font-semibold">Message</label>
-            <textarea id="message-body" wire:model="body" rows="3" maxlength="{{ Chat::MAX_BODY }}"
+            <textarea id="message-body" wire:model="body" rows="2" maxlength="{{ Chat::MAX_BODY }}"
                       @if ($sendError) aria-invalid="true" aria-describedby="send-error" @endif
-                      class="w-full rounded-md border border-line bg-raised px-3 py-2"></textarea>
+                      class="field w-full"></textarea>
             @if ($sendError)
                 <p id="send-error" role="alert" class="mt-1 text-sm font-medium text-danger">{{ $sendError }}</p>
             @endif
             <div class="mt-2 flex items-center gap-3">
                 <button type="submit" wire:loading.attr="disabled" wire:target="send"
-                        class="inline-flex min-h-11 items-center rounded-md bg-accent px-5 font-medium text-on-accent hover:opacity-90 disabled:opacity-60">Send</button>
+                        class="btn btn-primary">Send</button>
                 <span wire:loading wire:target="send" class="text-sm text-muted">Sending…</span>
             </div>
         </form>

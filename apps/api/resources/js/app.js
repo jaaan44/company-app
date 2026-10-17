@@ -78,3 +78,50 @@ document.addEventListener('livewire:init', () => {
         });
     });
 });
+
+/*
+ * Phase 37B (DEC-068): focus follows what changed, for keyboard and screen
+ * reader users.
+ * - After moving to another page without a reload, focus goes to the new
+ *   page's heading (every page has an h1, often visually hidden), so the
+ *   page is announced and Tab starts from its content. Not on Back or
+ *   Forward, which return you where you were.
+ * - After a form is saved with mistakes, focus goes to the first field
+ *   marked invalid, whose message is tied to it (aria-describedby).
+ */
+let focusHeadingAfterNavigation = false;
+let submittedForm = null;
+document.addEventListener('livewire:navigate', (event) => {
+    focusHeadingAfterNavigation = !event.detail?.history;
+});
+document.addEventListener('livewire:navigated', () => {
+    submittedForm = null;
+    if (!focusHeadingAfterNavigation) {
+        return;
+    }
+    focusHeadingAfterNavigation = false;
+    const heading = document.querySelector('#main h1');
+    if (heading) {
+        heading.setAttribute('tabindex', '-1');
+        heading.focus({ preventScroll: true });
+    }
+});
+
+document.addEventListener('submit', (event) => {
+    if (event.target instanceof HTMLFormElement && event.target.hasAttribute('wire:submit')) {
+        submittedForm = event.target;
+    }
+});
+document.addEventListener('livewire:init', () => {
+    window.Livewire.hook('morphed', ({ el }) => {
+        if (!submittedForm || !el.contains(submittedForm)) {
+            return;
+        }
+        const form = submittedForm;
+        submittedForm = null;
+        const invalid = form.isConnected && form.querySelector('[aria-invalid="true"]');
+        if (invalid && document.activeElement?.getAttribute('aria-invalid') !== 'true') {
+            invalid.focus();
+        }
+    });
+});

@@ -3,7 +3,22 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** **none active.** **Phase 37, Web Integration & Mobile-First UX Hardening (DEC-067), is complete and formally closed (2026-10-16):** staging runs `bbe7291`, UAT-37-01…08 **PASS** (product owner). **Phase 36, Admin Backoffice Business Management Screens (DEC-066), is complete and formally closed (2026-10-16):**
+**Current phase:** **Phase 37B — Web UI/UX Improvement (DEC-068): implemented (2026-10-17) on `claude/stoic-wright-paan67`, awaiting CI, a render pass, merge and UAT.**
+- **From** a UI/UX audit of the web app, approved in full ("I approve all your recommendations").
+- **Built:**
+  - field contrast (a `field` token) and a warning tone;
+  - shared `btn`/`field` styles and `x-portal.notice`/`no-profile`;
+  - saving and loading spinners and Clear filters;
+  - focus after page changes and failed saves;
+  - Chat opening at the latest message;
+  - a Backoffice dashboard that leads with Needs attention;
+  - tidier section pages and readable Audit log actions;
+  - password Show/Hide.
+- **Not yet run:** Pint, PHPStan, the suite (Composer can't install in this environment), the render pass and UAT-37B. **No migration, no API change, no new dependency.**
+- **Deferred:** the Messages unread badge and sortable reports (backend).
+- **Details:** `docs/handoffs/V1_PHASE_37B_HANDOFF.md`.
+
+**Phase 37, Web Integration & Mobile-First UX Hardening (DEC-067), is complete and formally closed (2026-10-16):** staging runs `bbe7291`, UAT-37-01…08 **PASS** (product owner). **Phase 36, Admin Backoffice Business Management Screens (DEC-066), is complete and formally closed (2026-10-16):**
 - **36A (People & sign-in accounts):** UAT-36A **PASS**.
 - **36B HR, 36C Work & Operations and 36D Reports:** UAT-36BD **PASS**.
 - Every Backoffice item is live.
@@ -24,7 +39,7 @@
 - Phase 30A is formally closed (2026-10-12). **Staging is assumed to run `2ca6092` (Phase 35D); not verified.**
 **Phase status:** Staging is **deployed and reachable over HTTPS** at `https://company-staging.storm-ark.com` (infrastructure verified by the operator; **real-device UAT passed**, Gate 2F, 2026-09-23). Live deployment refined the Gate 1 model: the verified path is Internet → Cloudflare (proxied, Full (strict)) → **shared** DigitalOcean Cloud Firewall (inbound 80/443 Cloudflare-scoped) → **shared** host Nginx (TLS, Let's Encrypt cert `company-staging.storm-ark.com`, HTTP → HTTPS redirect) → `127.0.0.1:8012` → Company App Docker nginx → Laravel (`APP_URL` HTTPS, `SESSION_SECURE_COOKIE=true`, `trustProxies(at: '*')`). Recorded as **DEC-051** (refines DEC-050). See `docs/DEPLOYMENT_STAGING.md` §13/§7a and the Phase 26 handoff addendum.
 **Last completed phase:** Phase 37 — Web Integration & Mobile-First UX Hardening (formally closed 2026-10-16). Before it, Phase 36 — Admin Backoffice Business Management Screens (36A–36D, formally closed 2026-10-16), and before that, Phase 35 — Granular permissions, Admin Backoffice and staff-portal editing (35A–35D), and before that, Phase 34 — Staff Web Portal (34A–34F; 34B by its UAT re-run on `0248615`) and Phases 30B–33. **Open, non-blocking:** the deferred UAT password rotation from 29B; UAT data on staging (cleanup needs its own authorization).
-**Next planned phase:** **Phase 38 — UAT** or **Phase 39 — Release Readiness** (`docs/ROADMAP.md`), each needing its own authorization. The Flutter app is paused (DEC-067). The roadmap was renumbered by DEC-063: Admin Backoffice 35–36, Integration 37, UAT 38, Release Readiness 39. **Open, non-blocking:** UAT data stays on staging (cleanup needs its own authorization); the host nginx backup `/etc/nginx/sites-available/company-staging.storm-ark.com.bak-uat3133` can be removed by the operator at will; CI now builds the staging images (`staging-images.yml`, Phase 34A).
+**Next planned phase:** finish Phase 37B (CI, render pass, merge, UAT-37B), then **Phase 38 — UAT** or **Phase 39 — Release Readiness** (`docs/ROADMAP.md`), each needing its own authorization. The Flutter app is paused (DEC-067). The roadmap was renumbered by DEC-063: Admin Backoffice 35–36, Integration 37, UAT 38, Release Readiness 39. **Open, non-blocking:** UAT data stays on staging (cleanup needs its own authorization); the host nginx backup `/etc/nginx/sites-available/company-staging.storm-ark.com.bak-uat3133` can be removed by the operator at will; CI now builds the staging images (`staging-images.yml`, Phase 34A).
 
 ## Current Objective
 

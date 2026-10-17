@@ -9,7 +9,7 @@
             <p role="alert" class="mb-4 font-medium text-danger">{{ $generalError }}</p>
         @endif
         @if ($canManage && $editing === null)
-            <button type="button" wire:click="add" class="mb-4 inline-flex min-h-11 items-center gap-2 rounded-full bg-accent px-5 font-medium text-on-accent hover:opacity-90">
+            <button type="button" wire:click="add" class="btn btn-primary mb-4">
                 <x-portal.icon name="add" class="size-5" /> New leave type
             </button>
         @endif
@@ -25,7 +25,7 @@
                     @include('livewire.portal.partials.field', ['id' => 'lt-code', 'label' => 'Code', 'model' => 'code', 'error' => 'code', 'max' => 50, 'optional' => true])
                     <div>
                         <label for="lt-status" class="mb-1 block text-sm font-semibold">Status</label>
-                        <select id="lt-status" wire:model="status" class="min-h-11 w-full rounded-md border border-line bg-raised px-3">
+                        <select id="lt-status" wire:model="status" class="field w-full">
                             <option value="active">Active</option>
                             <option value="inactive">Inactive</option>
                         </select>
@@ -38,8 +38,8 @@
                 </label>
                 @include('livewire.portal.partials.field', ['id' => 'lt-description', 'label' => 'Description', 'model' => 'description', 'error' => 'description', 'textarea' => true, 'rows' => 2, 'max' => 1000, 'optional' => true])
                 <div class="flex flex-wrap gap-2">
-                    <button type="submit" class="inline-flex min-h-11 items-center rounded-full bg-accent px-5 font-medium text-on-accent hover:opacity-90">{{ $editing === '' ? 'Add leave type' : 'Save changes' }}</button>
-                    <button type="button" wire:click="cancel" class="inline-flex min-h-11 items-center rounded-full px-5 font-medium text-accent-ink hover:bg-hover">Cancel</button>
+                    <button type="submit" class="btn btn-primary">{{ $editing === '' ? 'Add leave type' : 'Save changes' }}</button>
+                    <button type="button" wire:click="cancel" class="btn btn-text">Cancel</button>
                 </div>
             </form>
         @endif
@@ -59,10 +59,10 @@
                         @endif
                         @if ($canManage)
                             <span class="flex gap-1">
-                                <button type="button" wire:click="edit(@js($type['public_id']))" class="inline-flex min-h-11 items-center rounded-md px-3 text-sm text-accent-ink hover:bg-hover">Edit<span class="sr-only"> {{ $type['name'] }}</span></button>
+                                <button type="button" wire:click="edit(@js($type['public_id']))" class="btn btn-text btn-compact text-sm">Edit<span class="sr-only"> {{ $type['name'] }}</span></button>
                                 <x-portal.confirm :title="'Remove '.$type['name'].'?'" body="A type with requests or balances can't be removed; set it to Inactive instead." confirm="Remove"
                                                   :action="'remove(\''.$type['public_id'].'\')'" :danger="true"
-                                                  class="inline-flex min-h-11 items-center rounded-md px-3 text-sm text-danger hover:bg-hover">Remove<span class="sr-only"> {{ $type['name'] }}</span></x-portal.confirm>
+                                                  class="btn btn-danger-text btn-compact text-sm">Remove<span class="sr-only"> {{ $type['name'] }}</span></x-portal.confirm>
                             </span>
                         @endif
                     </li>

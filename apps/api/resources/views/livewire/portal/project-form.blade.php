@@ -8,7 +8,7 @@
     <h1 class="sr-only">{{ $publicId === null ? 'New project' : 'Edit project' }}</h1>
 
     @if ($notFound)
-        <p class="rounded-lg border border-line bg-raised p-4">This project no longer exists.</p>
+        <x-portal.notice>This project no longer exists.</x-portal.notice>
     @elseif ($errorMessage)
         <x-portal.error :message="$errorMessage" />
     @else
@@ -24,7 +24,7 @@
                 <div>
                     <label for="client" class="mb-1 block text-sm font-semibold">Client <span class="font-normal text-muted">(optional)</span></label>
                     <select id="client" wire:model="client" @error('client') aria-invalid="true" aria-describedby="client-error" @enderror
-                            class="min-h-11 w-full rounded-md border border-line bg-raised px-3">
+                            class="field w-full">
                         <option value="">No client</option>
                         @foreach ($clients as $c)
                             <option value="{{ $c['public_id'] }}">{{ $c['name'] }}</option>
@@ -36,7 +36,7 @@
 
             <div>
                 <label for="status" class="mb-1 block text-sm font-semibold">Status</label>
-                <select id="status" wire:model.live="status" class="min-h-11 w-full rounded-md border border-line bg-raised px-3 sm:max-w-xs">
+                <select id="status" wire:model.live="status" class="field w-full sm:max-w-xs">
                     @foreach (ProjectForm::STATUSES as $value)
                         <option value="{{ $value }}">{{ Format::projectStatus($value) }}</option>
                     @endforeach
@@ -57,10 +57,10 @@
 
             <div class="flex flex-wrap gap-2">
                 <button type="submit" wire:loading.attr="disabled" wire:target="save"
-                        class="inline-flex min-h-11 items-center rounded-full bg-accent px-5 font-medium text-on-accent hover:opacity-90 disabled:opacity-60">
+                        class="btn btn-primary">
                     {{ $publicId === null ? 'Add project' : 'Save changes' }}
                 </button>
-                <a href="{{ $publicId === null ? route('portal.projects') : route('portal.project', $publicId) }}" class="inline-flex min-h-11 items-center rounded-full px-5 font-medium text-accent-ink hover:bg-hover">Cancel</a>
+                <a href="{{ $publicId === null ? route('portal.projects') : route('portal.project', $publicId) }}" class="btn btn-text">Cancel</a>
             </div>
         </form>
     @endif

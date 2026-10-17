@@ -4,7 +4,7 @@
 
     @if ($notFound)
         <h1 class="sr-only">Staff</h1>
-        <p class="rounded-lg border border-line bg-raised p-4">This person isn't in the directory.</p>
+        <x-portal.notice>This person isn't in the directory.</x-portal.notice>
     @elseif ($errorMessage)
         <h1 class="sr-only">Staff</h1>
         <x-portal.error :message="$errorMessage" />

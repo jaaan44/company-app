@@ -8,7 +8,7 @@
     @if ($errorMessage)
         <x-portal.error :message="$errorMessage" />
     @elseif (count($clients) === 0)
-        <p class="rounded-lg border border-line bg-raised p-4">{{ $query === '' ? 'No active clients yet.' : 'No client matches "'.$query.'".' }}</p>
+        <x-portal.notice>{{ $query === '' ? 'No active clients yet.' : 'No client matches "'.$query.'".' }}</x-portal.notice>
     @else
         <ul class="divide-y divide-line rounded-xl border border-line bg-raised">
             @foreach ($clients as $client)

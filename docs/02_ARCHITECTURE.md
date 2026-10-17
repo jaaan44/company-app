@@ -792,3 +792,19 @@ No migration, route or permission change.
   - `App\Support\Database\Like::anyContains($query, $columns, $value)` builds an `OR` of `like ? escape '!'`, identical on SQLite and MySQL.
 - **Callers that asked for more than 100:** Chat pages through the API 100 at a time; the Admin's staff and organisation lists ask for 100.
 - **Shared Blade pieces:** `x-portal.empty` (an empty list). The report field partial's type parameter is `$input`, because a component's own public `$type` property would override it.
+
+## 50. Web UI/UX improvement (Phase 37B — implemented; DEC-068)
+
+- **Shared control styles** (`resources/css/app.css`, Tailwind `@utility`):
+  - `field` for inputs, selects and textareas (the `field` token border; a danger border when `aria-invalid`; a spinner while Livewire marks it `data-loading`);
+  - `btn` plus a variant for buttons and button-like links (`:disabled` and `[data-loading]` dim the button and show a spinner).
+
+  Views compose them with layout classes only.
+- **Blade:** `x-portal.notice` and `x-portal.no-profile` join `x-portal.empty`; `x-portal.chip` gains `warning`.
+- **`resources/js/app.js`:**
+  - on `livewire:navigated` after a forward navigation, focus goes to `#main h1` (given `tabindex="-1"`);
+  - after a `wire:submit` form is morphed, focus goes to its first `[aria-invalid="true"]` field.
+- **`App\Support\Portal\Format`:** `staffStatus`, `accountStatus`, `announcementStatus` and `auditAction`; `tone()` covers `suspended` (warning), `separated`/`archived` (muted) and `published` (success).
+- **Backoffice:**
+  - `Admin\Dashboard` passes the visible section keys (`Sections::visibleTo`), so the dashboard links only what the person may open;
+  - five list components have `clearFilters()`.

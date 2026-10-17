@@ -4,7 +4,7 @@
     <h1 class="sr-only">New message</h1>
 
     @if ($noProfile)
-        <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
+        <x-portal.no-profile />
     @elseif ($errorMessage)
         <x-portal.error :message="$errorMessage" />
     @else
@@ -13,7 +13,7 @@
             <p role="alert" class="mb-4 rounded-md bg-danger-soft p-3 font-medium text-danger">{{ $startError }}</p>
         @endif
         @if (count($people) === 0)
-            <p class="rounded-lg border border-line bg-raised p-4">No colleagues found.</p>
+            <x-portal.notice>No colleagues found.</x-portal.notice>
         @else
             <ul class="divide-y divide-line rounded-xl border border-line bg-raised">
                 @foreach ($people as $person)

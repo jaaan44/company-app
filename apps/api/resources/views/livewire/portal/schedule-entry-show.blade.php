@@ -19,7 +19,7 @@
         <section aria-labelledby="entry-people" class="mt-6">
             <h2 id="entry-people" class="mb-2 font-semibold">People ({{ count($people) }})</h2>
             @if (count($people) === 0)
-                <p class="rounded-lg border border-line bg-raised p-4">No other people.</p>
+                <x-portal.notice>No other people.</x-portal.notice>
             @else
                 <ul class="divide-y divide-line rounded-xl border border-line bg-raised">
                     @foreach ($people as $person)

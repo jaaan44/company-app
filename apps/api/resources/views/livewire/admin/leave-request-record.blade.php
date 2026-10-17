@@ -4,7 +4,7 @@
 
     @if ($notFound)
         <h1 class="sr-only">Leave request</h1>
-        <p class="rounded-lg border border-line bg-raised p-4">This request no longer exists.</p>
+        <x-portal.notice>This request no longer exists.</x-portal.notice>
     @elseif ($errorMessage && ! $request)
         <h1 class="sr-only">Leave request</h1>
         <x-portal.error :message="$errorMessage" />
@@ -36,11 +36,11 @@
                 @if ($confirming === null)
                     <div class="flex flex-wrap gap-3">
                         @if ($canDecide)
-                            <button type="button" wire:click="ask('approve')" class="inline-flex min-h-11 items-center rounded-full bg-accent px-5 font-medium text-on-accent hover:opacity-90">Approve</button>
-                            <button type="button" wire:click="ask('reject')" class="inline-flex min-h-11 items-center rounded-full border border-line px-5 font-medium text-danger hover:bg-hover">Reject</button>
+                            <button type="button" wire:click="ask('approve')" class="btn btn-primary">Approve</button>
+                            <button type="button" wire:click="ask('reject')" class="btn btn-danger-outline">Reject</button>
                         @endif
                         @if ($canCancel)
-                            <button type="button" wire:click="ask('cancel')" class="inline-flex min-h-11 items-center rounded-full border border-line px-5 font-medium text-danger hover:bg-hover">Cancel request</button>
+                            <button type="button" wire:click="ask('cancel')" class="btn btn-danger-outline">Cancel request</button>
                         @endif
                     </div>
                 @else
@@ -57,11 +57,11 @@
                         <label for="confirm-text" class="mb-1 mt-3 block text-sm font-semibold">{{ $label }}</label>
                         <textarea id="confirm-text" x-ref="text" wire:model="text" rows="3" maxlength="{{ LeaveRequestRecord::MAX_TEXT }}"
                                   @error('text') aria-invalid="true" aria-describedby="text-error" @enderror
-                                  class="w-full rounded-md border border-line bg-raised px-3 py-2"></textarea>
+                                  class="field w-full"></textarea>
                         @error('text') <p id="text-error" class="mt-1 text-sm font-medium text-danger">{{ $message }}</p> @enderror
                         <div class="mt-3 flex flex-wrap gap-3">
-                            <button type="submit" class="inline-flex min-h-11 items-center rounded-full px-5 font-medium {{ $confirming === 'approve' ? 'bg-accent text-on-accent' : 'bg-danger text-raised' }} hover:opacity-90">{{ $button }}</button>
-                            <button type="button" wire:click="dismiss" class="inline-flex min-h-11 items-center rounded-full px-5 font-medium text-accent-ink hover:bg-hover">Back</button>
+                            <button type="submit" class="btn {{ $confirming === 'approve' ? 'btn-primary' : 'btn-danger' }}">{{ $button }}</button>
+                            <button type="button" wire:click="dismiss" class="btn btn-text">Back</button>
                         </div>
                     </form>
                 @endif

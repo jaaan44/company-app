@@ -8,7 +8,7 @@
     </div>
 
     @if ($noProfile)
-        <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
+        <x-portal.no-profile />
     @elseif ($errorMessage)
         <x-portal.error :message="$errorMessage" />
     @else
@@ -24,7 +24,7 @@
         <section aria-labelledby="balances" class="mb-6">
             <h2 id="balances" class="mb-2 font-semibold">{{ count($balances) > 0 ? 'Balances '.$balances[0]['year'] : 'Balances' }}</h2>
             @if (count($balances) === 0)
-                <p class="rounded-lg border border-line bg-raised p-4">No leave types are available.</p>
+                <x-portal.notice>No leave types are available.</x-portal.notice>
             @else
                 <ul class="grid gap-3 sm:grid-cols-2">
                     @foreach ($balances as $balance)
@@ -41,7 +41,7 @@
         <section aria-labelledby="my-requests">
             <h2 id="my-requests" class="mb-2 font-semibold">My requests</h2>
             @if (count($requests) === 0)
-                <p class="rounded-lg border border-line bg-raised p-4">You haven't requested leave yet.</p>
+                <x-portal.notice>You haven't requested leave yet.</x-portal.notice>
             @else
                 <ul class="divide-y divide-line rounded-xl border border-line bg-raised">
                     @foreach ($requests as $request)

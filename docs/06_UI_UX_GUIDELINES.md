@@ -244,6 +244,11 @@ Principles:
   - **A refusal** shows the API's message, plus what to do instead ("set their status to Separated", "set it to Inactive").
   - **A temporary password** appears once in a highlighted panel, in a monospace box with Copy, saying it won't be shown again and what the person does next.
   - **Choose your password** uses the sign-in page's layout, with Log out. **Change password** is a portal page linked from My profile.
+- **As built (Phase 37B, DEC-068):**
+  - **Dashboard:** **Needs attention** first: leave waiting for a decision, open incidents and overdue tasks, all as of now. Each links to its list, for those who may open that section. Then **Overview**, with the From/To form and the other figures.
+  - **Section pages:** an item that opens a staff-portal screen says "Opens in the staff portal" and loads in full. People has two items (Staff records; Departments, teams and positions).
+  - **Filtered lists** show **Clear filters** once a filter differs from the list's start.
+  - **Audit log:** actions read as words, with the raw key after them.
 - **As built (Phases 36B–36D, DEC-066):**
   - **Lists** default to what needs attention: pending leave, submitted service reports, open incidents. Each has filters for status, type, dates and person.
   - **Decisions** (approve, reject, cancel, mark reviewed, the incident steps) open a small form in place. A reason is required where the API requires one; otherwise there is an optional note.
@@ -260,6 +265,10 @@ The visual-design foundation for Flutter is below (DEC-046). **The web equivalen
   - `surface`, `raised`, `ink`, `muted`, `line`, `hover`, `accent`, `on-accent`, `accent-ink`, `accent-soft`, `danger`, `danger-soft`, `success` and `success-soft`, each with a light and a dark value; dark follows the browser's `prefers-color-scheme`.
   - They are the web counterparts of the mobile color roles. Since 34F (DEC-064) they take the app's M3 indigo palette: light surface `#fbf8ff`, accent `#4355b9`; dark surface `#121318`, accent `#bac3ff`.
   - Every text and surface pair meets WCAG 2.2 AA. Axe scans of the 34A pages in light and dark found no violations.
+  - **Since 37B (DEC-068):**
+    - `field` (light `#767680`, dark `#90909a`) is the boundary of every form control, ≥3:1 against its surface (WCAG 1.4.11; `line` stays for dividers and card borders);
+    - `warning` and `warning-soft` (light `#7a5900` on `#ffdea6`, dark `#f5bf48` on `#5c4300`) are for a state someone must act on that isn't an error;
+    - `hover` is stronger (light `#e3e1ec`, dark `#34343b`).
 - **Type:** the system font stack. No web fonts, so no third-party request.
 - **Shell (34F, DEC-064):** the app's five tabs (Home, Tasks, Schedule, Messages, More), a bottom tab bar on phones and a sidebar from `md` up, with the current tab marked. More lists the other pages in the app's order. A sticky app bar shows the title, with a back arrow on sub-pages (to the parent, or to More). A list's main action is a "+" FAB on phones and a pill button on wider screens. The page content keeps clear of the tab bar and the safe areas.
 - **Layout:**
@@ -268,13 +277,36 @@ The visual-design foundation for Flutter is below (DEC-046). **The web equivalen
   - grids collapse to one column on narrow screens;
   - no horizontal scrolling at 320 px (200% zoom of a 640 px window).
 - **Interaction:** every target is at least 44 px tall (`min-h-11`); focus is always visible (a 3 px accent outline); there's a skip link and a labelled main navigation with `aria-current`.
+- **Shapes and shared controls (37B, DEC-068):**
+  - **Three shapes:** controls (inputs, selects) `rounded-md`; containers (cards, notices, lists) `rounded-xl`; actions (buttons, segmented controls, choice pills) `rounded-full`.
+  - **Form controls use `field`.** Add only layout classes, such as a width or `mt-1`. Labels are `text-sm font-semibold`.
+  - **Buttons use `btn` plus one variant:**
+    - `btn-primary`, the page's main action, one per area;
+    - `btn-secondary` (outlined), a second action (Edit);
+    - `btn-danger-outline`, a destructive action before its confirmation (Delete…);
+    - `btn-danger`, the confirmed destructive action;
+    - `btn-text`, a quiet action (Cancel, Clear filters);
+    - `btn-danger-text`, a quiet destructive action in a row (Remove);
+    - `btn-plain`, an action in body colour (Previous, Next).
+
+    `btn-compact` narrows a button inside a row. Never hand-write a button's colours or shape.
+  - **Saving and loading need no per-view code:** Livewire disables a submitting button and marks a clicked one `data-loading`, and both dim the button and show a spinner. A live search or filter shows a spinner at its end while results load.
+  - **A page's message in place of content** ("This task is no longer available.") is `x-portal.notice`; "No staff profile is linked to this account." is `x-portal.no-profile`; an empty list is `x-portal.empty`.
+- **Focus (37B):**
+  - after moving to another page without a reload, focus goes to the page heading (not on Back or Forward);
+  - after a failed save, focus goes to the first field marked invalid.
+- **Password fields (37B)** have Show/Hide. They're hidden again on submit.
+- **Chat (37B)** opens at the latest message and follows new ones while you're near the end. The message box stays in view above the tab bar.
 - **States, wording and order:** the same as the mobile screens they mirror (no-profile, error with "Try again", empty lists).
 - **Status chips (34B):** `x-portal.chip`. The text label is always present, and the tone comes from one mapping in `App\Support\Portal\Format::tone()`:
   - neutral (To do);
   - info (In progress, Active, Planned, Pending, Submitted);
+  - warning (Suspended, Must choose a password; since 37B);
   - danger (Blocked, Rejected);
   - success (Completed, Approved, Reviewed, Resolved);
-  - muted (Cancelled, Inactive, On hold).
+  - muted (Cancelled, Inactive, On hold, Separated, Archived).
+
+  Since 37B, staff, account and announcement statuses also take their labels from `Format`.
 
   A status concept looks the same on every web page ("Status presentation" below).
 - **Chat (34D):** my messages sit on the right in the accent-soft colour; others' on the left with a border. Each shows its time, and the sender's name in group and project chats (screen readers always hear "You" or the sender). Day separators are centred headings. Unread counts are text in a badge with " unread" for screen readers; an unread notification is bold, with a dot and "Unread" for screen readers.

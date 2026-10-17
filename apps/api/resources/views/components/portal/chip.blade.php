@@ -3,6 +3,7 @@
 @php
     $classes = match ($tone) {
         'info' => 'bg-accent-soft text-accent-ink',
+        'warning' => 'bg-warning-soft text-warning',
         'danger' => 'bg-danger-soft text-danger',
         'success' => 'bg-success-soft text-success',
         'muted' => 'border border-line text-muted',

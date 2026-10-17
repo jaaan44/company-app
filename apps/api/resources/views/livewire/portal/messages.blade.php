@@ -8,11 +8,11 @@
     </div>
 
     @if ($noProfile)
-        <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
+        <x-portal.no-profile />
     @elseif ($errorMessage)
         <x-portal.error :message="$errorMessage" />
     @elseif (count($conversations) === 0)
-        <p class="rounded-lg border border-line bg-raised p-4">No conversations yet.</p>
+        <x-portal.notice>No conversations yet.</x-portal.notice>
     @else
         <ul class="divide-y divide-line rounded-xl border border-line bg-raised">
             @foreach ($conversations as $conversation)
