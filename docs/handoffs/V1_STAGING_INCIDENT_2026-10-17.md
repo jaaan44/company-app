@@ -1,6 +1,6 @@
 # Staging Incident — 2026-10-17
 
-**Status:** staging restored. Pending items are listed in §5.
+**Status:** staging restored, and the seeded account locked. Remaining items are listed in §5.
 
 ## 1. What happened
 
@@ -50,6 +50,9 @@
 
 ## 5. Pending
 
-- **Lock `admin@example.test`:** suspend it, set a random password, end its sessions and tokens. The command was given to the operator; the output isn't recorded yet.
+- **`admin@example.test`: done** (output pasted).
+  - The account existed before today: created 2026-09-11 10:25:10, from the Phase 5 check against this database (UAT-05-01). Today's seed reset its password at 2026-10-17 06:13:20.
+  - Now: `suspended`, with a random 48-character password; its sessions and API tokens are ended. `/login` returns 200.
+  - It is kept rather than deleted, so its audit history stays intact.
 - **Staging runs the unmerged branch `f0e95fb`** (37B and 37C) for review. After PR #141 is merged, deploy `main` with the runbook.
 - **Rotate staging's legacy 6-character database password** in a planned change.

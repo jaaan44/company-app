@@ -12,7 +12,7 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
   - development containers removed; the database volume untouched;
   - `apps/api/.env` rebuilt from the template with `.env.staging`'s database values, a new `APP_KEY` (everyone signs in again; no encrypted data) and the Manila timezone;
   - staging images rebuilt and started on `f0e95fb`; smoke tests pass.
-- **Seeded account:** to be locked (suspended, random password, sessions and tokens ended). See the incident report.
+- **Seeded account:** `admin@example.test` (created 2026-09-11 for the Phase 5 check; today's seed reset its password) is now suspended, with a random password and its sessions and tokens ended.
 - **Guard:**
   - `docker-compose.yml` is now project `company-app-dev`;
   - its app container refuses to start in a checkout with `.env.staging` or `APP_ENV=staging/production`;
