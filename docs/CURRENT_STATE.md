@@ -19,7 +19,7 @@
   - the Messages unread badge (new `GET /conversations/unread-count`);
   - sortable report columns (`?sort=` on the seven reports).
 
-  They are on the same branch and await CI.
+  CI is green on `f46a52e` (1,501 tests).
 - **Details:** `docs/handoffs/V1_PHASE_37B_HANDOFF.md`.
 
 **Phase 37, Web Integration & Mobile-First UX Hardening (DEC-067), is complete and formally closed (2026-10-16):** staging runs `bbe7291`, UAT-37-01…08 **PASS** (product owner). **Phase 36, Admin Backoffice Business Management Screens (DEC-066), is complete and formally closed (2026-10-16):**

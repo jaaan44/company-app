@@ -1650,5 +1650,5 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | Pint / PHPStan / Composer | Automated, CI | PASS | PR #139: Backend quality gates green; Build staging images green. |
 | Render pass (Playwright + axe, 360 / 768 / 1280 px, light and dark) | Manual (AI) | NOT RUN | Needs a running app, so needs Composer. |
 | UAT-37B-01…06 | UAT (product owner) | NOT RUN | After merge and deployment. |
-| Addendum: badge and sortable reports (`ReportSortTest` 4, `UnreadCountTest` 2, `UiImprovementTest` +2) | Automated, CI | NOT RUN | Awaiting CI on the addendum push. |
+| Addendum: badge and sortable reports (`ReportSortTest` 4, `UnreadCountTest` 2, `UiImprovementTest` +2) | Automated, CI | PASS | PR #139, `f46a52e`: **1,501 passed** (6,018 assertions); Pint, PHPStan and the staging images green. Two earlier runs failed. `e95dd97`: PHPStan could not infer the sort helper's model through an untyped closure, so the default order is now an array. `3668f99`: an inline `@php(...)` swallowed a later `@php` block in the report view, so the header uses inline statements only; and the badge test's second user needed `forgetGuards()`. |
 | UAT-37B-07…08 | UAT (product owner) | NOT RUN | After merge and deployment. |

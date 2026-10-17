@@ -171,7 +171,8 @@ See §5.
   - `UnreadCountTest` (2);
   - `UiImprovementTest` +2: the badge, and sortable headers.
 - **Schema and authorization:** no migration and no new permission. The badge costs one in-process API call and one COUNT query on each full portal page load.
-- **Not yet run:** CI on this push, the render pass, UAT-37B-07 and 08.
+- **CI:** green on `f46a52e` (1,501 tests, Pint, PHPStan, staging images), after two fix-ups described in TEST_STATUS.
+- **Not yet run:** the render pass, UAT-37B-07 and 08.
 
 ## 16. Recommended Next Step
 
