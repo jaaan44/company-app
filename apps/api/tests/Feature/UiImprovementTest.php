@@ -162,6 +162,7 @@ class UiImprovementTest extends TestCase
             ->assertSee('<span class="sr-only">, 3 unread</span>', false); // the tab bar
 
         // No staff profile: no badge, and the page still opens.
+        $this->app['auth']->forgetGuards();
         $this->actingAs($this->admin, 'web')->get('/app/more')->assertOk()->assertDontSee(' unread</span>', false);
     }
 

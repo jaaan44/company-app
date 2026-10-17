@@ -42,15 +42,9 @@
                 <thead class="border-b border-line">
                     <tr>
                         @foreach (array_keys($definition['columns']) as $label)
-                            @php
-                                // Phase 37B (DEC-068): a sortable column is a button; aria-sort says which way it's sorted.
-                                $key = $definition['sorts'][$label] ?? null;
-                                $direction = match ($sort) {
-                                    $key => 'ascending',
-                                    '-'.$key => 'descending',
-                                    default => null,
-                                };
-                            @endphp
+                            {{-- Phase 37B (DEC-068): a sortable column is a button; aria-sort says which way it is sorted. --}}
+                            @php($key = $definition['sorts'][$label] ?? null)
+                            @php($direction = $key === null ? null : ($sort === $key ? 'ascending' : ($sort === '-'.$key ? 'descending' : null)))
                             @if ($key === null)
                                 <th scope="col" class="px-4 py-3 font-semibold">{{ $label }}</th>
                             @else
