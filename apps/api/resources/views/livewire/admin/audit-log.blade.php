@@ -8,27 +8,27 @@
     @else
         <p class="mb-4 text-muted">Every recorded change, newest first: who did it, what changed, and from where.</p>
 
-        @php($control = 'mt-1 min-h-11 rounded-md border border-line bg-raised px-3')
+        @php($control = 'field mt-1')
         <div class="mb-4 flex flex-wrap items-end gap-3">
             <div class="min-w-0 basis-64">
-                <label for="audit-action" class="block text-sm font-medium">Action</label>
+                <label for="audit-action" class="block text-sm font-semibold">Action</label>
                 <select id="audit-action" wire:model.live="action" class="{{ $control }} w-full">
                     <option value="">All actions</option>
                     @foreach ($actions as $value)
-                        <option value="{{ $value }}">{{ $value }}</option>
+                        <option value="{{ $value }}">{{ Format::auditAction($value) }}</option>
                     @endforeach
                 </select>
             </div>
             <div>
-                <label for="audit-from" class="block text-sm font-medium">From</label>
+                <label for="audit-from" class="block text-sm font-semibold">From</label>
                 <input id="audit-from" type="date" wire:model.live="from" class="{{ $control }}">
             </div>
             <div>
-                <label for="audit-to" class="block text-sm font-medium">To</label>
+                <label for="audit-to" class="block text-sm font-semibold">To</label>
                 <input id="audit-to" type="date" wire:model.live="to" class="{{ $control }}">
             </div>
             <div>
-                <label for="audit-record" class="block text-sm font-medium">Record ID</label>
+                <label for="audit-record" class="block text-sm font-semibold">Record ID</label>
                 <input id="audit-record" type="search" wire:model.live.debounce.500ms="record" autocomplete="off" class="{{ $control }} font-mono">
             </div>
         </div>
@@ -37,7 +37,7 @@
                 @if ($actor !== '')
                     <span>Only changes by <strong>{{ $actorName !== '' ? $actorName : $actor }}</strong>.</span>
                 @endif
-                <button type="button" wire:click="clearFilters" class="inline-flex min-h-11 items-center rounded-full px-3 font-medium text-accent-ink hover:bg-hover">Clear filters</button>
+                <button type="button" wire:click="clearFilters" class="btn btn-text btn-compact">Clear filters</button>
             </p>
         @endif
 
@@ -48,7 +48,7 @@
                 @foreach ($entries as $entry)
                     <li class="px-5 py-3">
                         <div class="flex flex-wrap items-baseline justify-between gap-x-4">
-                            <span class="font-mono text-sm font-medium break-all">{{ $entry['action'] }}</span>
+                            <span><span class="font-medium">{{ Format::auditAction($entry['action']) }}</span> <span class="font-mono text-sm text-muted break-all">{{ $entry['action'] }}</span></span>
                             <span class="text-sm text-muted">{{ Format::dateTime($entry['created_at'], $utcOffset) }}</span>
                         </div>
                         <p class="text-sm">

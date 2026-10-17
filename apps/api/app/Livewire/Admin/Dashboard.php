@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Livewire\Portal\Concerns\CallsInternalApi;
 use App\Services\Portal\PortalApiException;
+use App\Support\Admin\Sections;
 use App\Support\CompanyTimezone;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Url;
@@ -52,6 +53,7 @@ class Dashboard extends Component
         return view('livewire.admin.dashboard', [
             'd' => $dashboard,
             'utcOffset' => now(CompanyTimezone::value())->format('P'),
+            'sections' => array_keys(Sections::visibleTo(auth()->user())),
         ]);
     }
 }

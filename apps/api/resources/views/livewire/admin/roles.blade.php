@@ -61,14 +61,14 @@
         {{-- Save, with every change listed first (an in-app dialog, as in 34F). --}}
         <div class="sticky bottom-0 mt-6 flex flex-wrap items-center gap-2 border-t border-line bg-surface py-3" x-data>
             <button type="button" x-on:click="$refs.confirm.showModal()" @disabled($changes === [])
-                    class="inline-flex min-h-11 items-center rounded-full bg-accent px-5 font-medium text-on-accent hover:opacity-90 disabled:opacity-40">
+                    class="btn btn-primary">
                 Save changes
             </button>
             @if ($changes !== [])
-                <button type="button" wire:click="discard" class="inline-flex min-h-11 items-center rounded-full px-4 font-medium text-accent-ink hover:bg-hover">Undo changes</button>
+                <button type="button" wire:click="discard" class="btn btn-text">Undo changes</button>
                 <span class="text-sm text-muted">{{ count($changes) === 1 ? '1 role changed' : count($changes).' roles changed' }}, not saved yet</span>
             @endif
-            <button type="button" wire:click="resetToDefaults" class="ml-auto inline-flex min-h-11 items-center rounded-full px-4 font-medium text-accent-ink hover:bg-hover">Reset to defaults</button>
+            <button type="button" wire:click="resetToDefaults" class="btn btn-text ml-auto">Reset to defaults</button>
 
             <dialog x-ref="confirm" aria-labelledby="confirm-title" class="app-dialog bg-raised p-6 text-ink shadow-xl">
                 <h2 id="confirm-title" class="text-lg font-semibold">Save these changes?</h2>
@@ -89,8 +89,8 @@
                 </div>
                 <p class="mt-3 text-sm text-muted">Every change is recorded in the audit log.</p>
                 <div class="mt-6 flex flex-wrap justify-end gap-2">
-                    <button type="button" x-on:click="$refs.confirm.close()" autofocus class="inline-flex min-h-11 items-center rounded-full px-5 font-medium text-accent-ink hover:bg-hover">Cancel</button>
-                    <button type="button" x-on:click="$refs.confirm.close(); $wire.save()" class="inline-flex min-h-11 items-center rounded-full bg-accent px-5 font-medium text-on-accent hover:opacity-90">Save</button>
+                    <button type="button" x-on:click="$refs.confirm.close()" autofocus class="btn btn-text">Cancel</button>
+                    <button type="button" x-on:click="$refs.confirm.close(); $wire.save()" class="btn btn-primary">Save</button>
                 </div>
             </dialog>
         </div>

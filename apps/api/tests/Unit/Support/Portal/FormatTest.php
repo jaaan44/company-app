@@ -200,4 +200,24 @@ class FormatTest extends TestCase
         $this->assertSame('Return to draft', Format::reportAction('return_to_draft'));
         $this->assertSame('Updated', Format::reportAction(''));
     }
+
+    public function test_status_labels_and_tones_added_in_phase_37b(): void
+    {
+        $this->assertSame('warning', Format::tone('suspended'));
+        $this->assertSame('muted', Format::tone('separated'));
+        $this->assertSame('muted', Format::tone('archived'));
+        $this->assertSame('success', Format::tone('published'));
+        $this->assertSame('Separated', Format::staffStatus('separated'));
+        $this->assertSame('Suspended', Format::accountStatus('suspended'));
+        $this->assertSame('Published', Format::announcementStatus('published'));
+        $this->assertSame('On leave', Format::staffStatus('on_leave'));
+        $this->assertSame('Unknown', Format::accountStatus(null));
+    }
+
+    public function test_audit_actions_read_as_words(): void
+    {
+        $this->assertSame('Role: permissions updated', Format::auditAction('role.permissions_updated'));
+        $this->assertSame('Auth: login succeeded', Format::auditAction('auth.login_succeeded'));
+        $this->assertSame('Something', Format::auditAction('something'));
+    }
 }

@@ -4,7 +4,7 @@
         <h1 class="sr-only">Notifications</h1>
         @if (! $errorMessage && $hasUnread)
             <button type="button" wire:click="markAllRead" wire:loading.attr="disabled" wire:target="markAllRead"
-                    class="inline-flex min-h-11 items-center rounded-md border border-line px-4 hover:bg-hover disabled:opacity-60">Mark all read</button>
+                    class="btn btn-secondary">Mark all read</button>
         @endif
     </div>
 
@@ -18,7 +18,7 @@
     @if ($errorMessage)
         <x-portal.error :message="$errorMessage" />
     @elseif (count($notifications) === 0)
-        <p class="rounded-lg border border-line bg-raised p-4">No notifications yet.</p>
+        <x-portal.notice>No notifications yet.</x-portal.notice>
     @else
         <ul class="divide-y divide-line rounded-xl border border-line bg-raised">
             @foreach ($notifications as $notification)

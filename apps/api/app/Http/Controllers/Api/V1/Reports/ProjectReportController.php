@@ -13,6 +13,7 @@ use App\Support\Audit\AuditActions;
 use App\Support\Http\PerPage;
 use App\Support\Reporting\CsvExport;
 use App\Support\Reporting\PublicIdResolver;
+use App\Support\Reporting\ReportSort;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -29,6 +30,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class ProjectReportController extends Controller
 {
+    /** `?sort=` fields (Phase 37B): sort key => columns. */
+    private const SORTS = ['name' => ['name'], 'target_end_date' => ['target_end_date']];
+
     public function __construct(
         private readonly ProjectVisibility $visibility,
         private readonly AuditLogger $auditLogger,
@@ -76,15 +80,17 @@ class ProjectReportController extends Controller
         $request->validate([
             'client' => ['sometimes', 'string'],
             'status' => ['sometimes', new Enum(ProjectStatus::class)],
+            'sort' => ['sometimes', ReportSort::rule(self::SORTS)],
         ]);
 
-        return $this->visibility->visibleQuery($request)
+        $query = $this->visibility->visibleQuery($request)
             ->with('client')
             ->when(
                 $request->filled('client'),
                 fn ($query) => $query->where('client_id', PublicIdResolver::resolve(Client::class, $request->string('client')->toString()) ?? -1)
             )
-            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')))
-            ->orderBy('name');
+            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')));
+
+        return ReportSort::apply($request, $query, self::SORTS, ['name' => 'asc']);
     }
 }

@@ -8,11 +8,11 @@
     </div>
 
     @if ($noProfile)
-        <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
+        <x-portal.no-profile />
     @elseif ($errorMessage)
         <x-portal.error :message="$errorMessage" />
     @elseif (count($days) === 0)
-        <p class="rounded-lg border border-line bg-raised p-4">No work logged yet.</p>
+        <x-portal.notice>No work logged yet.</x-portal.notice>
     @else
         @foreach ($days as $date => $logs)
             <section wire:key="day-{{ $date }}" aria-labelledby="day-{{ $date }}" class="mb-6">

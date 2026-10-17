@@ -6,7 +6,7 @@
     <h1 class="sr-only">My status</h1>
 
     @if ($noProfile)
-        <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
+        <x-portal.no-profile />
     @elseif ($errorMessage)
         <x-portal.error :message="$errorMessage" />
     @else
@@ -24,7 +24,7 @@
                     @php($isCurrent = ($current['status'] ?? null) === $status)
                     <button type="button" wire:click="setStatus('{{ $status }}')" aria-pressed="{{ $isCurrent ? 'true' : 'false' }}"
                             @disabled($isCurrent) wire:loading.attr="disabled" wire:target="setStatus"
-                            class="inline-flex min-h-11 items-center rounded-md border px-4 {{ $isCurrent ? 'border-accent bg-accent-soft font-semibold text-accent-ink' : 'border-line hover:bg-hover disabled:opacity-50' }}">
+                            class="inline-flex min-h-11 items-center rounded-full border px-4 {{ $isCurrent ? 'border-accent bg-accent-soft font-semibold text-accent-ink' : 'border-field hover:bg-hover disabled:opacity-50' }}">
                         {{ Format::operationalStatus($status) }}
                     </button>
                 @endforeach
@@ -43,7 +43,7 @@
         <section aria-labelledby="recent-changes" class="mt-6">
             <h2 id="recent-changes" class="mb-2 font-semibold">Recent status changes</h2>
             @if (count($statuses) === 0)
-                <p class="rounded-lg border border-line bg-raised p-4">You haven't set a status yet.</p>
+                <x-portal.notice>You haven't set a status yet.</x-portal.notice>
             @else
                 @include('livewire.portal.partials.status-rows', ['items' => $statuses])
                 <a href="{{ route('portal.status.changes') }}" class="mt-2 inline-flex min-h-11 items-center text-accent-ink underline-offset-4 hover:underline">All status changes</a>
@@ -53,7 +53,7 @@
         <section aria-labelledby="recent-check-ins" class="mt-6">
             <h2 id="recent-check-ins" class="mb-2 font-semibold">Recent check-ins</h2>
             @if (count($checkIns) === 0)
-                <p class="rounded-lg border border-line bg-raised p-4">You haven't checked in yet.</p>
+                <x-portal.notice>You haven't checked in yet.</x-portal.notice>
             @else
                 @include('livewire.portal.partials.check-in-rows', ['items' => $checkIns])
                 <a href="{{ route('portal.status.check-ins') }}" class="mt-2 inline-flex min-h-11 items-center text-accent-ink underline-offset-4 hover:underline">All check-ins</a>

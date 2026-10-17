@@ -15,6 +15,7 @@ use App\Models\Notification;
 use App\Models\Staff;
 use App\Support\CompanyDay;
 use App\Support\Http\PerPage;
+use App\Support\Messaging\UnreadMessages;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -60,6 +61,18 @@ class ConversationController extends Controller
 
         return ConversationResource::collection($conversations)
             ->additional(['meta' => ['company_day' => CompanyDay::meta()]]);
+    }
+
+    /**
+     * How many messages the requester hasn't read, across all their
+     * conversations (Phase 37B, DEC-068): the staff portal's Messages tab
+     * badge. The same count as Home's `messages.unread_count`.
+     */
+    public function myUnreadCount(Request $request): JsonResponse
+    {
+        $staff = $this->resolveAuthenticatedStaff($request);
+
+        return response()->json(['data' => ['unread_count' => UnreadMessages::countFor($staff)]]);
     }
 
     public function show(Request $request, Conversation $conversation): ConversationResource

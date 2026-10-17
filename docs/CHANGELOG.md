@@ -4,6 +4,36 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-17 — Phase 37B addendum: Messages badge and sortable reports
+- **Approved:** "i approve you recommendations" (recorded in DEC-068's addendum).
+- **Messages badge:** the portal's Messages tab shows the unread count, from a new `GET /api/v1/conversations/unread-count` (the same count as Home).
+- **Sortable reports:** `?sort=field` / `-field` on the seven report endpoints and their CSV exports, for names, dates and numbers. Report column headers in the Backoffice sort, with `aria-sort`.
+- **No migration, no new permission, no new dependency.**
+
+### 2026-10-17 — Phase 37B: Web UI/UX improvement (implemented)
+- **Approved:** the UI/UX audit's recommendations ("I approve all your recommendations"), recorded as **DEC-068**.
+- **Contrast and consistency:**
+  - form fields get a 3:1 boundary (`field` token);
+  - one shared button style and field style across the portal and the Backoffice (`btn`, `field`);
+  - one notice for "no longer available" and empty messages;
+  - one label style;
+  - pill segmented controls;
+  - a warning tone (suspended accounts, "Must choose a password").
+- **Feedback:**
+  - every button dims and shows a spinner while it saves;
+  - live searches and filters show a spinner while results load;
+  - **Clear filters** on the Backoffice lists.
+- **Focus:** the page heading after moving to another page; the first invalid field after a failed save.
+- **Chat:** opens at the latest message and keeps the message box in view.
+- **Backoffice:**
+  - the dashboard leads with **Needs attention** (pending leave, open incidents, overdue tasks), each linking to its list;
+  - People loses two duplicate items;
+  - staff-portal screens are labelled "Opens in the staff portal";
+  - readable Audit log actions;
+  - status labels from one place.
+- **Sign-in:** Show/Hide on password fields.
+- **Not yet run:** Pint, PHPStan, the test suite and the render pass (Composer can't install in this environment); UAT. **No migration, no API change, no new dependency.**
+
 ### 2026-10-16 — Phase 37 complete (UAT PASS)
 - **UAT:** UAT-37-01…08 **PASS** on staging `bbe7291`, reported by the product owner ("ALL PASSED").
 - **Closed:** Phase 37 is formally closed. The `[UAT37]` records stay on staging.

@@ -7,7 +7,7 @@
     <x-portal.back :href="route('portal.tasks')">Tasks</x-portal.back>
 
     @if ($noProfile)
-        <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
+        <x-portal.no-profile />
     @elseif ($errorMessage)
         <h1 class="sr-only">Task</h1>
         <x-portal.error :message="$errorMessage" />
@@ -25,11 +25,11 @@
         @if ($mayEdit || $mayDelete)
             <div class="mt-3 flex flex-wrap gap-2">
                 @if ($mayEdit)
-                    <a href="{{ route('portal.tasks.edit', $task['public_id']) }}" class="inline-flex min-h-11 items-center rounded-full border border-line px-4 font-medium hover:bg-hover">Edit task</a>
+                    <a href="{{ route('portal.tasks.edit', $task['public_id']) }}" class="btn btn-secondary">Edit task</a>
                 @endif
                 @if ($mayDelete)
                     <x-portal.confirm title="Delete this task?" body="Only a task that is still To do, with no work logged, can be deleted. Otherwise cancel it instead." confirm="Delete" action="delete()" :danger="true"
-                                      class="inline-flex min-h-11 items-center rounded-full border border-line px-4 font-medium text-danger hover:bg-hover">Delete task</x-portal.confirm>
+                                      class="btn btn-danger-outline">Delete task</x-portal.confirm>
                 @endif
             </div>
             @if ($generalError)
@@ -50,7 +50,7 @@
                     @foreach (TaskShow::SELECTABLE as $status)
                         <button type="button" wire:click="setStatus('{{ $status }}')" aria-pressed="{{ $task['status'] === $status ? 'true' : 'false' }}"
                                 @disabled($task['status'] === $status || $locked) wire:loading.attr="disabled" wire:target="setStatus"
-                                class="inline-flex min-h-11 items-center rounded-md border px-4 {{ $task['status'] === $status ? 'border-accent bg-accent-soft font-semibold text-accent-ink' : 'border-line hover:bg-hover disabled:opacity-50' }}">
+                                class="inline-flex min-h-11 items-center rounded-full border px-4 {{ $task['status'] === $status ? 'border-accent bg-accent-soft font-semibold text-accent-ink' : 'border-field hover:bg-hover disabled:opacity-50' }}">
                             {{ Format::taskStatus($status) }}
                         </button>
                     @endforeach
@@ -63,7 +63,7 @@
                     @endif
                 </div>
                 <a href="{{ route('portal.work-logs.new', ['task' => $task['public_id']]) }}"
-                   class="mt-4 inline-flex min-h-11 items-center rounded-md border border-line px-4 hover:bg-hover">Log work</a>
+                   class="btn btn-secondary mt-4">Log work</a>
             @endif
         </section>
 

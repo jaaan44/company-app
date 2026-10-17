@@ -11,17 +11,21 @@
         <p role="alert" class="mb-4 text-sm font-medium text-danger">{{ $message }}</p>
     @enderror
 
-    <form wire:submit="login" class="space-y-4">
+    {{-- Phase 37B: a password can be shown to check it; it's hidden again on Sign in, which matches what the server renders. --}}
+    <form wire:submit="login" x-data="{ shown: false }" x-on:submit="shown = false" class="space-y-4">
         <div>
             <label for="email" class="mb-1 block text-sm font-semibold">Email</label>
             <input type="email" id="email" wire:model="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" enterkeyhint="next" required autofocus
-                   class="min-h-11 w-full rounded-md border border-line bg-raised px-3">
+                   class="field w-full">
         </div>
 
         <div>
             <label for="password" class="mb-1 block text-sm font-semibold">Password</label>
-            <input type="password" id="password" wire:model="password" autocomplete="current-password" enterkeyhint="go" required
-                   class="min-h-11 w-full rounded-md border border-line bg-raised px-3">
+            <div class="flex gap-2">
+                <input type="password" id="password" wire:model="password" autocomplete="current-password" enterkeyhint="go" required
+                       x-bind:type="shown ? 'text' : 'password'" class="field w-full">
+                <button type="button" x-on:click="shown = ! shown" aria-controls="password" class="btn btn-text btn-compact shrink-0"><span x-text="shown ? 'Hide' : 'Show'">Show</span><span class="sr-only"> password</span></button>
+            </div>
         </div>
 
         <label class="flex min-h-11 items-center gap-3">
@@ -30,7 +34,7 @@
         </label>
 
         <button type="submit" wire:loading.attr="disabled" wire:target="login"
-                class="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-accent px-4 font-medium text-on-accent hover:opacity-90 disabled:opacity-60">
+                class="btn btn-primary w-full">
             <span wire:loading.remove wire:target="login">Sign in</span>
             <span wire:loading wire:target="login">Signing in…</span>
         </button>

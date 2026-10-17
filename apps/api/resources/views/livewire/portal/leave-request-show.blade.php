@@ -7,11 +7,11 @@
     @endif
 
     @if ($noProfile)
-        <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
+        <x-portal.no-profile />
     @elseif ($errorMessage)
         <h1 class="sr-only">{{ $viewer === 'team' ? 'Team request' : 'Leave request' }}</h1>
         @if ($errorMessage === 'This request is no longer available.' || $errorMessage === "You don't have access to this request.")
-            <p class="rounded-lg border border-line bg-raised p-4">{{ $errorMessage }}</p>
+            <x-portal.notice>{{ $errorMessage }}</x-portal.notice>
         @else
             <x-portal.error :message="$errorMessage" />
         @endif
@@ -48,11 +48,11 @@
                 @if ($confirming === null)
                     <div class="flex flex-wrap gap-3">
                         @if ($canCancel)
-                            <button type="button" wire:click="ask('cancel')" class="inline-flex min-h-11 items-center rounded-md border border-line px-4 text-danger hover:bg-hover">Cancel request</button>
+                            <button type="button" wire:click="ask('cancel')" class="btn btn-danger-outline">Cancel request</button>
                         @endif
                         @if ($canDecide)
-                            <button type="button" wire:click="ask('approve')" class="inline-flex min-h-11 items-center rounded-md bg-accent px-4 font-medium text-on-accent hover:opacity-90">Approve</button>
-                            <button type="button" wire:click="ask('reject')" class="inline-flex min-h-11 items-center rounded-md border border-line px-4 text-danger hover:bg-hover">Reject</button>
+                            <button type="button" wire:click="ask('approve')" class="btn btn-primary">Approve</button>
+                            <button type="button" wire:click="ask('reject')" class="btn btn-danger-outline">Reject</button>
                         @endif
                     </div>
                 @else
@@ -81,12 +81,12 @@
                         <label for="confirm-text" class="mb-1 mt-3 block text-sm font-semibold">{{ $label }}</label>
                         <textarea id="confirm-text" x-ref="text" wire:model="text" rows="3" maxlength="{{ \App\Livewire\Portal\LeaveRequestShow::MAX_TEXT }}"
                                   @error('text') aria-invalid="true" aria-describedby="text-error" @enderror
-                                  class="w-full rounded-md border border-line bg-raised px-3 py-2"></textarea>
+                                  class="field w-full"></textarea>
                         @error('text') <p id="text-error" class="mt-1 text-sm font-medium text-danger">{{ $message }}</p> @enderror
                         <div class="mt-3 flex flex-wrap gap-3">
                             <button type="submit" wire:loading.attr="disabled" wire:target="confirm"
-                                    class="inline-flex min-h-11 items-center rounded-md px-4 font-medium disabled:opacity-60 {{ $confirming === 'approve' ? 'bg-accent text-on-accent hover:opacity-90' : 'bg-danger text-on-accent hover:opacity-90' }}">{{ $confirmLabel }}</button>
-                            <button type="button" wire:click="dismiss" class="inline-flex min-h-11 items-center rounded-md border border-line px-4 hover:bg-hover">{{ $confirming === 'cancel' ? 'Keep it' : 'Back' }}</button>
+                                    class="btn {{ $confirming === 'approve' ? 'btn-primary' : 'btn-danger' }}">{{ $confirmLabel }}</button>
+                            <button type="button" wire:click="dismiss" class="btn btn-secondary">{{ $confirming === 'cancel' ? 'Keep it' : 'Back' }}</button>
                         </div>
                     </form>
                 @endif

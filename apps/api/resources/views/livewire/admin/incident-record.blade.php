@@ -4,7 +4,7 @@
 
     @if ($notFound)
         <h1 class="sr-only">Incident</h1>
-        <p class="rounded-lg border border-line bg-raised p-4">This incident no longer exists.</p>
+        <x-portal.notice>This incident no longer exists.</x-portal.notice>
     @elseif ($errorMessage && ! $report)
         <h1 class="sr-only">Incident</h1>
         <x-portal.error :message="$errorMessage" />
@@ -44,7 +44,7 @@
                     <div class="flex flex-wrap gap-3">
                         @foreach ($actions as $action)
                             <button type="button" wire:click="ask('{{ $action }}')"
-                                    class="inline-flex min-h-11 items-center rounded-full px-5 font-medium {{ $loop->last && $action !== 'reopen' ? 'bg-accent text-on-accent hover:opacity-90' : 'border border-line text-accent-ink hover:bg-hover' }}">{{ IncidentRecord::ACTIONS[$action] }}</button>
+                                    class="btn {{ $loop->last && $action !== 'reopen' ? 'btn-primary' : 'btn-secondary' }}">{{ IncidentRecord::ACTIONS[$action] }}</button>
                         @endforeach
                     </div>
                 @else
@@ -60,8 +60,8 @@
                         @endif
                         @include('livewire.portal.partials.field', ['id' => 'inc-note', 'label' => 'Note for the history', 'model' => 'note', 'error' => 'note', 'textarea' => true, 'rows' => 2, 'max' => 1000, 'optional' => true])
                         <div class="flex flex-wrap gap-3">
-                            <button type="submit" class="inline-flex min-h-11 items-center rounded-full bg-accent px-5 font-medium text-on-accent hover:opacity-90">{{ IncidentRecord::ACTIONS[$confirming] }}</button>
-                            <button type="button" wire:click="dismiss" class="inline-flex min-h-11 items-center rounded-full px-5 font-medium text-accent-ink hover:bg-hover">Back</button>
+                            <button type="submit" class="btn btn-primary">{{ IncidentRecord::ACTIONS[$confirming] }}</button>
+                            <button type="button" wire:click="dismiss" class="btn btn-text">Back</button>
                         </div>
                     </form>
                 @endif

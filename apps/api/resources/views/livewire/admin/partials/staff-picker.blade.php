@@ -7,13 +7,13 @@
     @if ($staffId !== '')
         <p class="flex flex-wrap items-center gap-3">
             <span class="font-medium">{{ $staffName }}</span>
-            <button type="button" wire:click="clearStaff" class="inline-flex min-h-11 items-center rounded-md px-3 text-accent-ink hover:bg-hover">Remove<span class="sr-only"> {{ $staffName }}</span></button>
+            <button type="button" wire:click="clearStaff" class="btn btn-text btn-compact">Remove<span class="sr-only"> {{ $staffName }}</span></button>
         </p>
     @endif
     <input id="staff-search" type="search" wire:model.live.debounce.400ms="staffSearch" autocomplete="off"
            placeholder="{{ $staffId === '' ? 'Search by name or employee number' : 'Search to change' }}"
            @error('staffSearch') aria-invalid="true" aria-describedby="staff-search-error" @enderror
-           class="min-h-11 w-full rounded-md border border-line bg-raised px-3 sm:max-w-md">
+           class="field w-full sm:max-w-md">
     @error('staffSearch') <p id="staff-search-error" class="mt-1 text-sm font-medium text-danger">{{ $message }}</p> @enderror
     @if ($people === null)
         <p class="mt-1 text-sm text-muted">The staff directory couldn't be searched.</p>

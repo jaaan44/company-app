@@ -1,6 +1,6 @@
 @props(['href', 'label'])
 {{-- A page's main action (Phase 34F, F-3): a button in the page on wider screens, a round "+" above the tab bar on phones. --}}
-<a href="{{ $href }}" class="hidden min-h-11 items-center gap-2 rounded-full bg-accent px-5 font-medium text-on-accent hover:opacity-90 md:inline-flex">
+<a href="{{ $href }}" class="btn btn-primary max-md:hidden">
     <x-portal.icon name="add" class="size-5" /> {{ $label }}
 </a>
 <a href="{{ $href }}" aria-label="{{ $label }}"

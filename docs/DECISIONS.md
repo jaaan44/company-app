@@ -1043,3 +1043,41 @@ Internet → Cloudflare (proxied, SSL/TLS "Full (strict)")
 - **The DEC-066 addendum's "Audit log filters by UTC days"** is superseded by company days.
 - **The 29A cap of 50 on `/me/tasks`** is unchanged: an endpoint may keep a smaller cap of its own.
 - DEC-022 (the `web` guard) and DEC-066 (a reset or suspension ends every sign-in) are reaffirmed, now including the remember cookie.
+
+### DEC-068 — Phase 37B: Web UI/UX improvement; shared control styles; field contrast and a warning tone
+
+**Status:** Accepted (2026-10-17), product owner: "I approve all your recommendations" (the Phase 37B audit's UX-1…UX-4).
+**Context:** A UI/UX audit of the web app (`docs/phases/V1_PHASE_37B_DEFINITION.md`) found:
+- form-field borders at 1.7:1 against their surface, below WCAG 1.4.11's 3:1;
+- 12 button shapes and 68 notice cards each written by hand;
+- Backoffice forms with no visible saving state;
+- a dashboard that didn't link what needs a decision;
+- no focus management after page changes or failed saves.
+**Decision:**
+1. **Tokens:**
+   - `field` (an M3 outline, for form-control boundaries, ≥3:1);
+   - `warning`/`warning-soft` (the mobile app's warning role; AA on both themes);
+   - a stronger `hover`.
+2. **Shapes:** controls `rounded-md`, containers `rounded-xl`, actions `rounded-full`.
+3. **Shared control styles** as Tailwind `@utility` classes in `app.css`: `field`, and `btn` with one of `btn-primary`, `btn-secondary`, `btn-danger`, `btn-danger-outline`, `btn-text`, `btn-danger-text`, `btn-plain`, plus `btn-compact`. Views use them, not hand-written class lists. A class rather than a Blade component, because buttons carry Livewire and Alpine attributes and serve as the trigger of `x-portal.confirm`.
+4. **Feedback from Livewire's own state:**
+   - a disabled or `data-loading` button dims and shows a spinner;
+   - a `data-loading` field (a live search or filter) shows one at its end.
+5. **Shared notices:** `x-portal.notice` (a page's message in place of content) and `x-portal.no-profile`.
+6. **Status labels:** staff, account and announcement statuses go through `Format`; `suspended` takes the warning tone.
+7. **Focus:**
+   - the page heading after a page change without a reload (not on Back or Forward);
+   - the first invalid field after a failed save.
+8. **Admin dashboard:** "Needs attention" (pending leave, open incidents, overdue tasks; all as of now) comes first and links to its lists, for those who may open the section.
+9. **Section pages:** an item that opens the staff portal says so and loads in full.
+10. **Deferred** (each needs backend work and its own authorization):
+    - the Messages unread badge, which needs a cheap unread-count endpoint;
+    - sortable report columns, which need an API `sort` parameter.
+**Rationale:** The audit found no reason to change the visual direction: the indigo M3 palette and the system font stay. It found drift and gaps. Defining each control once removes the drift, and fixes contrast and feedback everywhere at the same time.
+**Superseded/reaffirmed:**
+- **DEC-067 H-8** ("no shared component library") is **superseded in part**: there are now shared control styles and two notice components. There is still no client-side component library and no new dependency.
+- DEC-063 W-5 (tokens, system font, 44 px targets) and DEC-064 (the M3 indigo palette) are reaffirmed.
+
+**Addendum (2026-10-17), product owner: "i approve you recommendations".** The two deferred items are built, as the handoff recommended:
+- **Unread badge:** `GET /api/v1/conversations/unread-count`, the same count as Home, needing a linked staff record. The portal's Messages tab shows it (sidebar and tab bar; "99+" above 99; no badge without a staff record).
+- **Sortable reports:** `?sort=field` / `-field` on the seven reports and their CSV exports, for names, dates and numbers only. Report column headers sort, with `aria-sort`.

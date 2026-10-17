@@ -5,7 +5,7 @@
 <div>
     @if ($noProfile)
         <h1 class="sr-only">Home</h1>
-        <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
+        <x-portal.no-profile />
     @elseif ($errorMessage)
         <h1 class="sr-only">Home</h1>
         <x-portal.error :message="$errorMessage" />
@@ -29,7 +29,7 @@
                     <p class="text-muted">{{ $staff['team']['name'] }}</p>
                 @endif
             @else
-                <p class="mt-3 rounded-lg border border-line bg-raised p-4">Your account isn't linked to an employee profile, so some sections aren't available.</p>
+                <x-portal.notice class="mt-3">Your account isn't linked to an employee profile, so some sections aren't available.</x-portal.notice>
             @endif
         </section>
 
@@ -45,7 +45,7 @@
                             <li wire:key="today-{{ $item['public_id'] }}">
                                 {{-- As on mobile (Phase 29A R-6 / 30A R-10): a task opens the task, a meeting its entry. --}}
                                 <a href="{{ ($item['source_type'] ?? null) === 'task' ? route('portal.task', $item['public_id']) : route('portal.schedule-entry', $item['public_id']) }}"
-                                   class="block min-h-11 py-3 hover:bg-hover">
+                                   class="chevron -mx-3 block min-h-11 rounded-md px-3 py-3 hover:bg-hover">
                                     <span class="block font-medium">{{ $item['title'] }}</span>
                                     <span class="block text-sm text-muted">{{ Format::todayLabel($item) }} · {{ Format::todayTime($item, $day) }}</span>
                                 </a>
@@ -103,7 +103,7 @@
                     <ul class="divide-y divide-line">
                         @foreach ($home['announcements']['latest'] as $announcement)
                             <li wire:key="announcement-{{ $announcement['public_id'] }}">
-                                <a href="{{ route('portal.announcement', $announcement['public_id']) }}" class="chevron block min-h-11 py-3 hover:bg-hover">
+                                <a href="{{ route('portal.announcement', $announcement['public_id']) }}" class="chevron -mx-3 block min-h-11 rounded-md px-3 py-3 hover:bg-hover">
                                     <span class="block font-medium">{{ $announcement['title'] }}</span>
                                     @if ($announcement['published_at'] ?? null)
                                         <span class="block text-sm text-muted">{{ Format::dayMonth(CarbonImmutable::parse($announcement['published_at'])->setTimezone($day['utc_offset'])) }}</span>

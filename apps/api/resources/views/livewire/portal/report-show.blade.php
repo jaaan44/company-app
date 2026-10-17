@@ -6,11 +6,11 @@
     <x-portal.back :href="route('portal.reports', $kind === 'incidents' ? ['type' => 'incidents'] : [])">Reports</x-portal.back>
 
     @if ($noProfile)
-        <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
+        <x-portal.no-profile />
     @elseif ($errorMessage)
         <h1 class="sr-only">{{ $kind === 'incidents' ? 'Incident' : 'Service report' }}</h1>
         @if (in_array($errorMessage, ['This report is no longer available.', "You don't have access to this report."], true))
-            <p class="rounded-lg border border-line bg-raised p-4">{{ $errorMessage }}</p>
+            <x-portal.notice>{{ $errorMessage }}</x-portal.notice>
         @else
             <x-portal.error :message="$errorMessage" />
         @endif
@@ -59,17 +59,17 @@
         @if ($canEdit || $canReturn)
             <div class="mt-4 flex flex-wrap gap-3">
                 @if ($canEdit)
-                    <a href="{{ $editRoute }}" class="inline-flex min-h-11 items-center rounded-md border border-line px-4 hover:bg-hover">Edit</a>
+                    <a href="{{ $editRoute }}" class="btn btn-secondary">Edit</a>
                     @if ($kind === 'service')
                         <x-portal.confirm title="Submit this report?" body="Your manager will review it. You can't edit it after submitting." confirm="Submit" action="submitReport()"
-                                          class="inline-flex min-h-11 items-center rounded-md bg-accent px-4 font-medium text-on-accent hover:opacity-90">Submit</x-portal.confirm>
+                                          class="btn btn-primary">Submit</x-portal.confirm>
                         <x-portal.confirm title="Delete this draft?" body="This can't be undone." confirm="Delete" action="deleteDraft()" :danger="true"
-                                          class="inline-flex min-h-11 items-center rounded-md border border-line px-4 text-danger hover:bg-hover">Delete draft</x-portal.confirm>
+                                          class="btn btn-danger-outline">Delete draft</x-portal.confirm>
                     @endif
                 @endif
                 @if ($canReturn)
                     <x-portal.confirm title="Return to draft?" body="You can then edit it and submit it again." confirm="Return to draft" action="returnToDraft()"
-                                      class="inline-flex min-h-11 items-center rounded-md bg-accent px-4 font-medium text-on-accent hover:opacity-90">Return to draft</x-portal.confirm>
+                                      class="btn btn-primary">Return to draft</x-portal.confirm>
                 @endif
             </div>
         @endif
@@ -94,7 +94,7 @@
                             $url = route('portal.report-file', ['kind' => $kind, 'publicId' => $report['public_id'], 'attachmentId' => $a['public_id']]);
                             $image = in_array($a['mime_type'], ['image/jpeg', 'image/png'], true);
                         @endphp
-                        <li wire:key="file-{{ $a['public_id'] }}" class="rounded-lg border border-line p-3">
+                        <li wire:key="file-{{ $a['public_id'] }}" class="rounded-xl border border-line p-3">
                             @if ($image)
                                 <a href="{{ $url }}" target="_blank" rel="noopener" class="block">
                                     <img src="{{ $url }}" alt="Photo: {{ $a['original_filename'] }}" loading="lazy" class="max-h-48 w-full rounded object-cover">
@@ -103,10 +103,10 @@
                             <p class="mt-2 break-all text-sm font-medium">{{ $a['original_filename'] }}</p>
                             <p class="text-sm text-muted">{{ Format::fileSize((int) $a['size_bytes']) }}</p>
                             <div class="mt-1 flex flex-wrap gap-2">
-                                <a href="{{ $url }}" @if ($image) target="_blank" rel="noopener" @endif class="inline-flex min-h-11 items-center rounded-md px-3 text-accent-ink hover:bg-hover">{{ $image ? 'Open photo' : 'Download' }}<span class="sr-only"> {{ $a['original_filename'] }}</span></a>
+                                <a href="{{ $url }}" @if ($image) target="_blank" rel="noopener" @endif class="btn btn-text btn-compact">{{ $image ? 'Open photo' : 'Download' }}<span class="sr-only"> {{ $a['original_filename'] }}</span></a>
                                 @if ($canEdit)
                                     <x-portal.confirm title="Remove this file?" :body="$a['original_filename']" confirm="Remove" :action="'removeFile(\''.$a['public_id'].'\')'" :danger="true"
-                                                      class="inline-flex min-h-11 items-center rounded-md px-3 text-danger hover:bg-hover">Remove<span class="sr-only"> {{ $a['original_filename'] }}</span></x-portal.confirm>
+                                                      class="btn btn-danger-text btn-compact">Remove<span class="sr-only"> {{ $a['original_filename'] }}</span></x-portal.confirm>
                                 @endif
                             </div>
                         </li>
@@ -120,7 +120,7 @@
                     <p class="mb-2 text-sm text-muted">JPEG, PNG or PDF, up to 10 MB. It uploads as soon as you choose it.</p>
                     <input id="report-file" type="file" wire:model="file" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
                            @error('file') aria-invalid="true" aria-describedby="report-file-error" @enderror
-                           class="block w-full text-sm file:mr-3 file:min-h-11 file:rounded-md file:border file:border-line file:bg-raised file:px-4">
+                           class="block w-full text-sm file:mr-3 file:min-h-11 file:rounded-full file:border file:border-field file:bg-raised file:px-4 file:font-medium file:text-accent-ink">
                     @error('file') <p id="report-file-error" class="mt-1 text-sm font-medium text-danger">{{ $message }}</p> @enderror
                     <p wire:loading wire:target="file,addFile" role="status" class="mt-2 text-sm text-muted">Uploading…</p>
                 </form>

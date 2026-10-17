@@ -4,7 +4,7 @@
 
     @if ($notFound)
         <h1 class="sr-only">Staff record</h1>
-        <p class="rounded-lg border border-line bg-raised p-4">This staff record no longer exists.</p>
+        <x-portal.notice>This staff record no longer exists.</x-portal.notice>
     @elseif ($errorMessage && ! $staff)
         <h1 class="sr-only">Staff record</h1>
         <x-portal.error :message="$errorMessage" />
@@ -15,16 +15,16 @@
                 <h1 class="text-xl font-semibold">{{ $staff['display_name'] }}</h1>
                 <p class="text-muted">{{ $staff['employee_number'] }}@if ($staff['position']) · {{ $staff['position']['title'] }}@endif</p>
                 @if ($staff['status'] !== 'active')
-                    <x-portal.chip tone="muted" class="mt-1">{{ ucfirst($staff['status']) }}</x-portal.chip>
+                    <x-portal.chip :tone="Format::tone($staff['status'])" class="mt-1">{{ Format::staffStatus($staff['status']) }}</x-portal.chip>
                 @endif
             </div>
             <div class="flex flex-wrap gap-2">
                 @if ($can['update'])
-                    <a href="{{ route('admin.staff.edit', $staff['public_id']) }}" class="inline-flex min-h-11 items-center rounded-full bg-accent px-5 font-medium text-on-accent hover:opacity-90">Edit</a>
+                    <a href="{{ route('admin.staff.edit', $staff['public_id']) }}" class="btn btn-primary">Edit</a>
                 @endif
                 @if ($can['delete'])
                     <x-portal.confirm :title="'Delete '.$staff['display_name'].'\'s record?'" body="A record with any history (tasks, work logs, leave, messages, reports…) can't be deleted. Set it to Separated instead." confirm="Delete" action="delete()" :danger="true"
-                                      class="inline-flex min-h-11 items-center rounded-full border border-line px-4 font-medium text-danger hover:bg-hover">Delete</x-portal.confirm>
+                                      class="btn btn-danger-outline">Delete</x-portal.confirm>
                 @endif
             </div>
         </div>
@@ -54,20 +54,20 @@
                 @if ($staff['user'] ?? null)
                     <p class="mt-2 break-all">{{ $staff['user']['email'] }}</p>
                     <p class="mt-1 flex flex-wrap gap-2">
-                        <x-portal.chip :tone="$staff['user']['status'] === 'active' ? 'success' : 'muted'">{{ ucfirst($staff['user']['status']) }}</x-portal.chip>
+                        <x-portal.chip :tone="$staff['user']['status'] === 'active' ? 'success' : Format::tone($staff['user']['status'])">{{ Format::accountStatus($staff['user']['status']) }}</x-portal.chip>
                     </p>
                     <div class="mt-3 flex flex-wrap gap-2">
-                        <a href="{{ route('admin.users', ['q' => $staff['user']['email']]) }}" class="inline-flex min-h-11 items-center rounded-full border border-line px-4 font-medium text-accent-ink hover:bg-hover">Manage the account</a>
+                        <a href="{{ route('admin.users', ['q' => $staff['user']['email']]) }}" class="btn btn-secondary">Manage the account</a>
                         <x-portal.confirm title="Unlink this sign-in account?" body="The account stays, but it no longer belongs to this staff record: the app shows no tasks, leave or messages for it until it is linked again." confirm="Unlink" action="unlinkAccount()" :danger="true"
-                                          class="inline-flex min-h-11 items-center rounded-full px-4 font-medium text-danger hover:bg-hover">Unlink</x-portal.confirm>
+                                          class="btn btn-danger-text">Unlink</x-portal.confirm>
                     </div>
                 @else
                     <p class="mt-2 text-muted">No sign-in account. They can't use the app or the web.</p>
-                    <a href="{{ route('admin.users.new', ['staff' => $staff['public_id']]) }}" class="mt-3 inline-flex min-h-11 items-center rounded-full border border-line px-4 font-medium text-accent-ink hover:bg-hover">Create a sign-in account</a>
+                    <a href="{{ route('admin.users.new', ['staff' => $staff['public_id']]) }}" class="btn btn-secondary mt-3">Create a sign-in account</a>
                     <div class="mt-4">
                         <label for="account-search" class="mb-1 block text-sm font-semibold">Or link an existing account</label>
                         <input id="account-search" type="search" wire:model.live.debounce.400ms="accountSearch" autocomplete="off" placeholder="Search accounts by name or email"
-                               class="min-h-11 w-full rounded-md border border-line bg-surface px-3 sm:max-w-md">
+                               class="field w-full sm:max-w-md">
                         @if (mb_strlen(trim($accountSearch)) >= 2)
                             @if ($accounts === [])
                                 <p class="mt-1 text-sm text-muted">No account without a staff record matches "{{ trim($accountSearch) }}".</p>
@@ -103,14 +103,14 @@
                 @if ($can['setStatus'])
                     <form wire:submit="setStatus" class="mt-3 flex flex-wrap items-end gap-2">
                         <div>
-                            <label for="new-status" class="block text-sm font-medium">Correct the status</label>
-                            <select id="new-status" wire:model="newStatus" class="mt-1 min-h-11 rounded-md border border-line bg-surface px-3">
+                            <label for="new-status" class="block text-sm font-semibold">Correct the status</label>
+                            <select id="new-status" wire:model="newStatus" class="field mt-1">
                                 @foreach (['available', 'busy', 'in_meeting', 'in_field', 'off_duty'] as $value)
                                     <option value="{{ $value }}">{{ Format::operationalStatus($value) }}</option>
                                 @endforeach
                             </select>
                         </div>
-                        <button type="submit" class="inline-flex min-h-11 items-center rounded-full border border-line px-4 font-medium text-accent-ink hover:bg-hover">Set status</button>
+                        <button type="submit" class="btn btn-secondary">Set status</button>
                     </form>
                     <p class="mt-2 text-sm text-muted">This adds to their status history. They see it in the app.</p>
                 @endif
@@ -137,7 +137,7 @@
                                 @if ($can['removeCheckIn'])
                                     <x-portal.confirm title="Remove this check-in?" body="It disappears from their history and their manager's view. This can't be undone." confirm="Remove"
                                                       :action="'removeCheckIn(\''.$checkIn['public_id'].'\')'" :danger="true"
-                                                      class="inline-flex min-h-11 items-center rounded-md px-3 text-sm text-danger hover:bg-hover">Remove<span class="sr-only"> the check-in of {{ Format::dateTime($checkIn['checked_in_at'], $timezone) }}</span></x-portal.confirm>
+                                                      class="btn btn-danger-text btn-compact text-sm">Remove<span class="sr-only"> the check-in of {{ Format::dateTime($checkIn['checked_in_at'], $timezone) }}</span></x-portal.confirm>
                                 @endif
                             </li>
                         @endforeach

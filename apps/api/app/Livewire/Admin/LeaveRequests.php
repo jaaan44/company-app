@@ -43,6 +43,12 @@ class LeaveRequests extends Component
         }
     }
 
+    /** Phase 37B (DEC-068): back to the list's starting filters. */
+    public function clearFilters(): void
+    {
+        $this->reset('status', 'type', 'from', 'to', 'page');
+    }
+
     public function goToPage(int $page): void
     {
         $this->page = max(1, $page);

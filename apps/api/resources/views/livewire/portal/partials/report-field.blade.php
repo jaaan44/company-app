@@ -7,11 +7,11 @@
     @if (($input ?? 'textarea') === 'textarea')
         <textarea id="{{ $id }}" wire:model="{{ $model }}" rows="{{ $rows ?? 3 }}" @isset($max) maxlength="{{ $max }}" @endisset
                   @error($error) aria-invalid="true" aria-describedby="{{ $id }}-error" @enderror
-                  class="w-full rounded-md border border-line bg-raised px-3 py-2"></textarea>
+                  class="field w-full"></textarea>
     @else
         <input id="{{ $id }}" type="{{ $input }}" wire:model="{{ $model }}" @isset($max) maxlength="{{ $max }}" @endisset
                @error($error) aria-invalid="true" aria-describedby="{{ $id }}-error" @enderror
-               class="min-h-11 w-full rounded-md border border-line bg-raised px-3">
+               class="field w-full">
     @endif
     @error($error) <p id="{{ $id }}-error" class="mt-1 text-sm font-medium text-danger">{{ $message }}</p> @enderror
 </div>

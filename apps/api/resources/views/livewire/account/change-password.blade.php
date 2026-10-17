@@ -7,7 +7,7 @@
         <h1 class="sr-only">Change password</h1>
     @endif
 
-    <form wire:submit="save" class="space-y-5 {{ $forced ? '' : 'rounded-xl border border-line bg-raised p-5' }}" novalidate>
+    <form wire:submit="save" x-data="{ shown: {} }" x-on:submit="shown = {}" class="space-y-5 {{ $forced ? '' : 'rounded-xl border border-line bg-raised p-5' }}" novalidate>
         @if ($generalError)
             <p role="alert" class="font-medium text-danger">{{ $generalError }}</p>
         @endif
@@ -22,21 +22,24 @@
                 @if ($hint)
                     <p id="{{ $field }}-hint" class="mb-1 text-sm text-muted">{{ $hint }}</p>
                 @endif
-                <input id="{{ $field }}" type="password" wire:model="{{ $field }}" autocomplete="{{ $autocomplete }}"
-                       @error($field) aria-invalid="true" @enderror
-                       aria-describedby="{{ trim(($hint ? $field.'-hint ' : '').($errors->has($field) ? $field.'-error' : '')) }}"
-                       class="min-h-11 w-full rounded-md border border-line bg-raised px-3">
+                <div class="flex gap-2">
+                    <input id="{{ $field }}" type="password" wire:model="{{ $field }}" autocomplete="{{ $autocomplete }}"
+                           @error($field) aria-invalid="true" @enderror
+                           aria-describedby="{{ trim(($hint ? $field.'-hint ' : '').($errors->has($field) ? $field.'-error' : '')) }}"
+                           x-bind:type="shown['{{ $field }}'] ? 'text' : 'password'" class="field w-full">
+                    <button type="button" x-on:click="shown['{{ $field }}'] = ! shown['{{ $field }}']" aria-controls="{{ $field }}" class="btn btn-text btn-compact shrink-0"><span x-text="shown['{{ $field }}'] ? 'Hide' : 'Show'">Show</span><span class="sr-only"> {{ strtolower($label) }}</span></button>
+                </div>
                 @error($field) <p id="{{ $field }}-error" class="mt-1 text-sm font-medium text-danger">{{ $message }}</p> @enderror
             </div>
         @endforeach
 
         <div class="flex flex-wrap gap-2">
             <button type="submit" wire:loading.attr="disabled" wire:target="save"
-                    class="inline-flex min-h-11 items-center justify-center rounded-full bg-accent px-5 font-medium text-on-accent hover:opacity-90 disabled:opacity-60 {{ $forced ? 'w-full' : '' }}">
+                    class="btn btn-primary {{ $forced ? 'w-full' : '' }}">
                 {{ $forced ? 'Set password and continue' : 'Change password' }}
             </button>
             @unless ($forced)
-                <a href="{{ route('portal.profile') }}" class="inline-flex min-h-11 items-center rounded-full px-5 font-medium text-accent-ink hover:bg-hover">Cancel</a>
+                <a href="{{ route('portal.profile') }}" class="btn btn-text">Cancel</a>
             @endunless
         </div>
     </form>

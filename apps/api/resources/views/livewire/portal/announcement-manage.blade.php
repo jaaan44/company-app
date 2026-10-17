@@ -8,11 +8,10 @@
     @elseif ($item)
         @php
             $status = $item['status'];
-            $tone = ['draft' => 'neutral', 'published' => 'success', 'archived' => 'muted'][$status] ?? 'neutral';
         @endphp
         <h1 class="text-2xl font-semibold">{{ $item['title'] }}</h1>
         <p class="mt-2 flex flex-wrap items-center gap-2">
-            <x-portal.chip :tone="$tone">{{ ucfirst($status) }}</x-portal.chip>
+            <x-portal.chip :tone="Format::tone($status)">{{ Format::announcementStatus($status) }}</x-portal.chip>
             <span class="text-sm text-muted">
                 @if ($item['audience_type'] === 'scoped')
                     For: {{ collect([...($item['departments'] ?? []), ...($item['teams'] ?? [])])->pluck('name')->implode(', ') }}
@@ -28,18 +27,18 @@
         <div class="mt-3 flex flex-wrap gap-2">
             @if ($status === 'draft' && $mayPublish)
                 <x-portal.confirm title="Publish this announcement?" body="Everyone in its audience will see it and be notified. A published announcement can't be edited; archive it and write a new one instead." confirm="Publish" action="publish()"
-                                  class="inline-flex min-h-11 items-center rounded-full bg-accent px-4 font-medium text-on-accent hover:opacity-90">Publish</x-portal.confirm>
+                                  class="btn btn-primary">Publish</x-portal.confirm>
             @endif
             @if ($status === 'draft' && $mayEdit)
-                <a href="{{ route('portal.announcements.manage.edit', $item['public_id']) }}" class="inline-flex min-h-11 items-center rounded-full border border-line px-4 font-medium hover:bg-hover">Edit draft</a>
+                <a href="{{ route('portal.announcements.manage.edit', $item['public_id']) }}" class="btn btn-secondary">Edit draft</a>
             @endif
             @if ($status === 'draft' && $mayDelete)
                 <x-portal.confirm title="Delete this draft?" body="This can't be undone." confirm="Delete" action="delete()" :danger="true"
-                                  class="inline-flex min-h-11 items-center rounded-full border border-line px-4 font-medium text-danger hover:bg-hover">Delete draft</x-portal.confirm>
+                                  class="btn btn-danger-outline">Delete draft</x-portal.confirm>
             @endif
             @if ($status === 'published' && $mayPublish)
                 <x-portal.confirm title="Archive this announcement?" body="It will no longer show in staff's announcements." confirm="Archive" action="archive()"
-                                  class="inline-flex min-h-11 items-center rounded-full border border-line px-4 font-medium hover:bg-hover">Archive</x-portal.confirm>
+                                  class="btn btn-secondary">Archive</x-portal.confirm>
             @endif
         </div>
         @if ($generalError)

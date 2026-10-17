@@ -343,16 +343,46 @@ final class Format
 
     /**
      * A status's chip tone, shared by every status concept (06 "Status
-     * presentation"): neutral, info, danger, success or muted.
+     * presentation"): neutral, info, warning, danger, success or muted.
+     * Warning (Phase 37B) is for a state someone has to act on that isn't
+     * an error: a suspended account.
      */
     public static function tone(?string $status): string
     {
         return match ($status) {
             'in_progress', 'active', 'planned', 'submitted', 'pending' => 'info',
+            'suspended' => 'warning',
             'blocked', 'rejected', 'overdue' => 'danger',
-            'completed', 'approved', 'reviewed', 'resolved' => 'success',
-            'cancelled', 'inactive', 'on_hold', 'closed' => 'muted',
+            'completed', 'approved', 'reviewed', 'resolved', 'published' => 'success',
+            'cancelled', 'inactive', 'on_hold', 'closed', 'separated', 'archived' => 'muted',
             default => 'neutral',
+        };
+    }
+
+    /** A staff record's employment status (Phase 37B: one label everywhere). */
+    public static function staffStatus(?string $value): string
+    {
+        return match ($value) {
+            'active' => 'Active', 'inactive' => 'Inactive', 'separated' => 'Separated',
+            default => self::humanize($value, 'Unknown'),
+        };
+    }
+
+    /** A sign-in account's status. */
+    public static function accountStatus(?string $value): string
+    {
+        return match ($value) {
+            'active' => 'Active', 'suspended' => 'Suspended', 'inactive' => 'Inactive',
+            default => self::humanize($value, 'Unknown'),
+        };
+    }
+
+    /** An announcement's status. */
+    public static function announcementStatus(?string $value): string
+    {
+        return match ($value) {
+            'draft' => 'Draft', 'published' => 'Published', 'archived' => 'Archived',
+            default => self::humanize($value, 'Unknown'),
         };
     }
 
@@ -624,6 +654,14 @@ final class Format
     public static function severityTone(?string $severity): string
     {
         return in_array($severity, ['high', 'critical'], true) ? 'danger' : 'neutral';
+    }
+
+    /** An audit log action, readable: "role.permissions_updated" → "Role: permissions updated" (Phase 37B). */
+    public static function auditAction(string $action): string
+    {
+        [$area, $event] = array_pad(explode('.', $action, 2), 2, '');
+
+        return $event === '' ? self::humanize($area, $action) : self::humanize($area, $area).': '.str_replace('_', ' ', $event);
     }
 
     /** A history step's action: "return_to_draft" → "Return to draft". */

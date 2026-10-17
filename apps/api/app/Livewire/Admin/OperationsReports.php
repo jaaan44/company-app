@@ -59,6 +59,13 @@ class OperationsReports extends Component
         }
     }
 
+    /** Phase 37B (DEC-068): back to the list's starting filters. */
+    public function clearFilters(): void
+    {
+        $this->reset('status', 'severity', 'from', 'to', 'page');
+        $this->status = $this->kind === 'service' ? 'submitted' : 'open';
+    }
+
     public function goToPage(int $page): void
     {
         $this->page = max(1, $page);

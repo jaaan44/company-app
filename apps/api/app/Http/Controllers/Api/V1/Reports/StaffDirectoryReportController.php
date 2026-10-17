@@ -13,6 +13,7 @@ use App\Support\Audit\AuditActions;
 use App\Support\Http\PerPage;
 use App\Support\Reporting\CsvExport;
 use App\Support\Reporting\PublicIdResolver;
+use App\Support\Reporting\ReportSort;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -29,6 +30,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class StaffDirectoryReportController extends Controller
 {
+    /** `?sort=` fields (Phase 37B): sort key => columns. */
+    private const SORTS = ['name' => ['last_name', 'first_name'], 'employee_number' => ['employee_number']];
+
     private const WITH_RELATIONS = ['department', 'team', 'position', 'manager', 'latestOperationalStatus', 'user'];
 
     public function __construct(private readonly AuditLogger $auditLogger) {}
@@ -83,9 +87,10 @@ class StaffDirectoryReportController extends Controller
             'department' => ['sometimes', 'string'],
             'team' => ['sometimes', 'string'],
             'status' => ['sometimes', new Enum(StaffStatus::class)],
+            'sort' => ['sometimes', ReportSort::rule(self::SORTS)],
         ]);
 
-        return Staff::query()
+        $query = Staff::query()
             ->with(self::WITH_RELATIONS)
             ->when(
                 $request->filled('department'),
@@ -95,8 +100,8 @@ class StaffDirectoryReportController extends Controller
                 $request->filled('team'),
                 fn ($query) => $query->where('team_id', PublicIdResolver::resolve(Team::class, $request->string('team')->toString()) ?? -1)
             )
-            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')))
-            ->orderBy('last_name')
-            ->orderBy('first_name');
+            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')));
+
+        return ReportSort::apply($request, $query, self::SORTS, ['last_name' => 'asc', 'first_name' => 'asc']);
     }
 }

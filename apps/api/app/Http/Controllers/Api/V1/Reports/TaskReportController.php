@@ -16,6 +16,7 @@ use App\Support\Http\PerPage;
 use App\Support\Reporting\CsvExport;
 use App\Support\Reporting\OverdueTasks;
 use App\Support\Reporting\PublicIdResolver;
+use App\Support\Reporting\ReportSort;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -34,6 +35,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class TaskReportController extends Controller
 {
+    /** `?sort=` fields (Phase 37B): sort key => columns. */
+    private const SORTS = ['title' => ['title'], 'due_date' => ['due_date']];
+
     private const WITH_RELATIONS = ['project', 'assignee', 'creator.staff'];
 
     public function __construct(
@@ -83,6 +87,7 @@ class TaskReportController extends Controller
             'status' => ['sometimes', new Enum(TaskStatus::class)],
             'priority' => ['sometimes', new Enum(TaskPriority::class)],
             'overdue' => ['sometimes', 'boolean'],
+            'sort' => ['sometimes', ReportSort::rule(self::SORTS)],
         ]);
 
         $query = $this->visibility->visibleQuery($request)
@@ -102,6 +107,6 @@ class TaskReportController extends Controller
             $query = OverdueTasks::scope($query);
         }
 
-        return $query->orderBy('due_date');
+        return ReportSort::apply($request, $query, self::SORTS, ['due_date' => 'asc']);
     }
 }

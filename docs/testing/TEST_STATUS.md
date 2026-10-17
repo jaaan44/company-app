@@ -1638,3 +1638,17 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | nginx headers | CI (image job) | PASS | Not runnable here (no Docker). On PR #135 (`13bbc9f`), the new `staging-images.yml` step got a 200 for a built CSS file with `Content-Encoding: gzip`, one `Cache-Control: public, max-age=31536000, immutable` and the four security headers: `nginx headers OK`. |
 | Staging deployment `0797e0c` → `bbe7291` | Manual (operator), output pasted | PASS | Fast-forward from `0797e0c`; backup `-- Dump completed on 2026-10-16 16:03:27`; `BUILD OK`; migration `[6] Ran`, nothing pending; three caches; app and nginx recreated and `Up`; `app`, `app/tasks`, `admin` `302 -> /login`; `api staff 401`; the 404 page (`Page not found — Company App`); the checkbox on `/login`; container nginx: `gzip`, the immutable cache and the four headers; public `/login`: the four headers, each once. |
 | UAT-37-01…08 | UAT (product owner) | PASS | Reported "ALL PASSED"; recorded in `UAT_LOG.md`. |
+
+## Phase 37B — Web UI/UX improvement (2026-10-17)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| CSS build (`npm ci && npm run build`) | Automated, local | PASS | Vite 8 and Tailwind 4. The compiled CSS has every new style, the tokens and the expected variant order. |
+| JS syntax (`node --check resources/js/app.js`) and `php -l` on changed PHP | Automated, local | PASS | |
+| Blade structure | Manual (AI), script | PASS | `@if`/`@endif`, `@foreach`, `@error` and notice tags balance in the 76 changed views. |
+| Backend tests (`UiImprovementTest` 8 new, `FormatTest` +2) | Automated, CI | PASS | PR #139, `0b8895f`: **1,493 passed** (5,981 assertions). The first run (`807601a`) failed 2 of the new tests: Schedule's Clear filters assumed a blank From (it defaults to today, fixed in the component), and the dashboard test expected no Operations link for a role that, by design, sees Operations. Not runnable locally: GitHub zip downloads are refused by this environment's network policy. |
+| Pint / PHPStan / Composer | Automated, CI | PASS | PR #139: Backend quality gates green; Build staging images green. |
+| Render pass (Playwright + axe, 360 / 768 / 1280 px, light and dark) | Manual (AI) | NOT RUN | Needs a running app, so needs Composer. |
+| UAT-37B-01…06 | UAT (product owner) | NOT RUN | After merge and deployment. |
+| Addendum: badge and sortable reports (`ReportSortTest` 4, `UnreadCountTest` 2, `UiImprovementTest` +2) | Automated, CI | PASS | PR #139, `f46a52e`: **1,501 passed** (6,018 assertions); Pint, PHPStan and the staging images green. Two earlier runs failed. `e95dd97`: PHPStan could not infer the sort helper's model through an untyped closure, so the default order is now an array. `3668f99`: an inline `@php(...)` swallowed a later `@php` block in the report view, so the header uses inline statements only; and the badge test's second user needed `forgetGuards()`. |
+| UAT-37B-07…08 | UAT (product owner) | NOT RUN | After merge and deployment. |

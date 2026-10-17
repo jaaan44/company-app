@@ -4,11 +4,11 @@
     <h1 class="sr-only">{{ $publicId === null ? 'New schedule entry' : 'Edit schedule entry' }}</h1>
 
     @if ($notFound)
-        <p class="rounded-lg border border-line bg-raised p-4">This entry no longer exists.</p>
+        <x-portal.notice>This entry no longer exists.</x-portal.notice>
     @elseif ($errorMessage)
         <x-portal.error :message="$errorMessage" />
     @else
-        @php($control = 'min-h-11 w-full rounded-md border border-line bg-raised px-3')
+        @php($control = 'field w-full')
         <form wire:submit="save" class="space-y-5 rounded-xl border border-line bg-raised p-5" novalidate>
             @if ($generalError)
                 <p role="alert" class="font-medium text-danger">{{ $generalError }}</p>
@@ -60,7 +60,7 @@
                         @foreach ($participants as $id => $name)
                             <li wire:key="participant-{{ $id }}" class="inline-flex items-center gap-1 rounded-full border border-line pl-3">
                                 {{ $name }}
-                                <button type="button" wire:click="removeParticipant(@js($id))" class="inline-flex min-h-11 items-center rounded-full px-3 text-accent-ink hover:bg-hover">Remove<span class="sr-only"> {{ $name }}</span></button>
+                                <button type="button" wire:click="removeParticipant(@js($id))" class="btn btn-text btn-compact">Remove<span class="sr-only"> {{ $name }}</span></button>
                             </li>
                         @endforeach
                     </ul>
@@ -69,11 +69,11 @@
             @include('livewire.portal.partials.field', ['id' => 'se-description', 'label' => 'Description', 'model' => 'description', 'error' => 'description', 'textarea' => true, 'rows' => 3, 'max' => 5000, 'optional' => true])
 
             <div class="flex flex-wrap items-center gap-2">
-                <button type="submit" class="inline-flex min-h-11 items-center rounded-full bg-accent px-5 font-medium text-on-accent hover:opacity-90">{{ $publicId === null ? 'Add entry' : 'Save changes' }}</button>
-                <a href="{{ route('admin.schedule') }}" class="inline-flex min-h-11 items-center rounded-full px-5 font-medium text-accent-ink hover:bg-hover">Cancel</a>
+                <button type="submit" class="btn btn-primary">{{ $publicId === null ? 'Add entry' : 'Save changes' }}</button>
+                <a href="{{ route('admin.schedule') }}" class="btn btn-text">Cancel</a>
                 @if ($publicId !== null)
                     <x-portal.confirm title="Delete this schedule entry?" body="It disappears from everyone's schedule. This can't be undone." confirm="Delete" action="delete()" :danger="true"
-                                      class="ml-auto inline-flex min-h-11 items-center rounded-full border border-line px-4 font-medium text-danger hover:bg-hover">Delete</x-portal.confirm>
+                                      class="btn btn-danger-outline ml-auto">Delete</x-portal.confirm>
                 @endif
             </div>
         </form>

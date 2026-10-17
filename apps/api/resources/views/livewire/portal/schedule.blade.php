@@ -3,7 +3,7 @@
     <h1 class="sr-only">Schedule</h1>
 
     @if ($noProfile)
-        <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
+        <x-portal.no-profile />
     @elseif ($errorMessage)
         <x-portal.error :message="$errorMessage" />
     @elseif ($companyDay)
@@ -11,11 +11,11 @@
             $dates = array_keys($days);
         @endphp
         <div class="mb-4 flex flex-wrap items-center gap-2">
-            <button type="button" wire:click="move(-7)" class="inline-flex min-h-11 items-center rounded-md border border-line px-3 hover:bg-hover">Previous week</button>
+            <button type="button" wire:click="move(-7)" class="btn btn-secondary btn-compact">Previous week</button>
             <p class="px-2 font-semibold" aria-live="polite">{{ Format::weekRange($dates[0], $dates[count($dates) - 1]) }}</p>
-            <button type="button" wire:click="move(7)" class="inline-flex min-h-11 items-center rounded-md border border-line px-3 hover:bg-hover">Next week</button>
+            <button type="button" wire:click="move(7)" class="btn btn-secondary btn-compact">Next week</button>
             @if ($dates[0] !== $companyDay['date'])
-                <button type="button" wire:click="today" class="inline-flex min-h-11 items-center rounded-md px-3 text-accent-ink hover:bg-hover">Today</button>
+                <button type="button" wire:click="today" class="btn btn-text btn-compact">Today</button>
             @endif
         </div>
 
@@ -37,7 +37,7 @@
                                 @endphp
                                 <li wire:key="item-{{ $date }}-{{ $item['source_type'] }}-{{ $item['public_id'] }}">
                                     @if ($href)
-                                        <a href="{{ $href }}" class="block min-h-11 py-2 hover:bg-hover">
+                                        <a href="{{ $href }}" class="-mx-3 block min-h-11 rounded-md px-3 py-2 hover:bg-hover">
                                     @else
                                         <div class="py-2">
                                     @endif

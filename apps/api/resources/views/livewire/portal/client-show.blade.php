@@ -17,12 +17,12 @@
         @if ($mayEdit || $mayDelete)
             <div class="mt-3 flex flex-wrap gap-2">
                 @if ($mayEdit)
-                    <a href="{{ route('portal.clients.edit', $client['public_id']) }}" class="inline-flex min-h-11 items-center rounded-full border border-line px-4 font-medium hover:bg-hover">Edit client</a>
-                    <a href="{{ route('portal.contacts.new', $client['public_id']) }}" class="inline-flex min-h-11 items-center gap-2 rounded-full border border-line px-4 font-medium hover:bg-hover"><x-portal.icon name="add" class="size-5" /> Add contact</a>
+                    <a href="{{ route('portal.clients.edit', $client['public_id']) }}" class="btn btn-secondary">Edit client</a>
+                    <a href="{{ route('portal.contacts.new', $client['public_id']) }}" class="btn btn-secondary"><x-portal.icon name="add" class="size-5" /> Add contact</a>
                 @endif
                 @if ($mayDelete)
                     <x-portal.confirm title="Delete this client?" body="A client with projects, service reports or incidents can't be deleted. Set it to Inactive instead." confirm="Delete" action="delete()" :danger="true"
-                                      class="inline-flex min-h-11 items-center rounded-full border border-line px-4 font-medium text-danger hover:bg-hover">Delete client</x-portal.confirm>
+                                      class="btn btn-danger-outline">Delete client</x-portal.confirm>
                 @endif
             </div>
         @endif
@@ -42,7 +42,7 @@
         <section aria-labelledby="client-contacts" class="mt-6">
             <h2 id="client-contacts" class="mb-2 font-semibold">Contacts ({{ $contactsTotal }})</h2>
             @if (count($contacts) === 0)
-                <p class="rounded-lg border border-line bg-raised p-4">{{ $mayEdit ? 'No contacts yet.' : 'No active contacts.' }}</p>
+                <x-portal.notice>{{ $mayEdit ? 'No contacts yet.' : 'No active contacts.' }}</x-portal.notice>
             @else
                 <ul class="space-y-3">
                     @foreach ($contacts as $contact)
@@ -65,10 +65,10 @@
                             </dl>
                             @if ($mayEdit)
                                 <div class="flex flex-wrap gap-1 py-2">
-                                    <a href="{{ route('portal.contacts.edit', [$client['public_id'], $contact['public_id']]) }}" class="inline-flex min-h-11 items-center rounded-md px-3 text-sm text-accent-ink hover:bg-hover">Edit<span class="sr-only"> {{ $contact['full_name'] }}</span></a>
+                                    <a href="{{ route('portal.contacts.edit', [$client['public_id'], $contact['public_id']]) }}" class="btn btn-text btn-compact text-sm">Edit<span class="sr-only"> {{ $contact['full_name'] }}</span></a>
                                     <x-portal.confirm :title="'Remove '.$contact['full_name'].'?'" body="This can't be undone. To keep the history, set the contact to Inactive instead." confirm="Remove"
                                                       :action="'removeContact(\''.$contact['public_id'].'\')'" :danger="true"
-                                                      class="inline-flex min-h-11 items-center rounded-md px-3 text-sm text-danger hover:bg-hover">Remove<span class="sr-only"> {{ $contact['full_name'] }}</span></x-portal.confirm>
+                                                      class="btn btn-danger-text btn-compact text-sm">Remove<span class="sr-only"> {{ $contact['full_name'] }}</span></x-portal.confirm>
                                 </div>
                             @endif
                         </li>

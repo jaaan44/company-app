@@ -3,11 +3,11 @@
     <x-portal.back :href="route('portal.announcements')">Announcements</x-portal.back>
 
     @if ($noProfile)
-        <p class="rounded-lg border border-line bg-raised p-4">No staff profile is linked to this account.</p>
+        <x-portal.no-profile />
     @elseif ($errorMessage)
         <h1 class="sr-only">Announcement</h1>
         @if ($errorMessage === 'This announcement is no longer available.')
-            <p class="rounded-lg border border-line bg-raised p-4">{{ $errorMessage }}</p>
+            <x-portal.notice>{{ $errorMessage }}</x-portal.notice>
         @else
             <x-portal.error :message="$errorMessage" />
         @endif
@@ -34,7 +34,7 @@
                     <p role="status" class="font-medium">✓ Acknowledged on {{ Format::dateTime($announcement['acknowledged_at'], $offset) }}</p>
                 @else
                     <button type="button" wire:click="acknowledge" wire:loading.attr="disabled" wire:target="acknowledge"
-                            class="inline-flex min-h-11 items-center rounded-md bg-accent px-5 font-medium text-on-accent hover:opacity-90 disabled:opacity-60">Acknowledge</button>
+                            class="btn btn-primary">Acknowledge</button>
                 @endif
             </div>
         </article>

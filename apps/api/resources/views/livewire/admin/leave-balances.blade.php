@@ -8,7 +8,7 @@
         </div>
         <div>
             <label for="lb-year" class="mb-1 block text-sm font-semibold">Year</label>
-            <input id="lb-year" type="number" min="2000" max="2100" wire:model.live.debounce.500ms="year" class="min-h-11 w-28 rounded-md border border-line bg-surface px-3">
+            <input id="lb-year" type="number" min="2000" max="2100" wire:model.live.debounce.500ms="year" class="field w-28">
         </div>
     </div>
 
@@ -37,16 +37,16 @@
                     @if ($row['is_paid'] && $canSet)
                         <form wire:submit="saveAllowance(@js($typeId))" class="mt-3 flex flex-wrap items-end gap-3" novalidate>
                             <div>
-                                <label for="alloc-{{ $typeId }}" class="block text-sm font-medium">Allowance (days) for {{ $year }}</label>
+                                <label for="alloc-{{ $typeId }}" class="block text-sm font-semibold">Allowance (days) for {{ $year }}</label>
                                 <input id="alloc-{{ $typeId }}" type="number" min="0" max="365" wire:model="allocated.{{ $typeId }}"
                                        @error('allocated.'.$typeId) aria-invalid="true" aria-describedby="alloc-{{ $typeId }}-error" @enderror
-                                       class="mt-1 min-h-11 w-28 rounded-md border border-line bg-surface px-3">
+                                       class="field mt-1 w-28">
                             </div>
                             <div class="min-w-0 flex-1 basis-48">
-                                <label for="notes-{{ $typeId }}" class="block text-sm font-medium">Notes <span class="font-normal text-muted">(optional)</span></label>
-                                <input id="notes-{{ $typeId }}" type="text" maxlength="500" wire:model="notes.{{ $typeId }}" class="mt-1 min-h-11 w-full rounded-md border border-line bg-surface px-3">
+                                <label for="notes-{{ $typeId }}" class="block text-sm font-semibold">Notes <span class="font-normal text-muted">(optional)</span></label>
+                                <input id="notes-{{ $typeId }}" type="text" maxlength="500" wire:model="notes.{{ $typeId }}" class="field mt-1 w-full">
                             </div>
-                            <button type="submit" class="inline-flex min-h-11 items-center rounded-full border border-line px-4 font-medium text-accent-ink hover:bg-hover">Save<span class="sr-only"> {{ $row['leave_type']['name'] }} allowance</span></button>
+                            <button type="submit" class="btn btn-secondary">Save<span class="sr-only"> {{ $row['leave_type']['name'] }} allowance</span></button>
                             @error('allocated.'.$typeId) <p id="alloc-{{ $typeId }}-error" class="w-full text-sm font-medium text-danger">{{ $message }}</p> @enderror
                         </form>
                     @endif

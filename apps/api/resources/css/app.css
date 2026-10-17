@@ -13,7 +13,10 @@
  * Role mapping: surface = M3 surface, raised = surface container (cards,
  * bars), ink = on-surface, muted = on-surface-variant, line = outline
  * variant, accent = primary, accent-soft = primary container,
- * accent-ink = primary as text, danger = error.
+ * accent-ink = primary as text, danger = error, field = outline (the
+ * boundary of a form control: 3:1 or more against its surface, WCAG
+ * 1.4.11), warning = the mobile app's AppStatusColors.warning (Phase 37B,
+ * DEC-068).
  */
 @theme {
     --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -23,7 +26,8 @@
     --color-ink: #1b1b21;
     --color-muted: #46464f;
     --color-line: #c6c5d0;
-    --color-hover: #eceaf4;
+    --color-field: #767680;
+    --color-hover: #e3e1ec;
     --color-accent: #4355b9;
     --color-on-accent: #ffffff;
     --color-accent-ink: #3a4caf;
@@ -32,6 +36,8 @@
     --color-danger-soft: #ffdad6;
     --color-success: #1d6b3a;
     --color-success-soft: #dcf3e2;
+    --color-warning: #7a5900;
+    --color-warning-soft: #ffdea6;
 
     --radius-xl: 1rem;
     --radius-2xl: 1.25rem;
@@ -44,7 +50,8 @@
         --color-ink: #e4e1e9;
         --color-muted: #c6c5d0;
         --color-line: #46464f;
-        --color-hover: #2a2a31;
+        --color-field: #90909a;
+        --color-hover: #34343b;
         --color-accent: #bac3ff;
         --color-on-accent: #08218a;
         --color-accent-ink: #bac3ff;
@@ -53,6 +60,8 @@
         --color-danger-soft: #690005;
         --color-success: #8fd8a5;
         --color-success-soft: #123a21;
+        --color-warning: #f5bf48;
+        --color-warning-soft: #5c4300;
     }
 }
 
@@ -117,4 +126,178 @@ dialog.admin-drawer::backdrop {
 :focus-visible {
     outline: 3px solid var(--color-accent);
     outline-offset: 2px;
+}
+
+/* A page heading focused after a page change (Phase 37B) is not a control: no ring. */
+h1[tabindex='-1']:focus {
+    outline: none;
+}
+
+/*
+ * Shared control styles (Phase 37B, DEC-068). A form control and a button
+ * look the same on every page, so they are defined once here rather than
+ * repeated in each view. Three shapes: controls `rounded-md`, containers
+ * `rounded-xl`, actions (buttons, chips' pills) `rounded-full`.
+ */
+@utility field {
+    min-height: 2.75rem;
+    border: 1px solid var(--color-field);
+    border-radius: var(--radius-md);
+    background-color: var(--color-raised);
+    padding-inline: 0.75rem;
+
+    &:where(textarea) {
+        padding-block: 0.5rem;
+    }
+
+    &[aria-invalid='true'] {
+        border-color: var(--color-danger);
+    }
+
+    &:disabled {
+        opacity: 0.6;
+    }
+
+    /* A live search or filter (wire:model.live) is marked data-loading by
+       Livewire while its results load: a small spinner at the field's end. */
+    &[data-loading] {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23767680' stroke-width='3'%3E%3Cpath d='M12 3a9 9 0 1 0 9 9'%3E%3CanimateTransform attributeName='transform' type='rotate' from='0 12 12' to='360 12 12' dur='0.8s' repeatCount='indefinite'/%3E%3C/path%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 1rem;
+        padding-right: 2.25rem;
+
+        @media (prefers-reduced-motion: reduce) {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23767680'%3E%3Ccircle cx='5' cy='12' r='2'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3Ccircle cx='19' cy='12' r='2'/%3E%3C/svg%3E");
+        }
+    }
+
+    &:where(select)[data-loading] {
+        background-position: right 2rem center;
+        padding-right: 3.25rem;
+    }
+}
+
+/* A button: a pill at least 44 px tall. Add one of the variants below. */
+@utility btn {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: calc(infinity * 1px);
+    padding-inline: 1.25rem;
+    font-weight: 500;
+    cursor: pointer;
+
+    /* Livewire disables a form's submit button while it saves, and marks a
+       clicked button with data-loading: both show, so a tap never looks ignored. */
+    &:disabled,
+    &[data-loading] {
+        opacity: 0.6;
+        cursor: default;
+    }
+
+    &[data-loading]::after {
+        content: '';
+        width: 1em;
+        height: 1em;
+        border: 2px solid currentColor;
+        border-right-color: transparent;
+        border-radius: calc(infinity * 1px);
+        animation: btn-spin 0.7s linear infinite;
+    }
+}
+
+@keyframes btn-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* A smaller pill for actions inside a row (Copy, Remove, Previous). */
+@utility btn-compact {
+    padding-inline: 0.75rem;
+}
+
+/* The page's main action. */
+@utility btn-primary {
+    background-color: var(--color-accent);
+    color: var(--color-on-accent);
+
+    &:hover:not(:disabled) {
+        opacity: 0.9;
+    }
+}
+
+/* A confirmed destructive action. */
+@utility btn-danger {
+    background-color: var(--color-danger);
+    color: var(--color-raised);
+
+    &:hover:not(:disabled) {
+        opacity: 0.9;
+    }
+}
+
+/* A second action beside the main one (Edit, Back). */
+@utility btn-secondary {
+    border: 1px solid var(--color-field);
+    color: var(--color-accent-ink);
+
+    &:hover:not(:disabled) {
+        background-color: var(--color-hover);
+    }
+}
+
+/* A destructive action before its confirmation (Delete…). */
+@utility btn-danger-outline {
+    border: 1px solid var(--color-field);
+    color: var(--color-danger);
+
+    &:hover:not(:disabled) {
+        background-color: var(--color-hover);
+    }
+}
+
+/* A quiet action (Cancel, Clear search, Copy). */
+@utility btn-text {
+    color: var(--color-accent-ink);
+
+    &:hover:not(:disabled) {
+        background-color: var(--color-hover);
+    }
+}
+
+/* A quiet destructive action inside a row (Remove). */
+@utility btn-danger-text {
+    color: var(--color-danger);
+
+    &:hover:not(:disabled) {
+        background-color: var(--color-hover);
+    }
+}
+
+/* A quiet action in the body text colour (Previous, Next). */
+@utility btn-plain {
+    &:hover:not(:disabled) {
+        background-color: var(--color-hover);
+    }
+}
+
+/* Livewire's page-change progress bar follows the accent, in light and dark. */
+#nprogress .bar {
+    background: var(--color-accent) !important;
+}
+
+/* Reduced motion: transitions (the toast's fade) end at once. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+    }
 }

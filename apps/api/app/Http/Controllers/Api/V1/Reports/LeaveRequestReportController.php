@@ -13,6 +13,7 @@ use App\Support\Audit\AuditActions;
 use App\Support\Http\PerPage;
 use App\Support\Reporting\CsvExport;
 use App\Support\Reporting\PublicIdResolver;
+use App\Support\Reporting\ReportSort;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -28,6 +29,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class LeaveRequestReportController extends Controller
 {
+    /** `?sort=` fields (Phase 37B): sort key => columns. */
+    private const SORTS = ['start_date' => ['start_date'], 'total_days' => ['total_days']];
+
     private const WITH_RELATIONS = ['staff', 'leaveType', 'creator.staff'];
 
     public function __construct(
@@ -79,9 +83,10 @@ class LeaveRequestReportController extends Controller
             'staff' => ['sometimes', 'string'],
             'type' => ['sometimes', 'string'],
             'status' => ['sometimes', 'string'],
+            'sort' => ['sometimes', ReportSort::rule(self::SORTS)],
         ]);
 
-        return $this->visibility->visibleQuery($request)
+        $query = $this->visibility->visibleQuery($request)
             ->with(self::WITH_RELATIONS)
             ->when(
                 $request->filled('staff'),
@@ -93,7 +98,8 @@ class LeaveRequestReportController extends Controller
             )
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')))
             ->when($request->filled('from'), fn ($query) => $query->whereDate('end_date', '>=', $request->date('from')))
-            ->when($request->filled('to'), fn ($query) => $query->whereDate('start_date', '<=', $request->date('to')))
-            ->orderByDesc('start_date');
+            ->when($request->filled('to'), fn ($query) => $query->whereDate('start_date', '<=', $request->date('to')));
+
+        return ReportSort::apply($request, $query, self::SORTS, ['start_date' => 'desc']);
     }
 }

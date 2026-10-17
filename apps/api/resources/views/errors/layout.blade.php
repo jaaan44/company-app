@@ -15,7 +15,7 @@
             <div class="rounded-2xl border border-line bg-raised p-6 shadow-sm sm:p-8">
                 <h1 class="text-xl font-semibold">{{ $title }}</h1>
                 <p class="mt-3 text-muted">{{ $message }}</p>
-                <a href="{{ $href ?? '/app' }}" data-no-navigate class="mt-6 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-accent px-5 font-medium text-on-accent hover:opacity-90">{{ $action ?? 'Go to Home' }}</a>
+                <a href="{{ $href ?? '/app' }}" data-no-navigate class="btn btn-primary mt-6 w-full">{{ $action ?? 'Go to Home' }}</a>
             </div>
         </main>
     </body>

@@ -8,7 +8,7 @@
         @else
             <p role="status" class="rounded-xl border border-line bg-raised p-5">Account created for {{ $created['name'] }}. The temporary password is no longer shown; if it wasn't passed on, use Reset password.</p>
         @endif
-        <a href="{{ route('admin.users', ['q' => $created['email']]) }}" class="mt-4 inline-flex min-h-11 items-center rounded-full bg-accent px-5 font-medium text-on-accent hover:opacity-90">Done</a>
+        <a href="{{ route('admin.users', ['q' => $created['email']]) }}" class="btn btn-primary mt-4">Done</a>
     @else
         <form wire:submit="save" class="space-y-5 rounded-xl border border-line bg-raised p-5" novalidate>
             @if ($generalError)
@@ -19,7 +19,7 @@
                 @include('livewire.portal.partials.field', ['id' => 'account-email', 'label' => 'Sign-in email', 'model' => 'email', 'error' => 'email', 'max' => 255, 'type' => 'email'])
                 <div>
                     <label for="account-role" class="mb-1 block text-sm font-semibold">Role</label>
-                    <select id="account-role" wire:model="role" class="min-h-11 w-full rounded-md border border-line bg-raised px-3"
+                    <select id="account-role" wire:model="role" class="field w-full"
                             @error('role') aria-invalid="true" aria-describedby="account-role-error" @enderror>
                         <option value="staff">Staff</option>
                         <option value="manager">Manager</option>
@@ -35,13 +35,13 @@
                 @if ($staffId !== '')
                     <p class="flex flex-wrap items-center gap-3">
                         <span class="font-medium">{{ $staffName }}</span>
-                        <button type="button" wire:click="clearStaff" class="inline-flex min-h-11 items-center rounded-md px-3 text-accent-ink hover:bg-hover">Remove<span class="sr-only"> {{ $staffName }}</span></button>
+                        <button type="button" wire:click="clearStaff" class="btn btn-text btn-compact">Remove<span class="sr-only"> {{ $staffName }}</span></button>
                     </p>
                 @endif
                 <input id="staff-search" type="search" wire:model.live.debounce.400ms="staffSearch" autocomplete="off"
                        placeholder="{{ $staffId === '' ? 'Search by name or employee number' : 'Search to change' }}"
                        @error('staffSearch') aria-invalid="true" aria-describedby="staff-search-error" @enderror
-                       class="min-h-11 w-full rounded-md border border-line bg-raised px-3 sm:max-w-md">
+                       class="field w-full sm:max-w-md">
                 @error('staffSearch') <p id="staff-search-error" class="mt-1 text-sm font-medium text-danger">{{ $message }}</p> @enderror
                 @if (mb_strlen(trim($staffSearch)) >= 2)
                     @if (count($people) === 0)
@@ -64,8 +64,8 @@
             <p class="text-sm text-muted">A temporary password is created and shown to you once. They must choose their own at their first sign-in.</p>
             <div class="flex flex-wrap gap-2">
                 <button type="submit" wire:loading.attr="disabled" wire:target="save"
-                        class="inline-flex min-h-11 items-center rounded-full bg-accent px-5 font-medium text-on-accent hover:opacity-90 disabled:opacity-60">Create account</button>
-                <a href="{{ route('admin.users') }}" class="inline-flex min-h-11 items-center rounded-full px-5 font-medium text-accent-ink hover:bg-hover">Cancel</a>
+                        class="btn btn-primary">Create account</button>
+                <a href="{{ route('admin.users') }}" class="btn btn-text">Cancel</a>
             </div>
         </form>
     @endif

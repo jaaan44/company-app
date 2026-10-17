@@ -162,7 +162,20 @@ Status: **Principles, implemented for a growing set of endpoints as of Phase 4/5
 ## Filtering & Sorting
 
 - Filtering via query params scoped to the resource, e.g. `GET /tasks?status=open&assignee_id=5`. **Implemented (Phase 15):** `GET /api/v1/me/notifications?unread=1&type=announcement_published` — always implicitly scoped to the authenticated recipient (never a `?user=` selector). **Implemented (Phase 14):** `GET /api/v1/announcements?status=&audience_type=` (management only — no filters on `/api/v1/me/announcements` beyond pagination, per CLAUDE.md's "do not turn the API into a generic search engine"). **Implemented (Phase 13):** `GET /api/v1/leave-requests?staff=<public_id>&status=&type=<public_id>&from=&to=` (scoped: Administrator/Manager); `GET /api/v1/me/leave-requests?status=&type=&from=&to=` (self, never `?staff=`); `GET /api/v1/leave-types?status=active`; `GET /api/v1/me/leave-balances?year=`/`GET /api/v1/staff/{public_id}/leave-balances?year=` (defaults to the current calendar year — the company year since Phase 31). **Implemented (Phase 12):** `GET /api/v1/work-logs?staff=<public_id>&project=<public_id>&task=<public_id>&from=&to=` (privileged, visibility-scoped); `GET /api/v1/me/work-logs?project=&task=&from=&to=` (self, always own — no `?staff=`). **Implemented (Phase 6):** `GET /api/v1/departments?status=active`, `GET /api/v1/teams?department=<public_id>&status=active` — filter values that reference another resource use its `public_id`, never an internal numeric id. **Implemented (Phase 7):** `GET /api/v1/staff?department=<public_id>&team=<public_id>&position=<public_id>&manager=<public_id>&status=active`, plus a simple `?q=` directory search (matched against name fields and employee number) — a genuinely useful lookup for a personnel directory, not a filter added for completeness. **Implemented (Phase 8):** `GET /api/v1/clients?status=active&q=`, `GET /api/v1/contacts?client=<public_id>&status=active&is_primary=1&q=`. **Implemented (Phase 10):** `GET /api/v1/projects?status=active&client=<public_id>&member=<staff public_id>&q=`, `GET /api/v1/projects/{public_id}/members?role=project_lead` — all applied within the requester's visibility-scoped base query (see `05_SECURITY_MODEL.md`), not a raw table scan. **Implemented (Phase 11):** `GET /api/v1/tasks?project=<public_id>&status=&assignee=<staff public_id>&priority=&q=` (title search) — same visibility-scoped pattern; no due-date/overdue filter was added (no demonstrated need at V1 scale). **Implemented (Phase 18):** `GET /api/v1/service-reports?client=<public_id>&project=<public_id>&task=<public_id>&staff=<creator public_id>&status=&from=&to=` (service date range) — same visibility-scoped pattern as every prior row-level-scoped resource. **Implemented (Phase 19):** `GET /api/v1/incident-reports?client=<public_id>&project=<public_id>&task=<public_id>&reporter=<public_id>&assigned=<public_id>&status=&severity=&incident_type=&from=&to=` (occurrence date range) — same visibility-scoped pattern, extended with `severity`/`incident_type` filters this module's closed taxonomies make useful; no full-text search was added (per CLAUDE.md's "do not turn the API into a generic search engine").
-- Sorting via `?sort=due_date` / `?sort=-due_date` (leading `-` = descending) — a common, unsurprising convention; avoid bespoke sort syntax. Not yet implemented for any endpoint (Phase 6's organization-structure lists are small enough that a fixed `sort_order`-then-name ordering was sufficient; a genuine `?sort=` param is introduced when a future endpoint's data actually needs it).
+- Sorting via `?sort=due_date` / `?sort=-due_date` (leading `-` = descending) — a common, unsurprising convention; avoid bespoke sort syntax. Not yet implemented for any endpoint (Phase 6's organization-structure lists are small enough that a fixed `sort_order`-then-name ordering was sufficient; a genuine `?sort=` param is introduced when a future endpoint's data actually needs it). **Implemented (Phase 37B, DEC-068), on the seven reports and their CSV exports** (`App\Support\Reporting\ReportSort`):
+  - **Fields:**
+    - `/reports/staff`: `name` (last, then first name) and `employee_number`;
+    - `/reports/projects`: `name` and `target_end_date`;
+    - `/reports/tasks`: `title` and `due_date`;
+    - `/reports/work-logs`: `work_date` and `duration_minutes`;
+    - `/reports/leave-requests`: `start_date` and `total_days`;
+    - `/reports/service-reports`: `service_date`;
+    - `/reports/incident-reports`: `occurred_at`.
+  - **Behaviour:**
+    - any other value is `422`;
+    - without `sort`, each report keeps its own order;
+    - with one, the primary key breaks ties.
+  - **Not sortable:** status and severity values, which would sort alphabetically, not meaningfully.
 - Document supported filter/sort fields per endpoint as it's built; don't expose arbitrary column filtering.
 
 ## Timestamps & Identifiers
@@ -201,3 +214,11 @@ Status: **Principles, implemented for a growing set of endpoints as of Phase 4/5
 ## Explicitly Not Decided Here
 
 - Rate limiting thresholds for future write-heavy endpoints beyond authentication (see `05_SECURITY_MODEL.md` for the Phase 4 authentication thresholds now in place).
+
+## Phase 37B additions (DEC-068)
+
+- **`GET /api/v1/conversations/unread-count`:**
+  - returns `{"data": {"unread_count": n}}`, the requester's unread messages across their conversations;
+  - it's the same count as `GET /me/home`'s `messages.unread_count` (`App\Support\Messaging\UnreadMessages`);
+  - like every Messaging endpoint, it needs a linked staff record (`403` without one).
+- **`?sort=` on the reports:** see "Filtering & Sorting".

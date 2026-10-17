@@ -4,7 +4,7 @@
     <h1 class="sr-only">{{ $publicId === null ? 'New contact' : 'Edit contact' }}</h1>
 
     @if ($notFound)
-        <p class="rounded-lg border border-line bg-raised p-4">This contact no longer exists.</p>
+        <x-portal.notice>This contact no longer exists.</x-portal.notice>
     @elseif ($errorMessage)
         <x-portal.error :message="$errorMessage" />
     @else
@@ -26,7 +26,7 @@
                 @endforeach
                 <div>
                     <label for="contact-status" class="mb-1 block text-sm font-semibold">Status</label>
-                    <select id="contact-status" wire:model="status" class="min-h-11 w-full rounded-md border border-line bg-raised px-3">
+                    <select id="contact-status" wire:model="status" class="field w-full">
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
                     </select>
@@ -39,10 +39,10 @@
 
             <div class="flex flex-wrap gap-2">
                 <button type="submit" wire:loading.attr="disabled" wire:target="save"
-                        class="inline-flex min-h-11 items-center rounded-full bg-accent px-5 font-medium text-on-accent hover:opacity-90 disabled:opacity-60">
+                        class="btn btn-primary">
                     {{ $publicId === null ? 'Add contact' : 'Save changes' }}
                 </button>
-                <a href="{{ route('portal.client', $clientId) }}" class="inline-flex min-h-11 items-center rounded-full px-5 font-medium text-accent-ink hover:bg-hover">Cancel</a>
+                <a href="{{ route('portal.client', $clientId) }}" class="btn btn-text">Cancel</a>
             </div>
         </form>
     @endif

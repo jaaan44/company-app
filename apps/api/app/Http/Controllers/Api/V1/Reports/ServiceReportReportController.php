@@ -16,6 +16,7 @@ use App\Support\Audit\AuditActions;
 use App\Support\Http\PerPage;
 use App\Support\Reporting\CsvExport;
 use App\Support\Reporting\PublicIdResolver;
+use App\Support\Reporting\ReportSort;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -33,6 +34,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class ServiceReportReportController extends Controller
 {
+    /** `?sort=` fields (Phase 37B): sort key => columns. */
+    private const SORTS = ['service_date' => ['service_date']];
+
     private const WITH_RELATIONS = ['client', 'project', 'task', 'creator', 'participants'];
 
     public function __construct(
@@ -84,9 +88,10 @@ class ServiceReportReportController extends Controller
             'task' => ['sometimes', 'string'],
             'staff' => ['sometimes', 'string'],
             'status' => ['sometimes', new Enum(ServiceReportStatus::class)],
+            'sort' => ['sometimes', ReportSort::rule(self::SORTS)],
         ]);
 
-        return $this->visibility->visibleQuery($request)
+        $query = $this->visibility->visibleQuery($request)
             ->with(self::WITH_RELATIONS)
             ->when(
                 $request->filled('client'),
@@ -106,7 +111,8 @@ class ServiceReportReportController extends Controller
             )
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')))
             ->when($request->filled('from'), fn ($query) => $query->whereDate('service_date', '>=', $request->date('from')))
-            ->when($request->filled('to'), fn ($query) => $query->whereDate('service_date', '<=', $request->date('to')))
-            ->orderByDesc('service_date');
+            ->when($request->filled('to'), fn ($query) => $query->whereDate('service_date', '<=', $request->date('to')));
+
+        return ReportSort::apply($request, $query, self::SORTS, ['service_date' => 'desc']);
     }
 }

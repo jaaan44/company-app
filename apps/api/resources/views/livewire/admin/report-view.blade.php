@@ -2,7 +2,7 @@
     <x-portal.back :href="route('admin.section', 'reports')">Reports</x-portal.back>
     <h1 class="sr-only">{{ $definition['title'] }} report</h1>
 
-    @php($control = 'mt-1 min-h-11 max-w-full rounded-md border border-line bg-raised px-3')
+    @php($control = 'field mt-1 max-w-full')
     <div class="mb-4 flex flex-wrap items-end gap-3">
         @foreach ($definition['filters'] as $name => $options)
             <div>
@@ -11,7 +11,7 @@
                         <input type="checkbox" value="1" wire:model.live="filters.{{ $name }}" class="size-5 accent-[var(--color-accent)]"> {{ ucfirst($name) }} only
                     </label>
                 @else
-                    <label for="rf-{{ $name }}" class="block text-sm font-medium">{{ ucfirst($name) }}</label>
+                    <label for="rf-{{ $name }}" class="block text-sm font-semibold">{{ ucfirst($name) }}</label>
                     @if ($options === 'date')
                         <input id="rf-{{ $name }}" type="date" wire:model.live="filters.{{ $name }}" class="{{ $control }}">
                     @else
@@ -25,7 +25,10 @@
                 @endif
             </div>
         @endforeach
-        <a href="{{ $exportUrl }}" data-no-navigate download class="ml-auto inline-flex min-h-11 items-center rounded-full bg-accent px-5 font-medium text-on-accent hover:opacity-90">Download CSV</a>
+        @if (array_filter($filters) !== [])
+            <button type="button" wire:click="clearFilters" class="btn btn-text btn-compact">Clear filters</button>
+        @endif
+        <a href="{{ $exportUrl }}" data-no-navigate download class="btn btn-primary ml-auto">Download CSV</a>
     </div>
 
     @if ($errorMessage && ! $meta)
@@ -35,11 +38,24 @@
     @else
         <p class="mb-2 text-sm text-muted">{{ $meta['total'] ?? count($rows) }} {{ ($meta['total'] ?? count($rows)) === 1 ? 'row' : 'rows' }}. The CSV has every matching row and more columns.</p>
         <div class="overflow-x-auto rounded-xl border border-line bg-raised" tabindex="0" role="region" aria-label="{{ $definition['title'] }} report rows">
-            <table class="w-full min-w-[36rem] text-left text-sm">
+            <table class="w-full min-w-[36rem] text-left text-sm tabular-nums">
                 <thead class="border-b border-line">
                     <tr>
                         @foreach (array_keys($definition['columns']) as $label)
-                            <th scope="col" class="px-4 py-3 font-semibold">{{ $label }}</th>
+                            {{-- Phase 37B (DEC-068): a sortable column is a button; aria-sort says which way it is sorted. --}}
+                            @php($key = $definition['sorts'][$label] ?? null)
+                            @php($direction = $key === null ? null : ($sort === $key ? 'ascending' : ($sort === '-'.$key ? 'descending' : null)))
+                            @if ($key === null)
+                                <th scope="col" class="px-4 py-3 font-semibold">{{ $label }}</th>
+                            @else
+                                <th scope="col" class="px-2 py-1 font-semibold" aria-sort="{{ $direction ?? 'none' }}">
+                                    <button type="button" wire:click="sortBy('{{ $key }}')" class="inline-flex min-h-11 items-center gap-1 rounded-md px-2 hover:bg-hover">
+                                        {{ $label }}
+                                        <span aria-hidden="true" class="{{ $direction === null ? 'text-muted' : 'text-accent-ink' }}">{{ $direction === 'descending' ? '↓' : ($direction === 'ascending' ? '↑' : '↕') }}</span>
+                                        <span class="sr-only">{{ $direction === 'ascending' ? ', sort descending' : ', sort ascending' }}</span>
+                                    </button>
+                                </th>
+                            @endif
                         @endforeach
                     </tr>
                 </thead>

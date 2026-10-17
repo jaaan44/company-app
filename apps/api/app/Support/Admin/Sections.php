@@ -25,10 +25,9 @@ final class Sections
             'permissions' => ['staff.view', 'staff.create', 'staff.update', 'staff.delete', 'organization.view', 'organization.manage', 'staff-status.manage', 'location.view', 'location.manage'],
             'summary' => 'Staff records and how the company is organised.',
             'items' => [
-                ['Staff records', 'Add, edit and remove staff, and give them sign-in accounts.', 'admin.staff', null],
+                // Phase 37B: status and check-ins live on the staff record, so they are part of this item, not two more links to it.
+                ['Staff records', 'Add, edit and remove staff, give them sign-in accounts, correct their status and review their check-ins.', 'admin.staff', null],
                 ['Departments, teams and positions', 'The company structure.', 'admin.organization', null],
-                ['Staff status', 'Open a staff record to correct their status.', 'admin.staff', null],
-                ['Location check-ins', 'Open a staff record to review and remove check-ins.', 'admin.staff', null],
             ],
         ],
         'clients' => [
@@ -37,7 +36,7 @@ final class Sections
             'permissions' => ['clients.view', 'clients.create', 'clients.update', 'clients.delete'],
             'summary' => 'The company\'s clients and their contacts.',
             'items' => [
-                ['Clients and contacts', 'Add, edit and remove clients and their contacts (the staff portal).', 'portal.clients', null],
+                ['Clients and contacts', 'Add, edit and remove clients and their contacts.', 'portal.clients', null],
             ],
         ],
         'work' => [
@@ -46,8 +45,8 @@ final class Sections
             'permissions' => ['projects.view', 'projects.create', 'projects.update', 'projects.delete', 'projects.members', 'tasks.view', 'tasks.create', 'tasks.update', 'tasks.delete', 'work-logs.view', 'work-logs.manage'],
             'summary' => 'Projects, tasks, logged work and the schedule.',
             'items' => [
-                ['Projects', 'Projects, their members and milestones (the staff portal, All projects).', ['portal.projects', ['scope' => 'all']], null],
-                ['Tasks', 'Add, assign, edit and remove tasks (the staff portal, All tasks).', ['portal.tasks', ['scope' => 'all']], null],
+                ['Projects', 'Projects, their members and milestones.', ['portal.projects', ['scope' => 'all']], null],
+                ['Tasks', 'Add, assign, edit and remove tasks.', ['portal.tasks', ['scope' => 'all']], null],
                 ['Work logs', 'Review, correct and remove logged work.', 'admin.work-logs', null],
                 ['Schedule', 'Everyone\'s schedule entries.', 'admin.schedule', null],
             ],
@@ -79,7 +78,7 @@ final class Sections
             'permissions' => ['announcements.view-all', 'announcements.create', 'announcements.publish', 'announcements.delete'],
             'summary' => 'Company announcements.',
             'items' => [
-                ['Announcements', 'Write, publish, archive and remove announcements (the staff portal).', 'portal.announcements.manage', null],
+                ['Announcements', 'Write, publish, archive and remove announcements.', 'portal.announcements.manage', null],
             ],
         ],
         'reports' => [
