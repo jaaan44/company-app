@@ -20,7 +20,7 @@
                     @endforeach
                 </select>
             </div>
-            @if ($from !== '' || $type !== '')
+            @if ($filtered)
                 <button type="button" wire:click="clearFilters" class="btn btn-text btn-compact">Clear filters</button>
             @endif
             <a href="{{ route('admin.schedule.new') }}" class="btn btn-primary ml-auto">

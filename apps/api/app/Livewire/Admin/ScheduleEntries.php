@@ -32,7 +32,7 @@ class ScheduleEntries extends Component
     public function mount(): void
     {
         if ($this->from === '') {
-            $this->from = now(CompanyTimezone::value())->toDateString();
+            $this->from = self::today();
         }
     }
 
@@ -43,10 +43,16 @@ class ScheduleEntries extends Component
         }
     }
 
-    /** Phase 37B (DEC-068): back to the list's starting filters. */
+    /** Phase 37B (DEC-068): back to the list's starting filters (from today, every activity). */
     public function clearFilters(): void
     {
-        $this->reset('from', 'type', 'page');
+        $this->reset('type', 'page');
+        $this->from = self::today();
+    }
+
+    private static function today(): string
+    {
+        return now(CompanyTimezone::value())->toDateString();
     }
 
     public function goToPage(int $page): void
@@ -72,6 +78,7 @@ class ScheduleEntries extends Component
             'entries' => $result['data'] ?? [],
             'meta' => $result['meta'] ?? null,
             'timezone' => CompanyTimezone::value(),
+            'filtered' => $this->from !== self::today() || $this->type !== '',
         ]);
     }
 }

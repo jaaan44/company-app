@@ -78,13 +78,14 @@ class UiImprovementTest extends TestCase
 
     public function test_dashboard_figures_link_only_for_those_who_may_open_the_section(): void
     {
+        // HR shows only to holders of a leave permission; Operations to anyone in the Backoffice (as in the navigation).
         $role = Role::query()->create(['name' => 'clerk', 'label' => 'Clerk']);
         $role->permissions()->sync(Permission::query()->whereIn('name', ['admin.access', 'clients.view'])->pluck('id'));
         $this->actingAs(User::factory()->create(['role_id' => $role->id]), 'web');
 
         Livewire::test(Dashboard::class)
             ->assertDontSeeHtml('href="'.route('admin.leave-requests').'"')
-            ->assertDontSeeHtml('href="'.route('admin.incidents').'"');
+            ->assertSeeHtml('href="'.route('admin.incidents').'"');
     }
 
     // ---- Section pages ---------------------------------------------------
@@ -124,9 +125,9 @@ class UiImprovementTest extends TestCase
             ->set('filters.overdue', '1')->assertSee('Clear filters')
             ->call('clearFilters')->assertSet('filters', [])->assertDontSee('Clear filters');
 
-        Livewire::test(ScheduleEntries::class)->assertDontSee('Clear filters')
-            ->set('type', 'meeting')->assertSee('Clear filters')
-            ->call('clearFilters')->assertSet('type', '')->assertDontSee('Clear filters');
+        Livewire::test(ScheduleEntries::class)->assertSet('from', '2026-10-16')->assertDontSee('Clear filters')
+            ->set('type', 'meeting')->set('from', '2026-10-01')->assertSee('Clear filters')
+            ->call('clearFilters')->assertSet('type', '')->assertSet('from', '2026-10-16')->assertDontSee('Clear filters');
     }
 
     // ---- Sign-in ---------------------------------------------------------
