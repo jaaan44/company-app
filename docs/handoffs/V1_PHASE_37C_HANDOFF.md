@@ -1,6 +1,6 @@
 # Phase 37C — Home Redesign for Phones — Handoff
 
-**Status: implemented** on `claude/mobile-home-redesign`; awaiting CI, review, merge and UAT. **No migration, no API change, no new dependency.**
+**Status: implemented; CI green** on PR #141 (`12a1319`); awaiting review, merge and UAT. **No migration, no API change, no new dependency.**
 
 ## 1. Phase Identification
 
@@ -88,7 +88,8 @@ None. Every link goes where it did; the profile link is the existing My profile 
   - close to the reference;
   - no horizontal overflow at any width;
   - refined after a first pass: softer card borders, Notifications stacking in the three-column row, no duplicate app mark on desktop.
-- **Not run here:** Pint, PHPStan and the PHP tests (Composer can't install in this environment; CI runs them on the PR), and the real page in a browser.
+- **CI on PR #141 (`12a1319`):** Pint, PHPStan and 1,501/1,501 tests, and the staging images build. The first run failed only the new "View all" assertion (Livewire's block markers), fixed in the test.
+- **Not run here:** the real page in a browser.
 
 ## 12. Deviations from the Brief
 

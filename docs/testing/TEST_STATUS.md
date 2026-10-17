@@ -1660,6 +1660,6 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | CSS build (`npm run build`) | Automated, local | PASS | The new tokens and classes are in the compiled CSS. |
 | Blade structure | Manual (AI), script | PASS | Directives balance; no inline `@php(...)` before a `@php` block. |
 | Static layout preview (Playwright + Chromium) | Manual (AI) | PASS (layout only) | A hand-built copy of the new markup with the compiled CSS: 360, 390 (light and dark) and 1280 px, with no horizontal overflow at any width. **Not the running app** (see `docs/design/README.md`). |
-| Backend tests (`PortalPagesTest` home +3 assertions; `CommunicationPagesTest` "View all") | Automated, CI | NOT RUN | Awaiting CI on the PR. |
+| Backend tests (`PortalPagesTest` home +3 assertions; `CommunicationPagesTest` "View all") | Automated, CI | PASS | PR #141, `12a1319`: Pint, PHPStan and **1,501/1,501** tests green, and the staging images build. The first run (`35396a3`) failed only the new "View all" assertion: Livewire puts a comment marker after each `@if`, so the test now checks the parts in order. |
 | UAT-37C-01…03 | UAT (product owner) | NOT RUN | After merge and deployment. |
 
