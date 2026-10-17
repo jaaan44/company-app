@@ -1,6 +1,6 @@
 # Phase 37B — Web UI/UX Improvement — Handoff
 
-**Status: implemented; CI green on PR #139 (`0b8895f`, 1,493 tests); not yet checked in a browser.** Branch `claude/stoic-wright-paan67`. **No migration and no API change.**
+**Status: merged** (PR #139 as `c72cfef`, CI green: 1,501 tests). **Not yet deployed, render-checked or UAT'd.** No migration. The API gains a read-only unread-count endpoint and `?sort=` on reports (addendum).
 
 ## 1. Phase Identification
 
@@ -182,3 +182,13 @@ See §5.
 4. Merge, deploy and run UAT-37B.
 5. Decide on the unread badge and report sorting (backend).
 6. Then Phase 38 or 39, each needing its own authorization.
+
+## Addendum — Merge and UAT runbook (2026-10-17)
+
+- **PR #139 merged as `c72cfef`** on the product owner's "go ahead and merge". CI was green on the final head: Pint, PHPStan, 1,501 tests and the staging images.
+- **Runbook `docs/testing/PHASE_37B_UAT_PREPARATION.md`:**
+  - the deploy `bbe7291` → `c72cfef`: no migration; backup, build of both images, caches;
+  - smoke tests: the new routes answer `401` unsigned, and the built CSS has the new styles;
+  - UAT-37B-01…08 on your own iPhone and Android phone and a computer, with Lia, Ben and the Administrator. No new account.
+- **Not run:** the deployment, the render pass and UAT.
+

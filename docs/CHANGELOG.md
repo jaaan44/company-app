@@ -4,6 +4,10 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-17 — Phase 37B merged; UAT runbook
+- **Merged:** PR #139 as `c72cfef`. CI was green: Pint, PHPStan, 1,501 tests and the staging images.
+- **Runbook:** `docs/testing/PHASE_37B_UAT_PREPARATION.md` covers the deploy (`bbe7291` → `c72cfef`; no migration; both images rebuilt; smoke tests for the new routes and styles) and UAT-37B-01…08 on real phones and a computer.
+
 ### 2026-10-17 — Phase 37B addendum: Messages badge and sortable reports
 - **Approved:** "i approve you recommendations" (recorded in DEC-068's addendum).
 - **Messages badge:** the portal's Messages tab shows the unread count, from a new `GET /api/v1/conversations/unread-count` (the same count as Home).
