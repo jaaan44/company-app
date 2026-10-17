@@ -1081,3 +1081,22 @@ Internet → Cloudflare (proxied, SSL/TLS "Full (strict)")
 **Addendum (2026-10-17), product owner: "i approve you recommendations".** The two deferred items are built, as the handoff recommended:
 - **Unread badge:** `GET /api/v1/conversations/unread-count`, the same count as Home, needing a linked staff record. The portal's Messages tab shows it (sidebar and tab bar; "99+" above 99; no badge without a staff record).
 - **Sortable reports:** `?sort=field` / `-field` on the seven reports and their CSV exports, for names, dates and numbers only. Report column headers sort, with `aria-sort`.
+
+### DEC-070 — The local development Compose setup can't run on the staging host
+
+**Status:** Accepted (2026-10-17), product owner: "ok go ahead", after the staging incident of the same day.
+**Context:** Laptop setup instructions were run on the staging VPS, in the deploy checkout:
+- `docker-compose.yml` shares staging's project name (the folder name `company-app`) and container names, so `docker compose up` replaced staging's containers;
+- `cp .env.docker.example .env` overwrote staging's bind-mounted `apps/api/.env`;
+- the development database login was the same as staging's legacy one, and the app said `APP_ENV=local`, so `AdminUserSeeder` seeded a known-password Administrator into staging's database.
+
+Staging was restored the same day (`docs/handoffs/V1_STAGING_INCIDENT_2026-10-17.md`).
+**Decision:**
+1. `docker-compose.yml` has its own project name, **`company-app-dev`**:
+   - its containers and volumes never coincide with staging's (`-p company-app`);
+   - with the container names unchanged, `up` fails with "name already in use" while staging runs.
+2. The development app container's entrypoint **refuses to start** when the checkout has `.env.staging` (seen through a read-only mount of the repository root) or `apps/api/.env` says `APP_ENV=staging` or `production`.
+3. **Warnings:** the README's Docker section and `DEPLOYMENT_STAGING.md` say plainly that the local commands must never run on the VPS. The operator keeps a backup of `apps/api/.env`.
+4. **Open, separate change:** staging's database password is the legacy 6-character value. It's only reachable inside Docker's network, but it should be rotated to a generated one in a planned step.
+**Rationale:** The two environments shared names by accident of folder naming. Making them distinct removes the failure mode, rather than relying on care.
+**Superseded/reaffirmed:** DEC-027 (Docker Compose for local development) and DEC-047 (the staging Compose file and the `-p company-app` project) are reaffirmed. Only the local project's name changes.

@@ -3,6 +3,12 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
+**Staging incident (2026-10-17): restored.**
+- Laptop setup commands run on the VPS replaced staging's containers and its `apps/api/.env`, and seeded `admin@example.test`.
+- Staging was rebuilt the same day and now runs the unmerged branch `f0e95fb` (37B + 37C) for review.
+- **Pending:** lock `admin@example.test`; rotate the legacy database password.
+- **Guard:** DEC-070. **Details:** `docs/handoffs/V1_STAGING_INCIDENT_2026-10-17.md`.
+
 **Current phase:** **Phase 37B — Web UI/UX Improvement (DEC-068): implemented (2026-10-17) on `claude/stoic-wright-paan67`, awaiting CI, a render pass, merge and UAT.**
 - **From** a UI/UX audit of the web app, approved in full ("I approve all your recommendations").
 - **Built:**

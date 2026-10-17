@@ -10,6 +10,19 @@
 # via APP_PORT/MYSQL_PORT — export them, or set them in a root-level
 # .env, if either default is already taken on your machine. Neither
 # affects the containers' own internal ports.
+#
+# NEVER run this file on the staging VPS (incident 2026-10-17, DEC-070).
+# Staging uses docker-compose.staging.yml with `-p company-app`. Two
+# guards make this file refuse there:
+#   - its own project name, `company-app-dev`, so it can never take over
+#     staging's containers or its `company-app_mysql-data` volume (with
+#     the same container names, `up` fails with "name already in use"
+#     while staging runs, instead of replacing them);
+#   - the app container's entrypoint refuses to start when the checkout
+#     has a `.env.staging` (only the staging host has one) or
+#     apps/api/.env says APP_ENV=staging/production.
+
+name: company-app-dev
 
 services:
   app:
@@ -20,6 +33,9 @@ services:
     volumes:
       - ./apps/api:/var/www/html
       - vendor:/var/www/html/vendor
+      # Read-only view of the repository root, only so the entrypoint can
+      # see a staging host's .env.staging and refuse to start (DEC-070).
+      - .:/repo-root:ro
     # Deliberately no `env_file`/`environment` here: Laravel reads
     # apps/api/.env directly (it's part of the bind mount above) via its
     # own Dotenv loading. Injecting the same values as container OS
