@@ -107,6 +107,6 @@ class TaskReportController extends Controller
             $query = OverdueTasks::scope($query);
         }
 
-        return ReportSort::apply($request, $query, self::SORTS, fn (Builder $query) => $query->orderBy('due_date'));
+        return ReportSort::apply($request, $query, self::SORTS, ['due_date' => 'asc']);
     }
 }

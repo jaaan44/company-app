@@ -107,6 +107,6 @@ class WorkLogReportController extends Controller
             ->when($request->filled('from'), fn ($query) => $query->whereDate('work_date', '>=', $request->date('from')))
             ->when($request->filled('to'), fn ($query) => $query->whereDate('work_date', '<=', $request->date('to')));
 
-        return ReportSort::apply($request, $query, self::SORTS, fn (Builder $query) => $query->orderByDesc('work_date')->orderByDesc('created_at'));
+        return ReportSort::apply($request, $query, self::SORTS, ['work_date' => 'desc', 'created_at' => 'desc']);
     }
 }

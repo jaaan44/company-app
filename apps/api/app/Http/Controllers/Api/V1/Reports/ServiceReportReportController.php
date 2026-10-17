@@ -113,6 +113,6 @@ class ServiceReportReportController extends Controller
             ->when($request->filled('from'), fn ($query) => $query->whereDate('service_date', '>=', $request->date('from')))
             ->when($request->filled('to'), fn ($query) => $query->whereDate('service_date', '<=', $request->date('to')));
 
-        return ReportSort::apply($request, $query, self::SORTS, fn (Builder $query) => $query->orderByDesc('service_date'));
+        return ReportSort::apply($request, $query, self::SORTS, ['service_date' => 'desc']);
     }
 }

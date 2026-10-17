@@ -130,6 +130,6 @@ class IncidentReportReportController extends Controller
             ->when($request->filled('from'), fn ($query) => $query->where('occurred_at', '>=', $request->date('from')))
             ->when($request->filled('to'), fn ($query) => $query->where('occurred_at', '<=', $request->date('to')));
 
-        return ReportSort::apply($request, $query, self::SORTS, fn (Builder $query) => $query->orderByDesc('occurred_at'));
+        return ReportSort::apply($request, $query, self::SORTS, ['occurred_at' => 'desc']);
     }
 }

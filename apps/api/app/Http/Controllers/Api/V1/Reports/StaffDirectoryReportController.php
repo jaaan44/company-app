@@ -102,6 +102,6 @@ class StaffDirectoryReportController extends Controller
             )
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')));
 
-        return ReportSort::apply($request, $query, self::SORTS, fn (Builder $query) => $query->orderBy('last_name')->orderBy('first_name'));
+        return ReportSort::apply($request, $query, self::SORTS, ['last_name' => 'asc', 'first_name' => 'asc']);
     }
 }

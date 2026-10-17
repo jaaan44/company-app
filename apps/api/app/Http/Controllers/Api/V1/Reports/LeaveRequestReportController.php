@@ -100,6 +100,6 @@ class LeaveRequestReportController extends Controller
             ->when($request->filled('from'), fn ($query) => $query->whereDate('end_date', '>=', $request->date('from')))
             ->when($request->filled('to'), fn ($query) => $query->whereDate('start_date', '<=', $request->date('to')));
 
-        return ReportSort::apply($request, $query, self::SORTS, fn (Builder $query) => $query->orderByDesc('start_date'));
+        return ReportSort::apply($request, $query, self::SORTS, ['start_date' => 'desc']);
     }
 }

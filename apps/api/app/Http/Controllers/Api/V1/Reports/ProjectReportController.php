@@ -91,6 +91,6 @@ class ProjectReportController extends Controller
             )
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')));
 
-        return ReportSort::apply($request, $query, self::SORTS, fn (Builder $query) => $query->orderBy('name'));
+        return ReportSort::apply($request, $query, self::SORTS, ['name' => 'asc']);
     }
 }

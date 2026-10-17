@@ -2,7 +2,6 @@
 
 namespace App\Support\Reporting;
 
-use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -36,15 +35,19 @@ final class ReportSort
      *
      * @param  Builder<TModel>  $query
      * @param  array<string, list<string>>  $fields  sort key => columns
-     * @param  Closure(Builder<TModel>): Builder<TModel>  $default
+     * @param  array<string, 'asc'|'desc'>  $default  the report's own order: column => direction
      * @return Builder<TModel>
      */
-    public static function apply(Request $request, Builder $query, array $fields, Closure $default): Builder
+    public static function apply(Request $request, Builder $query, array $fields, array $default): Builder
     {
         $sort = $request->string('sort')->toString();
         $key = ltrim($sort, '-');
         if ($sort === '' || ! array_key_exists($key, $fields)) {
-            return $default($query);
+            foreach ($default as $column => $direction) {
+                $query->orderBy($column, $direction);
+            }
+
+            return $query;
         }
 
         $direction = str_starts_with($sort, '-') ? 'desc' : 'asc';
