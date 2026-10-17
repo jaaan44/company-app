@@ -1,4 +1,4 @@
-@props(['title' => 'Company App'])
+@props(['title' => 'Company App', 'phoneAppBar' => true])
 @php
     // Phase 34F (F-1): the mobile app's five tabs; every other portal page belongs to More.
     $tabs = [
@@ -72,7 +72,8 @@
 
         <div class="md:pl-60">
             {{-- F-2: the app bar: the page title and, on a sub-page, a back arrow. --}}
-            <header class="sticky top-0 z-20 border-b border-line bg-raised pt-[env(safe-area-inset-top)]">
+            {{-- Home's hero takes the app bar's place on phones (mobile redesign); the title stays in <title>. --}}
+            <header class="sticky top-0 z-20 border-b border-line bg-raised pt-[env(safe-area-inset-top)] {{ $phoneAppBar ? '' : 'max-md:hidden' }}">
                 <div class="mx-auto flex min-h-14 max-w-3xl items-center gap-2 px-4">
                     @if ($back !== '')
                         {!! $back !!}
@@ -91,16 +92,17 @@
         </div>
 
         {{-- Phones: the five tabs at the bottom, as in the app. --}}
-        <nav aria-label="Main" class="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-raised pb-[env(safe-area-inset-bottom)] md:hidden">
-            <ul class="grid grid-cols-5">
+        {{-- Mobile redesign: a raised bar with rounded top corners; the current tab is a filled pill around its icon and label. --}}
+        <nav aria-label="Main" class="fixed inset-x-0 bottom-0 z-30 rounded-t-3xl bg-raised px-2 pt-1 pb-[calc(0.25rem+env(safe-area-inset-bottom))] shadow-bar md:hidden">
+            <ul class="grid grid-cols-5 gap-1">
                 @foreach ($tabs as [$name, $label, $icon, $patterns])
                     @php
                         $current = request()->routeIs(...$patterns);
                     @endphp
                     <li>
                         <a href="{{ route($name) }}" @if ($current) aria-current="page" @endif
-                           class="flex min-h-16 flex-col items-center justify-center gap-1 text-xs {{ $current ? 'font-semibold text-accent-ink' : 'text-muted' }}">
-                            <span class="relative inline-flex h-8 w-14 items-center justify-center rounded-full {{ $current ? 'bg-accent-soft' : '' }}"><x-portal.icon :name="$icon" />
+                           class="my-1 flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-2xl text-xs {{ $current ? 'bg-accent-soft font-semibold text-accent-ink' : 'text-muted hover:bg-hover' }}">
+                            <span class="relative inline-flex h-7 w-12 items-center justify-center"><x-portal.icon :name="$icon" />
                                 @if ($count = $badge($name))
                                     <span aria-hidden="true" class="absolute -top-1 right-1 min-w-5 rounded-full bg-accent px-1 text-center text-xs leading-5 font-semibold text-on-accent tabular-nums">{{ $count }}</span>
                                 @endif
