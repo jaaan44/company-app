@@ -1646,7 +1646,7 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | CSS build (`npm ci && npm run build`) | Automated, local | PASS | Vite 8 and Tailwind 4. The compiled CSS has every new style, the tokens and the expected variant order. |
 | JS syntax (`node --check resources/js/app.js`) and `php -l` on changed PHP | Automated, local | PASS | |
 | Blade structure | Manual (AI), script | PASS | `@if`/`@endif`, `@foreach`, `@error` and notice tags balance in the 76 changed views. |
-| Backend tests (`UiImprovementTest` 8 new, `FormatTest` +2) | Automated | NOT RUN | `composer install` can't complete here: GitHub zip downloads are refused by the network policy. CI on a pull request is the first run. |
-| Pint / PHPStan / Composer | Automated | NOT RUN | Same reason. |
+| Backend tests (`UiImprovementTest` 8 new, `FormatTest` +2) | Automated, CI | PASS | PR #139, `0b8895f`: **1,493 passed** (5,981 assertions). The first run (`807601a`) failed 2 of the new tests: Schedule's Clear filters assumed a blank From (it defaults to today, fixed in the component), and the dashboard test expected no Operations link for a role that, by design, sees Operations. Not runnable locally: GitHub zip downloads are refused by this environment's network policy. |
+| Pint / PHPStan / Composer | Automated, CI | PASS | PR #139: Backend quality gates green; Build staging images green. |
 | Render pass (Playwright + axe, 360 / 768 / 1280 px, light and dark) | Manual (AI) | NOT RUN | Needs a running app, so needs Composer. |
 | UAT-37B-01…06 | UAT (product owner) | NOT RUN | After merge and deployment. |

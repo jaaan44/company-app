@@ -1,6 +1,6 @@
 # Phase 37B — Web UI/UX Improvement — Handoff
 
-**Status: implemented; not yet validated by CI or in a browser.** Pushed to `claude/stoic-wright-paan67`. **No migration and no API change.**
+**Status: implemented; CI green on PR #139 (`0b8895f`, 1,493 tests); not yet checked in a browser.** Branch `claude/stoic-wright-paan67`. **No migration and no API change.**
 
 ## 1. Phase Identification
 
@@ -124,7 +124,9 @@ None:
 - **Not run:** `composer install`, so also Pint, PHPStan, `php artisan test`, the render pass and axe.
   - Composer's GitHub zip downloads are refused by this environment's network policy (403). Git clones work, but filled the disk.
   - A workaround (fetching each package at its locked commit) was refused by the session's permission policy, so it wasn't pursued.
-  - **CI on a pull request is the first real run of the PHP checks.**
+  - **CI on PR #139 is the run of record:**
+    - first run (`807601a`): 2 of the new tests failed. Schedule's From defaults to today, so Clear filters now returns to today. The Operations section shows to everyone in the Backoffice, so the dashboard test now expects its link for that role.
+    - second run (`0b8895f`): **Pint, PHPStan and 1,493/1,493 tests pass**, and the staging images build.
 - **CSS build and the static checks above:** pass.
 
 ## 12. Deviations from Specification

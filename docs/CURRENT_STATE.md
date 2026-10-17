@@ -14,7 +14,7 @@
   - a Backoffice dashboard that leads with Needs attention;
   - tidier section pages and readable Audit log actions;
   - password Show/Hide.
-- **Not yet run:** Pint, PHPStan, the suite (Composer can't install in this environment), the render pass and UAT-37B. **No migration, no API change, no new dependency.**
+- **Tested:** CI green on PR #139 (Pint, PHPStan, 1,493/1,493 tests, staging images). **Not yet run:** the render pass and UAT-37B. **No migration, no API change, no new dependency.**
 - **Deferred:** the Messages unread badge and sortable reports (backend).
 - **Details:** `docs/handoffs/V1_PHASE_37B_HANDOFF.md`.
 
