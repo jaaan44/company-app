@@ -324,6 +324,14 @@ The visual-design foundation for Flutter is below (DEC-046). **The web equivalen
   - a confirmation message shows as a **toast** above the tab bar (`role="status"`, hides after 4.5 s);
   - a confirmation that needs no typing is an **in-app dialog** (`x-portal.confirm`, a modal `<dialog>`). It is a sheet from the bottom on phones and centred on wider screens. The question is its heading, the body follows, **Cancel** has focus, Escape closes it, and destructive confirms use the danger colour.
   - The browser's own dialogs are no longer used.
+- **Home on phones (37C, DEC-069, `docs/design/mobile-home-reference.png`):**
+  - **Hero:** a navy-to-blue gradient under the status bar, in place of the app bar, with the app's mark, the initials (a link to My profile), "Hello, *name*" and the role line and team. From `md` up, it's a rounded panel below the app bar.
+  - **Sheet:** a rounded-top sheet overlaps the hero. It holds:
+    - the **Today** card (blue tint, calendar icon, each item a row with a chevron button);
+    - **Needs attention**: tasks (rose), messages (blue) and notifications (green), as pastel cards with a round icon, two columns on phones with notifications across the row, three columns from `lg`;
+    - **Latest announcements**: a list card with violet megaphones and a "View all" heading link.
+  - **Colours:** Home's own tokens (`hero-*`, `card-*`, `tint-*`, `icon-*`, `shadow-card`); the rest of the app keeps the indigo accent.
+- **Bottom tab bar (37C):** a raised bar with rounded top corners and a soft shadow. The current tab is a filled accent-soft pill around its icon and label.
 - **Phones first (37, DEC-067):** the staff portal is the product for staff on phones (the Flutter app is paused).
   - **Sign-in:** "Keep me signed in on this device" (unticked; "For 30 days. Leave it off on a shared phone or computer."). The email field uses `inputmode="email"` with no auto-capitalisation or spell-check; `enterkeyhint` is next, then go. After sign-in you return to the page you asked for ("Please sign in to continue.").
   - **Connection banner:** a bar across the top (danger colour, `role="status"`).

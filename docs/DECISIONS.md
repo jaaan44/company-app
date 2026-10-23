@@ -1082,6 +1082,29 @@ Internet → Cloudflare (proxied, SSL/TLS "Full (strict)")
 - **Unread badge:** `GET /api/v1/conversations/unread-count`, the same count as Home, needing a linked staff record. The portal's Messages tab shows it (sidebar and tab bar; "99+" above 99; no badge without a staff record).
 - **Sortable reports:** `?sort=field` / `-field` on the seven reports and their CSV exports, for names, dates and numbers only. Report column headers sort, with `aria-sort`.
 
+### DEC-069 — Phase 37C: Home redesigned as a native-style mobile screen, after an approved reference
+
+**Status:** Accepted (2026-10-17), product owner: the "Mobile Home Dashboard UI/UX Redesign" brief and `docs/design/mobile-home-reference.png` ("the approved visual direction").
+**Context:** The portal's Home read as a web page. The product owner supplied a reference for a polished mobile app:
+- a navy gradient header with the greeting;
+- a Today card;
+- pastel "Needs attention" cards;
+- an announcements list;
+- a pill-style bottom bar.
+**Decision:**
+1. **Home only gets the new colours:** `hero-from`/`hero-to` (navy to blue), `hero-sub`, and a card, tint and icon colour per kind (tasks rose, messages blue, notifications green, announcements violet), in light and dark. **The app-wide indigo accent is unchanged.** Changing the brand everywhere would be a design-system change across every screen, and needs its own approval. The palette question went unanswered, so the narrower scope was taken.
+2. **Phones:** Home's hero takes the app bar's place (the layout's `phoneAppBar` flag); the page title stays in `<title>`. From `md` up, the app bar and sidebar stay, and the hero is a rounded panel without the duplicate app mark.
+3. **The bottom tab bar** (every portal page) becomes a raised bar with rounded top corners, and the current tab is a filled accent-soft pill around its icon and label. Same tabs, links, badge and `aria-current`.
+4. **New `x-portal` components:** `home-hero`, `summary-card`, `section-header` and `announcement-row`. Four new icons: `flag`, `chevron`, `today` and `company`.
+5. **Data and behaviour are unchanged:**
+   - the same `GET /me/home` fields and the same destinations;
+   - the greeting's supporting line is the role line and team, or "Good to see you again!" when there is neither;
+   - the initials (first letters of the display name) link to My profile;
+   - every announcement shows the same megaphone, since the API has no category to choose an icon by;
+   - Needs attention has no "View all", because there's no single destination.
+**Rationale:** The reference's look, delivered within the existing stack and tokens, with contrast checked: white on the hero ≥ 6.7:1, the subtitle ≥ 5:1, and icons ≥ 3:1 on their tints.
+**Superseded/reaffirmed:** DEC-063 W-5's shell (five tabs, a sidebar from `md`) and DEC-064's indigo palette for the rest of the app are reaffirmed. The bottom bar's look supersedes 34F's icon-only pill.
+
 ### DEC-070 — The local development Compose setup can't run on the staging host
 
 **Status:** Accepted (2026-10-17), product owner: "ok go ahead", after the staging incident of the same day.

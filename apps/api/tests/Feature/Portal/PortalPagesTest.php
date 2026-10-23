@@ -111,7 +111,11 @@ class PortalPagesTest extends TestCase
             ->assertSee('Today · Tue 13 Oct')
             ->assertSeeInOrder(['Site survey', 'Meeting · 09:00 – 10:30'])
             ->assertSeeInOrder(['Needs attention', 'My tasks', '0 overdue', 'No unread messages', 'No unread notifications'])
-            ->assertSeeInOrder(['Latest announcements', 'Office closed Friday']);
+            ->assertSeeInOrder(['Latest announcements', 'Office closed Friday'])
+            // Mobile redesign: the hero has the initials (a link to My profile) and takes the app bar's place on phones.
+            ->assertSee('aria-label="My profile"', false)
+            ->assertSee('>L</a>', false) // her preferred name
+            ->assertSee('max-md:hidden">', false);
     }
 
     public function test_home_without_a_staff_profile(): void

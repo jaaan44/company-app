@@ -19,6 +19,14 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
   - warnings added to the README and `DEPLOYMENT_STAGING.md`.
 - **Local developers:** a fresh local database volume; run `migrate` again.
 
+### 2026-10-17 — Phase 37C: Home redesigned for phones (implemented)
+- **From** the product owner's brief and reference image (`docs/design/mobile-home-reference.png`), recorded as **DEC-069**.
+- **Home:**
+  - a navy gradient hero with the greeting, role and team, and initials linking to My profile (it replaces the app bar on phones);
+  - a rounded sheet with the Today card, pastel Needs-attention cards (tasks, messages, notifications), and Latest announcements with "View all".
+- **Bottom tab bar:** raised, with rounded corners; the current tab is a filled pill.
+- **Unchanged:** the data, links and permissions. Home-only colour tokens; the rest of the app keeps its colours. No API, migration or dependency change.
+
 ### 2026-10-17 — Phase 37B addendum: Messages badge and sortable reports
 - **Approved:** "i approve you recommendations" (recorded in DEC-068's addendum).
 - **Messages badge:** the portal's Messages tab shows the unread count, from a new `GET /api/v1/conversations/unread-count` (the same count as Home).
