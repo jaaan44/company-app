@@ -4,6 +4,21 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-17 — Staging incident and recovery; local setup can't run on staging (DEC-070)
+- **Incident:**
+  - laptop setup instructions were run on the staging VPS, which replaced staging's containers with the development ones, overwrote staging's `apps/api/.env` and seeded `admin@example.test` (Administrator, known password) into staging's database;
+  - staging returned 500.
+- **Recovery (operator, output pasted):**
+  - development containers removed; the database volume untouched;
+  - `apps/api/.env` rebuilt from the template with `.env.staging`'s database values, a new `APP_KEY` (everyone signs in again; no encrypted data) and the Manila timezone;
+  - staging images rebuilt and started on `f0e95fb`; smoke tests pass.
+- **Seeded account:** `admin@example.test` (created 2026-09-11 for the Phase 5 check; today's seed reset its password) is now suspended, with a random password and its sessions and tokens ended.
+- **Guard:**
+  - `docker-compose.yml` is now project `company-app-dev`;
+  - its app container refuses to start in a checkout with `.env.staging` or `APP_ENV=staging/production`;
+  - warnings added to the README and `DEPLOYMENT_STAGING.md`.
+- **Local developers:** a fresh local database volume; run `migrate` again.
+
 ### 2026-10-17 — Phase 37C: Home redesigned for phones (implemented)
 - **From** the product owner's brief and reference image (`docs/design/mobile-home-reference.png`), recorded as **DEC-069**.
 - **Home:**

@@ -58,6 +58,8 @@ Company App is built through explicitly authorized, numbered phases. The reposit
 
 ### Backend (Docker — standard, as of Phase 4A)
 
+> **Local machines only. Never run these commands on the staging VPS** (incident 2026-10-17, DEC-070). Staging has its own setup: `docs/DEPLOYMENT_STAGING.md`. Since DEC-070, this Compose project is named `company-app-dev`, and its app container refuses to start in a checkout that has a `.env.staging`. **If you used this setup before 2026-10-17:** the new project name gives you a fresh, empty local database volume, so run `migrate` (and the seeder) again. Your old local data stays in the previous volume until you remove it yourself.
+
 ```sh
 cd apps/api
 cp .env.docker.example .env

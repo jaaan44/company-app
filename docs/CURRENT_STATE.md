@@ -3,6 +3,13 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
+**Staging incident (2026-10-17): restored.**
+- Laptop setup commands run on the VPS replaced staging's containers and its `apps/api/.env`, and seeded `admin@example.test`.
+- Staging was rebuilt the same day and now runs the unmerged branch `f0e95fb` (37B + 37C) for review.
+- **Done:** `admin@example.test` (a Phase 5 leftover whose password the seed reset) is suspended with a random password.
+- **Pending:** rotate the legacy database password.
+- **Guard:** DEC-070. **Details:** `docs/handoffs/V1_STAGING_INCIDENT_2026-10-17.md`.
+
 **Current phase:** **Phase 37C — Home redesign for phones (DEC-069): implemented (2026-10-17) on `claude/mobile-home-redesign`; awaiting CI, review, merge and UAT-37C.**
 - Home now follows `docs/design/mobile-home-reference.png`:
   - a navy gradient hero;
