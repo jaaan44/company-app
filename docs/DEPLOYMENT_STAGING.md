@@ -4,6 +4,15 @@ This document is a step-by-step runbook for deploying Company App to the staging
 
 **Everything in this document is a proposal for the VPS operator to execute.** No command in this file has been run against the real staging VPS by any AI session — Claude Code has no access to that host. Every code block below is labeled either **[Repository — already done]** (an artifact this phase already committed, nothing to run) or **[Run on the VPS]** (a command the user must execute themselves, on the real staging host).
 
+> **⚠ On this host, never run the local development setup.** Never run plain `docker compose …` (it reads `docker-compose.yml`), never `cp .env.docker.example …`, and never `db:seed --class=…AdminUserSeeder`. **Always use the `-p company-app -f docker-compose.staging.yml --env-file .env.staging` form below.**
+>
+> On 2026-10-17, laptop instructions run here caused three problems:
+> - the development containers replaced staging's;
+> - staging's `apps/api/.env` was overwritten;
+> - a known-password Administrator was seeded.
+>
+> See `docs/handoffs/V1_STAGING_INCIDENT_2026-10-17.md`. Since DEC-070, the development file refuses to start on this host. **Keep a copy of `apps/api/.env`** in `/home/deploy/backups/` (mode 600) after every change to it.
+
 ---
 
 ## 0. What Phase 24 already put in the repository
