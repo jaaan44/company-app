@@ -169,7 +169,7 @@ Cross-module dashboard and administrative reports. Preceded by a product-owner-r
 - the phone polish found by a walk-through of the eight everyday tasks.
 
 The shared loading/empty/error library was judged not needed (H-8). **The Flutter app is paused (DEC-067 H-1):** no app work until the product owner decides otherwise.
-**Phase 37B — Web UI/UX Improvement** *(**implemented 2026-10-17** under DEC-068, `docs/phases/V1_PHASE_37B_DEFINITION.md`, see `docs/handoffs/V1_PHASE_37B_HANDOFF.md`; awaiting CI, a render pass, merge and UAT)*. From a UI/UX audit of the web app:
+**Phase 37B — Web UI/UX Improvement** *(**implemented 2026-10-17** under DEC-068, `docs/phases/V1_PHASE_37B_DEFINITION.md`, see `docs/handoffs/V1_PHASE_37B_HANDOFF.md`; merged as `c72cfef` (PR #139); awaiting deployment of `main` and UAT-37B, runbook `docs/testing/PHASE_37BC_UAT_PREPARATION.md`)*. From a UI/UX audit of the web app:
 - field contrast;
 - shared control styles and notices;
 - saving and loading feedback;
@@ -180,7 +180,7 @@ The shared loading/empty/error library was judged not needed (H-8). **The Flutte
 - password show/hide.
 
 The Messages unread badge and sortable reports are deferred (backend).
-**Phase 37C — Home Redesign for Phones** *(**implemented 2026-10-17** under DEC-069, see `docs/handoffs/V1_PHASE_37C_HANDOFF.md`; awaiting review, merge and UAT)*. Home rebuilt after the approved reference `docs/design/mobile-home-reference.png`, with a restyled bottom tab bar. Same data and links.
+**Phase 37C — Home Redesign for Phones** *(**implemented 2026-10-17** under DEC-069, see `docs/handoffs/V1_PHASE_37C_HANDOFF.md`; merged as `b083958` (PR #141); awaiting deployment of `main` and UAT-37C, same runbook)*. Home rebuilt after the approved reference `docs/design/mobile-home-reference.png`, with a restyled bottom tab bar. Same data and links.
 **Phase 38 — UAT** *(formerly 37)* — product owner acceptance testing (see `docs/testing/UAT_LOG.md`), now meaningful because real client workflows exist on both surfaces. **Includes the phone-app screens of 30B and 31–33, paused with the Flutter app (DEC-067 H-1)** (UAT-30B/31/32/33-01…08), whose combined-round results were withdrawn as not verified on 2026-10-16. Formerly numbered Phase 25 — see DEC-048.
 **Phase 39 — Release Readiness** *(formerly 38)* — final go/no-go. Formerly numbered Phase 26 — see DEC-048.
 

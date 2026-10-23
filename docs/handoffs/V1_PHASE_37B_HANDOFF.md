@@ -1,6 +1,6 @@
 # Phase 37B — Web UI/UX Improvement — Handoff
 
-**Status: implemented; CI green on PR #139 (`0b8895f`, 1,493 tests); not yet checked in a browser.** Branch `claude/stoic-wright-paan67`. **No migration and no API change.**
+**Status: merged (PR #139, `c72cfef`, 2026-10-17); awaiting deployment of `main` and UAT-37B-01…08 (`NOT RUN`).** Runbook: `docs/testing/PHASE_37BC_UAT_PREPARATION.md`. **No migration.** The addendum added one read-only API route (`GET /conversations/unread-count`) and `?sort=` on the reports (see the addendum below).
 
 ## 1. Phase Identification
 
@@ -182,3 +182,14 @@ See §5.
 4. Merge, deploy and run UAT-37B.
 5. Decide on the unread badge and report sorting (backend).
 6. Then Phase 38 or 39, each needing its own authorization.
+
+## Addendum — Merge and UAT runbook (2026-10-23)
+
+- **PR #139 merged as `c72cfef`** (2026-10-17), with the addendum. CI was green on `f46a52e` (1,501 tests).
+- **Runbook:** `docs/testing/PHASE_37BC_UAT_PREPARATION.md`, one deploy and one UAT round for 37B and 37C:
+  - the checkout moves from the review branch `f0e95fb` (the incident recovery) to `main` `b083958`;
+  - no migration; both images are rebuilt; smoke tests check the 37B routes and styles, the 37C styles and Phase 37's headers;
+  - UAT-37B-01…08 and UAT-37C-01…03.
+
+  It replaces the 37B-only runbook proposed in PR #140, whose deploy target `c72cfef` is out of date.
+- **Not run:** the deployment and UAT.
