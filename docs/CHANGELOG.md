@@ -4,6 +4,14 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-23 — Status reconciled; one runbook for 37B and 37C
+- **Reconciled:** CURRENT_STATE, ROADMAP and the 37B, 37C and incident handoffs now say that 37B (PR #139) and 37C (PR #141) are merged and await deployment and UAT, and that staging runs the review branch `f0e95fb`. Phase 37's stale "not yet run" lines are removed.
+- **Runbook:** `docs/testing/PHASE_37BC_UAT_PREPARATION.md` covers:
+  - the deploy that moves staging's checkout from `f0e95fb` to `main` `b083958`, with no migration and no app-code change;
+  - UAT-37B-01…08 (from PR #140, unchanged) and UAT-37C-01…03.
+
+  It replaces PR #140's runbook, which targeted `c72cfef`.
+
 ### 2026-10-17 — Staging incident and recovery; local setup can't run on staging (DEC-070)
 - **Incident:**
   - laptop setup instructions were run on the staging VPS, which replaced staging's containers with the development ones, overwrote staging's `apps/api/.env` and seeded `admin@example.test` (Administrator, known password) into staging's database;

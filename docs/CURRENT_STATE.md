@@ -3,52 +3,29 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
+**Current phase:** **none in development.** Phases **37B** (web UI/UX improvement, DEC-068) and **37C** (Home redesign for phones, DEC-069) are **merged into `main` and await deployment of `main` and UAT** (runbook `docs/testing/PHASE_37BC_UAT_PREPARATION.md`). `main` is `b083958`, with CI green.
+- **Phase 37B:** merged as `c72cfef` (PR #139, 2026-10-17), including its addendum (the Messages unread badge and sortable report columns). UAT-37B-01…08 `NOT RUN`. **Details:** `docs/handoffs/V1_PHASE_37B_HANDOFF.md`.
+- **Phase 37C:** merged as `b083958` (PR #141, 2026-10-23). Home now follows `docs/design/mobile-home-reference.png`, with a restyled bottom tab bar; there is no API or migration change. UAT-37C-01…03 `NOT RUN`. **Details:** `docs/handoffs/V1_PHASE_37C_HANDOFF.md`.
+- **DEC-070 (PR #142, 2026-10-23):** the local Docker setup refuses to run on the staging host.
+- **Staging runs `f0e95fb`**, the 37B + 37C review branch deployed during the incident recovery. It has the same app code as `main`. The runbook above moves the checkout back to `main`.
+
 **Staging incident (2026-10-17): restored.**
 - Laptop setup commands run on the VPS replaced staging's containers and its `apps/api/.env`, and seeded `admin@example.test`.
-- Staging was rebuilt the same day and now runs the unmerged branch `f0e95fb` (37B + 37C) for review.
+- Staging was rebuilt the same day on `f0e95fb`. The new `APP_KEY` signed everyone out.
 - **Done:** `admin@example.test` (a Phase 5 leftover whose password the seed reset) is suspended with a random password.
-- **Pending:** rotate the legacy database password.
+- **Pending:** rotate the legacy 6-character database password, in a planned change.
 - **Guard:** DEC-070. **Details:** `docs/handoffs/V1_STAGING_INCIDENT_2026-10-17.md`.
 
-**Current phase:** **Phase 37C — Home redesign for phones (DEC-069): implemented (2026-10-17) on `claude/mobile-home-redesign`; awaiting CI, review, merge and UAT-37C.**
-- Home now follows `docs/design/mobile-home-reference.png`:
-  - a navy gradient hero;
-  - Today, Needs-attention and announcements cards;
-  - a pill-style bottom tab bar.
-- Same data and links. Home-only colours. No API or migration change.
-- **Details:** `docs/handoffs/V1_PHASE_37C_HANDOFF.md`.
+**Phase 37, Web Integration & Mobile-First UX Hardening (DEC-067), is complete and formally closed (2026-10-16):**
+- merged as `bbe7291` (PR #135), deployed and UAT-37-01…08 **PASS** (product owner);
+- web only: **the Flutter app is paused (H-1)**;
+- **Built:** "Keep me signed in" (30 days); no browser pop-up when a page expires, and a return to the page after sign-in; the app's own error pages; an offline banner; gzip, caching and four security headers; `per_page` capped at 100; literal search wildcards; Audit log company days; and the phone fixes from a walk-through of the eight everyday tasks;
+- **Details:** `docs/handoffs/V1_PHASE_37_HANDOFF.md`.
 
-**Phase 37B (DEC-068)** remains merged (`c72cfef`) and awaits deployment and UAT-37B.
-
-**Phase 37B — Web UI/UX Improvement (DEC-068): implemented (2026-10-17) on `claude/stoic-wright-paan67`, awaiting CI, a render pass, merge and UAT.**
-- **From** a UI/UX audit of the web app, approved in full ("I approve all your recommendations").
-- **Built:**
-  - field contrast (a `field` token) and a warning tone;
-  - shared `btn`/`field` styles and `x-portal.notice`/`no-profile`;
-  - saving and loading spinners and Clear filters;
-  - focus after page changes and failed saves;
-  - Chat opening at the latest message;
-  - a Backoffice dashboard that leads with Needs attention;
-  - tidier section pages and readable Audit log actions;
-  - password Show/Hide.
-- **Tested:** CI green on PR #139 (Pint, PHPStan, 1,493/1,493 tests, staging images). **Not yet run:** the render pass and UAT-37B. **No migration, no API change, no new dependency.**
-- **Addendum (approved after review):**
-  - the Messages unread badge (new `GET /conversations/unread-count`);
-  - sortable report columns (`?sort=` on the seven reports).
-
-  CI is green on `f46a52e` (1,501 tests).
-- **Details:** `docs/handoffs/V1_PHASE_37B_HANDOFF.md`.
-
-**Phase 37, Web Integration & Mobile-First UX Hardening (DEC-067), is complete and formally closed (2026-10-16):** staging runs `bbe7291`, UAT-37-01…08 **PASS** (product owner). **Phase 36, Admin Backoffice Business Management Screens (DEC-066), is complete and formally closed (2026-10-16):**
+**Phase 36, Admin Backoffice Business Management Screens (DEC-066), is complete and formally closed (2026-10-16):**
 - **36A (People & sign-in accounts):** UAT-36A **PASS**.
 - **36B HR, 36C Work & Operations and 36D Reports:** UAT-36BD **PASS**.
 - Every Backoffice item is live.
-- Phase 36 was deployed as `0797e0c`; **staging now runs `bbe7291` (Phase 37)**.
-- **Phase 37, Web Integration & Mobile-First UX Hardening (DEC-067), is merged (PR #135, `bbe7291`), **deployed: staging runs `bbe7291`** (deploy output pasted, 2026-10-16), and **UAT-37-01…08 PASS** ("ALL PASSED"); formally closed (runbook `docs/testing/PHASE_37_UAT_PREPARATION.md`). It is for the web only: **the Flutter app is paused (H-1)**.
-  - **Built:** "Keep me signed in" (30 days); no browser pop-up when a page expires, and a return to the page after sign-in; the app's own error pages; an offline banner; gzip, caching and four security headers; `per_page` capped at 100; literal search wildcards; Audit log company days; and the phone fixes from a walk-through of the eight everyday tasks.
-  - **Tested:** 1,484/1,484 tests; 66/66 browser checks with axe AA clean.
-  - **Not yet run:** MySQL, staging and UAT. **No migration.**
-  - **Details:** `docs/handoffs/V1_PHASE_37_HANDOFF.md`.
 - **Phase 34D — Staff Web Portal: Communication is complete and formally closed (2026-10-13)**: merged as `fd57c7c` (PR #105), UAT-34D-01…06 **PASS** (product owner).
 - **Phase 34C — Staff Web Portal: HR & Operations is complete and formally closed (2026-10-13)**: merged as `0248615` (PR #101), deployed to staging, UAT-34C-01…07 **PASS** (product owner). **Discrepancy (2026-10-13):** the 34C deploy showed staging had never run 34B (`2a7bca9`) and held no UAT34B, UAT31 or UAT32 data; UAT-34B was **re-run on `0248615`: PASS**. The 30B and 31–33 UAT records were **reconciled on 2026-10-16**: the product owner withdrew them as not verified.
 - **Phase 34B — Staff Web Portal: Work is complete and formally closed (2026-10-13)**: merged as `2a7bca9` (PR #92), UAT-34B-01…07 **PASS** on staging `0248615` (re-run; the first recorded deploy was not found on staging). 34A is also closed.
@@ -57,10 +34,10 @@
 - **Phase 32 — Messages, Notifications & Announcements (Mobile): complete, formally closed 2026-10-13** (PR #80; DEC-061). UAT-32-01…08 **withdrawn as not verified** (2026-10-16, product owner; now `NOT RUN`, phone screens left for Phase 38).
 - **Phase 31 — Leave (Mobile): complete, formally closed 2026-10-13** (PR #79; DEC-060). UAT-31-01…08 **withdrawn as not verified** (2026-10-16, product owner; now `NOT RUN`, phone screens left for Phase 38).
 - **Phase 30B — Status & Check-in: complete, formally closed 2026-10-13.** UAT-30B-01…08 **withdrawn as not verified** (2026-10-16, product owner; now `NOT RUN`, phone screens left for Phase 38). **Phase 30 is complete.**
-- Phase 30A is formally closed (2026-10-12). **Staging is assumed to run `2ca6092` (Phase 35D); not verified.**
+- Phase 30A is formally closed (2026-10-12).
 **Phase status:** Staging is **deployed and reachable over HTTPS** at `https://company-staging.storm-ark.com` (infrastructure verified by the operator; **real-device UAT passed**, Gate 2F, 2026-09-23). Live deployment refined the Gate 1 model: the verified path is Internet → Cloudflare (proxied, Full (strict)) → **shared** DigitalOcean Cloud Firewall (inbound 80/443 Cloudflare-scoped) → **shared** host Nginx (TLS, Let's Encrypt cert `company-staging.storm-ark.com`, HTTP → HTTPS redirect) → `127.0.0.1:8012` → Company App Docker nginx → Laravel (`APP_URL` HTTPS, `SESSION_SECURE_COOKIE=true`, `trustProxies(at: '*')`). Recorded as **DEC-051** (refines DEC-050). See `docs/DEPLOYMENT_STAGING.md` §13/§7a and the Phase 26 handoff addendum.
 **Last completed phase:** Phase 37 — Web Integration & Mobile-First UX Hardening (formally closed 2026-10-16). Before it, Phase 36 — Admin Backoffice Business Management Screens (36A–36D, formally closed 2026-10-16), and before that, Phase 35 — Granular permissions, Admin Backoffice and staff-portal editing (35A–35D), and before that, Phase 34 — Staff Web Portal (34A–34F; 34B by its UAT re-run on `0248615`) and Phases 30B–33. **Open, non-blocking:** the deferred UAT password rotation from 29B; UAT data on staging (cleanup needs its own authorization).
-**Next planned phase:** finish Phase 37B (CI, render pass, merge, UAT-37B), then **Phase 38 — UAT** or **Phase 39 — Release Readiness** (`docs/ROADMAP.md`), each needing its own authorization. The Flutter app is paused (DEC-067). The roadmap was renumbered by DEC-063: Admin Backoffice 35–36, Integration 37, UAT 38, Release Readiness 39. **Open, non-blocking:** UAT data stays on staging (cleanup needs its own authorization); the host nginx backup `/etc/nginx/sites-available/company-staging.storm-ark.com.bak-uat3133` can be removed by the operator at will; CI now builds the staging images (`staging-images.yml`, Phase 34A).
+**Next planned phase:** deploy `main` and run UAT-37B and UAT-37C (`docs/testing/PHASE_37BC_UAT_PREPARATION.md`), then **Phase 38 — UAT** or **Phase 39 — Release Readiness** (`docs/ROADMAP.md`), each needing its own authorization. The Flutter app is paused (DEC-067). The roadmap was renumbered by DEC-063: Admin Backoffice 35–36, Integration 37, UAT 38, Release Readiness 39. **Open, non-blocking:** UAT data stays on staging (cleanup needs its own authorization); the host nginx backup `/etc/nginx/sites-available/company-staging.storm-ark.com.bak-uat3133` can be removed by the operator at will; CI now builds the staging images (`staging-images.yml`, Phase 34A).
 
 ## Current Objective
 

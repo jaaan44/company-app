@@ -54,5 +54,5 @@
   - The account existed before today: created 2026-09-11 10:25:10, from the Phase 5 check against this database (UAT-05-01). Today's seed reset its password at 2026-10-17 06:13:20.
   - Now: `suspended`, with a random 48-character password; its sessions and API tokens are ended. `/login` returns 200.
   - It is kept rather than deleted, so its audit history stays intact.
-- **Staging runs the unmerged branch `f0e95fb`** (37B and 37C) for review. After PR #141 is merged, deploy `main` with the runbook.
+- **Staging runs the review branch `f0e95fb`** (37B and 37C). PR #141 is now merged (2026-10-23, `b083958`), and `docs/testing/PHASE_37BC_UAT_PREPARATION.md` moves the checkout back to `main`.
 - **Rotate staging's legacy 6-character database password** in a planned change.

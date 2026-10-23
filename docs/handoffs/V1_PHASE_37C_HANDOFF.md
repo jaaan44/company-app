@@ -1,6 +1,6 @@
 # Phase 37C — Home Redesign for Phones — Handoff
 
-**Status: implemented; CI green** on PR #141 (`12a1319`); awaiting review, merge and UAT. **No migration, no API change, no new dependency.**
+**Status: merged (PR #141, `b083958`, 2026-10-23); awaiting deployment of `main` and UAT-37C-01…03 (`NOT RUN`).** Runbook: `docs/testing/PHASE_37BC_UAT_PREPARATION.md`. **No migration, no API change, no new dependency.**
 
 ## 1. Phase Identification
 
@@ -118,3 +118,14 @@ See §5.
 1. Review the PR (and the previews in `docs/design/`).
 2. Merge on green CI with your approval.
 3. Deploy together with 37B, and run UAT-37B and UAT-37C.
+
+## Addendum — Merge and UAT runbook (2026-10-23)
+
+- **PR #141 merged as `b083958`** (2026-10-23), after `main` with DEC-070 (PR #142) was merged into it. CI was green on the merge.
+- **Runbook:** `docs/testing/PHASE_37BC_UAT_PREPARATION.md`, one deploy and one UAT round for 37B and 37C:
+  - the checkout moves from the review branch `f0e95fb` (the incident recovery) to `main` `b083958`;
+  - no migration; both images are rebuilt; smoke tests check the 37B routes and styles, the 37C styles and Phase 37's headers;
+  - UAT-37B-01…08 and UAT-37C-01…03.
+
+  It replaces the 37B-only runbook proposed in PR #140, whose deploy target `c72cfef` is out of date.
+- **Not run:** the deployment and UAT.
