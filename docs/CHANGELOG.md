@@ -17,6 +17,11 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 - **Home:** quick actions, My work chips, Needs attention rows with badges, and **My team** (one more API call, `GET /staff` for the person's team).
 - **Unchanged:** routes, permissions, API, wording and behaviour. No migration and no new dependency. The Admin Backoffice takes the new colours through the shared tokens.
 
+### 2026-10-24 — Livewire 4.4.8 (security advisory)
+- **Why:** `composer audit --locked` (CLAUDE.md §5) reports [GHSA-mhf7-xp6r-6qrc](https://github.com/advisories/GHSA-mhf7-xp6r-6qrc) (medium, published 2026-10-23): an authorization bypass in Livewire's `#[Authorize]` with `#[Json]`, affecting `>=4.3.0,<4.4.8`. The lock pinned `v4.4.6`, so Backend CI failed at the audit step on every branch.
+- **Change:** `livewire/livewire` `v4.4.6` → `v4.4.8` in `apps/api/composer.lock` only, within the existing `^4.4` constraint. No code change.
+- **Exposure:** none found. The app's Livewire components use neither `#[Authorize]` nor `#[Json]`.
+
 ### 2026-10-23 — Status reconciled; one runbook for 37B and 37C
 - **Reconciled:** CURRENT_STATE, ROADMAP and the 37B, 37C and incident handoffs now say that 37B (PR #139) and 37C (PR #141) are merged and await deployment and UAT, and that staging runs the review branch `f0e95fb`. Phase 37's stale "not yet run" lines are removed.
 - **Runbook:** `docs/testing/PHASE_37BC_UAT_PREPARATION.md` covers:
