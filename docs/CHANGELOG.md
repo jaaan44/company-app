@@ -17,6 +17,10 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 - **Home:** quick actions, My work chips, Needs attention rows with badges, and **My team** (one more API call, `GET /staff` for the person's team).
 - **Unchanged:** routes, permissions, API, wording and behaviour. No migration and no new dependency. The Admin Backoffice takes the new colours through the shared tokens.
 
+### 2026-10-24 — Phase 37E merged; PHPStan fix
+- **Phase 37E** merged as `6c7e2cd` (PR #147) while its CI was red on one PHPStan finding (`Directory.php:108`, `identical.alwaysTrue`).
+- **Fixed** in PR #148, merged as `6f924f2`: the directory decides whether to load departments on whether the staff list returned. Same behaviour; CI green.
+
 ### 2026-10-24 — Phase 37E: employee cards on Home and in the Staff directory (implemented)
 - **From** the product owner's brief and answers (`docs/phases/V1_PHASE_37E_DEFINITION.md`), recorded as **DEC-072**.
 - **Home:** an **Employees** section with the first four active staff company-wide (A–Z) as cards, and "View all (N)". It replaces 37D's My team.
