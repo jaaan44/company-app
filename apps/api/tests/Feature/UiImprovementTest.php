@@ -64,7 +64,7 @@ class UiImprovementTest extends TestCase
     public function test_a_page_without_a_staff_profile_says_so_in_the_shared_notice(): void
     {
         $this->actingAs($this->admin, 'web')->get('/app/tasks')->assertOk()
-            ->assertSee('<p class="rounded-xl border border-line bg-raised p-5">No staff profile is linked to this account.</p>', false);
+            ->assertSee('<p class="card p-5">No staff profile is linked to this account.</p>', false);
     }
 
     // ---- Admin dashboard -------------------------------------------------

@@ -16,7 +16,8 @@
             <x-portal.error :message="$errorMessage" />
         @endif
     @elseif ($request)
-        <h1 class="text-2xl font-semibold">{{ $request['leave_type']['name'] }}</h1>
+        <x-portal.icon-tile icon="leave" :tone="Format::tileTone(Format::tone($request['status']))" size="lg" class="mb-3" />
+        <h1 class="text-2xl font-bold tracking-tight">{{ $request['leave_type']['name'] }}</h1>
         <p class="mt-2 flex flex-wrap items-center gap-3">
             <span>{{ ($request['leave_type']['is_paid'] ?? false) ? 'Paid' : 'Unpaid' }}</span>
             <x-portal.chip :tone="Format::tone($request['status'])">{{ Format::leaveStatus($request['status']) }}</x-portal.chip>
@@ -25,12 +26,12 @@
         <div aria-live="polite">
             <x-portal.toast :message="$doneMessage" :nonce="$toastNonce ?? 0" />
             @if ($actionMessage)
-                <p role="alert" class="mt-4 rounded-md bg-danger-soft p-3 font-medium text-danger">{{ $actionMessage }}</p>
+                <p role="alert" class="mt-4 rounded-xl bg-danger-soft p-3 font-medium text-danger">{{ $actionMessage }}</p>
             @endif
         </div>
 
-        <section aria-labelledby="request-details" class="mt-6 rounded-xl border border-line bg-raised px-5">
-            <h2 id="request-details" class="pt-4 font-semibold">Details</h2>
+        <section aria-labelledby="request-details" class="mt-6 card px-5">
+            <h2 id="request-details" class="pt-4 text-lg font-bold tracking-tight">Details</h2>
             <dl>
                 @if ($viewer === 'team')
                     <x-portal.info-row label="Requested by" :value="$request['staff']['display_name'] ?? null" />
@@ -44,7 +45,7 @@
         </section>
 
         @if ($canCancel || $canDecide)
-            <section aria-label="Actions" class="mt-6 rounded-xl border border-line bg-raised p-5">
+            <section aria-label="Actions" class="mt-6 card p-5">
                 @if ($confirming === null)
                     <div class="flex flex-wrap gap-3">
                         @if ($canCancel)
@@ -93,8 +94,8 @@
             </section>
         @endif
 
-        <section aria-labelledby="request-history" class="mt-6 rounded-xl border border-line bg-raised p-5">
-            <h2 id="request-history" class="mb-2 font-semibold">History</h2>
+        <section aria-labelledby="request-history" class="mt-6 card p-5">
+            <h2 id="request-history" class="mb-3 text-lg font-bold tracking-tight">History</h2>
             @if (count($request['history'] ?? []) === 0)
                 <p class="text-muted">No history yet.</p>
             @else

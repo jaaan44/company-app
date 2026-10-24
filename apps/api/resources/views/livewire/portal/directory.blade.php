@@ -22,14 +22,21 @@
         @if (count($staff) === 0)
             <x-portal.notice>{{ $query === '' ? 'No active staff yet.' : 'No one matches "'.$query.'".' }}</x-portal.notice>
         @else
-            <ul class="divide-y divide-line rounded-xl border border-line bg-raised">
+            <ul class="divide-y divide-line overflow-hidden card">
                 @foreach ($staff as $person)
                     <li wire:key="staff-{{ $person['public_id'] }}">
-                        <a href="{{ route('portal.staff', $person['public_id']) }}" class="chevron block min-h-11 px-5 py-3 hover:bg-hover">
-                            <span class="block font-medium">{{ $person['display_name'] }}</span>
-                            @if ($line = Format::roleLine($person))
-                                <span class="block text-sm text-muted">{{ $line }}</span>
-                            @endif
+                        <a href="{{ route('portal.staff', $person['public_id']) }}" class="chevron flex min-h-16 items-center gap-3 px-4 py-3 hover:bg-hover">
+                            @php($status = $mayViewStatus ? ($person['operational_status'] ?? null) : null)
+                            <x-portal.avatar :name="$person['display_name']" :status="$status" />
+                            <span class="block min-w-0 flex-1">
+                                <span class="block font-semibold [overflow-wrap:anywhere]">{{ $person['display_name'] }}</span>
+                                @if ($line = Format::roleLine($person))
+                                    <span class="block text-sm text-muted">{{ $line }}</span>
+                                @endif
+                                @if ($status)
+                                    <x-portal.status-dot :status="$status" class="mt-0.5" />
+                                @endif
+                            </span>
                         </a>
                     </li>
                 @endforeach

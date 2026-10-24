@@ -384,8 +384,9 @@ class CommunicationPagesTest extends TestCase
         $announcement = Announcement::factory()->published()->create(['title' => 'Holiday hours']);
 
         $this->actingAs($this->user, 'web')->get('/app')->assertOk()
-            ->assertSee('href="'.route('portal.messages').'" class="block rounded-xl', false)
-            ->assertSee('href="'.route('portal.notifications').'" class="block rounded-xl', false)
+            // 37D: Needs attention is a list of rows, each opening its screen.
+            ->assertSee('href="'.route('portal.messages').'" class="chevron flex', false)
+            ->assertSee('href="'.route('portal.notifications').'" class="chevron flex', false)
             ->assertSee(route('portal.announcement', $announcement->public_id), false)
             // Mobile redesign: "View all", heard as "View all announcements" (Livewire puts a comment marker between the two).
             ->assertSeeInOrder(['href="'.route('portal.announcements').'"', 'View all', '<span class="sr-only"> announcements</span>'], false);

@@ -21,7 +21,8 @@
                 default => '',
             };
         @endphp
-        <h1 class="text-2xl font-semibold">{{ $task['title'] }}</h1>
+        <x-portal.icon-tile icon="tasks" :tone="Format::tileTone(Format::tone($task['status']))" size="lg" class="mb-3" />
+        <h1 class="text-2xl font-bold tracking-tight">{{ $task['title'] }}</h1>
         @if ($mayEdit || $mayDelete)
             <div class="mt-3 flex flex-wrap gap-2">
                 @if ($mayEdit)
@@ -41,8 +42,8 @@
             <span>Priority: {{ Format::priority($task['priority']) }}</span>
         </p>
 
-        <section aria-labelledby="task-status" class="mt-6 rounded-xl border border-line bg-raised p-5">
-            <h2 id="task-status" class="mb-3 font-semibold">Status</h2>
+        <section aria-labelledby="task-status" class="mt-6 card p-5">
+            <h2 id="task-status" class="mb-3 text-lg font-bold tracking-tight">Status</h2>
             @if ($task['status'] === 'cancelled')
                 <p class="text-muted">This task was cancelled. Its status can't be changed here.</p>
             @else
@@ -67,8 +68,8 @@
             @endif
         </section>
 
-        <section aria-labelledby="task-details" class="mt-6 rounded-xl border border-line bg-raised px-5">
-            <h2 id="task-details" class="pt-4 font-semibold">Details</h2>
+        <section aria-labelledby="task-details" class="mt-6 card px-5">
+            <h2 id="task-details" class="pt-4 text-lg font-bold tracking-tight">Details</h2>
             <dl>
                 <x-portal.info-row label="Due date" :value="$dueValue" />
                 <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-line py-3">
@@ -88,8 +89,8 @@
             </dl>
         </section>
 
-        <section aria-labelledby="task-description" class="mt-6 rounded-xl border border-line bg-raised p-5">
-            <h2 id="task-description" class="mb-2 font-semibold">Description</h2>
+        <section aria-labelledby="task-description" class="mt-6 card p-5">
+            <h2 id="task-description" class="mb-3 text-lg font-bold tracking-tight">Description</h2>
             @if (filled($task['description'] ?? null))
                 <p class="whitespace-pre-line">{{ $task['description'] }}</p>
             @else

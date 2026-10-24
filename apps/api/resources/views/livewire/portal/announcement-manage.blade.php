@@ -9,7 +9,8 @@
         @php
             $status = $item['status'];
         @endphp
-        <h1 class="text-2xl font-semibold">{{ $item['title'] }}</h1>
+        <x-portal.icon-tile icon="announcements" tone="violet" size="lg" class="mb-3" />
+        <h1 class="text-2xl font-bold tracking-tight">{{ $item['title'] }}</h1>
         <p class="mt-2 flex flex-wrap items-center gap-2">
             <x-portal.chip :tone="Format::tone($status)">{{ Format::announcementStatus($status) }}</x-portal.chip>
             <span class="text-sm text-muted">
@@ -45,7 +46,7 @@
             <p role="alert" class="mt-3 font-medium text-danger">{{ $generalError }}</p>
         @endif
 
-        <section aria-label="Announcement text" class="mt-6 rounded-xl border border-line bg-raised p-5">
+        <section aria-label="Announcement text" class="mt-6 card p-5">
             <p class="whitespace-pre-line">{{ $item['body'] }}</p>
         </section>
         <x-portal.toast :message="$savedMessage" :nonce="$toastNonce" />

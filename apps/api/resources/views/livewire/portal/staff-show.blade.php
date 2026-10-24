@@ -9,12 +9,25 @@
         <h1 class="sr-only">Staff</h1>
         <x-portal.error :message="$errorMessage" />
     @elseif ($staff)
-        <h1 class="text-2xl font-semibold">{{ $staff['display_name'] }}</h1>
-        @if ($full = Format::distinctFullName($staff))
-            <p class="text-muted">{{ $full }}</p>
-        @endif
+        @php($status = $mayViewStatus ? ($staff['operational_status'] ?? null) : null)
+        {{-- 37D: a header card with their initials, as in the reference. --}}
+        <div class="card flex items-center gap-4 p-5">
+            <x-portal.avatar :name="$staff['display_name']" :status="$status" size="lg" />
+            <div class="min-w-0">
+                <h1 class="text-2xl leading-tight font-bold tracking-tight [overflow-wrap:anywhere]">{{ $staff['display_name'] }}</h1>
+                @if ($full = Format::distinctFullName($staff))
+                    <p class="text-muted">{{ $full }}</p>
+                @endif
+                @if ($line = Format::roleLine($staff))
+                    <p class="text-sm text-muted">{{ $line }}</p>
+                @endif
+                @if ($status)
+                    <x-portal.status-dot :status="$status" class="mt-1" />
+                @endif
+            </div>
+        </div>
 
-        <dl class="mt-6 rounded-xl border border-line bg-raised px-5">
+        <dl class="mt-6 card px-5">
             <x-portal.info-row label="Position" :value="$staff['position']['title'] ?? null" />
             <x-portal.info-row label="Department" :value="$staff['department']['name'] ?? null" />
             <x-portal.info-row label="Team" :value="$staff['team']['name'] ?? null" />

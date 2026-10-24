@@ -13,7 +13,7 @@
     @elseif ($errorMessage)
         <x-portal.error :message="$errorMessage" />
     @else
-        <form wire:submit="save" class="space-y-5 rounded-xl border border-line bg-raised p-5" novalidate>
+        <form wire:submit="save" class="space-y-5 card p-5" novalidate>
             @if ($generalError)
                 <p role="alert" class="font-medium text-danger">{{ $generalError }}</p>
             @endif
@@ -34,7 +34,7 @@
                 <legend class="mb-1 text-sm font-semibold">Severity</legend>
                 <div class="flex flex-wrap gap-2">
                     @foreach (F::SEVERITIES as $s)
-                        <label class="inline-flex min-h-11 items-center gap-2 rounded-full border border-line px-4 has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:checked]:font-medium">
+                        <label class="inline-flex min-h-11 items-center gap-2 rounded-full border border-field px-4 has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:checked]:font-medium">
                             <input type="radio" name="severity" value="{{ $s }}" wire:model="severity" class="size-5"> {{ Format::severity($s) }}
                         </label>
                     @endforeach

@@ -4,6 +4,19 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 
 ## [Unreleased]
 
+### 2026-10-24 — Phase 37D: the staff portal restyled after the second reference (implemented)
+- **From** the product owner's reference (`docs/design/portal-style-reference.webp`) and approved definition (`docs/phases/V1_PHASE_37D_DEFINITION.md`), recorded as **DEC-071**.
+- **Every staff-portal screen:**
+  - royal-blue palette on a grey-blue page, white rounded cards with a soft shadow;
+  - larger bold titles and section headings with "View all";
+  - rows with coloured icon tiles or initials avatars;
+  - status chips as pills, list filters as chips (the chosen one filled blue);
+  - Messages with unread bubbles, Notifications with kind icons, Schedule with coloured dots, Tasks with due-date pills and priority flags, Leave balances as cards;
+  - detail pages with a header tile, the staff page and My profile with a header card.
+- **People:** each colleague's status (dot plus word) on the directory, their page and Home, for those who may see statuses.
+- **Home:** quick actions, My work chips, Needs attention rows with badges, and **My team** (one more API call, `GET /staff` for the person's team).
+- **Unchanged:** routes, permissions, API, wording and behaviour. No migration and no new dependency. The Admin Backoffice takes the new colours through the shared tokens.
+
 ### 2026-10-23 — Status reconciled; one runbook for 37B and 37C
 - **Reconciled:** CURRENT_STATE, ROADMAP and the 37B, 37C and incident handoffs now say that 37B (PR #139) and 37C (PR #141) are merged and await deployment and UAT, and that staging runs the review branch `f0e95fb`. Phase 37's stale "not yet run" lines are removed.
 - **Runbook:** `docs/testing/PHASE_37BC_UAT_PREPARATION.md` covers:

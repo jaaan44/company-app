@@ -1123,3 +1123,26 @@ Staging was restored the same day (`docs/handoffs/V1_STAGING_INCIDENT_2026-10-17
 4. **Open, separate change:** staging's database password is the legacy 6-character value. It's only reachable inside Docker's network, but it should be rotated to a generated one in a planned step.
 **Rationale:** The two environments shared names by accident of folder naming. Making them distinct removes the failure mode, rather than relying on care.
 **Superseded/reaffirmed:** DEC-027 (Docker Compose for local development) and DEC-047 (the staging Compose file and the `-p company-app` project) are reaffirmed. Only the local project's name changes.
+
+### DEC-071 — Phase 37D: the whole staff portal takes the second reference's style
+
+**Status:** Accepted (2026-10-24), product owner: "Authorize Phase 37D, web portal only, all screens should be moved to this style", with `docs/design/portal-style-reference.webp`, then "Approved, go with your recommendations on all four" on the definition (`docs/phases/V1_PHASE_37D_DEFINITION.md` §9).
+**Context:** DEC-069 changed only Home's colours and left the app-wide palette to its own approval. The product owner has now given that approval for every staff-portal screen.
+**Decision:**
+1. **Palette (Q1):** royal blue `#2563EB` on a grey-blue page `#F4F6FA` with white cards replaces DEC-064's M3 indigo, in light and dark. The token names are unchanged, so every screen follows. A new `edge` token is a card's hairline. Secondary text is `#475569`, not the reference's `#64748B`, which is only 4.4:1 on the page.
+2. **Containers:** one `card` utility (`rounded-2xl`, hairline, soft shadow). **Three shapes** become controls `rounded-lg`, containers `card`, actions `rounded-full`, superseding DEC-068's `rounded-md` / `rounded-xl`. Status chips become pills.
+3. **Kind colours** (37C's Home tints) are app-wide: blue, green, amber, rose, violet and slate. Rows lead with an icon tile coloured by status (`Format::tileTone`). People get initials avatars (there are no photos).
+4. **Operational status** shows as a coloured dot and its word (`Format::operationalTone`: available green, in a meeting amber, busy rose, in the field violet, off duty slate). It shows on the directory, a colleague's page, Home's My team, My status and its history, but only to those who hold `staff-status.view`.
+5. **Filter chips:** the list filters (Mine/All, Open/Done and others) are separate chips. The chosen one is filled blue (`filter-chip`, `aria-pressed`).
+6. **App bar:** on the page colour, with no rule, and a larger bold title.
+7. **Home (Q2):**
+   - quick actions, which are links to existing pages: New task (with `tasks.create`; filled blue), Message, Request leave, My status and More;
+   - Today as rows;
+   - My work: due today, open and overdue chips, opening Tasks;
+   - Needs attention: Messages and Notifications rows with a red count badge;
+   - **My team:** up to six active colleagues in the person's team, from `GET /staff?team=…` (one more API call). It's omitted when there's no team, no `staff.view`, or the call fails;
+   - Latest announcements.
+8. **Not built (no data, or a behaviour change):** status filter chips on the directory (Q3, needs an API filter; a follow-up), photos, "working on" and project progress, list locations, a one-tap task checkbox, the decorative banner and emoji. The hero keeps 37C's gradient (Q4).
+9. **No change** to routes, permissions, API, wording, focus and accessibility behaviour, or the order of More. Type stays the system stack (no web fonts, DEC-063).
+**Rationale:** The approved reference applied through the existing token and component system, so one change of values and a small set of components restyles every screen. Every new pair is computed against WCAG 2.2 AA.
+**Superseded/reaffirmed:** Supersedes DEC-064's palette and DEC-068's container and control radii. DEC-069's Home-only token restriction ends (its hero, sheet and bottom bar stay). DEC-063's shell (five tabs, sidebar from `md`) is reaffirmed. **The Admin Backoffice shares the tokens**, so it takes the new colours. Its layout and components are unchanged.

@@ -6,10 +6,10 @@
         <x-portal.fab :href="route('portal.projects.new')" label="New project" />
     @endif
     @if ($mayViewAll)
-        <div role="group" aria-label="Whose projects" class="mb-4 inline-flex rounded-full border border-line bg-raised p-1">
+        <div role="group" aria-label="Whose projects" class="mb-4 inline-flex flex-wrap gap-2">
             @foreach (['mine' => 'Mine', 'all' => 'All'] as $value => $label)
                 <button type="button" wire:click="showScope('{{ $value }}')" aria-pressed="{{ $currentScope === $value ? 'true' : 'false' }}"
-                        class="inline-flex min-h-11 items-center rounded-full px-4 {{ $currentScope === $value ? 'bg-accent-soft font-semibold text-accent-ink' : 'hover:bg-hover' }}">{{ $label }}</button>
+                        class="filter-chip">{{ $label }}</button>
             @endforeach
         </div>
     @endif
@@ -24,20 +24,23 @@
         @elseif (count($projects) === 0)
             <x-portal.notice>{{ $query === '' ? ($currentScope === 'all' ? 'No projects yet.' : "You aren't a member of any projects yet.") : 'No project matches "'.$query.'".' }}</x-portal.notice>
         @else
-            <ul class="divide-y divide-line rounded-xl border border-line bg-raised">
+            <ul class="divide-y divide-line overflow-hidden card">
                 @foreach ($projects as $project)
                     @php($details = implode(' · ', array_filter([$project['project_code'] ?? null, $project['client']['name'] ?? null])))
                     <li wire:key="project-{{ $project['public_id'] }}">
-                        <a href="{{ route('portal.project', $project['public_id']) }}" class="chevron block min-h-11 px-5 py-3 hover:bg-hover">
-                            <span class="block font-medium">{{ $project['name'] }}</span>
-                            @if ($details !== '')
-                                <span class="block text-sm text-muted">{{ $details }}</span>
-                            @endif
-                            <span class="mt-1 flex flex-wrap items-center gap-2 text-sm">
-                                <x-portal.chip :tone="Format::tone($project['status'])">{{ Format::projectStatus($project['status']) }}</x-portal.chip>
-                                @if (($project['my_role'] ?? null) === 'project_lead')
-                                    <span class="font-medium text-accent-ink">Project lead</span>
+                        <a href="{{ route('portal.project', $project['public_id']) }}" class="chevron flex min-h-16 items-start gap-3 px-4 py-3 hover:bg-hover">
+                            <x-portal.icon-tile icon="projects" :tone="Format::tileTone(Format::tone($project['status'] ?? null))" />
+                            <span class="block min-w-0 flex-1">
+                                <span class="block font-semibold [overflow-wrap:anywhere]">{{ $project['name'] }}</span>
+                                @if ($details !== '')
+                                    <span class="block text-sm text-muted">{{ $details }}</span>
                                 @endif
+                                <span class="mt-1 flex flex-wrap items-center gap-2 text-sm">
+                                    <x-portal.chip :tone="Format::tone($project['status'])">{{ Format::projectStatus($project['status']) }}</x-portal.chip>
+                                    @if (($project['my_role'] ?? null) === 'project_lead')
+                                        <span class="font-medium text-accent-ink">Project lead</span>
+                                    @endif
+                                </span>
                             </span>
                         </a>
                     </li>

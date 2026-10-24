@@ -1663,3 +1663,15 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | Backend tests (`PortalPagesTest` home +3 assertions; `CommunicationPagesTest` "View all") | Automated, CI | PASS | PR #141, `12a1319`: Pint, PHPStan and **1,501/1,501** tests green, and the staging images build. The first run (`35396a3`) failed only the new "View all" assertion: Livewire puts a comment marker after each `@if`, so the test now checks the parts in order. |
 | UAT-37C-01…03 | UAT (product owner) | NOT RUN | After merge and deployment. |
 
+
+## Phase 37D — Staff portal visual refresh (2026-10-24)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| CSS build (`npm run build`) | Automated, local | PASS | New tokens and the `card` and `filter-chip` utilities compile. |
+| Full backend suite (`php artisan test`) | Automated, local | PASS | **1,505/1,505** (6,042 assertions), including 4 new tests (Home quick actions by permission, My team, no My team without teammates, directory status by permission). Run in a scratch copy whose lock leaves out only PHPStan/Larastan: Composer can't download PHPStan's dist-only package here. The first run caught two real view errors (an inline `@php(...)` before a `@php` block in Notifications, and a missing `Format` import in Clients), both fixed. |
+| Pint (`vendor/bin/pint --test`) | Automated, local | PASS | |
+| PHPStan | Automated, CI | PENDING | Not runnable here (see above); CI runs it on the PR. |
+| Render pass of the running app (Playwright + Chromium) | Manual (AI) | PASS | The real app on SQLite with sample data, signed in: 11 pages (Home, Staff, Tasks, Messages, Schedule, More, Notifications, Leave, Profile, Announcements, Status) at 320, 390 (light and dark) and 1280 px. **No horizontal overflow at any width.** Previews in `docs/design/portal-preview-*.webp`. |
+| Contrast of new colour pairs | Manual (AI), computed | PASS | Every text pair ≥ 4.5:1 and control boundary ≥ 3:1, light and dark (handoff §11). |
+| UAT-37D-01…04 | UAT (product owner) | NOT RUN | After merge and deployment. |

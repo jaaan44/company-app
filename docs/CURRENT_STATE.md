@@ -3,7 +3,8 @@
 *Read this first. Kept intentionally short — for depth, follow the pointers, don't expect this file to contain everything.*
 
 **Product:** Company App — internal operations & communication platform
-**Current phase:** **none in development.** Phases **37B** (web UI/UX improvement, DEC-068) and **37C** (Home redesign for phones, DEC-069) are **merged into `main` and await deployment of `main` and UAT** (runbook `docs/testing/PHASE_37BC_UAT_PREPARATION.md`). `main` is `b083958`, with CI green.
+**Current phase:** **Phase 37D — Staff portal visual refresh (DEC-071): implemented on branch `claude/admiring-planck-hictyu`, awaiting review, merge, deployment and UAT-37D-01…04 (`NOT RUN`).** Every staff-portal screen follows `docs/design/portal-style-reference.webp` (royal-blue palette, cards, icon tiles and avatars, status dots, filter chips; Home gains quick actions and My team). No API or migration change. Local: 1,505/1,505 tests and Pint pass; PHPStan runs in CI. **Details:** `docs/handoffs/V1_PHASE_37D_HANDOFF.md`.
+- Phases **37B** (web UI/UX improvement, DEC-068) and **37C** (Home redesign for phones, DEC-069) are **merged into `main` and await deployment of `main` and UAT** (runbook `docs/testing/PHASE_37BC_UAT_PREPARATION.md`). `main` is `ab24aac`, with CI green.
 - **Phase 37B:** merged as `c72cfef` (PR #139, 2026-10-17), including its addendum (the Messages unread badge and sortable report columns). UAT-37B-01…08 `NOT RUN`. **Details:** `docs/handoffs/V1_PHASE_37B_HANDOFF.md`.
 - **Phase 37C:** merged as `b083958` (PR #141, 2026-10-23). Home now follows `docs/design/mobile-home-reference.png`, with a restyled bottom tab bar; there is no API or migration change. UAT-37C-01…03 `NOT RUN`. **Details:** `docs/handoffs/V1_PHASE_37C_HANDOFF.md`.
 - **DEC-070 (PR #142, 2026-10-23):** the local Docker setup refuses to run on the staging host.

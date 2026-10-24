@@ -5,6 +5,7 @@ namespace App\Livewire\Portal;
 use App\Livewire\Portal\Concerns\CallsInternalApi;
 use App\Services\Portal\PortalApiException;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -68,6 +69,8 @@ class Directory extends Component
             'staff' => $result['data'] ?? [],
             'meta' => $result['meta'] ?? null,
             'query' => $search,
+            // Phase 37D: each person's status, for those who may see it (staff-status.view).
+            'mayViewStatus' => Auth::user()?->can('staff-status.view') ?? false,
         ]);
     }
 }

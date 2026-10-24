@@ -37,7 +37,7 @@
         <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-raised focus:px-4 focus:py-2 focus:shadow">Skip to content</a>
 
         {{-- Wider screens: the five tabs in a sidebar. --}}
-        <aside class="fixed inset-y-0 left-0 z-20 hidden w-60 flex-col border-r border-line bg-raised md:flex">
+        <aside class="fixed inset-y-0 left-0 z-20 hidden w-60 flex-col border-r border-edge bg-raised md:flex">
             <a href="{{ route('portal.home') }}" class="flex min-h-16 items-center gap-3 px-6 text-lg font-semibold">
                 <img src="/icons/icon-192.png" alt="" class="size-8 rounded-lg"> Company App
             </a>
@@ -59,7 +59,7 @@
                     @endforeach
                 </ul>
             </nav>
-            <div class="space-y-1 border-t border-line p-3">
+            <div class="space-y-1 border-t border-edge p-3">
                 @can('admin.access')
                     <a href="{{ route('admin.dashboard') }}" data-no-navigate class="flex min-h-12 items-center gap-4 rounded-full px-4 hover:bg-hover"><x-portal.icon name="admin" /> Admin</a>
                 @endcan
@@ -73,8 +73,9 @@
         <div class="md:pl-60">
             {{-- F-2: the app bar: the page title and, on a sub-page, a back arrow. --}}
             {{-- Home's hero takes the app bar's place on phones (mobile redesign); the title stays in <title>. --}}
-            <header class="sticky top-0 z-20 border-b border-line bg-raised pt-[env(safe-area-inset-top)] {{ $phoneAppBar ? '' : 'max-md:hidden' }}">
-                <div class="mx-auto flex min-h-14 max-w-3xl items-center gap-2 px-4">
+            {{-- 37D: on the page colour, with no rule, and a large bold title, as in the reference. --}}
+            <header class="sticky top-0 z-20 bg-surface pt-[env(safe-area-inset-top)] {{ $phoneAppBar ? '' : 'max-md:hidden' }}">
+                <div class="mx-auto flex min-h-16 max-w-3xl items-center gap-2 px-4">
                     @if ($back !== '')
                         {!! $back !!}
                     @elseif ($backToMore)
@@ -82,7 +83,7 @@
                             <x-portal.icon name="back" />
                         </a>
                     @endif
-                    <p class="truncate text-lg font-semibold">{{ $title }}</p>
+                    <p class="truncate text-xl font-bold tracking-tight">{{ $title }}</p>
                 </div>
             </header>
 

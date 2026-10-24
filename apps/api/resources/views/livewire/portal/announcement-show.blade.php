@@ -19,8 +19,9 @@
                 ($announcement['published_at'] ?? null) ? Format::dateTime($announcement['published_at'], $offset) : null,
             ]));
         @endphp
-        <article class="rounded-xl border border-line bg-raised p-5">
-            <h1 class="text-2xl font-semibold">{{ $announcement['title'] }}</h1>
+        <article class="card p-5">
+            <x-portal.icon-tile icon="announcements" tone="violet" size="lg" class="mb-3" />
+            <h1 class="text-2xl font-bold tracking-tight">{{ $announcement['title'] }}</h1>
             @if ($by !== '')
                 <p class="mt-1 text-muted">{{ $by }}</p>
             @endif

@@ -12,7 +12,7 @@
         @endphp
         <div class="mb-4 flex flex-wrap items-center gap-2">
             <button type="button" wire:click="move(-7)" class="btn btn-secondary btn-compact">Previous week</button>
-            <p class="px-2 font-semibold" aria-live="polite">{{ Format::weekRange($dates[0], $dates[count($dates) - 1]) }}</p>
+            <p class="px-2 text-lg font-bold tracking-tight" aria-live="polite">{{ Format::weekRange($dates[0], $dates[count($dates) - 1]) }}</p>
             <button type="button" wire:click="move(7)" class="btn btn-secondary btn-compact">Next week</button>
             @if ($dates[0] !== $companyDay['date'])
                 <button type="button" wire:click="today" class="btn btn-text btn-compact">Today</button>
@@ -21,8 +21,8 @@
 
         <div class="space-y-4">
             @foreach ($days as $date => $items)
-                <section wire:key="day-{{ $date }}" aria-labelledby="day-{{ $date }}" class="rounded-xl border border-line bg-raised p-5 {{ $date === $companyDay['date'] ? 'ring-2 ring-accent' : '' }}">
-                    <h2 id="day-{{ $date }}" class="mb-2 font-semibold">{{ Format::dayLabel($date, $companyDay['date'], withTomorrow: true) }}</h2>
+                <section wire:key="day-{{ $date }}" aria-labelledby="day-{{ $date }}" class="card p-5 {{ $date === $companyDay['date'] ? 'ring-2 ring-accent' : '' }}">
+                    <h2 id="day-{{ $date }}" class="mb-1 text-lg font-bold tracking-tight">{{ Format::dayLabel($date, $companyDay['date'], withTomorrow: true) }}</h2>
                     @if (count($items) === 0)
                         <p class="text-muted">Nothing scheduled.</p>
                     @else
@@ -36,13 +36,18 @@
                                     };
                                 @endphp
                                 <li wire:key="item-{{ $date }}-{{ $item['source_type'] }}-{{ $item['public_id'] }}">
+                                    {{-- 37D: a coloured dot per kind (tasks amber, meetings and other entries blue, leave violet); the label says which. --}}
+                                    @php($dot = match ($item['source_type']) { 'task' => 'bg-icon-amber', 'leave' => 'bg-icon-violet', default => 'bg-icon-blue' })
                                     @if ($href)
-                                        <a href="{{ $href }}" class="-mx-3 block min-h-11 rounded-md px-3 py-2 hover:bg-hover">
+                                        <a href="{{ $href }}" class="-mx-3 flex min-h-11 items-start gap-3 rounded-xl px-3 py-2.5 hover:bg-hover">
                                     @else
-                                        <div class="py-2">
+                                        <div class="flex items-start gap-3 py-2.5">
                                     @endif
-                                        <span class="block font-medium">{{ $item['title'] }}</span>
-                                        <span class="block text-sm text-muted">{{ Format::scheduleLabel($item) }} · {{ Format::itemTimeOn($item, $date, $companyDay['utc_offset']) }}@if ($item['project']['name'] ?? null) · {{ $item['project']['name'] }}@endif</span>
+                                        <span aria-hidden="true" class="mt-2 size-2.5 shrink-0 rounded-full {{ $dot }}"></span>
+                                        <span class="block min-w-0">
+                                            <span class="block font-semibold [overflow-wrap:anywhere]">{{ $item['title'] }}</span>
+                                            <span class="block text-sm text-muted">{{ Format::scheduleLabel($item) }} · {{ Format::itemTimeOn($item, $date, $companyDay['utc_offset']) }}@if ($item['project']['name'] ?? null) · {{ $item['project']['name'] }}@endif</span>
+                                        </span>
                                     @if ($href)
                                         </a>
                                     @else

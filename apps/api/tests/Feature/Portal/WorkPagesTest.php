@@ -403,8 +403,8 @@ class WorkPagesTest extends TestCase
         $entry = ScheduleEntry::factory()->create(['creator_staff_id' => $this->staff->id, 'starts_at' => Carbon::parse('2026-10-13 03:00:00', 'UTC'), 'ends_at' => Carbon::parse('2026-10-13 04:00:00', 'UTC')]);
 
         $this->actingAs($this->user, 'web')->get('/app')
-            // The tile itself links (the navigation also links to Tasks).
-            ->assertSee('<a href="'.route('portal.tasks').'" class="block rounded-xl', false)
+            // The My work card itself links (the navigation also links to Tasks).
+            ->assertSee('<a href="'.route('portal.tasks').'" class="chevron card', false)
             ->assertSee(route('portal.task', $task->public_id), false)
             ->assertSee(route('portal.schedule-entry', $entry->public_id), false);
     }

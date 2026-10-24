@@ -6,7 +6,8 @@
         <h1 class="sr-only">Client</h1>
         <x-portal.error :message="$errorMessage" />
     @elseif ($client)
-        <h1 class="text-2xl font-semibold">{{ $client['name'] }}</h1>
+        <x-portal.icon-tile icon="clients" :tone="($client['status'] ?? null) === 'inactive' ? 'slate' : 'blue'" size="lg" class="mb-3" />
+        <h1 class="text-2xl font-bold tracking-tight">{{ $client['name'] }}</h1>
         @if ($client['client_code'] ?? null)
             <p class="text-muted">{{ $client['client_code'] }}</p>
         @endif
@@ -32,7 +33,7 @@
         <x-portal.toast :message="$savedMessage" :nonce="$toastNonce" />
 
         @php($address = implode(', ', Format::addressLines($client)))
-        <dl class="mt-6 rounded-xl border border-line bg-raised px-5">
+        <dl class="mt-6 card px-5">
             <x-portal.info-row label="Email" :value="$client['email'] ?? null" copy-label="Copy email" />
             <x-portal.info-row label="Phone" :value="$client['phone'] ?? null" copy-label="Copy phone" />
             <x-portal.info-row label="Website" :value="$client['website'] ?? null" copy-label="Copy website" />
@@ -40,13 +41,13 @@
         </dl>
 
         <section aria-labelledby="client-contacts" class="mt-6">
-            <h2 id="client-contacts" class="mb-2 font-semibold">Contacts ({{ $contactsTotal }})</h2>
+            <h2 id="client-contacts" class="mb-3 text-lg font-bold tracking-tight">Contacts ({{ $contactsTotal }})</h2>
             @if (count($contacts) === 0)
                 <x-portal.notice>{{ $mayEdit ? 'No contacts yet.' : 'No active contacts.' }}</x-portal.notice>
             @else
                 <ul class="space-y-3">
                     @foreach ($contacts as $contact)
-                        <li wire:key="contact-{{ $contact['public_id'] }}" class="rounded-xl border border-line bg-raised px-5">
+                        <li wire:key="contact-{{ $contact['public_id'] }}" class="card px-5">
                             <p class="flex flex-wrap items-center gap-2 pt-4 font-medium">
                                 {{ $contact['full_name'] }}
                                 @if ($contact['is_primary'] ?? false)
