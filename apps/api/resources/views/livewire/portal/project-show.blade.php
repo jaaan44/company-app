@@ -6,7 +6,8 @@
         <h1 class="sr-only">Project</h1>
         <x-portal.error :message="$errorMessage" />
     @elseif ($project)
-        <h1 class="text-2xl font-semibold">{{ $project['name'] }}</h1>
+        <x-portal.icon-tile icon="projects" :tone="Format::tileTone(Format::tone($project['status']))" size="lg" class="mb-3" />
+        <h1 class="text-2xl font-bold tracking-tight">{{ $project['name'] }}</h1>
         @if ($project['project_code'] ?? null)
             <p class="text-muted">{{ $project['project_code'] }}</p>
         @endif
@@ -31,7 +32,7 @@
         @endif
         <x-portal.toast :message="$savedMessage" :nonce="$toastNonce" />
 
-        <dl class="mt-6 rounded-xl border border-line bg-raised px-5">
+        <dl class="mt-6 card px-5">
             <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-line py-3">
                 <dt class="text-sm text-muted">Client</dt>
                 <dd class="font-medium">
@@ -51,18 +52,18 @@
         </dl>
 
         @if (filled($project['description'] ?? null))
-            <section aria-labelledby="project-description" class="mt-6 rounded-xl border border-line bg-raised p-5">
-                <h2 id="project-description" class="mb-2 font-semibold">Description</h2>
+            <section aria-labelledby="project-description" class="mt-6 card p-5">
+                <h2 id="project-description" class="mb-3 text-lg font-bold tracking-tight">Description</h2>
                 <p class="whitespace-pre-line">{{ $project['description'] }}</p>
             </section>
         @endif
 
         <section aria-labelledby="project-members" class="mt-6">
-            <h2 id="project-members" class="mb-2 font-semibold">Members ({{ $membersTotal }})</h2>
+            <h2 id="project-members" class="mb-3 text-lg font-bold tracking-tight">Members ({{ $membersTotal }})</h2>
             @if (count($members) === 0)
                 <x-portal.notice>No members yet.</x-portal.notice>
             @else
-                <ul class="divide-y divide-line rounded-xl border border-line bg-raised">
+                <ul class="divide-y divide-line overflow-hidden card">
                     @foreach ($members as $member)
                         <li wire:key="member-{{ $member['staff']['public_id'] }}" class="{{ $mayMembers ? 'flex flex-wrap items-center justify-between gap-2 pr-3' : '' }}">
                             <a href="{{ route('portal.staff', $member['staff']['public_id']) }}" class="{{ $mayMembers ? 'min-w-0 flex-1' : 'chevron' }} block min-h-11 px-5 py-3 hover:bg-hover">
@@ -90,7 +91,7 @@
         </section>
 
         @if ($mayMembers)
-            <form wire:submit="addMember" class="mt-3 space-y-3 rounded-xl border border-line bg-raised p-4" novalidate>
+            <form wire:submit="addMember" class="mt-3 space-y-3 card p-4" novalidate>
                 <h3 class="font-semibold">Add a member</h3>
                 @if ($newMemberId !== '')
                     <p class="font-medium">{{ $newMemberName }}</p>
@@ -101,7 +102,7 @@
                            @error('memberSearch') aria-invalid="true" aria-describedby="member-error" @enderror class="field w-full">
                     @error('memberSearch') <p id="member-error" class="mt-1 text-sm font-medium text-danger">{{ $message }}</p> @enderror
                     @if (count($people) > 0)
-                        <ul class="mt-2 divide-y divide-line rounded-md border border-line">
+                        <ul class="mt-2 divide-y divide-line rounded-xl border border-edge">
                             @foreach ($people as $person)
                                 <li wire:key="find-{{ $person['public_id'] }}">
                                     <button type="button" wire:click="chooseMember(@js($person['public_id']), @js($person['display_name']))" class="block min-h-11 w-full px-3 py-2 text-left hover:bg-hover">{{ $person['display_name'] }}</button>
@@ -124,11 +125,11 @@
         @endif
 
         <section aria-labelledby="project-milestones" class="mt-6">
-            <h2 id="project-milestones" class="mb-2 font-semibold">Milestones</h2>
+            <h2 id="project-milestones" class="mb-3 text-lg font-bold tracking-tight">Milestones</h2>
             @if (count($milestones) === 0)
                 <x-portal.notice>No milestones yet.</x-portal.notice>
             @else
-                <ul class="divide-y divide-line rounded-xl border border-line bg-raised">
+                <ul class="divide-y divide-line overflow-hidden card">
                     @foreach ($milestones as $milestone)
                         <li wire:key="milestone-{{ $milestone['public_id'] }}" class="flex flex-wrap items-center justify-between gap-2 px-5 py-3">
                             <span>
@@ -159,7 +160,7 @@
                 @endif
             @endif
             @if ($mayMilestones)
-                <form wire:submit="addMilestone" class="mt-3 flex flex-wrap items-end gap-3 rounded-xl border border-line bg-raised p-4" novalidate>
+                <form wire:submit="addMilestone" class="mt-3 flex flex-wrap items-end gap-3 card p-4" novalidate>
                     <div class="min-w-0 flex-1 basis-48">
                         <label for="milestone-title" class="mb-1 block text-sm font-semibold">New milestone</label>
                         <input id="milestone-title" type="text" wire:model="milestoneTitle" maxlength="255" @error('milestoneTitle') aria-invalid="true" aria-describedby="milestone-title-error" @enderror

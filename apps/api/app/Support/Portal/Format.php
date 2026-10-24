@@ -359,6 +359,19 @@ final class Format
         };
     }
 
+    /**
+     * The kind colour (Phase 37D) for a chip tone, so a row's icon tile
+     * matches its status chip: info blue, success green, warning amber,
+     * danger rose, and neutral or muted slate.
+     */
+    public static function tileTone(string $chipTone): string
+    {
+        return match ($chipTone) {
+            'info' => 'blue', 'success' => 'green', 'warning' => 'amber', 'danger' => 'rose',
+            default => 'slate',
+        };
+    }
+
     /** A staff record's employment status (Phase 37B: one label everywhere). */
     public static function staffStatus(?string $value): string
     {
@@ -491,6 +504,26 @@ final class Format
             'in_field' => 'In the field', 'off_duty' => 'Off duty',
             default => 'Unknown status',
         };
+    }
+
+    /**
+     * An operational status's colour (Phase 37D): its dot, and the word
+     * beside it, which always shows. Available green, in a meeting amber,
+     * busy rose, in the field violet, off duty (or none) slate.
+     */
+    public static function operationalTone(?string $value): string
+    {
+        return match ($value) {
+            'available' => 'green', 'in_meeting' => 'amber', 'busy' => 'rose', 'in_field' => 'violet',
+            default => 'slate',
+        };
+    }
+
+    /** A person's initials (Phase 37D avatars): the first letters of the first two words of their name. */
+    public static function initials(string $name): string
+    {
+        return collect(preg_split('/\s+/', trim($name)) ?: [])->filter()->take(2)
+            ->map(fn (string $part) => mb_strtoupper(mb_substr($part, 0, 1)))->implode('');
     }
 
     /**

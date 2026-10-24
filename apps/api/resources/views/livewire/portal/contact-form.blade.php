@@ -8,7 +8,7 @@
     @elseif ($errorMessage)
         <x-portal.error :message="$errorMessage" />
     @else
-        <form wire:submit="save" class="space-y-5 rounded-xl border border-line bg-raised p-5" novalidate>
+        <form wire:submit="save" class="space-y-5 card p-5" novalidate>
             @if ($generalError)
                 <p role="alert" class="font-medium text-danger">{{ $generalError }}</p>
             @endif

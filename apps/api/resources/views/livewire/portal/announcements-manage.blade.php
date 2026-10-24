@@ -6,10 +6,10 @@
         <x-portal.fab :href="route('portal.announcements.manage.new')" label="New announcement" />
     @endif
 
-    <div role="group" aria-label="Which announcements" class="mb-4 inline-flex flex-wrap rounded-full border border-line bg-raised p-1">
+    <div role="group" aria-label="Which announcements" class="mb-4 inline-flex flex-wrap gap-2">
         @foreach (AnnouncementsManage::STATUSES as $value => $label)
             <button type="button" wire:click="showStatus('{{ $value }}')" aria-pressed="{{ $current === $value ? 'true' : 'false' }}"
-                    class="inline-flex min-h-11 items-center rounded-full px-4 {{ $current === $value ? 'bg-accent-soft font-semibold text-accent-ink' : 'hover:bg-hover' }}">{{ $label }}</button>
+                    class="filter-chip">{{ $label }}</button>
         @endforeach
     </div>
 
@@ -18,12 +18,15 @@
     @elseif (count($items) === 0)
         <x-portal.notice>No {{ strtolower(AnnouncementsManage::STATUSES[$current]) }}.</x-portal.notice>
     @else
-        <ul class="divide-y divide-line rounded-xl border border-line bg-raised">
+        <ul class="divide-y divide-line overflow-hidden card">
             @foreach ($items as $item)
                 <li wire:key="manage-{{ $item['public_id'] }}">
-                    <a href="{{ route('portal.announcements.manage.show', $item['public_id']) }}" class="chevron block min-h-11 px-5 py-3 hover:bg-hover">
-                        <span class="block font-medium">{{ $item['title'] }}</span>
-                        <span class="block text-sm text-muted">{{ $item['audience_type'] === 'scoped' ? 'Selected departments or teams' : 'Everyone' }}</span>
+                    <a href="{{ route('portal.announcements.manage.show', $item['public_id']) }}" class="chevron flex min-h-16 items-start gap-3 px-4 py-3 hover:bg-hover">
+                        <x-portal.icon-tile icon="announcements" :tone="Format::tileTone(Format::tone($item['status'] ?? null))" />
+                        <span class="block min-w-0 flex-1">
+                            <span class="block font-semibold [overflow-wrap:anywhere]">{{ $item['title'] }}</span>
+                            <span class="block text-sm text-muted">{{ $item['audience_type'] === 'scoped' ? 'Selected departments or teams' : 'Everyone' }}</span>
+                        </span>
                     </a>
                 </li>
             @endforeach

@@ -12,18 +12,21 @@
     @elseif (count($announcements) === 0)
         <x-portal.notice>No announcements yet.</x-portal.notice>
     @else
-        <ul class="divide-y divide-line rounded-xl border border-line bg-raised">
+        <ul class="divide-y divide-line overflow-hidden card">
             @foreach ($announcements as $announcement)
                 @php($new = ($announcement['acknowledged_at'] ?? null) === null)
                 <li wire:key="announcement-{{ $announcement['public_id'] }}">
-                    <a href="{{ route('portal.announcement', $announcement['public_id']) }}" class="chevron block min-h-11 px-5 py-3 hover:bg-hover">
-                        <span class="block {{ $new ? 'font-semibold' : 'font-medium' }}">{{ $announcement['title'] }}</span>
-                        @if (($announcement['published_at'] ?? null) && $companyDay)
-                            <span class="block text-sm text-muted">{{ Format::date(\Carbon\CarbonImmutable::parse($announcement['published_at'])->setTimezone($companyDay['utc_offset'])->toDateString()) }}</span>
-                        @endif
-                        @if ($new)
-                            <span class="mt-1 block"><x-portal.chip tone="info">New<span class="sr-only"> — not yet acknowledged</span></x-portal.chip></span>
-                        @endif
+                    <a href="{{ route('portal.announcement', $announcement['public_id']) }}" class="chevron flex min-h-16 items-start gap-3 px-4 py-3 hover:bg-hover">
+                        <x-portal.icon-tile icon="announcements" tone="violet" />
+                        <span class="block min-w-0 flex-1">
+                            <span class="block {{ $new ? 'font-semibold' : 'font-medium' }}">{{ $announcement['title'] }}</span>
+                            @if (($announcement['published_at'] ?? null) && $companyDay)
+                                <span class="block text-sm text-muted">{{ Format::date(\Carbon\CarbonImmutable::parse($announcement['published_at'])->setTimezone($companyDay['utc_offset'])->toDateString()) }}</span>
+                            @endif
+                            @if ($new)
+                                <span class="mt-1 block"><x-portal.chip tone="info">New<span class="sr-only"> — not yet acknowledged</span></x-portal.chip></span>
+                            @endif
+                        </span>
                     </a>
                 </li>
             @endforeach

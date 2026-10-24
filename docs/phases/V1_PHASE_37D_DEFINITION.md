@@ -1,6 +1,6 @@
 # Phase 37D — Staff Portal Visual Refresh (proposal)
 
-**Status: PROPOSED — awaiting the product owner's approval of this definition. No code has been changed.**
+**Status: APPROVED (2026-10-24, "Approved, go with your recommendations on all four") and implemented; see §10 and `docs/handoffs/V1_PHASE_37D_HANDOFF.md`.**
 **Authorization:** the product owner, 2026-10-24: "Authorize Phase 37D, web portal only, all screens should be moved to this style", with the reference `docs/design/portal-style-reference.webp`.
 **Branch:** `claude/admiring-planck-hictyu`, from `main` at `ab24aac`.
 
@@ -188,3 +188,13 @@ These come from one mapping in `App\Support\Portal\Format`, as 34B did for chips
 2. **Home additions:** add (a) the quick actions row and (b) the My Team row (one extra API call)? Both use existing data and routes. *(Recommended: both.)*
 3. **Directory status filters:** these need a small API addition (filter `/staff` by operational status). It's outside "no API change". *(Recommended: leave out of 37D; record it as a follow-up.)*
 4. **Hero image:** keep the gradient, or supply a company photo (it would ship as a compressed asset)? *(Recommended: keep the gradient unless you have a photo.)*
+
+## 10. Decisions and as implemented
+
+- **Answers (product owner, 2026-10-24):** Q1 yes, Q2 both, Q3 out of 37D (follow-up), Q4 the gradient. Recorded as **DEC-071**.
+- **Deviations from this proposal:**
+  - **More keeps one list in the app's order** (34F: the same items in the same order as the mobile app), with coloured icon tiles, instead of grouped cards (§6).
+  - **The app bar has no scroll shadow.** It sits on the page colour with no rule; a shadow on scroll would need script for little gain (§4.4).
+  - **Status visibility:** statuses show only to those holding `staff-status.view`. The API already returns them to `staff.view` holders, but a custom role without status permission shouldn't see them more prominently than before.
+  - **The Home quick action "New task"** shows for `tasks.create` holders. Project leads without that permission still have the "+" on Tasks.
+  - **The Admin Backoffice** takes the new colours through the shared tokens; its layout is unchanged (§3.2 had it out of scope for restyling).

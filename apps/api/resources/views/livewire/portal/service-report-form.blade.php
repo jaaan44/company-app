@@ -10,7 +10,7 @@
     @elseif ($errorMessage)
         <x-portal.error :message="$errorMessage" />
     @else
-        <form wire:submit="save" class="space-y-5 rounded-xl border border-line bg-raised p-5" novalidate>
+        <form wire:submit="save" class="space-y-5 card p-5" novalidate>
             @if ($generalError)
                 <p role="alert" class="font-medium text-danger">{{ $generalError }}</p>
             @endif
@@ -31,7 +31,7 @@
                         @if (count($clients) === 0)
                             <p class="mt-2 text-muted">No clients found.</p>
                         @else
-                            <ul class="mt-2 divide-y divide-line rounded-md border border-line">
+                            <ul class="mt-2 divide-y divide-line rounded-xl border border-edge">
                                 @foreach ($clients as $c)
                                     <li wire:key="client-{{ $c['public_id'] }}">
                                         <button type="button" wire:click="chooseClient('{{ $c['public_id'] }}')" class="block min-h-11 w-full px-3 py-2 text-left hover:bg-hover">

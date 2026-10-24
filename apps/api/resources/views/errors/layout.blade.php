@@ -12,7 +12,7 @@
     <body class="min-h-screen bg-surface text-ink antialiased">
         <main class="mx-auto mt-[12vh] w-full max-w-md px-4 text-center">
             <p class="mb-6 flex items-center justify-center gap-3 text-xl font-semibold"><img src="/icons/icon-192.png" alt="" class="size-10 rounded-xl"> Company App</p>
-            <div class="rounded-2xl border border-line bg-raised p-6 shadow-sm sm:p-8">
+            <div class="card p-6 sm:p-8">
                 <h1 class="text-xl font-semibold">{{ $title }}</h1>
                 <p class="mt-3 text-muted">{{ $message }}</p>
                 <a href="{{ $href ?? '/app' }}" data-no-navigate class="btn btn-primary mt-6 w-full">{{ $action ?? 'Go to Home' }}</a>

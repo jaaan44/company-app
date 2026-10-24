@@ -7,7 +7,7 @@
         <h1 class="sr-only">Change password</h1>
     @endif
 
-    <form wire:submit="save" x-data="{ shown: {} }" x-on:submit="shown = {}" class="space-y-5 {{ $forced ? '' : 'rounded-xl border border-line bg-raised p-5' }}" novalidate>
+    <form wire:submit="save" x-data="{ shown: {} }" x-on:submit="shown = {}" class="space-y-5 {{ $forced ? '' : 'card p-5' }}" novalidate>
         @if ($generalError)
             <p role="alert" class="font-medium text-danger">{{ $generalError }}</p>
         @endif

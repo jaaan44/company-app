@@ -8,9 +8,12 @@ use App\Livewire\Portal\Home;
 use App\Livewire\Portal\Profile;
 use App\Models\Announcement;
 use App\Models\Department;
+use App\Models\Permission;
 use App\Models\Position;
+use App\Models\Role;
 use App\Models\ScheduleEntry;
 use App\Models\Staff;
+use App\Models\StaffOperationalStatus;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\Portal\InternalApi;
@@ -110,12 +113,52 @@ class PortalPagesTest extends TestCase
             ->assertSeeInOrder(['Hello, Lia', 'Field Technician · Operations', 'North Crew'])
             ->assertSee('Today · Tue 13 Oct')
             ->assertSeeInOrder(['Site survey', 'Meeting · 09:00 – 10:30'])
-            ->assertSeeInOrder(['Needs attention', 'My tasks', '0 overdue', 'No unread messages', 'No unread notifications'])
+            // 37D: My work (the tasks card) comes before Needs attention.
+            ->assertSeeInOrder(['My work', 'My tasks', '0 overdue', 'Needs attention', 'No unread messages', 'No unread notifications'])
             ->assertSeeInOrder(['Latest announcements', 'Office closed Friday'])
             // Mobile redesign: the hero has the initials (a link to My profile) and takes the app bar's place on phones.
             ->assertSee('aria-label="My profile"', false)
             ->assertSee('>L</a>', false) // her preferred name
             ->assertSee('max-md:hidden">', false);
+    }
+
+    public function test_home_quick_actions_link_to_existing_pages_by_permission(): void
+    {
+        // Staff: no tasks.create, so no New task; the others are links to pages they already have.
+        $this->actingAs($this->user, 'web')->get('/app')
+            ->assertOk()
+            ->assertSee('aria-label="Quick actions"', false)
+            ->assertSeeInOrder([route('portal.messages.new'), 'Message', route('portal.leave.new'), 'Request leave', route('portal.status'), 'My status'], false)
+            ->assertDontSee(route('portal.tasks.new'), false);
+
+        $this->app['auth']->forgetGuards();
+        $admin = User::factory()->administrator()->create();
+        Staff::factory()->create(['user_id' => $admin->id]);
+        $this->actingAs($admin, 'web')->get('/app')
+            ->assertOk()
+            ->assertSeeInOrder(['aria-label="Quick actions"', route('portal.tasks.new'), 'New task'], false);
+    }
+
+    public function test_home_shows_my_team_with_their_status(): void
+    {
+        $team = $this->staff->team;
+        $kai = Staff::factory()->create(['first_name' => 'Kai', 'last_name' => 'Tan', 'preferred_name' => null, 'team_id' => $team->id]);
+        StaffOperationalStatus::factory()->create(['staff_id' => $kai->id, 'status' => 'in_meeting']);
+        Staff::factory()->create(['first_name' => 'Other', 'last_name' => 'Crew', 'preferred_name' => null, 'team_id' => Team::factory()->create()->id]);
+        Staff::factory()->create(['first_name' => 'Gone', 'last_name' => 'Person', 'preferred_name' => null, 'team_id' => $team->id, 'status' => StaffStatus::Separated]);
+
+        $this->actingAs($this->user, 'web')->get('/app')
+            ->assertOk()
+            ->assertSeeInOrder(['My team', 'In a meeting', 'Kai Tan', 'Latest announcements']) // the status above the name, as in the reference
+            ->assertSee(route('portal.staff', $kai->public_id), false)
+            ->assertDontSee(route('portal.staff', $this->staff->public_id), false) // not herself
+            ->assertDontSee('Other Crew')
+            ->assertDontSee('Gone Person');
+    }
+
+    public function test_home_has_no_my_team_without_teammates(): void
+    {
+        $this->actingAs($this->user, 'web')->get('/app')->assertOk()->assertDontSee('My team');
     }
 
     public function test_home_without_a_staff_profile(): void
@@ -182,6 +225,29 @@ class PortalPagesTest extends TestCase
             ->call('clearSearch')
             ->assertSet('search', '')
             ->assertSee('Kai');
+    }
+
+    public function test_directory_shows_each_persons_status_to_those_who_may_see_it(): void
+    {
+        $kai = Staff::factory()->create(['first_name' => 'Kai', 'last_name' => 'Tan', 'preferred_name' => null]);
+        StaffOperationalStatus::factory()->create(['staff_id' => $kai->id, 'status' => 'available']);
+
+        // Staff hold staff-status.view by default: the dot and its word.
+        $this->actingAs($this->user, 'web')->get('/app/staff')
+            ->assertOk()
+            ->assertSeeInOrder(['Kai Tan', 'Available']);
+        $this->actingAs($this->user, 'web')->get('/app/staff/'.$kai->public_id)
+            ->assertOk()
+            ->assertSeeInOrder(['Kai Tan', 'Available']);
+
+        // Without staff-status.view, no status (the directory itself still shows).
+        $this->app['auth']->forgetGuards();
+        $role = Role::query()->create(['name' => 'directory-only', 'label' => 'Directory only']);
+        $role->permissions()->sync(Permission::query()->where('name', 'staff.view')->pluck('id'));
+        $this->actingAs(User::factory()->create(['role_id' => $role->id]), 'web')->get('/app/staff')
+            ->assertOk()
+            ->assertSee('Kai Tan')
+            ->assertDontSee('Available');
     }
 
     public function test_directory_pages_by_25(): void

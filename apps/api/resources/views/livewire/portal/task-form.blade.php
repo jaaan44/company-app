@@ -14,7 +14,7 @@
     @elseif ($publicId === null && ! $allowNoProject && count($projects) === 0)
         <x-portal.notice>You can add tasks only to projects you lead, and you don't lead any open project.</x-portal.notice>
     @else
-        <form wire:submit="save" class="space-y-5 rounded-xl border border-line bg-raised p-5" novalidate>
+        <form wire:submit="save" class="space-y-5 card p-5" novalidate>
             @if ($generalError)
                 <p role="alert" class="font-medium text-danger">{{ $generalError }}</p>
             @endif
@@ -64,7 +64,7 @@
                     @if (count($people) === 0)
                         <p class="mt-1 text-sm text-muted">No one matches "{{ trim($assigneeSearch) }}".</p>
                     @else
-                        <ul class="mt-2 divide-y divide-line rounded-md border border-line">
+                        <ul class="mt-2 divide-y divide-line rounded-xl border border-edge">
                             @foreach ($people as $person)
                                 <li wire:key="person-{{ $person['public_id'] }}">
                                     <button type="button" wire:click="chooseAssignee(@js($person['public_id']), @js($person['display_name']))"

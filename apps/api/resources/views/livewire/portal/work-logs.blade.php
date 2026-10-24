@@ -16,19 +16,20 @@
     @else
         @foreach ($days as $date => $logs)
             <section wire:key="day-{{ $date }}" aria-labelledby="day-{{ $date }}" class="mb-6">
-                <h2 id="day-{{ $date }}" class="mb-2 font-semibold">{{ Format::dayLabel($date, $companyDate) }}</h2>
-                <ul class="divide-y divide-line rounded-xl border border-line bg-raised">
+                <h2 id="day-{{ $date }}" class="mb-3 text-lg font-bold tracking-tight">{{ Format::dayLabel($date, $companyDate) }}</h2>
+                <ul class="divide-y divide-line overflow-hidden card">
                     @foreach ($logs as $log)
                         <li wire:key="log-{{ $log['public_id'] }}">
-                            <a href="{{ route('portal.work-logs.edit', $log['public_id']) }}" class="chevron flex min-h-11 items-start justify-between gap-4 px-5 py-3 hover:bg-hover">
-                                <span class="min-w-0">
-                                    <span class="block font-medium">{{ $log['task']['title'] ?? $log['project']['name'] ?? '' }}</span>
+                            <a href="{{ route('portal.work-logs.edit', $log['public_id']) }}" class="chevron flex min-h-16 items-start gap-3 px-4 py-3 hover:bg-hover">
+                                <x-portal.icon-tile icon="work-logs" tone="blue" />
+                                <span class="block min-w-0 flex-1">
+                                    <span class="block font-semibold [overflow-wrap:anywhere]">{{ $log['task']['title'] ?? $log['project']['name'] ?? '' }}</span>
                                     @if (($log['task'] ?? null) && ($log['project']['name'] ?? null))
                                         <span class="block text-sm text-muted">{{ $log['project']['name'] }}</span>
                                     @endif
                                     <span class="block text-sm text-muted line-clamp-2">{{ $log['description'] }}</span>
                                 </span>
-                                <span class="shrink-0 font-semibold">{{ Format::duration($log['duration_minutes']) }}</span>
+                                <span class="shrink-0 font-semibold tabular-nums">{{ Format::duration($log['duration_minutes']) }}</span>
                             </a>
                         </li>
                     @endforeach

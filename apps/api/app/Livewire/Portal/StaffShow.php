@@ -5,6 +5,7 @@ namespace App\Livewire\Portal;
 use App\Livewire\Portal\Concerns\CallsInternalApi;
 use App\Services\Portal\PortalApiException;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 
@@ -46,6 +47,10 @@ class StaffShow extends Component
             }
         }
 
-        return view('livewire.portal.staff-show', ['staff' => $staff]);
+        return view('livewire.portal.staff-show', [
+            'staff' => $staff,
+            // Phase 37D: their status, for those who may see it (staff-status.view).
+            'mayViewStatus' => Auth::user()?->can('staff-status.view') ?? false,
+        ]);
     }
 }

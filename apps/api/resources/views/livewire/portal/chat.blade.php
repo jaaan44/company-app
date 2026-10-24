@@ -24,9 +24,9 @@
             <x-portal.error :message="$errorMessage" />
         @endif
     @elseif ($conversation)
-        <h1 class="mb-4 text-2xl font-semibold">{{ Format::conversationTitle($conversation, $myStaffId) }}</h1>
+        <h1 class="mb-4 text-2xl font-bold tracking-tight">{{ Format::conversationTitle($conversation, $myStaffId) }}</h1>
 
-        <section aria-label="Messages" x-ref="thread" class="rounded-xl border border-line bg-raised p-4">
+        <section aria-label="Messages" x-ref="thread" class="card p-4">
             @if ($hasEarlier)
                 <div class="mb-3 text-center">
                     <button type="button" wire:click="loadEarlier" class="btn btn-text">Load earlier messages</button>
@@ -52,7 +52,7 @@
                             @endphp
                         @endif
                         <li wire:key="message-{{ $message['public_id'] }}" class="flex {{ $mine ? 'justify-end' : 'justify-start' }}">
-                            <div class="max-w-[85%] rounded-xl px-3 py-2 {{ $mine ? 'bg-accent-soft text-ink' : 'border border-line bg-surface' }}">
+                            <div class="max-w-[85%] rounded-2xl px-3.5 py-2 {{ $mine ? 'rounded-br-md bg-accent-soft text-ink' : 'rounded-bl-md border border-edge bg-surface' }}">
                                 <p class="text-xs text-muted">
                                     <span class="{{ $mine || ! Format::showsSenderNames($conversation) ? 'sr-only' : 'font-semibold' }}">{{ $mine ? 'You' : $message['sender']['name'] }}{{ $mine || ! Format::showsSenderNames($conversation) ? ', ' : ' · ' }}</span>{{ $at->format('H:i') }}
                                 </p>
@@ -64,7 +64,7 @@
             @endif
         </section>
 
-        <form wire:submit="send" x-on:submit="nearEnd = true" class="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-10 mt-4 rounded-xl border border-line bg-raised p-4 shadow-sm md:bottom-4" novalidate>
+        <form wire:submit="send" x-on:submit="nearEnd = true" class="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-10 mt-4 card p-4 md:bottom-4" novalidate>
             <label for="message-body" class="mb-1 block text-sm font-semibold">Message</label>
             <textarea id="message-body" wire:model="body" rows="2" maxlength="{{ Chat::MAX_BODY }}"
                       @if ($sendError) aria-invalid="true" aria-describedby="send-error" @endif

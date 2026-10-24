@@ -4,109 +4,131 @@
 @source '../views';
 
 /*
- * Staff Web Portal design tokens (Phase 34A, DEC-063 W-5; Phase 34F,
- * DEC-064): the mobile app's Material 3 color roles (DEC-046), from the
- * same indigo seed, so the portal looks like the Company App. Light and
- * dark follow the browser's `prefers-color-scheme`; every text/surface
- * pair meets WCAG 2.2 AA contrast (4.5:1 for body text).
+ * Staff Web Portal design tokens. Since Phase 37D (DEC-071, after
+ * docs/design/portal-style-reference.webp) the whole portal takes the
+ * royal-blue palette on a grey-blue page, replacing 34F's M3 indigo
+ * (DEC-064). Light and dark follow the browser's `prefers-color-scheme`;
+ * every text/surface pair meets WCAG 2.2 AA (4.5:1 for text), and every
+ * control boundary, icon and status dot 3:1.
  *
- * Role mapping: surface = M3 surface, raised = surface container (cards,
- * bars), ink = on-surface, muted = on-surface-variant, line = outline
- * variant, accent = primary, accent-soft = primary container,
- * accent-ink = primary as text, danger = error, field = outline (the
- * boundary of a form control: 3:1 or more against its surface, WCAG
- * 1.4.11), warning = the mobile app's AppStatusColors.warning (Phase 37B,
- * DEC-068).
+ * Roles: surface = the page, raised = cards and bars, edge = a card's
+ * hairline, ink = text, muted = secondary text, line = dividers,
+ * field = a form control's boundary (WCAG 1.4.11), hover = a pressed or
+ * hovered row, accent = the main action, accent-ink = links, accent-soft
+ * = a selected pill, danger / success / warning = states (37B).
  */
 @theme {
     --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 
-    --color-surface: #fbf8ff;
+    --color-surface: #f4f6fa;
     --color-raised: #ffffff;
-    --color-ink: #1b1b21;
-    --color-muted: #46464f;
-    --color-line: #c6c5d0;
-    --color-field: #767680;
-    --color-hover: #e3e1ec;
-    --color-accent: #4355b9;
+    --color-edge: #e6ebf2;
+    --color-ink: #0f172a;
+    --color-muted: #475569;
+    --color-line: #e2e8f0;
+    --color-field: #7b8496;
+    --color-hover: #eef2f7;
+    --color-accent: #2563eb;
     --color-on-accent: #ffffff;
-    --color-accent-ink: #3a4caf;
-    --color-accent-soft: #dee0ff;
-    --color-danger: #ba1a1a;
-    --color-danger-soft: #ffdad6;
-    --color-success: #1d6b3a;
-    --color-success-soft: #dcf3e2;
-    --color-warning: #7a5900;
-    --color-warning-soft: #ffdea6;
+    --color-accent-ink: #1d4ed8;
+    --color-accent-soft: #dbeafe;
+    --color-danger: #b91c1c;
+    --color-danger-soft: #fee2e2;
+    --color-success: #15803d;
+    --color-success-soft: #dcfce7;
+    --color-warning: #92400e;
+    --color-warning-soft: #fef3c7;
 
     --radius-xl: 1rem;
     --radius-2xl: 1.25rem;
     --radius-3xl: 1.75rem;
 
     /*
-     * Home (mobile redesign, docs/design/mobile-home-reference.png): the
-     * hero's navy-to-blue gradient, and one pastel tint and icon colour per
-     * kind of card (tasks rose, messages blue, notifications green,
-     * announcements violet). Used on Home only; the rest of the app keeps
-     * the indigo accent. White on the hero ≥ 6.7:1; each icon ≥ 3:1 on its tint.
+     * Kind colours (37C's Home tokens, app-wide since 37D): a pale card, a
+     * tint for an icon tile or avatar and an icon/text colour per kind.
+     * Each icon colour is ≥ 4.5:1 on its tint and on white, so it can also
+     * colour a status word. The hero is Home's gradient: white on it ≥ 5:1.
      */
     --color-hero-from: #163b70;
     --color-hero-to: #1d4ed8;
     --color-hero-sub: #dbe7ff;
     --color-card-rose: #fff5f5;
-    --color-tint-rose: #fee2e2;
-    --color-icon-rose: #dc2626;
+    --color-tint-rose: #ffe4e6;
+    --color-icon-rose: #be123c;
     --color-card-blue: #f3f7ff;
     --color-tint-blue: #dbeafe;
-    --color-icon-blue: #2563eb;
+    --color-icon-blue: #1d4ed8;
     --color-card-green: #f2fbf5;
     --color-tint-green: #dcfce7;
     --color-icon-green: #15803d;
+    --color-card-amber: #fffaeb;
+    --color-tint-amber: #fef3c7;
+    --color-icon-amber: #b45309;
     --color-tint-violet: #ede9fe;
-    --color-icon-violet: #7c3aed;
+    --color-icon-violet: #6d28d9;
+    --color-tint-slate: #e2e8f0;
+    --color-icon-slate: #475569;
 
-    --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 6px 20px rgb(15 23 42 / 0.06);
+    --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 4px 16px rgb(15 23 42 / 0.05);
     --shadow-bar: 0 -4px 20px rgb(15 23 42 / 0.08);
 }
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --color-surface: #121318;
-        --color-raised: #1d1e24;
-        --color-ink: #e4e1e9;
-        --color-muted: #c6c5d0;
-        --color-line: #46464f;
-        --color-field: #90909a;
-        --color-hover: #34343b;
-        --color-accent: #bac3ff;
-        --color-on-accent: #08218a;
-        --color-accent-ink: #bac3ff;
-        --color-accent-soft: #293ca0;
-        --color-danger: #ffb4ab;
-        --color-danger-soft: #690005;
-        --color-success: #8fd8a5;
+        --color-surface: #0e1525;
+        --color-raised: #172033;
+        --color-edge: #273248;
+        --color-ink: #e5e9f2;
+        --color-muted: #a3adbf;
+        --color-line: #273248;
+        --color-field: #8c97ab;
+        --color-hover: #222d44;
+        --color-accent: #93b4ff;
+        --color-on-accent: #0b2a6b;
+        --color-accent-ink: #93b4ff;
+        --color-accent-soft: #1e3a8a;
+        --color-danger: #fca5a5;
+        --color-danger-soft: #4c1414;
+        --color-success: #86efac;
         --color-success-soft: #123a21;
-        --color-warning: #f5bf48;
-        --color-warning-soft: #5c4300;
+        --color-warning: #fcd34d;
+        --color-warning-soft: #4a3500;
 
         --color-hero-from: #0f2a52;
         --color-hero-to: #1d4ed8;
         --color-hero-sub: #c7d7fe;
-        --color-card-rose: #2a1a1c;
-        --color-tint-rose: #3f1d1d;
-        --color-icon-rose: #fca5a5;
+        --color-card-rose: #2a1a1f;
+        --color-tint-rose: #4c1d2a;
+        --color-icon-rose: #fda4af;
         --color-card-blue: #18213a;
-        --color-tint-blue: #172554;
-        --color-icon-blue: #93c5fd;
+        --color-tint-blue: #1e3a8a;
+        --color-icon-blue: #bfd3ff;
         --color-card-green: #17261d;
-        --color-tint-green: #14341f;
+        --color-tint-green: #14402a;
         --color-icon-green: #86efac;
-        --color-tint-violet: #2e1065;
-        --color-icon-violet: #c4b5fd;
+        --color-card-amber: #2a2214;
+        --color-tint-amber: #4a3500;
+        --color-icon-amber: #fcd34d;
+        --color-tint-violet: #3b1f7a;
+        --color-icon-violet: #d8ccff;
+        --color-tint-slate: #2b3650;
+        --color-icon-slate: #c3cad8;
 
         --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
         --shadow-bar: 0 -1px 0 rgb(255 255 255 / 0.06);
     }
+}
+
+/*
+ * A card (37D): the portal's one container (lists, sections, forms,
+ * notices): white on the grey page, a large radius, a hairline and a soft
+ * shadow. Add only layout classes (padding, margins, dividers).
+ */
+@utility card {
+    border: 1px solid var(--color-edge);
+    border-radius: var(--radius-2xl);
+    background-color: var(--color-raised);
+    box-shadow: var(--shadow-card);
 }
 
 /* A list row that opens something: a trailing chevron, as on mobile (34F). */
@@ -180,13 +202,14 @@ h1[tabindex='-1']:focus {
 /*
  * Shared control styles (Phase 37B, DEC-068). A form control and a button
  * look the same on every page, so they are defined once here rather than
- * repeated in each view. Three shapes: controls `rounded-md`, containers
- * `rounded-xl`, actions (buttons, chips' pills) `rounded-full`.
+ * repeated in each view. Three shapes (37D): controls `rounded-lg`,
+ * containers the `card` utility (`rounded-2xl`), actions (buttons, chips'
+ * pills) `rounded-full`.
  */
 @utility field {
     min-height: 2.75rem;
     border: 1px solid var(--color-field);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
     background-color: var(--color-raised);
     padding-inline: 0.75rem;
 
@@ -256,6 +279,34 @@ h1[tabindex='-1']:focus {
 @keyframes btn-spin {
     to {
         transform: rotate(360deg);
+    }
+}
+
+/*
+ * A filter chip (37D, the reference's "All · Working · WFH" row): one of a
+ * group of buttons that choose what a list shows. The chosen one
+ * (`aria-pressed="true"`) is filled with the accent.
+ */
+@utility filter-chip {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    border: 1px solid var(--color-edge);
+    border-radius: calc(infinity * 1px);
+    background-color: var(--color-raised);
+    padding-inline: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+
+    &:hover {
+        background-color: var(--color-hover);
+    }
+
+    &[aria-pressed='true'] {
+        border-color: var(--color-accent);
+        background-color: var(--color-accent);
+        color: var(--color-on-accent);
+        font-weight: 600;
     }
 }
 

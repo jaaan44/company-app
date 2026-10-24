@@ -269,6 +269,12 @@ The visual-design foundation for Flutter is below (DEC-046). **The web equivalen
     - `field` (light `#767680`, dark `#90909a`) is the boundary of every form control, ≥3:1 against its surface (WCAG 1.4.11; `line` stays for dividers and card borders);
     - `warning` and `warning-soft` (light `#7a5900` on `#ffdea6`, dark `#f5bf48` on `#5c4300`) are for a state someone must act on that isn't an error;
     - `hover` is stronger (light `#e3e1ec`, dark `#34343b`).
+- **Since 37D (DEC-071, `docs/design/portal-style-reference.webp`):** the portal palette is royal blue on a grey-blue page:
+  - light: surface `#f4f6fa`, raised `#ffffff`, edge `#e6ebf2`, ink `#0f172a`, muted `#475569`, accent `#2563eb`, accent-ink `#1d4ed8`;
+  - dark: surface `#0e1525`, raised `#172033`, ink `#e5e9f2`, muted `#a3adbf`, accent `#93b4ff`;
+  - **kind colours** (`card-*`, `tint-*`, `icon-*`: blue, green, amber, rose, violet, slate) are app-wide; each icon colour is ≥ 4.5:1 on its tint and on white.
+
+  This supersedes the indigo values above. The Admin Backoffice shares these tokens.
 - **Type:** the system font stack. No web fonts, so no third-party request.
 - **Shell (34F, DEC-064):** the app's five tabs (Home, Tasks, Schedule, Messages, More), a bottom tab bar on phones and a sidebar from `md` up, with the current tab marked. More lists the other pages in the app's order. A sticky app bar shows the title, with a back arrow on sub-pages (to the parent, or to More). A list's main action is a "+" FAB on phones and a pill button on wider screens. The page content keeps clear of the tab bar and the safe areas.
 - **Layout:**
@@ -277,8 +283,8 @@ The visual-design foundation for Flutter is below (DEC-046). **The web equivalen
   - grids collapse to one column on narrow screens;
   - no horizontal scrolling at 320 px (200% zoom of a 640 px window).
 - **Interaction:** every target is at least 44 px tall (`min-h-11`); focus is always visible (a 3 px accent outline); there's a skip link and a labelled main navigation with `aria-current`.
-- **Shapes and shared controls (37B, DEC-068):**
-  - **Three shapes:** controls (inputs, selects) `rounded-md`; containers (cards, notices, lists) `rounded-xl`; actions (buttons, segmented controls, choice pills) `rounded-full`.
+- **Shapes and shared controls (37B, DEC-068; shapes 37D, DEC-071):**
+  - **Three shapes:** controls (inputs, selects) `rounded-lg`; containers (cards, notices, lists) the **`card`** utility (`rounded-2xl`, a hairline in `edge`, `shadow-card`; add only layout classes); actions (buttons, chips, choice pills) `rounded-full`.
   - **Form controls use `field`.** Add only layout classes, such as a width or `mt-1`. Labels are `text-sm font-semibold`.
   - **Buttons use `btn` plus one variant:**
     - `btn-primary`, the page's main action, one per area;
@@ -331,6 +337,14 @@ The visual-design foundation for Flutter is below (DEC-046). **The web equivalen
     - **Needs attention**: tasks (rose), messages (blue) and notifications (green), as pastel cards with a round icon, two columns on phones with notifications across the row, three columns from `lg`;
     - **Latest announcements**: a list card with violet megaphones and a "View all" heading link.
   - **Colours:** Home's own tokens (`hero-*`, `card-*`, `tint-*`, `icon-*`, `shadow-card`); the rest of the app keeps the indigo accent.
+- **Portal style (37D, DEC-071):**
+  - **App bar:** the page colour with no rule, a bold `text-xl` title.
+  - **Section headings:** `text-lg font-bold`; `x-portal.section-header` adds a "View all" link (heard as "View all *what*").
+  - **List rows:** a leading `x-portal.icon-tile` (its tone from the status, `Format::tileTone`) or `x-portal.avatar` (initials on a tint from the name), a bold title over a muted line, and a chevron when the row opens something. Detail pages put a large icon tile above the title; a colleague's page and My profile open with a header card and a large avatar.
+  - **Operational status:** `x-portal.status-dot`, a dot in the status's colour plus its word (`Format::operationalTone`). An avatar may carry the same dot. Shown only with `staff-status.view`.
+  - **Filter chips:** a list's filters are separate `filter-chip` buttons; the chosen one (`aria-pressed="true"`) is filled with the accent. Chips wrap; they never scroll sideways.
+  - **Counts:** unread counts are a red bubble (`bg-danger`, the count, " unread" for screen readers); `x-portal.stat-chip` is a tinted count with its words ("1 due today").
+  - **Home:** hero; quick actions (links to existing pages, permission-gated, the first filled); Today rows; My work chips; Needs attention rows; **My team** (up to six teammates from `GET /staff`, cards that scroll inside their row on phones and form a grid from `md`); Latest announcements.
 - **Bottom tab bar (37C):** a raised bar with rounded top corners and a soft shadow. The current tab is a filled accent-soft pill around its icon and label.
 - **Phones first (37, DEC-067):** the staff portal is the product for staff on phones (the Flutter app is paused).
   - **Sign-in:** "Keep me signed in on this device" (unticked; "For 30 days. Leave it off on a shared phone or computer."). The email field uses `inputmode="email"` with no auto-capitalisation or spell-check; `enterkeyhint` is next, then go. After sign-in you return to the page you asked for ("Please sign in to continue.").

@@ -72,13 +72,13 @@ class AppShellTest extends TestCase
                 'Projects', 'Clients', 'Company clients and contacts', 'Log out',
             ])
             ->assertSee('<title>More — Company App</title>', false)
-            ->assertDontSee('font-medium">Admin</span>', false);
+            ->assertDontSee('font-semibold">Admin</span>', false);
     }
 
     public function test_more_links_to_admin_only_for_administrators(): void
     {
         $this->actingAs(User::factory()->administrator()->create(), 'web')->get('/app/more')
-            ->assertSee('font-medium">Admin</span>', false)
+            ->assertSee('font-semibold">Admin</span>', false)
             ->assertSee('data-no-navigate', false);
     }
 
@@ -107,7 +107,7 @@ class AppShellTest extends TestCase
     public function test_the_app_bar_shows_the_page_title(): void
     {
         $this->actingAs($this->user, 'web')->get('/app/leave')
-            ->assertSee('<p class="truncate text-lg font-semibold">Leave</p>', false);
+            ->assertSee('<p class="truncate text-xl font-bold tracking-tight">Leave</p>', false);
     }
 
     public function test_a_flashed_status_shows_as_a_toast(): void

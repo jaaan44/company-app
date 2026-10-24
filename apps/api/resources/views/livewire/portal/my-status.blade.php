@@ -11,14 +11,19 @@
         <x-portal.error :message="$errorMessage" />
     @else
         @php($current = $statuses[0] ?? null)
-        <section aria-labelledby="current-status" class="rounded-xl border border-line bg-raised p-5">
+        <section aria-labelledby="current-status" class="card p-5">
             <h2 id="current-status" class="text-sm text-muted">Current status</h2>
-            <p class="mt-1 text-xl font-semibold">{{ $current === null ? 'No status set yet' : Format::operationalStatus($current['status']) }}</p>
+            @if ($current === null)
+                <p class="mt-1 text-xl font-bold">No status set yet</p>
+            @else
+                {{-- 37D: the status's colour beside its word, as on the directory. --}}
+                <p class="mt-1 flex items-center gap-2 text-xl font-bold"><span aria-hidden="true" class="size-3 rounded-full {{ ['green' => 'bg-icon-green', 'amber' => 'bg-icon-amber', 'rose' => 'bg-icon-rose', 'violet' => 'bg-icon-violet'][Format::operationalTone($current['status'])] ?? 'bg-icon-slate' }}"></span>{{ Format::operationalStatus($current['status']) }}</p>
+            @endif
             @if ($current && $companyDay)
                 <p class="text-sm text-muted">Set {{ Format::companyTime($current['recorded_at'], $companyDay['date'], $companyDay['utc_offset']) }}</p>
             @endif
 
-            <h3 id="change-status" class="mt-5 mb-2 font-semibold">Change status</h3>
+            <h3 id="change-status" class="mt-5 mb-2 text-lg font-bold tracking-tight">Change status</h3>
             <div role="group" aria-labelledby="change-status" class="flex flex-wrap gap-2">
                 @foreach (MyStatus::STATUSES as $status)
                     @php($isCurrent = ($current['status'] ?? null) === $status)
@@ -41,7 +46,7 @@
         </section>
 
         <section aria-labelledby="recent-changes" class="mt-6">
-            <h2 id="recent-changes" class="mb-2 font-semibold">Recent status changes</h2>
+            <h2 id="recent-changes" class="mb-3 text-lg font-bold tracking-tight">Recent status changes</h2>
             @if (count($statuses) === 0)
                 <x-portal.notice>You haven't set a status yet.</x-portal.notice>
             @else
@@ -51,7 +56,7 @@
         </section>
 
         <section aria-labelledby="recent-check-ins" class="mt-6">
-            <h2 id="recent-check-ins" class="mb-2 font-semibold">Recent check-ins</h2>
+            <h2 id="recent-check-ins" class="mb-3 text-lg font-bold tracking-tight">Recent check-ins</h2>
             @if (count($checkIns) === 0)
                 <x-portal.notice>You haven't checked in yet.</x-portal.notice>
             @else

@@ -25,12 +25,13 @@
         @endphp
 
         @if ($kind === 'incidents')
-            <h1 class="text-2xl font-semibold">{{ Format::incidentType($report['incident_type']) }}</h1>
+            <x-portal.icon-tile icon="reports" tone="rose" size="lg" class="mb-3" />
+            <h1 class="text-2xl font-bold tracking-tight">{{ Format::incidentType($report['incident_type']) }}</h1>
             <p class="mt-2 flex flex-wrap items-center gap-2">
                 <x-portal.chip :tone="Format::severityTone($report['severity'])"><span class="sr-only">Severity: </span>{{ Format::severity($report['severity']) }}</x-portal.chip>
                 <x-portal.chip :tone="Format::reportTone($report['status'])">{{ Format::incidentStatus($report['status']) }}</x-portal.chip>
             </p>
-            <dl class="mt-4 rounded-xl border border-line bg-raised px-5">
+            <dl class="mt-4 card px-5">
                 <x-portal.info-row label="When" :value="Format::reportTime($report['occurred_at'], $offset)" />
                 <x-portal.info-row label="Location" :value="$report['location'] ?? null" />
                 <x-portal.info-row label="Reported by" :value="$report['reporter']['display_name'] ?? null" />
@@ -39,9 +40,10 @@
                 @endif
             </dl>
         @else
-            <h1 class="text-2xl font-semibold">Service report · {{ $report['client']['name'] ?? '' }}</h1>
+            <x-portal.icon-tile icon="reports" tone="blue" size="lg" class="mb-3" />
+            <h1 class="text-2xl font-bold tracking-tight">Service report · {{ $report['client']['name'] ?? '' }}</h1>
             <p class="mt-2"><x-portal.chip :tone="Format::reportTone($report['status'])">{{ Format::serviceStatus($report['status']) }}</x-portal.chip></p>
-            <dl class="mt-4 rounded-xl border border-line bg-raised px-5">
+            <dl class="mt-4 card px-5">
                 <x-portal.info-row label="Client" :value="$report['client']['name'] ?? null" />
                 <x-portal.info-row label="Project" :value="$report['project']['name'] ?? 'No project'" />
                 <x-portal.info-row label="Service date" :value="Format::reportDate($report['service_date'])" />
@@ -52,7 +54,7 @@
         <div aria-live="polite">
             <x-portal.toast :message="$doneMessage" :nonce="$toastNonce ?? 0" />
             @if ($actionMessage)
-                <p role="alert" class="mt-4 rounded-md bg-danger-soft p-3 font-medium text-danger">{{ $actionMessage }}</p>
+                <p role="alert" class="mt-4 rounded-xl bg-danger-soft p-3 font-medium text-danger">{{ $actionMessage }}</p>
             @endif
         </div>
 
@@ -76,15 +78,15 @@
 
         @foreach ($sections as $title => $field)
             @if (filled($report[$field] ?? null))
-                <section class="mt-6 rounded-xl border border-line bg-raised p-5" aria-label="{{ $title }}">
-                    <h2 class="mb-2 font-semibold">{{ $title }}</h2>
+                <section class="mt-6 card p-5" aria-label="{{ $title }}">
+                    <h2 class="mb-3 text-lg font-bold tracking-tight">{{ $title }}</h2>
                     <p class="whitespace-pre-line break-words">{{ $report[$field] }}</p>
                 </section>
             @endif
         @endforeach
 
-        <section aria-labelledby="files" class="mt-6 rounded-xl border border-line bg-raised p-5">
-            <h2 id="files" class="mb-3 font-semibold">Photos and files ({{ count($attachments) }})</h2>
+        <section aria-labelledby="files" class="mt-6 card p-5">
+            <h2 id="files" class="mb-3 text-lg font-bold tracking-tight">Photos and files ({{ count($attachments) }})</h2>
             @if (count($attachments) === 0)
                 <p class="text-muted">No photos or files yet.</p>
             @else
@@ -94,7 +96,7 @@
                             $url = route('portal.report-file', ['kind' => $kind, 'publicId' => $report['public_id'], 'attachmentId' => $a['public_id']]);
                             $image = in_array($a['mime_type'], ['image/jpeg', 'image/png'], true);
                         @endphp
-                        <li wire:key="file-{{ $a['public_id'] }}" class="rounded-xl border border-line p-3">
+                        <li wire:key="file-{{ $a['public_id'] }}" class="rounded-xl border border-edge p-3">
                             @if ($image)
                                 <a href="{{ $url }}" target="_blank" rel="noopener" class="block">
                                     <img src="{{ $url }}" alt="Photo: {{ $a['original_filename'] }}" loading="lazy" class="max-h-48 w-full rounded object-cover">
@@ -127,8 +129,8 @@
             @endif
         </section>
 
-        <section aria-labelledby="history" class="mt-6 rounded-xl border border-line bg-raised p-5">
-            <h2 id="history" class="mb-2 font-semibold">History</h2>
+        <section aria-labelledby="history" class="mt-6 card p-5">
+            <h2 id="history" class="mb-3 text-lg font-bold tracking-tight">History</h2>
             @if (count($report['history'] ?? []) === 0)
                 <p class="text-muted">No history yet.</p>
             @else
