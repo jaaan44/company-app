@@ -23,11 +23,11 @@ Make Home show the employees as cards (the first four), and make the Staff direc
   - filters `operational_status=` (the latest status) and `on_leave=1|0`, both needing `staff-status.view`;
   - `StaffResource` adds `current_leave` (`{start_date, end_date}`, `staff-status.view` only) and `working_on` (`{public_id, name}` of a project the requester may view);
   - `GET /staff/{id}` and `GET /me/profile` carry the same fields.
-- **`x-portal.staff-card`:**
+- **`x-portal.staff-card`** (a `compact` shape for Home; the row shape for the directory):
   - initials avatar with a status dot, name, role, the status in words or **On leave** with dates;
   - a **Working on** block;
   - the whole card links to the person's page.
-- **Home:** **Employees**, right after the quick actions: the first four active staff A–Z, one column on phones and two from `md`, with "View all (N)". It replaces 37D's My team.
+- **Home:** **Employees**, right after the quick actions: the first four active staff A–Z as **compact cards side by side**, like the reference's dashboard (product owner, follow-up: "make it scroll sideways like the reference"). On phones the row scrolls sideways inside itself with the next card peeking in; four columns from `md`. "View all (N)". It replaces 37D's My team.
 - **Staff directory:**
   - cards;
   - status chips (All, Available, In a meeting, Busy, In the field, Off duty, On leave), with `staff-status.view`;
@@ -100,7 +100,7 @@ No new permission. Each new value reuses an existing audience (`05_SECURITY_MODE
 
 ## 11. Results
 
-- **1,513/1,513 tests; Pint passes.**
+- **1,514/1,514 tests; Pint passes.**
 - The first full run failed one existing test: `MyProfileTest`'s "the staff block is identical to `GET /staff/{id}`". It's fixed by loading the same relations in `/me/profile`, which keeps the invariant rather than weakening it.
 - No horizontal overflow at any width.
 - **PHPStan:** in CI.

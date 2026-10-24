@@ -63,14 +63,15 @@
                 </nav>
             @endif
 
-            {{-- 37E (DEC-072): the first four employees, A–Z, as cards; View all opens the whole directory. --}}
+            {{-- 37E (DEC-072): the first four employees, A–Z, as compact cards; View all opens the whole directory. --}}
             @if ($employees !== null && count($employees['people']) > 0)
                 <section aria-labelledby="employees">
                     <x-portal.section-header id="employees" :href="route('portal.directory')" :action="'View all ('.$employees['total'].')'" action-label="employees">Employees</x-portal.section-header>
-                    <ul class="grid gap-3 md:grid-cols-2">
+                    {{-- As in the reference's dashboard: narrow cards side by side, a row that scrolls sideways inside itself on phones (the next card peeks in; the page never scrolls sideways), four columns from md. --}}
+                    <ul class="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-4 md:overflow-visible md:px-0 md:pb-0">
                         @foreach ($employees['people'] as $person)
-                            <li wire:key="employee-{{ $person['public_id'] }}">
-                                <x-portal.staff-card :person="$person" :may-view-status="$mayViewStatus" />
+                            <li wire:key="employee-{{ $person['public_id'] }}" class="w-38 shrink-0 snap-start md:w-auto">
+                                <x-portal.staff-card :person="$person" :may-view-status="$mayViewStatus" :compact="true" />
                             </li>
                         @endforeach
                     </ul>

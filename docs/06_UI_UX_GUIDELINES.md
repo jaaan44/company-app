@@ -344,8 +344,10 @@ The visual-design foundation for Flutter is below (DEC-046). **The web equivalen
   - **Operational status:** `x-portal.status-dot`, a dot in the status's colour plus its word (`Format::operationalTone`). An avatar may carry the same dot. Shown only with `staff-status.view`.
   - **Filter chips:** a list's filters are separate `filter-chip` buttons; the chosen one (`aria-pressed="true"`) is filled with the accent. Chips wrap; they never scroll sideways.
   - **Counts:** unread counts are a red bubble (`bg-danger`, the count, " unread" for screen readers); `x-portal.stat-chip` is a tinted count with its words ("1 due today").
-  - **Home:** hero; quick actions (links to existing pages, permission-gated, the first filled); **Employees** (37E, DEC-072: the first four active staff A–Z as `x-portal.staff-card`s, one column on phones and two from `md`, with "View all (N)"); Today rows; My work chips; Needs attention rows; Latest announcements. 37D's My team row is gone.
-  - **Staff cards (37E):** `x-portal.staff-card` is the whole card as one link to the person's page, with a chevron:
+  - **Home:** hero; quick actions (links to existing pages, permission-gated, the first filled); **Employees** (37E, DEC-072: the first four active staff A–Z as **compact** `x-portal.staff-card`s side by side, as in the reference's dashboard. On phones they sit in a row that scrolls sideways inside itself, 152 px each with the next one peeking in, snapping to each card; the page never scrolls sideways. Four columns from `md`. With "View all (N)"); Today rows; My work chips; Needs attention rows; Latest announcements. 37D's My team row is gone.
+  - **Staff cards (37E):** `x-portal.staff-card` has two shapes, each the whole card as one link to the person's page.
+    - **Compact** (Home): stacked. A large initials avatar with a status dot, the status (or On leave with a short range, "24 – 26 Oct"), the name and the position, then **Working on** below a rule at the card's foot.
+    - **Row** (directory), with a chevron:
     - initials avatar with a status dot, name and role line;
     - status in words, or **On leave** (danger dot) with its dates;
     - when given, a **Working on** block with a violet project tile, below a rule on phones and beside a vertical rule from `sm`.

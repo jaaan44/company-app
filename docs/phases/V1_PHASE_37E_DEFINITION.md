@@ -35,7 +35,7 @@ Home shows the user the employees: the first four, as cards like the reference's
 ## 4. Portal
 
 - `x-portal.staff-card`, used on Home and the directory.
-- **Home:** Employees replaces 37D's My team: four cards, "View all (N)" opening the directory, right after the quick actions.
+- **Home:** Employees replaces 37D's My team: four **compact cards side by side**, like the reference's dashboard "My Team" (a sideways-scrolling row on phones, four columns from `md`; follow-up instruction), with "View all (N)" opening the directory, right after the quick actions.
 - **Directory:** cards, status chips (with `staff-status.view`), a department select (with `organization.view`), all kept in the URL.
 - **Colleague's page:** On leave with dates, and a Working on row.
 

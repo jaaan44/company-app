@@ -155,10 +155,20 @@ class PortalPagesTest extends TestCase
 
         $this->actingAs($this->user, 'web')->get('/app')
             ->assertOk()
-            ->assertSeeInOrder(['Employees', 'View all (7)', 'Anna Abad', 'In a meeting', 'Bo Bautista', 'Cy Castro', 'Ben Cruz', 'Today'])
+            ->assertSeeInOrder(['Employees', 'View all (7)', 'In a meeting', 'Anna Abad', 'Bo Bautista', 'Cy Castro', 'Ben Cruz', 'Today']) // compact cards: the status above the name, as in the reference
             ->assertSee(route('portal.staff', $anna->public_id), false)
             ->assertDontSee('Di Diaz')
             ->assertDontSee('Gone Aaron');
+    }
+
+    public function test_home_cards_show_leave_as_a_short_range(): void
+    {
+        $anna = Staff::factory()->create(['first_name' => 'Anna', 'last_name' => 'Abad', 'preferred_name' => null]);
+        LeaveRequest::factory()->approved()->create(['staff_id' => $anna->id, 'start_date' => '2026-10-13', 'end_date' => '2026-10-15']);
+
+        $this->actingAs($this->user, 'web')->get('/app')
+            ->assertOk()
+            ->assertSeeInOrder(['Employees', 'On leave', '13 – 15 Oct', 'Anna Abad']);
     }
 
     public function test_home_has_no_employees_without_the_directory(): void
