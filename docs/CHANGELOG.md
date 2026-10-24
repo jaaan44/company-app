@@ -17,6 +17,16 @@ Notable repository-level changes. Follows a simple date-ordered log; not tied to
 - **Home:** quick actions, My work chips, Needs attention rows with badges, and **My team** (one more API call, `GET /staff` for the person's team).
 - **Unchanged:** routes, permissions, API, wording and behaviour. No migration and no new dependency. The Admin Backoffice takes the new colours through the shared tokens.
 
+### 2026-10-24 — Phase 37E: employee cards on Home and in the Staff directory (implemented)
+- **From** the product owner's brief and answers (`docs/phases/V1_PHASE_37E_DEFINITION.md`), recorded as **DEC-072**.
+- **Home:** an **Employees** section with the first four active staff company-wide (A–Z) as cards, and "View all (N)". It replaces 37D's My team.
+- **Staff directory:** each person is a card. Status filter chips (All, each status, On leave) and a department filter, kept in the URL.
+- **Cards and the colleague's page:** the status, or **On leave** with its dates; and **Working on** a project.
+- **API (no migration):**
+  - `GET /staff?operational_status=` and `?on_leave=`, needing `staff-status.view`;
+  - `StaffResource` adds `current_leave` (dates only, `staff-status.view`) and `working_on` (a project the requester may view);
+  - `/me/profile` stays identical to `/staff/{id}`.
+
 ### 2026-10-24 — Livewire 4.4.8 (security advisory)
 - **Why:** `composer audit --locked` (CLAUDE.md §5) reports [GHSA-mhf7-xp6r-6qrc](https://github.com/advisories/GHSA-mhf7-xp6r-6qrc) (medium, published 2026-10-23): an authorization bypass in Livewire's `#[Authorize]` with `#[Json]`, affecting `>=4.3.0,<4.4.8`. The lock pinned `v4.4.6`, so Backend CI failed at the audit step on every branch.
 - **Change:** `livewire/livewire` `v4.4.6` → `v4.4.8` in `apps/api/composer.lock` only, within the existing `^4.4` constraint. No code change.

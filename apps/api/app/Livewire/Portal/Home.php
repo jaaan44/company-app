@@ -15,16 +15,18 @@ use Livewire\Component;
  * so it is not echoed into the page's Livewire snapshot.
  *
  * Phase 37D adds quick actions (links to existing pages, shown by the same
- * permissions as their pages' own buttons) and My team: up to six active
- * colleagues in the person's team, from `GET /staff`, with their status.
- * My team is a convenience: if it can't load, Home shows without it.
+ * permissions as their pages' own buttons). Phase 37E (DEC-072) replaces
+ * 37D's My team with Employees: the first four active staff company-wide,
+ * in the directory's order (A–Z), as cards, from `GET /staff`, with the
+ * total for "View all". Employees is a convenience: if it can't load, Home
+ * shows without it.
  */
 class Home extends Component
 {
     use CallsInternalApi;
 
-    /** How many colleagues My team shows. */
-    public const TEAM_SIZE = 6;
+    /** How many employees Home shows. */
+    public const EMPLOYEES_SHOWN = 4;
 
     public function render(): View
     {
@@ -41,37 +43,31 @@ class Home extends Component
 
         return view('livewire.portal.home', [
             'home' => $home,
-            'team' => $this->team($home),
+            'employees' => $home === null ? null : $this->employees(),
             'mayAddTasks' => $user?->can('tasks.create') ?? false,
             'mayViewStatus' => $user?->can('staff-status.view') ?? false,
         ]);
     }
 
     /**
-     * My team's colleagues (Phase 37D): active staff in the person's team,
-     * without the person themselves, or null when there's no team, no
-     * permission to see the directory, or the request fails.
+     * Home's Employees (Phase 37E): the first four active staff, A–Z, and
+     * how many there are in all; null without `staff.view` or when the
+     * request fails.
      *
-     * @param  array<string, mixed>|null  $home
-     * @return list<array<string, mixed>>|null
+     * @return array{people: list<array<string, mixed>>, total: int}|null
      */
-    private function team(?array $home): ?array
+    private function employees(): ?array
     {
-        $teamId = $home['staff']['team']['public_id'] ?? null;
-        if ($teamId === null || ! (Auth::user()?->can('staff.view') ?? false)) {
+        if (! (Auth::user()?->can('staff.view') ?? false)) {
             return null;
         }
 
         try {
-            $staff = $this->api()->get('/staff', ['status' => 'active', 'team' => $teamId, 'per_page' => self::TEAM_SIZE + 1])['data'] ?? [];
+            $result = $this->api()->get('/staff', ['status' => 'active', 'per_page' => self::EMPLOYEES_SHOWN]);
         } catch (PortalApiException) {
             return null;
         }
 
-        return collect($staff)
-            ->reject(fn (array $person) => $person['public_id'] === $home['staff']['public_id'])
-            ->take(self::TEAM_SIZE)
-            ->values()
-            ->all();
+        return ['people' => array_values($result['data'] ?? []), 'total' => (int) ($result['meta']['total'] ?? 0)];
     }
 }

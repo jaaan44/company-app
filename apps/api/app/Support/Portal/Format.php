@@ -458,6 +458,24 @@ final class Format
             : self::dayMonth($s).' '.$s->format('Y').' – '.self::dayMonth($e).' '.$e->format('Y');
     }
 
+    /**
+     * A short leave range for a narrow card (Phase 37E): "24 – 26 Oct",
+     * "30 Oct – 2 Nov", one day "24 Oct"; the year only when it isn't the
+     * same for both ends.
+     */
+    public static function shortDateRange(string $start, string $end): string
+    {
+        $s = CarbonImmutable::parse($start);
+        $e = CarbonImmutable::parse($end);
+
+        return match (true) {
+            $start === $end => $s->format('j M'),
+            $s->format('Y-m') === $e->format('Y-m') => $s->format('j').' – '.$e->format('j M'),
+            $s->year === $e->year => $s->format('j M').' – '.$e->format('j M'),
+            default => $s->format('j M Y').' – '.$e->format('j M Y'),
+        };
+    }
+
     /** "3 calendar days (weekends included)". */
     public static function calendarDays(int $days): string
     {

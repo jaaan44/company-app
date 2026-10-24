@@ -12,6 +12,7 @@
     [$box, $glyph] = match (true) {
         $round => ['size-11 rounded-full', 'size-6'], // in place of an avatar (a group chat)
         $size === 'lg' => ['size-12 rounded-2xl', 'size-6'],
+        $size === 'sm' => ['size-8 rounded-lg', 'size-4'], // inside a compact card
         default => ['size-10 rounded-xl', 'size-5'],
     };
 @endphp

@@ -4,9 +4,9 @@
 @endphp
 {{--
     Home (Phase 34A; mobile redesign 37C; 37D after docs/design/portal-style-reference.webp):
-    a gradient hero with the greeting, then a sheet with quick actions, Today,
-    My work, Needs attention, My team and Latest announcements, from
-    GET /me/home (and GET /staff for My team). Every card opens the screen it
+    a gradient hero with the greeting, then a sheet with quick actions,
+    Employees (37E), Today, My work, Needs attention and Latest announcements,
+    from GET /me/home (and GET /staff for Employees). Every card opens the screen it
     summarises, as before.
 --}}
 <div>
@@ -61,6 +61,21 @@
                         @endforeach
                     </ul>
                 </nav>
+            @endif
+
+            {{-- 37E (DEC-072): the first four employees, A–Z, as compact cards; View all opens the whole directory. --}}
+            @if ($employees !== null && count($employees['people']) > 0)
+                <section aria-labelledby="employees">
+                    <x-portal.section-header id="employees" :href="route('portal.directory')" :action="'View all ('.$employees['total'].')'" action-label="employees">Employees</x-portal.section-header>
+                    {{-- As in the reference's dashboard: narrow cards side by side, a row that scrolls sideways inside itself on phones (the next card peeks in; the page never scrolls sideways), four columns from md. --}}
+                    <ul class="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-4 md:overflow-visible md:px-0 md:pb-0">
+                        @foreach ($employees['people'] as $person)
+                            <li wire:key="employee-{{ $person['public_id'] }}" class="w-38 shrink-0 snap-start md:w-auto">
+                                <x-portal.staff-card :person="$person" :may-view-status="$mayViewStatus" :compact="true" />
+                            </li>
+                        @endforeach
+                    </ul>
+                </section>
             @endif
 
             @if ($home['today'] !== null)
@@ -142,30 +157,6 @@
                 </ul>
             </section>
 
-            @if (! empty($team))
-                <section aria-labelledby="my-team">
-                    <x-portal.section-header id="my-team" :href="route('portal.directory')" action-label="staff">My team</x-portal.section-header>
-                    {{-- A row of cards that scrolls sideways inside itself on phones (the page never does); a grid from md up. --}}
-                    <ul class="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0 md:pb-0">
-                        @foreach ($team as $person)
-                            <li wire:key="team-{{ $person['public_id'] }}" class="w-40 shrink-0 snap-start md:w-auto">
-                                <a href="{{ route('portal.staff', $person['public_id']) }}" class="card flex h-full flex-col gap-2 p-4 hover:bg-hover">
-                                    <x-portal.avatar :name="$person['display_name']" :status="$mayViewStatus ? ($person['operational_status'] ?? null) : null" />
-                                    @if ($mayViewStatus && ($person['operational_status'] ?? null))
-                                        <x-portal.status-dot :status="$person['operational_status']" />
-                                    @endif
-                                    <span class="block min-w-0">
-                                        <span class="block font-semibold [overflow-wrap:anywhere]">{{ $person['display_name'] }}</span>
-                                        @if ($line = Format::roleLine($person))
-                                            <span class="block text-sm text-muted">{{ $line }}</span>
-                                        @endif
-                                    </span>
-                                </a>
-                            </li>
-                        @endforeach
-                    </ul>
-                </section>
-            @endif
 
             @if ($home['announcements'] !== null)
                 <section aria-labelledby="announcements">

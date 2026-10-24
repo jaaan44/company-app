@@ -26,11 +26,13 @@ use Illuminate\Http\Request;
  * `staff` is the existing Phase 7 `StaffResource` with the same eager
  * loads as `StaffController`, so it is field-for-field identical to
  * `GET /api/v1/staff/{public_id}` for the same requester, including its
- * `staff.update`-only `user` block. No new field is exposed.
+ * `staff.update`-only `user` block. No new field is exposed. Since Phase
+ * 37E (DEC-072) that includes the directory's `current_leave` and
+ * `working_on`, so the two stay identical.
  */
 class MyProfileController extends Controller
 {
-    private const STAFF_RELATIONS = ['department', 'team', 'position', 'manager', 'user', 'latestOperationalStatus'];
+    private const STAFF_RELATIONS = ['department', 'team', 'position', 'manager', 'user', 'latestOperationalStatus', 'currentLeave', 'currentTask.project'];
 
     public function show(Request $request): JsonResponse
     {

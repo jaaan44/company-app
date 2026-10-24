@@ -1671,7 +1671,18 @@ Branch `claude/amazing-brahmagupta-dbsrjc` at Gate 3 (`568640c`), confirmed up t
 | CSS build (`npm run build`) | Automated, local | PASS | New tokens and the `card` and `filter-chip` utilities compile. |
 | Full backend suite (`php artisan test`) | Automated, local | PASS | **1,505/1,505** (6,042 assertions), including 4 new tests (Home quick actions by permission, My team, no My team without teammates, directory status by permission). Run in a scratch copy whose lock leaves out only PHPStan/Larastan: Composer can't download PHPStan's dist-only package here. The first run caught two real view errors (an inline `@php(...)` before a `@php` block in Notifications, and a missing `Format` import in Clients), both fixed. |
 | Pint (`vendor/bin/pint --test`) | Automated, local | PASS | |
-| PHPStan | Automated, CI | PENDING | Not runnable here (see above); CI runs it on the PR. |
+| PHPStan | Automated, CI | PASS | First run on PR #146 (`c8b11e3`, `main` with 37D plus Livewire 4.4.8): Backend quality gates green. PR #145 itself stopped at `composer audit` (the Livewire advisory). |
 | Render pass of the running app (Playwright + Chromium) | Manual (AI) | PASS | The real app on SQLite with sample data, signed in: 11 pages (Home, Staff, Tasks, Messages, Schedule, More, Notifications, Leave, Profile, Announcements, Status) at 320, 390 (light and dark) and 1280 px. **No horizontal overflow at any width.** Previews in `docs/design/portal-preview-*.webp`. |
 | Contrast of new colour pairs | Manual (AI), computed | PASS | Every text pair ≥ 4.5:1 and control boundary ≥ 3:1, light and dark (handoff §11). |
 | UAT-37D-01…04 | UAT (product owner) | NOT RUN | After merge and deployment. |
+
+## Phase 37E — Employee cards on Home and in the Staff directory (2026-10-24)
+
+| Check | Type | Status | Notes |
+|---|---|---|---|
+| CSS build (`npm run build`) | Automated, local | PASS | |
+| Full backend suite (`php artisan test`) | Automated, local | PASS | **1,514/1,514**, run in the scratch copy (lock without PHPStan/Larastan) as in 37D. New: `StaffDirectoryStatusTest` (6: status filter by the latest status, leave filter and dates, the `staff-status.view` gate, `working_on` project visibility, the most recent in-progress task, constant query count) and `PortalPagesTest` (+5: Home's first four employees, their short leave range, no Employees without the directory, directory filters, Working on; 37D's two My team tests replaced). The first full run caught `MyProfileTest`'s "identical to `/staff/{id}`" invariant, fixed by loading the same relations in `/me/profile`. |
+| Pint (`vendor/bin/pint --test`) | Automated, local | PASS | |
+| PHPStan | Automated, CI | PENDING | Runs on the PR. |
+| Render pass of the running app (Playwright + Chromium) | Manual (AI) | PASS | Home, the directory and its On leave filter at 320, 390 (light and dark) and 1280 px, with sample leave and in-progress project work. No horizontal page overflow. Home's Employees row scrolls inside itself on phones (676 px of cards in a 390 px row) and fits four columns at 1280. Previews: `docs/design/portal-preview-37e-*.webp`. |
+| UAT-37E-01…03 | UAT (product owner) | NOT RUN | After merge and deployment. |
