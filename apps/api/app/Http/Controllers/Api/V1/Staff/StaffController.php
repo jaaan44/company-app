@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Staff;
 
+use App\Enums\OperationalStatus;
 use App\Enums\StaffStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Staff\StoreStaffRequest;
@@ -34,6 +35,9 @@ class StaffController extends Controller
 {
     private const WITH_RELATIONS = ['department', 'team', 'position', 'manager', 'user', 'latestOperationalStatus'];
 
+    /** Phase 37E (DEC-072): what the directory adds to a read — today's approved leave and the project being worked on. */
+    private const DIRECTORY_RELATIONS = ['currentLeave', 'currentTask.project'];
+
     /** @var array<int, string> */
     private const AUDITED_FIELDS = ['status', 'department_id', 'team_id', 'position_id', 'manager_id'];
 
@@ -48,10 +52,17 @@ class StaffController extends Controller
             'position' => ['sometimes', 'string'],
             'manager' => ['sometimes', 'string'],
             'q' => ['sometimes', 'string', 'max:255'],
+            'operational_status' => ['sometimes', new Enum(OperationalStatus::class)],
+            'on_leave' => ['sometimes', 'boolean'],
         ]);
 
+        // Phase 37E (DEC-072): filtering by someone's status or leave reveals it, so it needs the same permission as seeing it.
+        if (($request->filled('operational_status') || $request->has('on_leave')) && ! ($request->user()?->can('staff-status.view') ?? false)) {
+            abort(403, 'You do not have access to filter staff by status.');
+        }
+
         $staff = Staff::query()
-            ->with(self::WITH_RELATIONS)
+            ->with([...self::WITH_RELATIONS, ...self::DIRECTORY_RELATIONS])
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')))
             ->when(
                 $request->filled('department'),
@@ -70,6 +81,13 @@ class StaffController extends Controller
                 fn ($query) => $query->where('manager_id', $this->resolveId(Staff::class, $request->string('manager')->toString()) ?? -1)
             )
             ->when($request->filled('q'), fn ($query) => Like::anyContains($query, ['first_name', 'last_name', 'preferred_name', 'employee_number'], $request->string('q')->toString()))
+            ->when(
+                $request->filled('operational_status'),
+                fn ($query) => $query->whereHas('latestOperationalStatus', fn ($status) => $status->where('status', $request->string('operational_status')->toString()))
+            )
+            ->when($request->has('on_leave'), fn ($query) => $request->boolean('on_leave')
+                ? $query->whereHas('currentLeave')
+                : $query->whereDoesntHave('currentLeave'))
             ->orderBy('last_name')
             ->orderBy('first_name')
             // Unique tie-breaker (Phase 28, R-6): without it, staff with
@@ -110,7 +128,7 @@ class StaffController extends Controller
 
     public function show(Staff $staff): StaffResource
     {
-        return new StaffResource($staff->load(self::WITH_RELATIONS));
+        return new StaffResource($staff->load([...self::WITH_RELATIONS, ...self::DIRECTORY_RELATIONS]));
     }
 
     /**

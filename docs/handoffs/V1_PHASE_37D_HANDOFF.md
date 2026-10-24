@@ -1,6 +1,6 @@
 # Phase 37D — Staff Portal Visual Refresh — Handoff
 
-**Status: implemented on `claude/admiring-planck-hictyu` (2026-10-24); awaiting review, merge, deployment and UAT-37D-01…04 (`NOT RUN`).** **No migration, no API change, no new dependency.**
+**Status: merged as `f9d7092` (PR #145, 2026-10-24); awaiting deployment and UAT-37D-01…04 (`NOT RUN`).** PR #145 merged while its CI was red on a new Livewire advisory at the audit step; the full CI (Pint, PHPStan, tests) first ran on PR #146 (Livewire 4.4.8, merged as `77aab0f`), green. Home's My team was replaced by Employees in Phase 37E (DEC-072). **No migration, no API change, no new dependency.**
 
 ## 1. Phase Identification
 

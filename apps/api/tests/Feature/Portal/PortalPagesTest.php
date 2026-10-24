@@ -8,12 +8,16 @@ use App\Livewire\Portal\Home;
 use App\Livewire\Portal\Profile;
 use App\Models\Announcement;
 use App\Models\Department;
+use App\Models\LeaveRequest;
 use App\Models\Permission;
 use App\Models\Position;
+use App\Models\Project;
+use App\Models\ProjectMembership;
 use App\Models\Role;
 use App\Models\ScheduleEntry;
 use App\Models\Staff;
 use App\Models\StaffOperationalStatus;
+use App\Models\Task;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\Portal\InternalApi;
@@ -139,26 +143,30 @@ class PortalPagesTest extends TestCase
             ->assertSeeInOrder(['aria-label="Quick actions"', route('portal.tasks.new'), 'New task'], false);
     }
 
-    public function test_home_shows_my_team_with_their_status(): void
+    public function test_home_shows_the_first_four_employees_as_cards(): void
     {
-        $team = $this->staff->team;
-        $kai = Staff::factory()->create(['first_name' => 'Kai', 'last_name' => 'Tan', 'preferred_name' => null, 'team_id' => $team->id]);
-        StaffOperationalStatus::factory()->create(['staff_id' => $kai->id, 'status' => 'in_meeting']);
-        Staff::factory()->create(['first_name' => 'Other', 'last_name' => 'Crew', 'preferred_name' => null, 'team_id' => Team::factory()->create()->id]);
-        Staff::factory()->create(['first_name' => 'Gone', 'last_name' => 'Person', 'preferred_name' => null, 'team_id' => $team->id, 'status' => StaffStatus::Separated]);
+        // Lia Ramos and Ben Cruz (setUp) plus five more: A–Z by last name, the first four show.
+        foreach ([['Anna', 'Abad'], ['Bo', 'Bautista'], ['Cy', 'Castro'], ['Di', 'Diaz'], ['Zed', 'Zamora']] as [$first, $last]) {
+            Staff::factory()->create(['first_name' => $first, 'last_name' => $last, 'preferred_name' => null]);
+        }
+        $anna = Staff::query()->where('first_name', 'Anna')->firstOrFail();
+        StaffOperationalStatus::factory()->create(['staff_id' => $anna->id, 'status' => 'in_meeting']);
+        Staff::factory()->create(['first_name' => 'Gone', 'last_name' => 'Aaron', 'preferred_name' => null, 'status' => StaffStatus::Separated]);
 
         $this->actingAs($this->user, 'web')->get('/app')
             ->assertOk()
-            ->assertSeeInOrder(['My team', 'In a meeting', 'Kai Tan', 'Latest announcements']) // the status above the name, as in the reference
-            ->assertSee(route('portal.staff', $kai->public_id), false)
-            ->assertDontSee(route('portal.staff', $this->staff->public_id), false) // not herself
-            ->assertDontSee('Other Crew')
-            ->assertDontSee('Gone Person');
+            ->assertSeeInOrder(['Employees', 'View all (7)', 'Anna Abad', 'In a meeting', 'Bo Bautista', 'Cy Castro', 'Ben Cruz', 'Today'])
+            ->assertSee(route('portal.staff', $anna->public_id), false)
+            ->assertDontSee('Di Diaz')
+            ->assertDontSee('Gone Aaron');
     }
 
-    public function test_home_has_no_my_team_without_teammates(): void
+    public function test_home_has_no_employees_without_the_directory(): void
     {
-        $this->actingAs($this->user, 'web')->get('/app')->assertOk()->assertDontSee('My team');
+        $role = Role::query()->create(['name' => 'no-directory', 'label' => 'No directory']);
+        $this->actingAs(User::factory()->create(['role_id' => $role->id]), 'web')->get('/app')
+            ->assertOk()
+            ->assertDontSee('aria-labelledby="employees"', false);
     }
 
     public function test_home_without_a_staff_profile(): void
@@ -248,6 +256,47 @@ class PortalPagesTest extends TestCase
             ->assertOk()
             ->assertSee('Kai Tan')
             ->assertDontSee('Available');
+    }
+
+    public function test_directory_filters_by_status_leave_and_department(): void
+    {
+        $kai = Staff::factory()->create(['first_name' => 'Kai', 'last_name' => 'Tan', 'preferred_name' => null, 'department_id' => Department::factory()->create(['name' => 'Sales'])->id]);
+        StaffOperationalStatus::factory()->create(['staff_id' => $kai->id, 'status' => 'available']);
+        $sarah = Staff::factory()->create(['first_name' => 'Sarah', 'last_name' => 'Kim', 'preferred_name' => null]);
+        LeaveRequest::factory()->approved()->create(['staff_id' => $sarah->id, 'start_date' => '2026-10-13', 'end_date' => '2026-10-15']);
+
+        $this->actingAs($this->user, 'web');
+        Livewire::test(Directory::class)
+            ->assertSeeInOrder(['All', 'Available', 'In a meeting', 'Busy', 'In the field', 'Off duty', 'On leave'])
+            ->assertSee('All departments')
+            ->assertSee('Sarah Kim')
+            ->assertSeeInOrder(['Sarah Kim', 'On leave', '15 Oct 2026']) // her leave, with its dates
+            ->call('showOnly', 'available')
+            ->assertSet('show', 'available')
+            ->assertSee('Kai Tan')
+            ->assertDontSee('Sarah Kim')
+            ->call('showOnly', 'on_leave')
+            ->assertSee('Sarah Kim')
+            ->assertDontSee('Kai Tan')
+            ->call('showOnly', '')
+            ->set('department', Department::query()->where('name', 'Sales')->value('public_id'))
+            ->assertSee('Kai Tan')
+            ->assertDontSee('Sarah Kim');
+    }
+
+    public function test_directory_cards_say_what_someone_is_working_on(): void
+    {
+        $kai = Staff::factory()->create(['first_name' => 'Kai', 'last_name' => 'Tan', 'preferred_name' => null]);
+        $project = Project::factory()->create(['name' => 'Website Redesign']);
+        ProjectMembership::factory()->create(['project_id' => $project->id, 'staff_id' => $this->staff->id]);
+        Task::factory()->inProgress()->create(['assignee_staff_id' => $kai->id, 'project_id' => $project->id]);
+
+        $this->actingAs($this->user, 'web')->get('/app/staff')
+            ->assertOk()
+            ->assertSeeInOrder(['Kai Tan', 'Working on', 'Website Redesign']);
+        $this->actingAs($this->user, 'web')->get('/app/staff/'.$kai->public_id)
+            ->assertOk()
+            ->assertSeeInOrder(['Working on', 'Website Redesign']);
     }
 
     public function test_directory_pages_by_25(): void

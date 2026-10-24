@@ -1,4 +1,4 @@
-@php use App\Support\Portal\Format; @endphp
+@php use App\Livewire\Portal\Directory; @endphp
 <div>
     <h1 class="sr-only">Staff directory</h1>
 
@@ -12,6 +12,29 @@
         @endif
     </form>
 
+    {{-- 37E (DEC-072): status chips (with staff-status.view) and a department filter, as in the reference's All Employees. --}}
+    @if ($mayViewStatus || count($departments) > 0)
+        <div class="mb-4 flex flex-wrap items-center gap-2">
+            @if ($mayViewStatus)
+                <div role="group" aria-label="Show" class="flex flex-wrap gap-2">
+                    @foreach (Directory::FILTERS as $value => $label)
+                        <button type="button" wire:click="showOnly('{{ $value }}')" aria-pressed="{{ $currentShow === $value ? 'true' : 'false' }}"
+                                class="filter-chip">{{ $label }}</button>
+                    @endforeach
+                </div>
+            @endif
+            @if (count($departments) > 0)
+                <label for="directory-department" class="sr-only">Department</label>
+                <select id="directory-department" wire:model.live="department" class="field">
+                    <option value="">All departments</option>
+                    @foreach ($departments as $option)
+                        <option value="{{ $option['public_id'] }}">{{ $option['name'] }}</option>
+                    @endforeach
+                </select>
+            @endif
+        </div>
+    @endif
+
     @if ($errorMessage)
         <x-portal.error :message="$errorMessage" />
     @else
@@ -20,24 +43,12 @@
         </div>
 
         @if (count($staff) === 0)
-            <x-portal.notice>{{ $query === '' ? 'No active staff yet.' : 'No one matches "'.$query.'".' }}</x-portal.notice>
+            <x-portal.notice>{{ $query !== '' ? 'No one matches "'.$query.'".' : ($currentShow !== '' || $department !== '' ? 'No one here right now.' : 'No active staff yet.') }}</x-portal.notice>
         @else
-            <ul class="divide-y divide-line overflow-hidden card">
+            <ul class="space-y-3">
                 @foreach ($staff as $person)
                     <li wire:key="staff-{{ $person['public_id'] }}">
-                        <a href="{{ route('portal.staff', $person['public_id']) }}" class="chevron flex min-h-16 items-center gap-3 px-4 py-3 hover:bg-hover">
-                            @php($status = $mayViewStatus ? ($person['operational_status'] ?? null) : null)
-                            <x-portal.avatar :name="$person['display_name']" :status="$status" />
-                            <span class="block min-w-0 flex-1">
-                                <span class="block font-semibold [overflow-wrap:anywhere]">{{ $person['display_name'] }}</span>
-                                @if ($line = Format::roleLine($person))
-                                    <span class="block text-sm text-muted">{{ $line }}</span>
-                                @endif
-                                @if ($status)
-                                    <x-portal.status-dot :status="$status" class="mt-0.5" />
-                                @endif
-                            </span>
-                        </a>
+                        <x-portal.staff-card :person="$person" :may-view-status="$mayViewStatus" />
                     </li>
                 @endforeach
             </ul>

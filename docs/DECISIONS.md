@@ -1146,3 +1146,27 @@ Staging was restored the same day (`docs/handoffs/V1_STAGING_INCIDENT_2026-10-17
 9. **No change** to routes, permissions, API, wording, focus and accessibility behaviour, or the order of More. Type stays the system stack (no web fonts, DEC-063).
 **Rationale:** The approved reference applied through the existing token and component system, so one change of values and a small set of components restyles every screen. Every new pair is computed against WCAG 2.2 AA.
 **Superseded/reaffirmed:** Supersedes DEC-064's palette and DEC-068's container and control radii. DEC-069's Home-only token restriction ends (its hero, sheet and bottom bar stay). DEC-063's shell (five tabs, sidebar from `md`) is reaffirmed. **The Admin Backoffice shares the tokens**, so it takes the new colours. Its layout and components are unchanged.
+
+### DEC-072 — Phase 37E: employee cards; leave and "working on" in the directory
+
+**Status:** Accepted (2026-10-24), product owner: the 37E brief and answers (`docs/phases/V1_PHASE_37E_DEFINITION.md`).
+**Context:** The product owner wants Home to show the employees as cards, like the reference's "All Employees", and asked for the data the app lacked to be built.
+**Decision:**
+1. **Home's Employees:** the first four active staff company-wide, in the directory's order (A–Z by last name), as cards, with "View all (N)". It replaces 37D's My team (DEC-071 §7).
+2. **Directory filters:** `GET /api/v1/staff?operational_status=` (the latest status) and `?on_leave=1|0`. They need **`staff-status.view`**, because a filter reveals what it filters on.
+3. **`current_leave`** (approved leave covering the company's today):
+   - the **dates only**, never the leave type or reason;
+   - shown to **`staff-status.view`** holders, the same audience as the operational status, since it answers the same question ("is this person in?");
+   - who may see leave *requests* (`leave-requests.view`, Phase 13) is unchanged.
+4. **`working_on`:**
+   - the project of the person's most recently updated in-progress task;
+   - **only when the requester may view that project** under Phase 10's rule (`projects.view`, or a membership), so a project name never reaches someone who couldn't open it;
+   - the task itself isn't exposed.
+5. **`/me/profile`** loads the same relations, so its `staff` stays identical to `GET /staff/{public_id}` (DEC-053).
+6. **Not added:**
+   - location on cards: check-ins stay behind `location.view` (DEC-032);
+   - "WFH" (not a status);
+   - photos;
+   - a per-card menu (View profile is the card's own tap).
+**Rationale:** Each new field reuses an existing audience rule rather than creating a new one. The list query count stays constant (two eager loads).
+**Superseded/reaffirmed:** DEC-071 §7's My team is replaced by Employees. DEC-032's split (status company-wide, location scoped) and Phase 10's project visibility are reaffirmed and applied to the new fields.

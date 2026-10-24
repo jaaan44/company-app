@@ -2,7 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\LeaveRequestStatus;
 use App\Enums\StaffStatus;
+use App\Enums\TaskStatus;
+use App\Support\Reporting\OverdueTasks;
 use Database\Factories\StaffFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -167,6 +170,41 @@ class Staff extends Model
     public function latestOperationalStatus(): HasOne
     {
         return $this->hasOne(StaffOperationalStatus::class)->latestOfMany();
+    }
+
+    /**
+     * The approved leave covering today in the company timezone (Phase
+     * 37E, DEC-072), or null — the directory's "On leave" with its dates.
+     * When two approved requests overlap today, the later-starting one.
+     *
+     * @return HasOne<LeaveRequest, $this>
+     */
+    public function currentLeave(): HasOne
+    {
+        $today = OverdueTasks::todayInCompanyTimezone();
+
+        return $this->hasOne(LeaveRequest::class)->ofMany(
+            ['start_date' => 'max', 'id' => 'max'],
+            fn ($query) => $query->where('status', LeaveRequestStatus::Approved)
+                ->whereDate('start_date', '<=', $today)
+                ->whereDate('end_date', '>=', $today),
+        );
+    }
+
+    /**
+     * The in-progress task on a project that this staff member most
+     * recently worked on (Phase 37E, DEC-072), or null — the directory's
+     * "Working on". Tasks without a project are left out: "Working on"
+     * names a project.
+     *
+     * @return HasOne<Task, $this>
+     */
+    public function currentTask(): HasOne
+    {
+        return $this->hasOne(Task::class, 'assignee_staff_id')->ofMany(
+            ['updated_at' => 'max', 'id' => 'max'],
+            fn ($query) => $query->where('status', TaskStatus::InProgress)->whereNotNull('project_id'),
+        );
     }
 
     /**

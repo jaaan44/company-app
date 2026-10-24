@@ -25,6 +25,15 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * location — which is deliberately NOT added here (see
  * CheckInController/`location.view`).
  *
+ * Phase 37E (DEC-072) adds two directory fields, each only when the
+ * controller loaded it (index and show):
+ * - `current_leave`: the dates of approved leave covering today, never
+ *   its type or reason, and only for a `staff-status.view` holder (the
+ *   same audience as the operational status: whether someone is in);
+ * - `working_on`: the project of their most recent in-progress task,
+ *   only when the requester may see that project (`projects.view`, or a
+ *   membership — Phase 10's visibility rule), never the task itself.
+ *
  * @mixin Staff
  */
 class StaffResource extends JsonResource
@@ -67,6 +76,21 @@ class StaffResource extends JsonResource
                 'latestOperationalStatus',
                 fn () => $this->latestOperationalStatus?->status->value,
             ),
+            'current_leave' => $this->when(
+                $request->user()?->can('staff-status.view') ?? false,
+                fn () => $this->whenLoaded('currentLeave', fn () => $this->currentLeave === null ? null : [
+                    'start_date' => $this->currentLeave->start_date->toDateString(),
+                    'end_date' => $this->currentLeave->end_date->toDateString(),
+                ]),
+            ),
+            'working_on' => $this->whenLoaded('currentTask', function () use ($request) {
+                $project = $this->currentTask?->project;
+
+                return $project === null || ! self::mayViewProject($request, $project->id) ? null : [
+                    'public_id' => $project->public_id,
+                    'name' => $project->name,
+                ];
+            }),
             'user' => $this->when(
                 $request->user()?->can('staff.update') ?? false,
                 fn () => $this->whenLoaded('user', fn () => $this->user === null ? null : [
@@ -78,5 +102,27 @@ class StaffResource extends JsonResource
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];
+    }
+
+    /**
+     * Phase 10's project visibility for the requester: everything with
+     * `projects.view`, otherwise only projects their Staff record is a
+     * member of. The member ids are looked up once per request.
+     */
+    private static function mayViewProject(Request $request, int $projectId): bool
+    {
+        $user = $request->user();
+        if ($user === null) {
+            return false;
+        }
+        if ($user->can('projects.view')) {
+            return true;
+        }
+
+        if (! $request->attributes->has('staff_resource.project_ids')) {
+            $request->attributes->set('staff_resource.project_ids', $user->staff?->projectMemberships()->pluck('project_id')->map(fn ($id) => (int) $id)->all() ?? []);
+        }
+
+        return in_array($projectId, (array) $request->attributes->get('staff_resource.project_ids'), true);
     }
 }

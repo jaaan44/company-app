@@ -344,7 +344,14 @@ The visual-design foundation for Flutter is below (DEC-046). **The web equivalen
   - **Operational status:** `x-portal.status-dot`, a dot in the status's colour plus its word (`Format::operationalTone`). An avatar may carry the same dot. Shown only with `staff-status.view`.
   - **Filter chips:** a list's filters are separate `filter-chip` buttons; the chosen one (`aria-pressed="true"`) is filled with the accent. Chips wrap; they never scroll sideways.
   - **Counts:** unread counts are a red bubble (`bg-danger`, the count, " unread" for screen readers); `x-portal.stat-chip` is a tinted count with its words ("1 due today").
-  - **Home:** hero; quick actions (links to existing pages, permission-gated, the first filled); Today rows; My work chips; Needs attention rows; **My team** (up to six teammates from `GET /staff`, cards that scroll inside their row on phones and form a grid from `md`); Latest announcements.
+  - **Home:** hero; quick actions (links to existing pages, permission-gated, the first filled); **Employees** (37E, DEC-072: the first four active staff A–Z as `x-portal.staff-card`s, one column on phones and two from `md`, with "View all (N)"); Today rows; My work chips; Needs attention rows; Latest announcements. 37D's My team row is gone.
+  - **Staff cards (37E):** `x-portal.staff-card` is the whole card as one link to the person's page, with a chevron:
+    - initials avatar with a status dot, name and role line;
+    - status in words, or **On leave** (danger dot) with its dates;
+    - when given, a **Working on** block with a violet project tile, below a rule on phones and beside a vertical rule from `sm`.
+
+    There is no ⋯ menu.
+  - **Staff directory (37E):** search; status `filter-chip`s (All, Available, In a meeting, Busy, In the field, Off duty, On leave), with `staff-status.view` only; an "All departments" select, with `organization.view`; then a list of staff cards. The filters are kept in the URL (`?show=`, `?department=`).
 - **Bottom tab bar (37C):** a raised bar with rounded top corners and a soft shadow. The current tab is a filled accent-soft pill around its icon and label.
 - **Phones first (37, DEC-067):** the staff portal is the product for staff on phones (the Flutter app is paused).
   - **Sign-in:** "Keep me signed in on this device" (unticked; "For 30 days. Leave it off on a shared phone or computer."). The email field uses `inputmode="email"` with no auto-capitalisation or spell-check; `enterkeyhint` is next, then go. After sign-in you return to the page you asked for ("Please sign in to continue.").
