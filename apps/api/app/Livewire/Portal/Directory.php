@@ -105,7 +105,7 @@ class Directory extends Component
             'meta' => $result['meta'] ?? null,
             'query' => $search,
             'currentShow' => $show,
-            'departments' => $this->errorMessage === null ? $this->departments() : [],
+            'departments' => $result === null ? [] : $this->departments(), // not when the list itself failed
             // Phase 37D: each person's status, for those who may see it (staff-status.view).
             'mayViewStatus' => $mayViewStatus,
         ]);

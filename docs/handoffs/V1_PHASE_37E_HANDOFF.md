@@ -1,6 +1,6 @@
 # Phase 37E — Employee Cards on Home and in the Staff Directory — Handoff
 
-**Status: implemented on `claude/admiring-planck-hictyu` (2026-10-24); awaiting review, merge, deployment and UAT-37E-01…03 (`NOT RUN`).** **No migration, no new permission, no new dependency.**
+**Status: merged as `6c7e2cd` (PR #147, 2026-10-24) with its backend CI red on one PHPStan finding (`Directory.php:108`, `identical.alwaysTrue`); the fix follows on `claude/admiring-planck-hictyu`. Awaiting deployment and UAT-37E-01…03 (`NOT RUN`).** **No migration, no new permission, no new dependency.**
 
 ## 1. Phase Identification
 
