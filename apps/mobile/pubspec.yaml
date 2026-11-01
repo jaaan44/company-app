@@ -36,7 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   http: ^1.6.0
   flutter_secure_storage: ^11.2.0
-  go_router: ^18.0.1
+  go_router: ^18.0.2
   # Phase 30B (R-17): the location package and its Android implementation,
   # both pinned exactly — the version line in use since 2026-06-12, not the
   # newest (under three weeks old when approved). Only one-shot reads are
